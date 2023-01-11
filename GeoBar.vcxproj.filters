@@ -1,0 +1,192 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Файлы ресурсов">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="imgui">
+      <UniqueIdentifier>{ba81dd01-1cfe-4bbb-b8e0-e9b39aed6240}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Frontend">
+      <UniqueIdentifier>{38104a2c-7ea1-49a6-a83d-b611fcb16364}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Backend">
+      <UniqueIdentifier>{64f7ec62-3276-4567-8873-8fcd9bf1ea82}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Barcode">
+      <UniqueIdentifier>{1143bbac-360a-4d74-9348-ba8b2d78ade1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Barcode\src">
+      <UniqueIdentifier>{fbf976c3-cb9f-4232-8ef1-af48702a654d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Side">
+      <UniqueIdentifier>{f13c016b-6080-4d17-9175-6a9c0ee2e169}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Barcode\modules">
+      <UniqueIdentifier>{3830fb1f-c201-41bf-bc10-e214906634eb}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\imgui\imgui.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\imgui_demo.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\imgui_draw.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\backends\imgui_impl_glfw.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\backends\imgui_impl_opengl3.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\imgui_tables.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\imgui_widgets.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="frontend\main.cpp">
+      <Filter>Frontend</Filter>
+    </ClCompile>
+    <ClCompile Include="frontend\Application.cpp">
+      <Filter>Frontend</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\source\hole.cpp">
+      <Filter>Barcode\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\source\barclasses.cpp">
+      <Filter>Barcode\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\source\barcodeCreator.cpp">
+      <Filter>Barcode\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\source\component.cpp">
+      <Filter>Barcode\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\convertation.cpp">
+      <Filter>Barcode\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\tiffreader.cpp">
+      <Filter>Barcode\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\geodataprocessor.cpp">
+      <Filter>Backend</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\project.cpp">
+      <Filter>Backend</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\SimpleImgReader.cpp">
+      <Filter>Backend</Filter>
+    </ClCompile>
+    <ClCompile Include="frontend\frontend.cpp">
+      <Filter>Frontend</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\Common.cpp">
+      <Filter>Backend</Filter>
+    </ClCompile>
+    <ClCompile Include="side\sago\platform_folders.cpp">
+      <Filter>Side</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\BackImage.cpp">
+      <Filter>Backend</Filter>
+    </ClCompile>
+    <ClCompile Include="frontend\DearImguiImpl.cpp">
+      <Filter>Frontend</Filter>
+    </ClCompile>
+    <ClCompile Include="frontend\GuiCommon.h">
+      <Filter>Frontend</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\imgui\imgui_internal.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\imgui.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\backends\imgui_impl_glfw.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\backends\imgui_impl_opengl3.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\backends\imgui_impl_opengl3_loader.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="frontend\Application.h">
+      <Filter>Frontend</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\imconfig.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C++\Barcode\PrjBarlib\include\barscalar.h">
+      <Filter>Barcode</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C++\Barcode\PrjBarlib\include\barcodeCreator.h">
+      <Filter>Barcode</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C++\Barcode\PrjBarlib\modules\base.h">
+      <Filter>Barcode\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C++\Barcode\PrjBarlib\modules\BinFile.h">
+      <Filter>Barcode\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C++\Barcode\PrjBarlib\modules\convertion.h">
+      <Filter>Barcode\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C++\Barcode\PrjBarlib\modules\decoder.h">
+      <Filter>Barcode\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C++\Barcode\PrjBarlib\modules\tiffreader.h">
+      <Filter>Barcode\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="backend\BinFile.h">
+      <Filter>Backend</Filter>
+    </ClInclude>
+    <ClInclude Include="backend\geodataprocessor.h">
+      <Filter>Backend</Filter>
+    </ClInclude>
+    <ClInclude Include="backend\MatrImg.h">
+      <Filter>Backend</Filter>
+    </ClInclude>
+    <ClInclude Include="backend\project.h">
+      <Filter>Backend</Filter>
+    </ClInclude>
+    <ClInclude Include="backend\SimpleImgReader.h">
+      <Filter>Backend</Filter>
+    </ClInclude>
+    <ClInclude Include="frontend\frontend.h">
+      <Filter>Frontend</Filter>
+    </ClInclude>
+    <ClInclude Include="frontend\FrontTypes.h">
+      <Filter>Frontend</Filter>
+    </ClInclude>
+    <ClInclude Include="side\IconsFontAwesome5.h">
+      <Filter>Side</Filter>
+    </ClInclude>
+    <ClInclude Include="side\PortFileDialog.h">
+      <Filter>Side</Filter>
+    </ClInclude>
+    <ClInclude Include="side\stb_image.h">
+      <Filter>Side</Filter>
+    </ClInclude>
+    <ClInclude Include="backend\Common.h">
+      <Filter>Backend</Filter>
+    </ClInclude>
+    <ClInclude Include="backend\BackImage.h">
+      <Filter>Backend</Filter>
+    </ClInclude>
+    <ClInclude Include="frontend\Framework.h">
+      <Filter>Frontend</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\imgui\misc\debuggers\imgui.natvis">
+      <Filter>Файлы ресурсов</Filter>
+    </None>
+  </ItemGroup>
+</Project>
