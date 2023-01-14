@@ -1,6 +1,8 @@
 #pragma once
 namespace MyApp
 {
-    void RenderUI();
+	void setImGuiStyle(float highDPIscaleFactor);
+	void Init();
+	void RenderUI();
 }
 

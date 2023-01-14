@@ -244,7 +244,8 @@ enum class BackPath
 	markers,
 	geojson,
 	binbar,
-	classifier
+	classifier,
+	classfiles
 };
 
 
@@ -276,18 +277,19 @@ public:
 
 	ReadType imgType;
 
-	bool loadProject(BackString path);
+	bool loadProject(const BackPathStr& path);
 	bool saveProject();
 
-	BackString u_imgPath;
+	BackPathStr u_imgPath;
 	float u_displayFactor;
 	float u_imgMaxVal;
 	float u_imgMinVal;
-	BackString u_geojsonPath;
+	BackPathStr u_geojsonPath;
+	int u_barcodePorog;
 	BackVector<MatrImg*> images;
 
-	int tileSize = 500;
-	int tileOffset = 5;
+	int tileSize = 200;
+	int tileOffset = 50;
 
 	void closeImages();
 
@@ -313,7 +315,8 @@ public:
 	{
 		if (!reader)
 		{
-			if (endsWith(u_imgPath, ".tiff") || endsWith(u_imgPath, ".tif"))
+			const auto &ext = u_imgPath.extension();
+			if (ext  == ".tiff" || ext == ".tif")
 			{
 				imgType = ReadType::Tiff;
 				reader = new TiffReader();
@@ -326,7 +329,7 @@ public:
 		}
 
 		if (!reader->ready)
-			reader->open((char*)getPath(BackPath::img).c_str());
+			reader->open(getPath(BackPath::img).string());
 	}
 
 	static Project *proj;
@@ -334,10 +337,11 @@ public:
 	BackString status;
 public:
 
-	void setProjectPath(const BackString& path)
+	void setProjectPath(const BackPathStr& path)
 	{
 		std::filesystem::path dir = path;
-		dir = std::filesystem::absolute(dir);
+		dir = std::filesystem::absolute(dir).parent_path();
+		projectPath = dir;
 /*		projectPath = (char*)dir.c_str();
 		projectPath.string
 		char last = projectPath[projectPath.filename().string().length() - 1];
@@ -365,19 +369,19 @@ public:
 	MainWidget *widget = nullptr;
 private:
 
-	BackPathStr projectPath;
+	BackDirStr projectPath;
 
 public:
 
 	bool isTileCached(int ind)
 	{
 		BackPathStr path = getTilePath(ind);
-		return fileExists(path);
+		return pathExists(path);
 	}
 
 	BackPathStr getTilePath(int ind)
 	{
-		return getPath(BackPath::tiles) / intToStr(ind) / ".png";
+		return getPath(BackPath::tiles) / (intToStr(ind) + ".png");
 	}
 
 	BackPathStr getPath(BackPath pathI) const
@@ -404,14 +408,14 @@ public:
 			return projectPath / "barcode.bin";
 		case BackPath::classifier:
 			return projectPath / "class.json";
-//		case BackPath::classifier:
-//			return projectPath + "class.json";
+		case BackPath::classfiles:
+			return projectPath / "class";
 		default:
 			throw;
 		}
 	}
 
-	void loadImage(BackString path, int step);
+	void loadImage(const BackPathStr& path, int step);
 	float getImgMaxVal() const;
 
 	float getImgMinVal() const;

@@ -11,6 +11,13 @@
 // 2 режима
 class GuiBackend
 {
+	enum class GuiState
+	{
+		Empty = 0,
+		ImageLoaded,
+		BarcodeCreated
+	};
+public:
 	GuiBackend();
 	~GuiBackend()
 	{
@@ -20,11 +27,17 @@ class GuiBackend
 		Project::dropProject();
 	}
 
-	Project* proj;
-	float factor;
+	bool isImageLoaded() const
+	{
+		return state >= GuiState::ImageLoaded;
+	}
+
+	bool isBarcodeCreated() const
+	{
+		return state >= GuiState::BarcodeCreated;
+	}
 
 	void clear();
-	int imgNumber = -1;
 
 	struct ComFinder
 	{
@@ -88,38 +101,41 @@ class GuiBackend
 		}
 	};
 
-	ComFinder comm;
-
-	Cound** resmap = nullptr;
-	std::vector<Cound*> veas;
-	void maskInit();
-
-
-	GuiItem* root = nullptr;
-	GuiImage* mainImage = nullptr;
-	GuiImage* processedImage = nullptr;
-	GuiItem* sliderP = nullptr;
-
-	MatrImg mainMat;
-	MatrImg sourceBack;
-	MatrImg resultMart;
-	MatrImg maskImg;
-	int curImgInd;
-	int curDisplayImgInd;
-
-	BackImage result;
-	std::unique_ptr<bc::Barcontainer> barcode = nullptr;
-	bool created = false;
-
-	bc::ColorType col;
-	std::vector<Barscalar> colors;
-
+	// Gui
 	void settup(GuiImage* mainImage, GuiImage* processedImage, GuiItem* sliderPanel);
-	void run(int procType, int colType, int compType);
-	void loadImage(BackString path);
-	int getBarsCount();
-	void exportResult(BackDirStr path);
+	void loadImageOrProject(const BackPathStr& path);
+	void createBarcode(bc::ProcType procType, bc::ColorType colType, bc::ComponentType compType);
+	void addClass(int classIndex);
+	void processMain(BackString extra);
 	void restoreSource();
+	void undoAddClass();
+	void exportResult(BackDirStr path);
+
+	inline int& getTileSize() const
+	{
+		return proj->tileSize;
+	}
+	inline int& getOffsetSize()
+	{
+		return proj->tileOffset;
+	}
+	inline int getImageMinSize()
+	{
+ 		return std::min(proj->reader->widght(), proj->reader->height());
+	}
+
+	inline BackSize getImageSize()
+	{
+		return BackSize(proj->reader->widght(), proj->reader->height());
+	}
+
+	inline int& getBarcodePorog()
+	{
+		return proj->u_barcodePorog;
+	}
+
+private:
+	int getBarsCount();
 	void resetSource();
 	void printCommon(int st, int ed, bool needSort);
 	void setTempDir(const BackPathStr& path);
@@ -134,19 +150,53 @@ class GuiBackend
 		return barcode ? barcode->getItem(1) : nullptr;
 	}
 
+private:
 	// //////////////////////////////////////////////
-	void processMain(GuiImage* iamge, int st, int ed, int mode, bool needSort, BackString extra);
 	void deleteRange(int st, int ed, bool needSort);
 	void exportAsJson(int st, int ed, bool needSort);
 	void click(int x, int y, BackString extra);
-	void addClass(int classIndex);
-	void undoAddClass();
 
 	void classBarcode(BarcodesHolder& baritem, int ind, MatrImg& mat, std::unordered_map<size_t, char>& map, BackString extra);
-	void createBarcode(const bc::BarConstructor& constr, int imgIndex, int);
+	void createHolesBarcode(const bc::BarConstructor& constr, int imgIndex, int);
 
+
+	// Sub
+	const BackImage& getMainImage() const
+	{
+		return mainMat;
+	}
 
 private:
+	Project* proj = nullptr;
+	float factor;
+	int imgNumber = -1;
+
+	ComFinder comm;
+
+	Cound** resmap = nullptr;
+	std::vector<Cound*> veas;
+	void maskInit();
+
+	GuiState state = GuiState::Empty;
+	GuiItem* root = nullptr;
+	GuiImage* mainImage = nullptr;
+	GuiImage* processedImage = nullptr;
+	GuiItem* sliderP = nullptr;
+
+	BackImage mainMat;
+	BackImage sourceBack;
+	BackImage resultMart;
+	BackImage maskImg;
+	int curImgInd;
+	int curDisplayImgInd;
+
+	std::unique_ptr<bc::Barcontainer> barcode = nullptr;
+	bool created = false;
+
+	bc::ColorType col;
+	std::vector<Barscalar> colors;
+
+
 	BackDirStr base_root;
 	BackDirStr auto_root = base_root;
 	SimpleLine* curSelected = nullptr;
@@ -169,7 +219,7 @@ private:
 		//		simpleHolder.clear();
 		resLinesMap.clear();
 	}
-	MatrImg mask(BarBinFile* bar, MatrImg& mat, int st, int ed, BackString& extra);
+	MatrImg mask(BarBinFile* bar, MatrImg& mat, BackString& extra);
 
 	//
 	static std::string openImageOrProject();

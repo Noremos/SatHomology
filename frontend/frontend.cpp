@@ -70,8 +70,14 @@ GuiBackend::GuiBackend()
 	classer.categorues.push_back("roof двускатные");
 	classer.categorues.push_back("roof односкатные");
 
-	BackPathStr directory(proj->getPath(BackPath::classifier));
-	directory /= "*.json";
+	//BackDirStr directory(proj->getPath(BackPath::classfiles));
+	//directory /= "*.json";
+
+	BackPathStr directory = std::filesystem::path(sago::getDocumentsFolder());
+	directory /= "Qbinbar";
+
+	if (!pathExists(directory))
+		mkdir(directory);
 
 	for (auto const& entry : std::filesystem::directory_iterator(directory))
 	{
@@ -90,9 +96,8 @@ GuiBackend::GuiBackend()
 
 	classer.addClass(createBar("D:\\Learning\\BAR\\sybery\\2.png"), 1);
 
-	BackPathStr home = std::filesystem::path(sago::getDocumentsFolder());
-	home /= "Qbinbar";
-	setTempDir(home);
+
+	setTempDir(directory);
 }
 
 void GuiBackend::maskInit()
@@ -160,9 +165,9 @@ void GuiBackend::settup(GuiImage *mainImage, GuiImage* processedImage, GuiItem* 
 	this->sliderP = sliderPanel;
 }
 
-void GuiBackend::run(int procType, int colType, int compType)
+void GuiBackend::createBarcode(bc::ProcType procType, bc::ColorType colType, bc::ComponentType compType)
 {
-	if (root == nullptr || mainMat.width() <= 1 || mainMat.height() <= 1)
+	if (!isImageLoaded() || mainMat.width() <= 1 || mainMat.height() <= 1)
 		return;
 
 	bc::BarcodeCreator bc;
@@ -171,7 +176,7 @@ void GuiBackend::run(int procType, int colType, int compType)
 	constr.createGraph = true;
 	constr.attachMode = bc::AttachMode::morePointsEatLow;
 	constr.returnType = bc::ReturnType::barcode2d;
-	constr.addStructure((bc::ProcType) procType, (bc::ColorType) colType, (bc::ComponentType) compType);
+	constr.addStructure(procType, colType, compType);
 //	constr.setStep(stepSB);
 
 	barcode.reset(proj->createBarcode(constr, curImgInd, 0));
@@ -197,22 +202,26 @@ void GuiBackend::run(int procType, int colType, int compType)
 
 #define ppair(x,y,chr) (std::pair<bc::point,uchar>(bc::point(x,y), chr))
 
-void GuiBackend::loadImage(BackString path)
+void GuiBackend::loadImageOrProject(const BackPathStr& path)
 {
-    if (root == nullptr)
-		return;
+    //if (root == nullptr)
+		//return;
 
+	GuiState newState = state;
 	bool setProc = false;
-	if (endsWith(path, ".qwr"))
+	if (path.extension() == ".qwr")
 	{
-		proj->loadProject(path);
+		if (!proj->loadProject(path))
+			return;
 		//		return;
 		setProc = true;
+		newState = GuiState::BarcodeCreated;
 	}
 	else
 	{
 		proj->setProjectPath(path);
 		proj->loadImage(path, 1);
+		newState = GuiState::ImageLoaded;
 	}
 
 	curImgInd = curDisplayImgInd = proj->getFirstNormIndex();
@@ -221,7 +230,9 @@ void GuiBackend::loadImage(BackString path)
 	clearResLine();
 	initResLine(mainMat.length());
 
-	mainImage->setSource(proj->getTilePath(curDisplayImgInd));
+	//mainImage->setSource(proj->getTilePath(curDisplayImgInd));
+	//imwrite(BackString("D:\\32.png"), mainMat);
+	mainImage->setImage(mainMat);
 
 	maskImg = MatrImg(1, 1, 1);
 
@@ -243,6 +254,7 @@ void GuiBackend::loadImage(BackString path)
 	factor = (float)proj->reader->widght() / mainMat.width();
 	proj->u_displayFactor = factor;
 
+	state = newState;
 
 //	const QStringList colorList = {"red",
 //								   "green",
@@ -282,7 +294,7 @@ int GuiBackend::getBarsCount()
 
 void GuiBackend::exportResult(BackDirStr path)
 {
-	imwrite(path / "result.png", result);
+	imwrite(path / "result.png", resultMart);
 	saveAllJsons(geojson, imgNumber, path);
 }
 
@@ -366,7 +378,7 @@ void fitInto(int sourceLen, int newLen, int &st, int &ed)
 	ed = newLen * static_cast<float>(ed) / sourceLen;
 }
 
-void GuiBackend::createBarcode(const bc::BarConstructor &constr, int imgIndex, int)
+void GuiBackend::createHolesBarcode(const bc::BarConstructor &constr, int imgIndex, int)
 {
 	ImageReader *reader = proj->reader;
 	//	reader->setCurrentSubImage(1);
@@ -377,7 +389,7 @@ void GuiBackend::createBarcode(const bc::BarConstructor &constr, int imgIndex, i
 
 	bc::BarcodeCreator creator;
 
-	const uint offts = 200;
+	const uint offts = 100;
 	const uint fullTile = proj->tileSize + offts;
 
 	//	FileBuffer boundStream;
@@ -428,13 +440,13 @@ void GuiBackend::createBarcode(const bc::BarConstructor &constr, int imgIndex, i
 	}
 
 	resultMart.assignCopyOf(mat);
-	result = resultMart;
-	processedImage->setImage(result);
+	processedImage->setImage(resultMart);
 }
 
-MatrImg GuiBackend::mask(BarBinFile *bar, MatrImg &mat, int st, int ed, BackString& extra)
+MatrImg GuiBackend::mask(BarBinFile *bar, MatrImg &mat, BackString& extra)
 {
-	MatrImg outMask(mat.wid(), mat.hei(), 1);
+	//MatrImg outMask(mat.wid(), mat.hei(), 1);
+	MatrImg outMask(1,1, 1);
 	outMask.fill(0);
 	mat.assignCopyOf(mainMat);
 	double masds = mat.length();
@@ -493,6 +505,9 @@ MatrImg GuiBackend::mask(BarBinFile *bar, MatrImg &mat, int st, int ed, BackStri
 		proj->getOffsertByTileIndex(ind, xOff, yOff);
 		BarcodesHolder holder = proj->toHoldes(baritem, mat, bc::point(xOff, yOff));
 //		classBarcode(holder, ind, mat, map, extra);
+
+		if (bar->memoffs.size() == ind + 1)
+			break;
 	}
 
 	bar->close();
@@ -502,7 +517,6 @@ MatrImg GuiBackend::mask(BarBinFile *bar, MatrImg &mat, int st, int ed, BackStri
 
 
 void GuiBackend::classBarcode(BarcodesHolder& baritem, int ind, MatrImg &mat, std::unordered_map<size_t, char> &map, BackString extra)
-
 {
 	bool wr = extra.find("json;") != -1;
 	//	bool ent = extra.indexOf("entr;") != -1;
@@ -584,7 +598,7 @@ void GuiBackend::classBarcode(BarcodesHolder& baritem, int ind, MatrImg &mat, st
 	}
 }
 
-void GuiBackend::processMain(GuiImage *iamge, int st, int ed, int, bool needSort, BackString extra)
+void GuiBackend::processMain(BackString extra)
 {
 	if (!created)
 		return;
@@ -606,14 +620,12 @@ void GuiBackend::processMain(GuiImage *iamge, int st, int ed, int, bool needSort
 	proj->u_displayFactor = factor;
 	BarBinFile reader;
 	reader.openRead(proj->getPath(BackPath::binbar).string());
-	mask(&reader, mat, st, ed, extra);
+	mask(&reader, mat, extra);
 
 	comm.print();
 
 	resultMart.assignCopyOf(mat);
-	GuiImage *img = static_cast<GuiImage*>(iamge);
-	result = mat;
-	img->setImage(result);
+	processedImage->setImage(resultMart);
 }
 
 
@@ -721,8 +733,8 @@ void GuiBackend::click(int x, int y, BackString extra)
 			addClass(ttype);
 		}
 
-		result = temp;
-		processedImage->setImage(result);
+		resultMart = temp;
+		processedImage->setImage(resultMart);
 	}
 }
 
@@ -747,7 +759,7 @@ void GuiBackend::addClass(int classIndex)
 	do
 	{
 		suff = std::format("{}_{}.json", name, distribution(generator));
-	} while (fileExists(doorPat / suff));
+	} while (pathExists(doorPat / suff));
 
 	doorPat /= suff;
 

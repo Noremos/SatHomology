@@ -96,7 +96,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>libs\glfw\lib-vc2010-32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>libs\glfw\lib-vc2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opengl32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <IgnoreSpecificDefaultLibraries>msvcrt.lib</IgnoreSpecificDefaultLibraries>
@@ -112,7 +112,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>libs\glfw\lib-vc2010-64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>libs\glfw\lib-vc2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opengl32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <IgnoreSpecificDefaultLibraries>msvcrt.lib</IgnoreSpecificDefaultLibraries>
@@ -133,7 +133,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>libs\glfw\lib-vc2010-32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>libs\glfw\lib-vc2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opengl32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <IgnoreSpecificDefaultLibraries>
@@ -155,7 +155,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>libs\glfw\lib-vc2010-64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>libs\glfw\lib-vc2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opengl32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <IgnoreSpecificDefaultLibraries>
@@ -184,6 +184,7 @@
     <ClCompile Include="frontend\Application.cpp" />
     <ClCompile Include="frontend\DearImguiImpl.cpp" />
     <ClCompile Include="frontend\frontend.cpp" />
+    <ClCompile Include="frontend\GuiCommon.cpp" />
     <ClCompile Include="frontend\GuiCommon.h" />
     <ClCompile Include="frontend\main.cpp" />
     <ClCompile Include="side\sago\platform_folders.cpp" />
@@ -203,9 +204,9 @@
     <ClInclude Include="..\imgui\backends\imgui_impl_opengl3.h" />
     <ClInclude Include="..\imgui\backends\imgui_impl_opengl3_loader.h" />
     <ClInclude Include="backend\BackImage.h" />
-    <ClInclude Include="backend\BinFile.h" />
     <ClInclude Include="backend\Common.h" />
     <ClInclude Include="backend\geodataprocessor.h" />
+    <ClInclude Include="backend\GuiWidgets.h" />
     <ClInclude Include="backend\MatrImg.h" />
     <ClInclude Include="backend\project.h" />
     <ClInclude Include="backend\SimpleImgReader.h" />

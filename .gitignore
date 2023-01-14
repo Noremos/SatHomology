@@ -1,2 +1,10 @@
 Debug
 .vs
+libs/glfw/docs
+libs/glfw/lib-vc2012
+libs/glfw/lib-vc2013
+libs/glfw/lib-vc2015
+libs/glfw/lib-vc2017
+libs/glfw/lib-vc2019
+libs/glfw/lib-mingw-*
+Release

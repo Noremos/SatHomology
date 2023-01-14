@@ -8,9 +8,6 @@
     <Filter Include="imgui">
       <UniqueIdentifier>{ba81dd01-1cfe-4bbb-b8e0-e9b39aed6240}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Frontend">
-      <UniqueIdentifier>{38104a2c-7ea1-49a6-a83d-b611fcb16364}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Backend">
       <UniqueIdentifier>{64f7ec62-3276-4567-8873-8fcd9bf1ea82}</UniqueIdentifier>
     </Filter>
@@ -25,6 +22,9 @@
     </Filter>
     <Filter Include="Barcode\modules">
       <UniqueIdentifier>{3830fb1f-c201-41bf-bc10-e214906634eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GUI">
+      <UniqueIdentifier>{38104a2c-7ea1-49a6-a83d-b611fcb16364}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -50,10 +50,10 @@
       <Filter>imgui</Filter>
     </ClCompile>
     <ClCompile Include="frontend\main.cpp">
-      <Filter>Frontend</Filter>
+      <Filter>GUI</Filter>
     </ClCompile>
     <ClCompile Include="frontend\Application.cpp">
-      <Filter>Frontend</Filter>
+      <Filter>GUI</Filter>
     </ClCompile>
     <ClCompile Include="..\..\C++\Barcode\PrjBarlib\source\hole.cpp">
       <Filter>Barcode\src</Filter>
@@ -83,7 +83,7 @@
       <Filter>Backend</Filter>
     </ClCompile>
     <ClCompile Include="frontend\frontend.cpp">
-      <Filter>Frontend</Filter>
+      <Filter>GUI</Filter>
     </ClCompile>
     <ClCompile Include="backend\Common.cpp">
       <Filter>Backend</Filter>
@@ -95,11 +95,12 @@
       <Filter>Backend</Filter>
     </ClCompile>
     <ClCompile Include="frontend\DearImguiImpl.cpp">
-      <Filter>Frontend</Filter>
+      <Filter>GUI</Filter>
     </ClCompile>
     <ClCompile Include="frontend\GuiCommon.h">
-      <Filter>Frontend</Filter>
+      <Filter>GUI</Filter>
     </ClCompile>
+    <ClCompile Include="frontend\GuiCommon.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\imgui\imgui_internal.h">
@@ -118,7 +119,7 @@
       <Filter>imgui</Filter>
     </ClInclude>
     <ClInclude Include="frontend\Application.h">
-      <Filter>Frontend</Filter>
+      <Filter>GUI</Filter>
     </ClInclude>
     <ClInclude Include="..\imgui\imconfig.h">
       <Filter>imgui</Filter>
@@ -144,9 +145,6 @@
     <ClInclude Include="..\..\C++\Barcode\PrjBarlib\modules\tiffreader.h">
       <Filter>Barcode\modules</Filter>
     </ClInclude>
-    <ClInclude Include="backend\BinFile.h">
-      <Filter>Backend</Filter>
-    </ClInclude>
     <ClInclude Include="backend\geodataprocessor.h">
       <Filter>Backend</Filter>
     </ClInclude>
@@ -160,10 +158,10 @@
       <Filter>Backend</Filter>
     </ClInclude>
     <ClInclude Include="frontend\frontend.h">
-      <Filter>Frontend</Filter>
+      <Filter>GUI</Filter>
     </ClInclude>
     <ClInclude Include="frontend\FrontTypes.h">
-      <Filter>Frontend</Filter>
+      <Filter>GUI</Filter>
     </ClInclude>
     <ClInclude Include="side\IconsFontAwesome5.h">
       <Filter>Side</Filter>
@@ -181,7 +179,10 @@
       <Filter>Backend</Filter>
     </ClInclude>
     <ClInclude Include="frontend\Framework.h">
-      <Filter>Frontend</Filter>
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="backend\GuiWidgets.h">
+      <Filter>GUI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

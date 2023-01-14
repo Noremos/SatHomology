@@ -31,7 +31,7 @@ bool Project::saveProject()
 	saveFile.close();
 
 	BackPathStr pas = getPath(BackPath::tiles);
-	if (!fileExists(pas))
+	if (!pathExists(pas))
 	{
 		mkdir(pas);
 	}
@@ -102,7 +102,7 @@ bc::Barcontainer* Project::createBarcode(const bc::BarConstructor& constr, int i
 	uint rhei = reader->height();
 
 	BarBinFile writer;
-	writer.openWrite((char*)getPath(BackPath::binbar).c_str());
+	writer.openWrite(getPath(BackPath::binbar).string());
 	writer.writeHeaderProto(getCon(rwid, tileSize) * getCon(rhei, tileSize));
 //	QImage remp(rwid, rhei,  QImage::Format_RGB888);
 
@@ -113,11 +113,15 @@ bc::Barcontainer* Project::createBarcode(const bc::BarConstructor& constr, int i
 	for (uint i = 0; i < rhei; i += tileSize)
 	{
 		uint ihei = (stH + fullTile > rhei ? rhei - stH : fullTile);
+		if (ihei <= tileOffset)
+			break;
 		stW = 0;
 		std::cout << i << std::endl;
 		for (uint j = 0; j < rwid; j += tileSize)
 		{
 			uint iwid = (stW + fullTile > rwid ? rwid - stW : fullTile);
+			if (iwid <= tileOffset)
+				break;
 
 			DataRect rect = reader->getRect(stW, stH, iwid, ihei);
 //			for (uint rX = 0; rX < iwid; ++rX)
@@ -187,7 +191,8 @@ BarcodesHolder Project::toHoldes(BarcodesHolder& lines, MatrImg& mat, bc::point 
 		}
 
 		auto &m = lines.lines[var]->matrix[0];
-		bc::point cp(m.getX() - offset.x, m.getY() - offset.y);
+		bc::point rp(m.getX() + offset.x, m.getY() + offset.y);
+		bc::point cp = rp * u_displayFactor;
 		mat.set(cp.x, cp.y, Barscalar(255, 0, 0));
 		if (cp.x - 1 >= 0)
 		{
@@ -207,7 +212,7 @@ BarcodesHolder Project::toHoldes(BarcodesHolder& lines, MatrImg& mat, bc::point 
 		}
 		assert(cp.x >= 0);
 		assert(cp.y >= 0);
-		cloud.points.push_back(bc::CloudPointsBarcode::CloundPoint(cp.x, cp.y, m.value.getAvgFloat()));
+		//cloud.points.push_back(bc::CloudPointsBarcode::CloundPoint(rp.x, rp.y, m.value.getAvgFloat()));
 	}
 
 	return toHoldes(cloud);
@@ -219,9 +224,12 @@ BarcodesHolder Project::toHoldes(const bc::CloudPointsBarcode::CloundPoints& clo
 {
 	bc::CloudPointsBarcode clodCrt;
 	std::unique_ptr<bc::Barcontainer> hold(clodCrt.createBarcode(&cloud));
-	bc::Baritem* main = hold->getItem(0);
 
 	BarcodesHolder holder;
+	if (cloud.points.size() == 0)
+		return holder;
+
+	bc::Baritem* main = hold->getItem(0);
 	for (size_t var = 0; var < main->barlines.size(); ++var)
 	{
 		auto *line = main->barlines[var];
@@ -247,7 +255,7 @@ BarcodeHolder Project::threasholdLines(bc::Baritem *item)
 	}
 	return vec;
 }
-void Project::loadImage(BackString path, int step)
+void Project::loadImage(const BackPathStr& path, int step)
 {
 	closeReader();
 
@@ -265,10 +273,10 @@ void Project::loadImage(BackString path, int step)
 	writeImages();
 }
 
-bool Project::loadProject(BackString path)
+bool Project::loadProject(const BackPathStr& prjFilepath)
 {
-	setProjectPath(path);
-	std::ifstream loadFile(path);
+	setProjectPath(prjFilepath);
+	std::ifstream loadFile(prjFilepath);
 
 	if (!loadFile.is_open())
 	{
@@ -360,6 +368,8 @@ void Project::writeImages()
 	if (!reader)
 		return;
 
+	images.clear();
+
 	BackPathStr tiles = getPath(BackPath::tiles);
 	if (imgType == ReadType::Tiff)
 	{
@@ -374,15 +384,15 @@ void Project::writeImages()
 				images.push_back(nullptr);
 			}
 			else
-				images.push_back(tiffToImg(reader, tiles / intToStr(i) / ".png", factor, true));
+				images.push_back(tiffToImg(reader, tiles / (intToStr(i) + ".png"), factor, true));
 		}
 
 		if (images.size() == 0)
-			images.push_back(tiffToImg(reader, tiles / intToStr(s) / ".png", 10, true));
+			images.push_back(tiffToImg(reader, tiles / (intToStr(s) + ".png"), 10, true));
 	}
 	else
 	{
-		images.push_back(tiffToImg(reader, tiles / intToStr(0) / ".png", 1, true));
+		images.push_back(tiffToImg(reader, tiles / (intToStr(0) + ".png"), 1, true));
 	}
 }
 
@@ -405,14 +415,14 @@ void Project::readImages()
 				images.push_back(nullptr);
 			}
 			else
-				images.push_back(tiffToImg(reader, tiles / intToStr(i) / ".png", 1, false));
+				images.push_back(tiffToImg(reader, tiles / (intToStr(i) + ".png"), 1, false));
 		}
 
 		if (images.size() == 0)
-			images.push_back(tiffToImg(reader, tiles / intToStr(s) / ".png", 10, false));
+			images.push_back(tiffToImg(reader, tiles / (intToStr(s) + ".png"), 10, false));
 	}
 	else
-		images.push_back(tiffToImg(reader, tiles / intToStr(0) / ".png", 1, false));
+		images.push_back(tiffToImg(reader, tiles / (intToStr(0) + ".png"), 1, false));
 }
 
 

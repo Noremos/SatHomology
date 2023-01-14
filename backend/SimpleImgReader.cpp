@@ -13,22 +13,24 @@ rowptr SimpleImgReader::getRowData(int ri)
 	return ptr;
 }
 
-bool SimpleImgReader::open(const char *path)
+bool SimpleImgReader::open(const std::string& path)
 {
 	main = imread(path);
 	samples = main.channels();
-	switch (samples)
-	{
-	case 1:
-		type = ImageType::int8;
-		break;
-	case 3:
-		type = ImageType::rdb8;
-		break;
-	default:
-		assert(false);
-		break;
-	}
+	type = ImageType::int8;
+
+	//switch (samples)
+	//{
+	//case 1:
+	//	type = ImageType::int8;
+	//	break;
+	//case 3:
+	//	type = ImageType::rgb8;
+	//	break;
+	//default:
+	//	assert(false);
+	//	break;
+	//}
 
 	ready = true;
 	return true;
@@ -79,12 +81,10 @@ DataRect SimpleImgReader::getRect(int stX, int stRow, int wid, int hei)
 	if (stRow + hei > main.height())
 		hei = main.height() - stRow;
 
-
 	DataRect rect(wid, hei, type, samples);
-	int rectOffset = 0;
-	for (int y = 0; y < hei; ++y, rectOffset += wid)
+	for (int y = 0; y < hei; ++y)
 	{
-		rect.setInRow(rectOffset, 0, main.lineOffet(y) + stX, wid);
+		rect.setInRow(y, 0, main.lineOffet(stRow + y, stX), wid);
 	}
 
 	return rect;

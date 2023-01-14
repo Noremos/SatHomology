@@ -47,7 +47,7 @@ static BackString intToStr(T value)
 }
 
 template<class StrT>
-static bool fileExists(const StrT& path)
+static bool pathExists(const StrT& path)
 {
 	std::filesystem::path filePath(path);
 	return std::filesystem::exists(filePath);
@@ -95,10 +95,10 @@ struct SimpleLine
 };
 
 
-struct Size2
+struct BackSize
 {
 	int wid, hei;
-	Size2(int _wid, int _hei)
+	BackSize(int _wid, int _hei)
 	{
 		wid = _wid;
 		hei = _hei;

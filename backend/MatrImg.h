@@ -286,16 +286,9 @@ public:
 		}
 	}
 
-	inline uchar* lineOffet(int y) const
+	inline uchar* lineOffet(int y, int x = 0) const
 	{
-		if (type == BarType::BYTE8_1)
-		{
-			return data + (y * _wid) * TSize;
-		}
-		else
-		{
-			return data + (y * _wid) * TSize;
-		}
+		return data + (y * _wid + x) * TSize;
 	}
 
 	inline int bytesInLine() const
