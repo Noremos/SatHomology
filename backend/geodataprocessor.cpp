@@ -1,5 +1,7 @@
 #include "geodataprocessor.h"
 
+#include "project.h"
+
 #include <stack>
 #include <ranges>
 
@@ -441,4 +443,116 @@ void saveAsGeojson(const bc::barlinevector &lines, const BackPathStr& savePath, 
 	}
 	//	widget->importedMakrers->release();
 	//	//	Size2 size = imgsrch.getTileSize();
+}
+
+BarCategories BarClassifierCache::loadCategories()
+{
+	BackPathStr path = Project::getProject()->getPath(BackPath::classifier);
+	BackJson loadDoc = jsonFromFile(path);
+
+	BarCategories categ;
+	JsonArray list = loadDoc.object()["categories"].array();
+	for (size_t i = 0; i < list.size(); i++)
+	{
+		JsonObject catId = list.at(i);
+		categ.value.push_back(catId["id"]);
+		categ.name.push_back(catId["name"].get<std::string>());
+	}
+
+	return categ;
+}
+
+void BarClassifierCache::saveCategories(BarCategories& barclas)
+{
+	BackPathStr path = Project::getProject()->getPath(BackPath::classifier);
+
+	JsonArray arr;
+	for (size_t i = 0; i < barclas.name.size(); i++)
+	{
+		JsonObject catId;
+		catId["id"] = barclas.value[i];
+		catId["name"] = barclas.name[i];
+		arr.push_back(catId);
+	}
+
+	BackJson loadDoc;
+	loadDoc["categories"] = arr;
+	jsonToFile(loadDoc, path);
+}
+
+void BarClassifierCache::loadCategories(std::function<void(int classId, const BackString& name)> callback)
+{
+	barclassificator barclas;
+	BackJson loadDoc = jsonFromFile(Project::getProject()->getPath(BackPath::classifier));
+
+	JsonArray list = loadDoc.object()["categories"].array();
+	for (size_t i = 0; i < list.size(); i++)
+	{
+		JsonObject catId = list.at(i);
+		callback(catId["id"], catId["name"].get<std::string>());
+	}
+}
+
+void BarClassifierCache::loadImgs(std::function<void(int classId, const BackPathStr& path)> callback, int* categorues, int size)
+{
+	BackPathStr pathp = Project::getProject()->getPath(BackPath::classfiles);
+	GeoBarHolderCache creator;
+	for (size_t i = 0; i < size; i++)
+	{
+		int categ = categorues[i];
+		BackDirStr dirl = pathp / (BackPathStr)intToStr(categ);
+		for (auto const& entry : std::filesystem::directory_iterator(dirl))
+		{
+			if (!entry.is_regular_file())
+			{
+				continue;
+			}
+
+			BackPathStr filename = entry.path().filename();
+			auto ext = entry.path().extension();
+			if (ext == ".jpg")
+			{
+				callback(categ, filename);
+			}
+		}
+	}
+}
+
+void BarClassifierCache::save(BarcodeHolder* curBar, int classIndex, BackImage* img)
+{
+	BackPathStr path = Project::getProject()->getPath(BackPath::classfiles);
+	BackDirStr doorPat = path / intToStr(classIndex);
+
+	std::mt19937 generator(std::random_device{}());
+	std::uniform_int_distribution<int> distribution(1, 1000);
+	BackString name, suff;
+	name = intToStr(classIndex);
+	do
+	{
+		suff = std::format("{}.bbf", name, distribution(generator));
+	} while (pathExists(doorPat / suff));
+	doorPat /= suff;
+
+	GeoBarHolderCache writer;
+	writer.openWrite(doorPat.string());
+	writer.save(0, curBar);
+
+	if (img)
+	{
+		auto extless = doorPat.string().substr(0, doorPat.string().length() - 3);
+		extless += 'jpg';
+		imwrite(extless, *img);
+	}
+}
+
+inline void GeoBarHolderCache::openRead()
+{
+	state.reset(new StateBinFile::BinStateReader());
+	state->open(Project::getPathSt(BackPath::binbar).string());
+}
+
+inline void GeoBarHolderCache::openWrite()
+{
+	state.reset(new StateBinFile::BinStateWriter());
+	state->open(Project::getPathSt(BackPath::binbar).string());
 }

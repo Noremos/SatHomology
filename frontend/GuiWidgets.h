@@ -5,15 +5,18 @@
 #include "GuiCommon.h"
 
 template<class T>
-struct ComboKeyValues
+struct SelectableKeyValues
 {
 	int currentIndex = 0;
 
-	ComboKeyValues(std::initializer_list<std::pair<T, const char*>> l)
+	SelectableKeyValues() : size(0)
+	{ }
+
+	SelectableKeyValues(std::initializer_list<std::pair<T, const char*>> l)
 	{
 		size = l.size();
-		items.reset(new const char* [size]);
-		values.reset(new T[size]);
+		items.resize(size);
+		values.resize(size);
 		int counter = 0;
 		for (const auto& kv : l)
 		{
@@ -23,9 +26,16 @@ struct ComboKeyValues
 		}
 	}
 
+	void add(const BackString& name, T value)
+	{
+		holder.push_back(name);
+		items.push_back(holder.back().c_str());
+		values.push_back(value);
+	}
+
 	const char** getItems()
 	{
-		return items.get();
+		return items.data();
 	}
 
 	T currentValue()
@@ -40,12 +50,36 @@ struct ComboKeyValues
 		ImGui::Combo(name, &currentIndex, items, size); //IM_ARRAYSIZE(items)
 	}
 
+	void drawListBox(const char* name, int width = 200)
+	{
+		const char** items = getItems();
+		ImGui::SetNextItemWidth(width);
+		ImGui::ListBox(name, &currentIndex, items, size); //IM_ARRAYSIZE(items)
+	}
+
+	T* getValuesIterator()
+	{
+		return values.data();
+	}
+
+	int getSize()
+	{
+		return size;
+	}
+
 private:
-	std::unique_ptr<const char* []> items;
-	std::unique_ptr<T[]> values;
+	std::vector<const char*> items;
+	std::vector<T> values;
+	std::vector<BackString> holder;
 	int size;
 };
 
+
+class GuiDrawInfo
+{
+	ImVec2 pos;
+	ImVec2 size;
+};
 
 class GuiDrawImage : public GuiImage
 {
@@ -64,8 +98,8 @@ public:
 		{
 			ImGuiWindow* win = ImGui::FindWindowByName(name);
 			drawTexture(win);
-			ImGui::End();
 		}
+		ImGui::End();
 	}
 
 private:
@@ -215,4 +249,28 @@ public:
 			//ImGui::EndChild();
 		}
 	}
+};
+
+
+class GuiDrawCloudPointClick : public GuiImage
+{
+public:
+	void draw(ImGuiWindow* win)
+	{
+		// ptoj->getVector();
+
+		ImDrawList* list = ImGui::GetWindowDrawList();
+
+		std::vector<ImVec2> points;
+
+		ImColor bigColor(255, 0, 0);
+		ImColor midColor(220, 200, 0);
+
+		for (ImVec2 p : points)
+		{
+			list->AddCircleFilled(p, 3, bigColor);
+			list->AddCircleFilled(p, 2, midColor);
+		}
+	}
+
 };

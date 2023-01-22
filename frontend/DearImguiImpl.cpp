@@ -11,13 +11,13 @@
 //#include <imgui_impl_opengl3_loader.h>
 #define GLEW_STATIC
 #include "../side/glew/GL/glew.h"
-
+#include "../side/sago/platform_folders.h"
 
 //#define GL_RGB                            0x1907
 
 using namespace Plarform;
 
-BackImage imread(BackString path)
+BackImage imread(const BackString& path)
 {
 	int width, height, chls;
 	unsigned char* image_data = stbi_load(path.c_str(), &width, &height, &chls, 0);
@@ -48,7 +48,7 @@ BackImage imread(BackString path)
 	return BackImage(width, height, chls, image_data, false, true);;
 }
 
-BackImage imread(BackPathStr path)
+BackImage imread(const BackPathStr& path)
 {
 	return imread(path.string());
 }
@@ -91,6 +91,12 @@ BackPathStr getSavePath(std::initializer_list<std::string> exts)
 
 	return fs.result().size() == 0 ? "" : fs.result();
 }
+
+BackPathStr getDicumnetPath()
+{
+	return sago::getDocumentsFolder();
+}
+
 
 // -----
 

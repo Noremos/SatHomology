@@ -7,6 +7,7 @@
 #include "../frontend/Framework.h"
 #include "../frontend/GuiCommon.h"
 
+
 // Todo.
 // 2 режима
 class GuiBackend
@@ -104,7 +105,7 @@ public:
 	// Gui
 	void settup(GuiImage* mainImage, GuiImage* processedImage, GuiItem* sliderPanel);
 	void loadImageOrProject(const BackPathStr& path);
-	void createBarcode(bc::ProcType procType, bc::ColorType colType, bc::ComponentType compType);
+	void createBarcode(bc::ProcType procType, bc::ColorType colType, bc::ComponentType compType, const FilterInfo& info);
 	void addClass(int classIndex);
 	void processMain(BackString extra);
 	void restoreSource();
@@ -129,16 +130,16 @@ public:
 		return BackSize(proj->reader->widght(), proj->reader->height());
 	}
 
-	inline int& getBarcodePorog()
+	BackDirStr getClassImagesPath()
 	{
-		return proj->u_barcodePorog;
+		return proj->getPath(BackPath::classfiles);
 	}
 
 private:
 	int getBarsCount();
 	void resetSource();
 	void printCommon(int st, int ed, bool needSort);
-	void setTempDir(const BackPathStr& path);
+	//void setTempDir(const BackPathStr& path);
 
 	inline bc::Baritem* getBaritem()
 	{
@@ -150,14 +151,14 @@ private:
 		return barcode ? barcode->getItem(1) : nullptr;
 	}
 
+
 private:
 	// //////////////////////////////////////////////
 	void deleteRange(int st, int ed, bool needSort);
 	void exportAsJson(int st, int ed, bool needSort);
 	void click(int x, int y, BackString extra);
 
-	void classBarcode(BarcodesHolder& baritem, int ind, MatrImg& mat, std::unordered_map<size_t, char>& map, BackString extra);
-	void createHolesBarcode(const bc::BarConstructor& constr, int imgIndex, int);
+	//void createHolesBarcode(const bc::BarConstructor& constr, int imgIndex, int);
 
 
 	// Sub
@@ -168,7 +169,6 @@ private:
 
 private:
 	Project* proj = nullptr;
-	float factor;
 	int imgNumber = -1;
 
 	ComFinder comm;
@@ -184,9 +184,7 @@ private:
 	GuiItem* sliderP = nullptr;
 
 	BackImage mainMat;
-	BackImage sourceBack;
 	BackImage resultMart;
-	BackImage maskImg;
 	int curImgInd;
 	int curDisplayImgInd;
 
@@ -194,11 +192,11 @@ private:
 	bool created = false;
 
 	bc::ColorType col;
-	std::vector<Barscalar> colors;
+	//std::vector<Barscalar> colors;
 
 
-	BackDirStr base_root;
-	BackDirStr auto_root = base_root;
+	//BackDirStr base_root;
+	//BackDirStr auto_root = base_root;
 	SimpleLine* curSelected = nullptr;
 	std::vector<std::shared_ptr<SimpleLine>> resLinesMap;
 	//	std::vector<SimpleLine*> simpleHolder;
@@ -219,9 +217,7 @@ private:
 		//		simpleHolder.clear();
 		resLinesMap.clear();
 	}
-	MatrImg mask(BarBinFile* bar, MatrImg& mat, BackString& extra);
 
-	//
 	static std::string openImageOrProject();
 };
 

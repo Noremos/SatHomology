@@ -9,6 +9,7 @@
 #include "tiffreader.h"
 #include "Common.h"
 
+#include "geodataprocessor.h"
 
 struct toStdStr
 {
@@ -28,10 +29,13 @@ class DataRectBarWrapper : public bc::DatagridProvider
 
 	// DatagridProvider interface
 public:
-	DataRectBarWrapper(DataRect &base) : baseobj(base) {}
+	DataRectBarWrapper(DataRect &base) : baseobj(base)
+	{
+		type = imageTypeToBar(base.data.type, base.data.samples);
+	}
 	int wid() const override { return baseobj.wid; }
 	int hei() const override { return baseobj.hei; }
-	int channels() const override { return baseobj.data.type == ImageType::argb8 ? 3 : 1; }
+	int channels() const override { return baseobj.data.samples; }
 	void maxAndMin(Barscalar &min, Barscalar &max) const override
 	{
 		min = getLiner(0);
@@ -54,6 +58,10 @@ public:
 	}
 	size_t typeSize() const override { return getImgTypeSize(baseobj.data.type); }
 	Barscalar get(int x, int y) const override { return rowToScalar(baseobj.get(x, y)); }
+	//BarType getType()
+	//{
+	//	//return baseobj.data.type;
+	//}
 
 	static Barscalar rowToScalar(const roweltype &val)
 	{
@@ -98,6 +106,26 @@ public:
 		return nva;
 	}
 
+	static BarType imageTypeToBar(const ImageType type, int samples)
+	{
+		if (samples > 1)
+		{
+			switch (type)
+			{
+			case ImageType::int8:
+				return BarType::BYTE8_3;
+			default:
+				throw;
+			}
+		}
+		switch (type)
+		{
+		case ImageType::int8:
+			return BarType::BYTE8_1;
+		default:
+			throw;
+		}
+	}
 
 	static roweltype scalarToRow(const Barscalar &val)
 	{
@@ -128,104 +156,6 @@ public:
 	}
 };
 
-//class BarReader
-//{
-//private:
-//	size_t tempLineCounter = 0;
-//	QFile jsonFile;
-//	std::unique_ptr<bc::barlinevector> item;
-//	QMap<size_t, bc::barline *> ids;
-//	bool readLine()
-//	{
-//		QByteArray data = jsonFile.readLine();
-//		if (data.size() == 0)
-//			return false;
-//		QJsonDocument jsonDocument(QJsonDocument::fromJson(data));
-//		// Из которого выделяем объект в текущий рабочий QJsonObject
-//		QJsonArray lines = jsonDocument.array();
-//		item.reset(new bc::barlinevector());
-
-//		auto parseBarscal = [](const QJsonValue &jsval) -> Barscalar {
-//			if (jsval.isArray())
-//			{
-//				QJsonArray sr = jsval.toArray();
-//				return Barscalar(sr[0].toInt(), sr[1].toInt(), sr[2].toInt());
-//			}
-//			else if (jsval.isDouble())
-//			{
-//				return Barscalar(jsval.toDouble(), BarType::FLOAT32_1);
-//			}
-//			else
-//				return Barscalar(jsval.toInt());
-//		};
-
-//		bc::barlinevector &vec = *item;
-//		for (int i = 0; i < lines.size(); ++i)
-//		{
-//			Barscalar valst;
-//			QJsonObject objline = lines.at(i).toObject();
-//			Barscalar start = parseBarscal(objline.take("s"));
-//			Barscalar end = parseBarscal(objline.take("e"));
-//			bc::barline *line = new bc::barline(start, end, 0);
-
-//			size_t id = objline.take("i").toInt();
-
-//			ids.insert(id, line);
-//			QJsonArray arr = objline.take("m").toArray();
-//			for (int j = 0; j < arr.size(); ++j)
-//			{
-//				QJsonObject objval = arr.at(j).toObject();
-//				int x = objval.take("x").toInt();
-//				int y = objval.take("y").toInt();
-//				Barscalar val = parseBarscal(objval);
-
-//				bc::barvalue v(x, y, val);
-//				line->matr.push_back(v);
-//			}
-//			vec.push_back(line);
-//		}
-
-//		for (int i = 0; i < lines.size(); ++i)
-//		{
-//			Barscalar valst;
-//			QJsonObject objline = lines.at(i).toObject();
-//			QJsonArray children = objline.take("c").toArray();
-//			bc::barline *cur = vec.at(i);
-//			for (int j = 0; j < children.size(); ++j)
-//			{
-//				size_t id = children.at(j).toInt();
-//				cur->children.push_back(ids[id]);
-//			}
-//		}
-
-//		return true;
-//	}
-
-//public:
-//	void open(BackString path)
-//	{
-//		jsonFile.setFileName(path);
-//		if (!jsonFile.open(QIODevice::ReadOnly))
-//		{
-//			return;
-//		}
-//	}
-
-
-//	bc::barline *getLine()
-//	{
-//		if (item == nullptr || tempLineCounter >= item->size())
-//		{
-//			bool read = readLine();
-//			if (!read)
-//				return nullptr;
-//			tempLineCounter = 0;
-//		}
-
-//		return item->at(tempLineCounter++);
-//	}
-//};
-
 
 class MainWidget;
 
@@ -246,6 +176,7 @@ enum class BackPath
 	binbar,
 	classifier,
 	classfiles
+	//classImages,
 };
 
 
@@ -281,11 +212,11 @@ public:
 	bool saveProject();
 
 	BackPathStr u_imgPath;
+	BackDirStr u_classCache;
 	float u_displayFactor;
 	float u_imgMaxVal;
 	float u_imgMinVal;
 	BackPathStr u_geojsonPath;
-	int u_barcodePorog;
 	BackVector<MatrImg*> images;
 
 	int tileSize = 200;
@@ -297,8 +228,14 @@ public:
 
 	void setCurrentSubImage(int imgIndex)
 	{
-		if (proj->imgType == ReadType::Tiff)
+		if (imgType == ReadType::Tiff)
 			dynamic_cast<TiffReader *>(reader)->setCurrentSubImage(imgIndex);
+	}
+
+	void setReadyLaod(int curImgInd, int displayWid)
+	{
+		setCurrentSubImage(curImgInd);
+		u_displayFactor = (float)reader->widght() / displayWid;
 	}
 
 	void closeReader()
@@ -366,6 +303,11 @@ public:
 		}
 	}
 
+	static BackPathStr getPathSt(BackPath pType)
+	{
+		return getProject()->getPath(pType);
+	}
+
 	MainWidget *widget = nullptr;
 private:
 
@@ -403,13 +345,16 @@ public:
 		case BackPath::markers:
 			return projectPath / "markers.lst";
 		case BackPath::geojson:
-			return u_geojsonPath;
+			//return u_geojsonPath;
+			return projectPath / "geojson.json";
 		case BackPath::binbar:
 			return projectPath / "barcode.bin";
 		case BackPath::classifier:
 			return projectPath / "class.json";
 		case BackPath::classfiles:
-			return projectPath / "class";
+			return u_classCache;
+		//case BackPath::classImages:
+		//	return projectPath / "classImages";
 		default:
 			throw;
 		}
@@ -425,9 +370,27 @@ public:
 	void readMarkers();
 	void readMyGeo(bool reinitY);
 
+
+	struct ClassInfo
+	{
+		int ind;
+		MatrImg& mat;
+		std::unordered_map<size_t, char>& map;
+		BackString extra;
+		std::vector<std::shared_ptr<SimpleLine>>& resLinesMaps;
+	};
+	void classBarcode(BarcodesHolder& baritem, ClassInfo& info);
+
+	void readPrcoessBarcode(ClassInfo& info);
+
+
+	void exportResult(int imgNumber, const BackImage& resultMart);
+
+
 	void readImages();
-	bc::Barcontainer *createBarcode(const bc::BarConstructor &constr, int imgIndex, int);
+	bc::Barcontainer* createCacheBarcode(const bc::BarConstructor& constr, int imgIndex, const FilterInfo& info);
 	void getOffsertByTileIndex(int tileIndex, uint &offX, uint &offY);
+
 
 	int getFirstNormIndex()
 	{
@@ -453,15 +416,22 @@ public:
 		return -1;
 	}
 
-	BarcodeHolder threasholdLines(bc::Baritem *item);
-	BarcodesHolder toHoldes(bc::barlinevector &lines, MatrImg& mat, bc::point offset);
-	BarcodesHolder toHoldes(BarcodesHolder &lines, MatrImg& mat, bc::point offset);
-	BarcodesHolder toHoldes(const bc::CloudPointsBarcode::CloundPoints &cloud);
+	BarcodeHolder threasholdLines(bc::Baritem* item);
 
+
+	void addClass(int classIndex, BarcodeHolder* points);
 private:
 	void write(BackJson& json) const;
 	void writeImages();
 	void read(const BackJson& json);
+
+
+public:
+	barclassificator classer;
+	BarClassifierCache classLoader;
+private:
+
+	std::vector<Barscalar> colors;
 };
 
 #endif

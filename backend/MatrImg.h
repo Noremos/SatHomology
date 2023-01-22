@@ -127,18 +127,15 @@ public:
 	void assign(const MatrImg &copy) { assignCopyOf(copy); }
 
 	// move
-	MatrImg(MatrImg &&moveImg)
+	MatrImg(MatrImg &&moveImg) noexcept
 	{
-		if (&moveImg != this)
-		{
-			assignInstanceOf(moveImg);
-			moveImg._deleteData = false;
-			moveImg.data = nullptr;
-			moveImg.type = BarType::NONE;
-		}
+		assignInstanceOf(moveImg);
+		moveImg._deleteData = false;
+		moveImg.data = nullptr;
+		moveImg.type = BarType::NONE;
 	}
 
-	MatrImg &operator=(MatrImg &&moveImg)
+	MatrImg &operator=(MatrImg &&moveImg) noexcept
 	{
 		if (&moveImg != this)
 		{
@@ -445,6 +442,42 @@ public:
 
 		this->type = inst.type;
 		this->diagReverce = inst.diagReverce;
+	}
+
+	void resize(int new_width, int new_height) 
+	{
+		float x_ratio = (float)width() / new_width;
+		float y_ratio = (float)height() / new_height;
+
+		unsigned char* new_image = new unsigned char[new_width * new_height * channels()];
+
+		for (int y = 0; y < new_height; y++)
+		{
+			for (int x = 0; x < new_width; x++)
+			{
+				int x_floor = (int)std::floor(x * x_ratio);
+				int y_floor = (int)std::floor(y * y_ratio);
+				int x_ceil = std::min(x_floor + 1, width() - 1);
+				int y_ceil = std::min(y_floor + 1, height() - 1);
+				float x_weight = x * x_ratio - x_floor;
+				float y_weight = y * y_ratio - y_floor;
+
+				for (int c = 0; c < channels(); c++)
+				{
+					int new_index = (y * new_width + x) * channels() + c;
+					int old_index = (y_floor * width() + x_floor) * channels() + c;
+					float top = data[old_index] * (1 - x_weight) + data[old_index + channels()] * x_weight;
+					old_index = (y_ceil * width() + x_floor) * channels() + c;
+					float bottom = data[old_index] * (1 - x_weight) + data[old_index + channels()] * x_weight;
+					new_image[new_index] = (unsigned char)(top * (1 - y_weight) + bottom * y_weight);
+				}
+			}
+		}
+
+		delete[] data;
+		data = new_image;
+		_wid = new_width;
+		_hei = new_height;
 	}
 
 };

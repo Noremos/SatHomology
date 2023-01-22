@@ -206,7 +206,6 @@
     <ClInclude Include="backend\BackImage.h" />
     <ClInclude Include="backend\Common.h" />
     <ClInclude Include="backend\geodataprocessor.h" />
-    <ClInclude Include="backend\GuiWidgets.h" />
     <ClInclude Include="backend\MatrImg.h" />
     <ClInclude Include="backend\project.h" />
     <ClInclude Include="backend\SimpleImgReader.h" />
@@ -214,6 +213,7 @@
     <ClInclude Include="frontend\Framework.h" />
     <ClInclude Include="frontend\frontend.h" />
     <ClInclude Include="frontend\FrontTypes.h" />
+    <ClInclude Include="frontend\GuiWidgets.h" />
     <ClInclude Include="side\IconsFontAwesome5.h" />
     <ClInclude Include="side\PortFileDialog.h" />
     <ClInclude Include="side\stb_image.h" />

@@ -181,7 +181,7 @@
     <ClInclude Include="frontend\Framework.h">
       <Filter>GUI</Filter>
     </ClInclude>
-    <ClInclude Include="backend\GuiWidgets.h">
+    <ClInclude Include="frontend\GuiWidgets.h">
       <Filter>GUI</Filter>
     </ClInclude>
   </ItemGroup>

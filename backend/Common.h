@@ -1,12 +1,12 @@
 #pragma once
 #include <filesystem>
+#include  <iostream>
 #include <fstream>
 
 #include "barscalar.h"
 #include "barstrucs.h"
 
 #include "../side/json.hpp"
-
 using BackString = std::string;
 using BackDirStr = std::filesystem::path;
 using BackPathStr = std::filesystem::path;
@@ -15,8 +15,39 @@ using BackFileWrited = std::ofstream;
 
 
 using BackJson = nlohmann::json;
-using JsonObejct = BackJson;
+using JsonObject = BackJson;
 using JsonArray = BackJson;
+static BackJson jsonFromFile(const BackPathStr& path)
+{
+	BackString temp;
+
+	BackFileReader file;
+	file.open(path);
+	if (!file.is_open())
+	{
+		std::cerr << "Couldn't open a file.";
+		return BackJson();
+	}
+	file >> temp;
+	file.close();
+
+	return BackJson::parse(temp);
+}
+
+static void jsonToFile(const BackJson& json, const BackPathStr& path)
+{
+	BackString temp;
+
+	BackFileWrited file;
+	file.open(path, std::ios::trunc);
+	if (!file.is_open())
+	{
+		std::cerr << "Couldn't open a file.";
+		return;
+	}
+	file << json.dump();
+	file.close();
+}
 
 
 template<class T>
@@ -58,6 +89,15 @@ static bool mkdir(const StrT& path)
 {
 	std::filesystem::path filePath(path);
 	return std::filesystem::create_directory(filePath);
+}
+
+
+static void mkDirIfNotExists(const BackDirStr& dirPath)
+{
+	if (!pathExists(dirPath))
+	{
+		mkdir(dirPath);
+	}
 }
 
 static bool endsWith(const BackString& string, const BackString endl)
@@ -102,6 +142,16 @@ struct BackSize
 	{
 		wid = _wid;
 		hei = _hei;
+	}
+};
+
+struct FilterInfo
+{
+	int minLen = 20;
+
+	bool needSkip(const Barscalar& scl) const
+	{
+		return scl < minLen;
 	}
 };
 

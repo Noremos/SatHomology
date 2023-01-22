@@ -88,7 +88,7 @@ namespace MyApp
 	struct TopbarValues
 	{
 		// Component
-		ComboKeyValues<bc::ComponentType> componentCB =
+		SelectableKeyValues<bc::ComponentType> componentCB =
 		{
 			{bc::ComponentType::Component, "Компонента"},
 			{bc::ComponentType::Hole, "Дыра"}
@@ -96,7 +96,7 @@ namespace MyApp
 		// ---
 
 		// Proc Type
-		ComboKeyValues<bc::ProcType> procCB =
+		SelectableKeyValues<bc::ProcType> procCB =
 		{
 			{bc::ProcType::f0t255, "От 0 до 255"},
 			{bc::ProcType::f255t0, "От 0 до 255"},
@@ -106,7 +106,7 @@ namespace MyApp
 			{bc::ProcType::ValueRadius, "Тру растояние"}
 		};
 
-		ComboKeyValues<bc::ColorType> colorCB =
+		SelectableKeyValues<bc::ColorType> colorCB =
 		{
 			{bc::ColorType::native, "Как в изображении"},
 			{bc::ColorType::gray, "Серый"},
@@ -118,6 +118,7 @@ namespace MyApp
 		bool enableProcessBtn = false;
 		int newTileSize = 20;
 		int newOffsetSize = 10;
+
 		int getTileSize()
 		{
 			return newTileSize * 10; //step
@@ -132,6 +133,8 @@ namespace MyApp
 			const auto p = backend.getImageSize();
 			return ImVec2(p.wid, p.hei);
 		}
+
+		FilterInfo filterInfo;
 	};
 
 	TopbarValues tbVals;
@@ -150,8 +153,72 @@ namespace MyApp
 	{
 		int classId = 0;
 		std::string valeExtra = "barclass;";
+		bool showLoader = false;
 	};
 	BottomBar bottomVals;
+
+
+	void loaderCategors(int classId, const BackString& name);
+	void loaderFile(int classId, const BackPathStr& path);
+
+	struct ClassiferVals
+	{
+		SelectableKeyValues<int> classesLB;
+
+		struct ClassTextures
+		{
+			int id;
+			std::vector<GuiImage> imgs;
+			ClassTextures(int i) : id(i)
+			{ }
+		};
+
+
+		GuiDrawImage iconImage;
+		std::vector<ClassTextures> classImages;
+		int classIndex = 0;
+		int itemCurrent = 0;
+
+		int getClassImagesSize()
+		{
+			return classImages.size();
+		}
+		ClassTextures& getClassImagesData()
+		{
+			return classImages[classIndex];
+		}
+
+		ImVec2 getPngSize()
+		{
+			return ImVec2(50, 50);
+		}
+		
+		void loadClassImages()
+		{
+			std::function<void(int, const BackString&)> casFS = loaderCategors;
+			std::function<void(int, const BackPathStr&)> casif = loaderFile;
+
+			BarClassifierCache bcc;
+			bcc.loadCategories(casFS);
+			bcc.loadImgs(casif, classesLB.getValuesIterator(), classesLB.getSize());
+		}
+	};
+	ClassiferVals classerVals;
+
+	void loaderCategors(int classId, const BackString& name)
+	{
+		classerVals.classesLB.add(name, classId);
+	}
+
+	void loaderFile(int classId, const BackPathStr& path)
+	{
+		BackImage a = imread(path);
+		a.resize(classerVals.getPngSize().x, classerVals.getPngSize().y);
+		GuiImage img;
+		img.setImage(a);
+		classerVals.classImages[classId].imgs.push_back(img);
+	}
+	// Draws
 
 	// Top Menu
 	void drawMenu()
@@ -202,6 +269,7 @@ namespace MyApp
 					{
 						tbVals.enableProcessBtn = true;
 						centerVals.mainImage.tileSize = backend.getTileSize();
+						classerVals.loadClassImages();
 					}
 				}
 			}
@@ -229,12 +297,17 @@ namespace MyApp
 
 			if (ImGui::BeginPopupModal("ProcSetts", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 			{
+				ImGui::Text("Порог отсеивания");
+				ImGui::SliderInt("##Prog", &tbVals.filterInfo.minLen, 1, 256, "%d");
+
+				ImGui::Separator();
+
 				ImGui::Text("Tile size");
-				ImGui::SliderInt("Tile size", &tbVals.newTileSize, 1, backend.getImageMinSize() / 10, "%d0");
+				ImGui::SliderInt("##Tile size", &tbVals.newTileSize, 1, backend.getImageMinSize() / 10, "%d0");
 				if (tbVals.newTileSize + tbVals.newOffsetSize > backend.getImageMinSize() / 10)
 					tbVals.newOffsetSize = backend.getImageMinSize() / 10 - tbVals.newTileSize;
 
-				ImGui::Text("Tile offset size");
+				ImGui::Text("##Tile offset size");
 				ImGui::SliderInt("Offset size", &tbVals.newOffsetSize, 0, backend.getImageMinSize() / 10 - tbVals.newTileSize, "%d0");
 
 				ImGui::Separator();
@@ -264,10 +337,11 @@ namespace MyApp
 			ImGui::SameLine();
 			if (ImGui::Button("Построить баркод")) 
 			{
+				
 				backend.createBarcode(
 					tbVals.procCB.currentValue(),
 					tbVals.colorCB.currentValue(),
-					tbVals.componentCB.currentValue());
+					tbVals.componentCB.currentValue(), tbVals.filterInfo);
 			}
 			ImGui::EndDisabled();
 
@@ -359,14 +433,92 @@ namespace MyApp
 			ImGui::SetNextItemWidth(300);
 			ImGui::InputText("Extra", (char*)bottomVals.valeExtra.c_str(), bottomVals.valeExtra.length());
 
-			ImGui::End();
+			ImGui::SameLine(0, 30);
+			if (ImGui::Button("Loader"))
+			{
+				bottomVals.showLoader = true;
+			}
 		}
+		ImGui::End();
 	}
 
 
-	void drawProcessSettings()
+	//void drawProcessSettings()
+	//{
+	//}
+
+
+	void drawClassifierMenu()
 	{
+		if (ImGui::Begin("Classifier"))
+		{
+			classerVals.classesLB.drawListBox("Классы");
+			//ImGui::ListBox("My List Box", &item_current, items, IM_ARRAYSIZE(items), 4);
+			ImGui::SameLine();
+
+
+			if (ImGui::Button("Load from image"))
+			{
+				ImGui::OpenPopup("LoadImg");
+				//backend.undoAddClass();
+			}
+
+			if (ImGui::BeginPopupModal("LoadImg", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+			{
+				if (ImGui::Button("Load iamge"))
+				{
+				}
+
+				//ImGui::SetNextWindowPos(pos);
+				//ImGui::SetNextWindowSize(size);
+				//prview.drawImage("Processed");
+				//ImGui::Separator();
+
+				ImGui::Separator();
+				auto id = ImGui::FindWindowByName("ProcSetts")->ID;
+				tbVals.tilePrview.draw(id, tbVals.getTileSize(), tbVals.getOffsetSize(), tbVals.getImageSize());
+				//if (ImGui::IsItemHovered())
+				//	ImGui::SetTooltip("I am a tooltip over a popup");
+
+				//static int unused_i = 0;
+				//ImGui::Combo("Combo", &unused_i, "Delete\0Delete harder\0");
+
+				ImGui::Separator();
+				if (ImGui::Button("OK", ImVec2(120, 0)))
+				{
+					ImGui::CloseCurrentPopup();
+					backend.getTileSize() = tbVals.getTileSize();
+					backend.getOffsetSize() = tbVals.getOffsetSize();
+					centerVals.mainImage.tileSize = tbVals.getTileSize();
+				}
+
+				ImGui::SetItemDefaultFocus();
+				ImGui::SameLine();
+				if (ImGui::Button("Cancel", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+				ImGui::EndPopup();
+			}
+
+
+			if (ImGui::Button("Drop")) {
+				// Open a file dialog to select a folder
+				backend.exportResult(getSavePath({ "*.png" }));
+			}
+			ImGui::BeginGroup();
+
+			auto& pngs = classerVals.getClassImagesData().imgs;
+			for (int i = 0; i < classerVals.getClassImagesSize(); i++)
+			{
+				ImGui::PushID(i);
+				ImGui::Image((void*)(intptr_t)pngs[i].textureId, classerVals.getPngSize());
+				ImGui::PopID();
+			}
+
+			ImGui::EndGroup();
+
+		}
+		ImGui::End();
 	}
+
 	
 	// Layout
 	void drawLayout()
@@ -374,7 +526,10 @@ namespace MyApp
 		drawTopBar();
 		drawWorkout();
 		drawBottomBar();
-
+		if (bottomVals.showLoader)
+		{
+			drawClassifierMenu();
+		}
 
 		//if (ImGui::BeginViewportSideBar("##MainStatusBar", NULL, ImGuiDir_Down, heighto, window_flags)) {
 		//    if (ImGui::BeginMenuBar()) {
