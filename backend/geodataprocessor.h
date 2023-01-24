@@ -300,7 +300,7 @@ private:
 	CloudItem* saveLoadBars(int& index, CloudItem* rsitem = NULL)
 	{
 		state->beginItem();
-		state->pInt(index);
+		index = state->pInt(index);
 		auto& lines = rsitem->lines;
 		state->pType(lines.size() > 0 && lines[0]->matrix.size() > 0 ? lines[0]->matrix[0].value.type : BarType::FLOAT32_1);
 
