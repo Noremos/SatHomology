@@ -119,7 +119,7 @@ void GuiBackend::clear()
 	veas.clear();
 }
 
-void GuiBackend::settup(GuiImage *mainImage, GuiImage* processedImage, GuiItem* sliderPanel)
+void GuiBackend::settup(GuiDrawImage*mainImage, GuiDrawImage* processedImage, GuiItem* sliderPanel)
 {
 	this->mainImage = mainImage;
 	this->processedImage = processedImage;
@@ -328,10 +328,8 @@ void GuiBackend::processMain(BackString extra)
 	comm.clear();
 	proj->setReadyLaod(curImgInd, mainMat.width());
 
-	Project::ClassInfo infoe{ 0, resultMart, map, extra, resLinesMap, };
+	Project::ClassInfo infoe{ 0, resultMart, map, extra, resLinesMap };
 	proj->readPrcoessBarcode(infoe);
-
-	//comm.print();
 
 	processedImage->setImage(resultMart);
 }
@@ -398,22 +396,22 @@ void GuiBackend::exportAsJson(int st, int ed, bool needSort)
 //	filed.close();
 }
 
-void GuiBackend::click(int x, int y, BackString extra)
+bc::barvector* GuiBackend::click(int x, int y)
 {
 	if (mainImage == nullptr || resLinesMap.size() == 0)
-		return;
+		return nullptr;
 
-	int ind = extra.find("_addclass;");
-	int ttype = -1;
-	if (ind != -1)
-	{
-		int ind2 = extra.find(';', ind - 2);
-		BackString type = extra.substr(ind2 + 1, ind - ind2 - 1);
-		ttype = strToInt(type);
-	}
+	x = processedImage->getRealX(x);
+	y = processedImage->getRealY(y);
 
-	x = mainImage->getRealX(x);
-	y = mainImage->getRealY(y);
+
+	if (x < 0 || x >= mainMat.wid())
+		return NULL;
+
+	if (y < 0 || y >= mainMat.hei())
+		return NULL;
+
+	std::cout << x << " : " << y << std::endl;
 
 	SimpleLine *line = resLinesMap[y * mainMat.wid() + x].get();
 	if (line)
@@ -422,27 +420,19 @@ void GuiBackend::click(int x, int y, BackString extra)
 			line = line->parent;
 
 		curSelected = line;
-		std::cout << line->matr.size() * 100.f / mainMat.length() << std::endl;
+		return &curSelected->matr;
+		/*std::cout << line->matr.size() * 100.f / mainMat.length() << std::endl;
 		MatrImg temp;
 		temp.assignCopyOf(resultMart);
 		auto &fullmatr = line->matr;
-//		line->getChildsMatr(fullmatr);
 
-		mcountor cont;
-		getCountour(fullmatr, cont, false);
-		for (int i = 0, total = cont.size(); i < total; ++i)
+		for (int i = 0, total = fullmatr.size(); i < total; ++i)
 		{
-			auto p = bc::barvalue::getStatPoint(cont[i]);
+			auto p = bc::barvalue::getStatPoint(fullmatr[i].index);
 			temp.set(p.x, p.y, Barscalar(255, 191, 0));
 		}
 
-		if (ttype != -1)
-		{
-			addClass(ttype);
-		}
-
-		processedImage->setImage(temp);
-		//resultMart = temp;
+		processedImage->setImage(temp);*/
 	}
 }
 

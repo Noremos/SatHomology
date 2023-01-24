@@ -6,6 +6,7 @@
 #include <map>
 #include <initializer_list>
 #include <memory>
+#include <future>
 
 #include "GuiWidgets.h"
 
@@ -145,6 +146,7 @@ namespace MyApp
 	{
 		GuiDrawImage mainImage;
 		GuiDrawImage processImage;
+		GuiDrawCloudPointClick clickHandler;
 	};
 
 	ImagesValues centerVals;
@@ -192,7 +194,7 @@ namespace MyApp
 		{
 			return ImVec2(50, 50);
 		}
-		
+
 		void loadClassImages()
 		{
 			std::function<void(int, const BackString&)> casFS = loaderCategors;
@@ -204,6 +206,27 @@ namespace MyApp
 		}
 	};
 	ClassiferVals classerVals;
+
+
+	struct WindowsValues
+	{
+		bool onAir = false;
+
+		void onAirC()
+		{
+			if (onAir && future.valid())
+			{
+				if (future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
+				{
+					onAir = false;
+				}
+			}
+		}
+
+		std::future<void> future;
+	};
+
+	WindowsValues commonValus;
 
 	void loaderCategors(int classId, const BackString& name)
 	{
@@ -245,9 +268,8 @@ namespace MyApp
 	}
 	// --------
 
-	
-	// Top bar
 
+	// Top bar
 
 	void drawTopBar()
 	{
@@ -255,7 +277,8 @@ namespace MyApp
 		float heighto = ImGui::GetFrameHeight();
 		if (ImGui::BeginViewportSideBar("##TopMenu", NULL, ImGuiDir_Up, 50, window_flags))
 		{
-			//ImGui::Text("Happy secondary menu bar");
+			// GBl
+			ImGui::BeginDisabled(commonValus.onAir);
 
 			ImGui::SameLine();
 
@@ -273,7 +296,7 @@ namespace MyApp
 					}
 				}
 			}
-			
+
 			ImGui::SameLine();
 			tbVals.componentCB.drawCombobox("##Форма");
 			ImGui::SameLine();
@@ -281,7 +304,7 @@ namespace MyApp
 			ImGui::SameLine();
 			tbVals.colorCB.drawCombobox("##Цвет");
 
-	
+
 			// Always center this window when appearing
 			ImVec2 center = ImGui::GetMainViewport()->GetCenter();
 			ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
@@ -321,8 +344,8 @@ namespace MyApp
 
 				ImGui::Separator();
 				if (ImGui::Button("OK", ImVec2(120, 0)))
-				{ 
-					ImGui::CloseCurrentPopup(); 
+				{
+					ImGui::CloseCurrentPopup();
 					backend.getTileSize() = tbVals.getTileSize();
 					backend.getOffsetSize() = tbVals.getOffsetSize();
 					centerVals.mainImage.tileSize = tbVals.getTileSize();
@@ -335,13 +358,16 @@ namespace MyApp
 			}
 
 			ImGui::SameLine();
-			if (ImGui::Button("Построить баркод")) 
+			if (ImGui::Button("Построить баркод"))
 			{
-				
 				backend.createBarcode(
+				//commonValus.onAir = true;
+				//commonValus.future = std::async(&GuiBackend::createBarcode, std::ref(backend),
 					tbVals.procCB.currentValue(),
 					tbVals.colorCB.currentValue(),
-					tbVals.componentCB.currentValue(), tbVals.filterInfo);
+					tbVals.componentCB.currentValue(),
+					//std::cref(tbVals.filterInfo));
+					tbVals.filterInfo);
 			}
 			ImGui::EndDisabled();
 
@@ -349,6 +375,10 @@ namespace MyApp
 			if (ImGui::Button("Восстановить")) {
 				backend.restoreSource();
 			}
+
+			// GBl
+			ImGui::EndDisabled();
+
 			ImGui::End();
 		}
 	}
@@ -371,7 +401,7 @@ namespace MyApp
 	void drawWorkout()
 	{
 		const ImGuiViewport* viewport = ImGui::GetMainViewport();
-		
+
 		ImVec2 pos = viewport->WorkPos;
 		ImVec2 size = viewport->WorkSize;
 		size.x /= 2;
@@ -385,7 +415,13 @@ namespace MyApp
 		ImGui::SetNextWindowPos(pos);
 		ImGui::SetNextWindowSize(size);
 		ImGui::SetNextWindowViewport(viewport->ID);
-		centerVals.processImage.drawImage("Processed");
+		centerVals.processImage.drawImage("Processed", true);
+		if (centerVals.processImage.clicked)
+		{
+			auto p = centerVals.processImage.clickedPos;
+			centerVals.clickHandler.points = backend.click(p.x, p.y);
+		}
+		centerVals.clickHandler.draw();
 	}
 	// ------
 
@@ -396,11 +432,18 @@ namespace MyApp
 		// https://github.com/bkaradzic/bgfx/blob/master/3rdparty/dear-imgui/widgets/range_slider.inl
 		if (ImGui::BeginViewportSideBar("##BottomBar", NULL, ImGuiDir_Down, 100, window_flags))
 		{
+			// GBL
+			ImGui::BeginDisabled(commonValus.onAir);
+
 			//ImGui::Text("Happy secondary menu bar");
 			ImGui::SameLine();
 			if (ImGui::Button("Update"))
 			{
-				backend.processMain(bottomVals.valeExtra);
+				 backend.processMain(bottomVals.valeExtra);
+				//commonValus.onAir = true;
+				//commonValus.future = std::async(&GuiBackend::processMain, std::ref(backend),
+				//	bottomVals.valeExtra);
+
 				// Do something when Button 1 is clicked
 			}
 
@@ -438,6 +481,9 @@ namespace MyApp
 			{
 				bottomVals.showLoader = true;
 			}
+
+			// GBL
+			ImGui::EndDisabled();
 		}
 		ImGui::End();
 	}
@@ -519,7 +565,6 @@ namespace MyApp
 		ImGui::End();
 	}
 
-	
 	// Layout
 	void drawLayout()
 	{
@@ -530,6 +575,8 @@ namespace MyApp
 		{
 			drawClassifierMenu();
 		}
+
+		commonValus.onAirC();
 
 		//if (ImGui::BeginViewportSideBar("##MainStatusBar", NULL, ImGuiDir_Down, heighto, window_flags)) {
 		//    if (ImGui::BeginMenuBar()) {
@@ -546,6 +593,7 @@ namespace MyApp
 	void MyApp::Init()
 	{
 		backend.settup(&centerVals.mainImage, &centerVals.processImage, NULL);
+		centerVals.clickHandler.par = &centerVals.processImage;
 	}
 	// Main
 	void MyApp::RenderUI()

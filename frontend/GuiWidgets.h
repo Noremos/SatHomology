@@ -1,8 +1,13 @@
 #pragma once
+#define IMGUI_DEFINE_MATH_OPERATORS
 
 #include "imgui.h"
 #include <imgui_internal.h>
 #include "GuiCommon.h"
+
+using ApplicationVec2 = ImVec2;
+using WindowVec2 = ImVec2; // The top-left is a begin window
+using ItemVec2 = ImVec2; // The top-left is a Item (image) coords
 
 template<class T>
 struct SelectableKeyValues
@@ -83,38 +88,116 @@ class GuiDrawInfo
 
 class GuiDrawImage : public GuiImage
 {
+	ImVec2 zoom = ImVec2(1, 1);
 public:
+	WindowVec2 localDisplayPos;
+	ApplicationVec2 winPos;
+	ImVec2 displaySize;
 	virtual ~GuiDrawImage()
 	{ }
 
+	float getZoom()
+	{
+		return zoom.x;
+	}
+	WindowVec2 offset = ImVec2(0, 0);
+	ItemVec2 clickedPos = ImVec2(0, 0);
+	bool clicked = false;
 	int tileSize = 0;
 
-	void drawImage(const char* name)
+
+	int getRealX(int x)
+	{
+		return static_cast<float>(x) * (width / displaySize.x);
+	}
+	int getRealY(int y)
+	{
+		return static_cast<float>(y) * (height / displaySize.y);
+	}
+
+	int toDisplayX(int x)
+	{
+		return static_cast<float>(x) / (width / displaySize.x);
+	}
+	int toDisplayY(int y)
+	{
+		return static_cast<float>(y) / (height / displaySize.y);
+	}
+
+	void drawImage(const char* name, bool zoomable = false)
 	{
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings;
 		window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
-
+		if (zoomable)
+			window_flags |= ImGuiWindowFlags_HorizontalScrollbar;
 		if (ImGui::Begin(name, nullptr, window_flags))
 		{
 			ImGuiWindow* win = ImGui::FindWindowByName(name);
-			drawTexture(win);
+			winPos = win->Pos;
+			drawTexture(win, zoomable);
 		}
 		ImGui::End();
 	}
 
+	void checkZoom(ImVec2 realSize)
+	{
+		if (textureId == 0)
+			return;
+		//void show_zoomable_image(unsigned char* image_data, int width, int height, int channels) {
+
+		//ImGui::Image(image_data, ImVec2((float)width, (float)height), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
+		// Handle zoom events
+		offset.x = ImGui::GetScrollX();
+		offset.y = ImGui::GetScrollY();
+		if (ImGui::IsWindowHovered() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+		{
+			offset.x -= ImGui::GetIO().MouseDelta.x;
+			offset.y -= ImGui::GetIO().MouseDelta.y;
+		}
+		if (ImGui::IsWindowHovered() && ImGui::GetIO().MouseWheel != 0)
+		{
+			float ads = ImGui::GetIO().MouseWheel * 0.1f;
+			zoom.x += ads;
+			zoom.y += ads;
+			zoom.x = std::max(zoom.x, 0.1f);
+			zoom.y = std::max(zoom.y, 0.1f);
+
+			offset.x += abs(ads) * 20;
+			offset.y += abs(ads) * 20;
+		}
+		ImGui::SetScrollX(offset.x);
+		ImGui::SetScrollY(offset.y);
+
+		//ImVec2 pmin = ImGui::GetCursorScreenPos();
+		//ImVec2 pmax(ImGui::GetCursorScreenPos().x + width * zoom.x, ImGui::GetCursorScreenPos().y + height * zoom.y);
+		//ImVec2 uvMin(offset.x / width, offset.y / height);
+		//ImVec2 uvMax((offset.x + width * zoom.x) / width, (offset.y + height * zoom.y) / height);
+		//ImGui::GetWindowDrawList()->AddImage((void*)(intptr_t)textureId, pmin, pmax, uvMin, uvMax);
+
+		//ImVec2 size = ImVec2((float)width * zoom.x, (float)height * zoom.y);
+		//ImVec2 uv0 = ImVec2((float)offset.x / width, (float)offset.y / height);
+		//ImVec2 uv1 = ImVec2((float)(offset.x + size.x) / width, (float)(offset.y + size.y) / height);
+		//ImGui::Image((void*)(intptr_t)textureId, size, uv0, uv1);
+
+		ImVec2 nsize = ImVec2((float)realSize.x * zoom.x, (float)realSize.y * zoom.y);
+		displaySize = nsize;
+		ImGui::Image((void*)(intptr_t)textureId, nsize);
+	}
+
 private:
-	void drawTexture(ImGuiWindow* win)
+	void drawTexture(ImGuiWindow* win, bool zoomable)
 	{
 		if (textureId == 0)
 		{
 			ImDrawList* list = ImGui::GetWindowDrawList();
-			ImVec2 startPos = win->Pos;
-			startPos.x += 5;
-			startPos.y += 5;
+			localDisplayPos.x = 5;
+			localDisplayPos.y = 5;
 			ImVec2 maxPos = win->Pos;
 			maxPos.x += win->Size.x - 10;
 			maxPos.y += win->Size.y - 30;
-			list->AddRectFilled(startPos, maxPos, ImColor(115, 140, 153));
+
+			ImVec2 minPos = win->Pos + localDisplayPos;
+			list->AddRectFilled(minPos, maxPos, ImColor(115, 140, 153));
 			//ImGui::Image((void*)0, win->Size);
 			return;
 		}
@@ -122,13 +205,29 @@ private:
 		int newWid = width;
 		int newHei = height;
 
-		ResizeImage(newWid, newHei, win->Size.x, win->Size.y - 20);
+		ResizeImage(newWid, newHei, win->Size.x, win->Size.y - 30);
 		this->scaleFactor = width / static_cast<float>(newWid);
+		displaySize.x = newWid;
+		displaySize.y = newHei;
 
-		ImVec2 localSet((win->Size.x - newWid) / 2, (win->Size.y - newHei) / 2);
-		ImGui::SetCursorPosX(localSet.x);
-		ImGui::SetCursorPosY(localSet.y);
-		ImGui::Image((void*)(intptr_t)textureId, ImVec2(newWid, newHei));
+		localDisplayPos.x = (win->Size.x - newWid) / 2;
+		localDisplayPos.y = (win->Size.y - newHei) / 2;
+		ImGui::SetCursorPosX(localDisplayPos.x);
+		ImGui::SetCursorPosY(localDisplayPos.y);
+
+		if (zoomable)
+		{
+			clicked = false;
+			if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+			{
+				clickedPos = ImGui::GetIO().MousePos - win->Pos - localDisplayPos + offset;
+				clicked = true;
+			}
+
+			checkZoom(ImVec2(newWid, newHei));
+		}
+		else
+			ImGui::Image((void*)(intptr_t)textureId, ImVec2(newWid, newHei));
 
 		ImVec2 cont =  ImGui::GetCursorPos();
 		if (tileSize)
@@ -136,9 +235,7 @@ private:
 			ImDrawList* list = ImGui::GetWindowDrawList();
 
 			ImVec2 drawTileSize(tileSize / scaleFactor, tileSize / scaleFactor);
-			ImVec2 maxPos = win->Pos;
-			maxPos.x += localSet.x;
-			maxPos.y += localSet.y;
+			ImVec2 maxPos = win->Pos + localDisplayPos;
 
 			ImColor lineColor(115, 115, 115);
 
@@ -166,7 +263,6 @@ private:
 
 		ImGui::SetCursorPos(cont);
 	}
-
 };
 
 
@@ -255,22 +351,31 @@ public:
 class GuiDrawCloudPointClick : public GuiImage
 {
 public:
-	void draw(ImGuiWindow* win)
+	bc::barvector* points = nullptr;
+	GuiDrawImage* par = nullptr;
+	void draw()
 	{
+		if (points == nullptr)
+			return;
 		// ptoj->getVector();
 
 		ImDrawList* list = ImGui::GetWindowDrawList();
 
-		std::vector<ImVec2> points;
-
 		ImColor bigColor(255, 0, 0);
 		ImColor midColor(220, 200, 0);
 
-		for (ImVec2 p : points)
+		float zoom = par->getZoom();
+		ApplicationVec2 offset = par->winPos + par->localDisplayPos;
+		bc::barvector& pointsi = *points;
+		for (const auto& p : pointsi)
 		{
-			list->AddCircleFilled(p, 3, bigColor);
-			list->AddCircleFilled(p, 2, midColor);
+			// TL is a Begin()
+			WindowVec2 pi = par->localDisplayPos + ItemVec2(par->toDisplayX(p.getX()), par->toDisplayY(p.getY()));
+			pi -= par->offset; // Admit the scrollers
+
+			//pi -= par->offset;
+			list->AddCircleFilled(offset + pi, 3 * zoom, bigColor);
+			list->AddCircleFilled(offset + pi, 2 * zoom, midColor);
 		}
 	}
-
 };

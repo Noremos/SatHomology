@@ -134,6 +134,7 @@ bc::Barcontainer* Project::createCacheBarcode(const bc::BarConstructor& constr, 
 		uint ihei = (stH + fullTile > rhei ? rhei - stH : fullTile);
 		if (ihei <= tileOffset)
 			break;
+
 		stW = 0;
 		std::cout << i << std::endl;
 		for (uint j = 0; j < rwid; j += tileSize)
@@ -238,8 +239,8 @@ void Project::classBarcode(BarcodesHolder& baritem, ClassInfo& info)
 
 		for (const auto& pm : matr)
 		{
-			int ox = pm.getX() - xOff;
-			int oy = pm.getY() - yOff;
+			int ox = pm.getX();// -xOff;
+			int oy = pm.getY();// -yOff;
 			int x = (ox) / u_displayFactor;
 			int y = (oy) / u_displayFactor;
 			uint index = bc::barvalue::getStatInd(x, y);
@@ -251,7 +252,7 @@ void Project::classBarcode(BarcodesHolder& baritem, ClassInfo& info)
 			bc::point p = bc::barvalue::getStatPoint(index);
 			sl->matr.push_back(bc::barvalue(p, pm.value));
 
-			info.mat.set(x, y, color);
+			//info.mat.set(x, y, color);
 			//			outMask.set(x, y, 255);
 			int indLocal = (y * info.mat.wid() + x);
 			SimpleLine* temp = info.resLinesMaps[indLocal].get();
@@ -260,6 +261,17 @@ void Project::classBarcode(BarcodesHolder& baritem, ClassInfo& info)
 			{
 				info.resLinesMaps[indLocal] = sl;
 				//				++sl->counter;
+			}
+
+			int ylek = 2;
+			for (int i = MAX(x - ylek, 0); i < std::min(x + ylek, info.mat.wid()); i++)
+			{
+				for (int j = MAX(y - ylek, 0); j < std::min(y + ylek, info.mat.hei()); j++)
+				{
+					int indLocal2 = (j * info.mat.wid() + i);
+
+					info.resLinesMaps[indLocal2] = sl;
+				}
 			}
 
 			bc::point cp(x, y);

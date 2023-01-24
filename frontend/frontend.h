@@ -6,6 +6,7 @@
 #include "../backend/project.h"
 #include "../frontend/Framework.h"
 #include "../frontend/GuiCommon.h"
+#include "../frontend/GuiWidgets.h"
 
 
 // Todo.
@@ -103,7 +104,7 @@ public:
 	};
 
 	// Gui
-	void settup(GuiImage* mainImage, GuiImage* processedImage, GuiItem* sliderPanel);
+	void settup(GuiDrawImage* mainImage, GuiDrawImage* processedImage, GuiItem* sliderPanel);
 	void loadImageOrProject(const BackPathStr& path);
 	void createBarcode(bc::ProcType procType, bc::ColorType colType, bc::ComponentType compType, const FilterInfo& info);
 	void addClass(int classIndex);
@@ -135,6 +136,8 @@ public:
 		return proj->getPath(BackPath::classfiles);
 	}
 
+	bc::barvector* click(int x, int y);
+
 private:
 	int getBarsCount();
 	void resetSource();
@@ -156,7 +159,6 @@ private:
 	// //////////////////////////////////////////////
 	void deleteRange(int st, int ed, bool needSort);
 	void exportAsJson(int st, int ed, bool needSort);
-	void click(int x, int y, BackString extra);
 
 	//void createHolesBarcode(const bc::BarConstructor& constr, int imgIndex, int);
 
@@ -179,8 +181,9 @@ private:
 
 	GuiState state = GuiState::Empty;
 	GuiItem* root = nullptr;
-	GuiImage* mainImage = nullptr;
-	GuiImage* processedImage = nullptr;
+	GuiDrawImage* mainImage = nullptr;
+	//std::atomic<GuiDrawImage*> processedImage = nullptr;
+	GuiDrawImage* processedImage = nullptr;
 	GuiItem* sliderP = nullptr;
 
 	BackImage mainMat;

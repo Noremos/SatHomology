@@ -1,4 +1,6 @@
 #pragma once
+#define IMGUI_DEFINE_MATH_OPERATORS
+
 #include "../backend/BackImage.h"
  
 typedef unsigned int GLuint;
@@ -30,15 +32,6 @@ public:
 		width = img.width();
 		height = img.height();
 		makeTexture(img.data, img.channels());
-	}
-
-	int getRealX(int x)
-	{
-		return x * scaleFactor;
-	}
-	int getRealY(int y)
-	{
-		return y * scaleFactor;
 	}
 
 	void release();
