@@ -175,7 +175,7 @@ public:
 			holder.lines.push_back(barhold);
 
 			barhold->matrix = std::move(line->matr);
-			line->getChilredAsList(barhold->lines, true, true, false);
+			line->getAsListSafe(barhold->lines, true, false);
 		}
 
 		return holder;
