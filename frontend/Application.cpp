@@ -156,6 +156,7 @@ namespace MyApp
 		int classId = 0;
 		std::string valeExtra = "barclass;";
 		bool showLoader = false;
+		BackString debug;
 	};
 	BottomBar bottomVals;
 
@@ -421,7 +422,8 @@ namespace MyApp
 			auto p = centerVals.processImage.clickedPos;
 			centerVals.clickHandler.points = backend.click(p.x, p.y);
 		}
-		centerVals.clickHandler.draw();
+		bottomVals.debug = intToStr(ImGui::GetIO().MousePos.x) + ":" + intToStr(ImGui::GetIO().MousePos.y);
+		centerVals.clickHandler.draw("Processed");
 	}
 	// ------
 
@@ -481,6 +483,8 @@ namespace MyApp
 			{
 				bottomVals.showLoader = true;
 			}
+
+			ImGui::Text(bottomVals.debug.c_str());
 
 			// GBL
 			ImGui::EndDisabled();

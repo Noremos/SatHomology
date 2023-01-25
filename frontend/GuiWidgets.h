@@ -353,13 +353,13 @@ class GuiDrawCloudPointClick : public GuiImage
 public:
 	bc::barvector* points = nullptr;
 	GuiDrawImage* par = nullptr;
-	void draw()
+	void draw(const char* name)
 	{
 		if (points == nullptr)
 			return;
 		// ptoj->getVector();
 
-		ImDrawList* list = ImGui::GetWindowDrawList();
+		ImDrawList* list = ImGui::FindWindowByName(name)->DrawList;
 
 		ImColor bigColor(255, 0, 0);
 		ImColor midColor(220, 200, 0);
@@ -370,7 +370,8 @@ public:
 		for (const auto& p : pointsi)
 		{
 			// TL is a Begin()
-			WindowVec2 pi = par->localDisplayPos + ItemVec2(par->toDisplayX(p.getX()), par->toDisplayY(p.getY()));
+			ItemVec2 pi(par->toDisplayX(p.getX()), par->toDisplayY(p.getY()));
+			//pi *= zoom;
 			pi -= par->offset; // Admit the scrollers
 
 			//pi -= par->offset;
