@@ -417,9 +417,8 @@ public:
 	}
 
 	BarcodeHolder threasholdLines(bc::Baritem* item);
-
-
-	void addClass(int classIndex, BarcodeHolder* points);
+	void addClassData(int classIndex, BarcodeHolder* points, BackImage* destIcon = nullptr);
+	int addClassType(const BackString& name);
 private:
 	void write(BackJson& json) const;
 	void writeImages();
@@ -430,7 +429,6 @@ public:
 	barclassificator classer;
 	BarClassifierCache classLoader;
 private:
-
 	std::vector<Barscalar> colors;
 };
 

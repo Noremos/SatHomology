@@ -54,11 +54,6 @@ GuiBackend::GuiBackend()
 
 	//BackDirStr directory(proj->getPath(BackPath::classfiles));
 	//directory /= "*.json";
-
-	BackPathStr directory = std::filesystem::path(sago::getDocumentsFolder());
-	directory /= "Qbinbar";
-
-	mkDirIfNotExists(directory);
 	//classer.addClass(createBar("D:\\Learning\\BAR\\sybery\\2.png"), 1);
 }
 
@@ -436,16 +431,35 @@ bc::barvector* GuiBackend::click(int x, int y)
 	}
 }
 
-void GuiBackend::addClass(int classIndex)
+void GuiBackend::showResultPics(bool show)
+{
+	if (show)
+	{
+		processedImage->setImage(resultMart);
+	}
+	else
+		processedImage->setImage(mainMat);
+}
+
+int GuiBackend::addClassType(const BackString& name)
+{
+	return proj->addClassType(name);
+}
+
+bool GuiBackend::addSelectedToClassData(int classIndex, BackImage* icon)
 {
 	if (classIndex < 0 || classIndex >= 3)
-		return;
+		return false;
+
+	if (!curSelected)
+		return false;
 
 	GeoBarHolderCache reader;
+	reader.openRead();
 	std::unique_ptr<CloudItem> item(reader.loadCloudItemByIndex(curSelected->id));
 	auto *curBarline = item->lines[curSelected->barlineIndex];
 
-	proj->addClass(classIndex, curBarline);
+	proj->addClassData(classIndex, curBarline, icon);
 	lastIndex = classIndex;
 }
 

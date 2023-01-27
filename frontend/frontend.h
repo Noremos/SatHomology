@@ -107,11 +107,16 @@ public:
 	void settup(GuiDrawImage* mainImage, GuiDrawImage* processedImage, GuiItem* sliderPanel);
 	void loadImageOrProject(const BackPathStr& path);
 	void createBarcode(bc::ProcType procType, bc::ColorType colType, bc::ComponentType compType, const FilterInfo& info);
-	void addClass(int classIndex);
+	bool addSelectedToClassData(int classIndex, BackImage* icon = nullptr);
 	void processMain(BackString extra);
 	void restoreSource();
 	void undoAddClass();
 	void exportResult(BackDirStr path);
+
+	void save()
+	{
+		proj->saveProject();
+	}
 
 	inline int& getTileSize() const
 	{
@@ -138,6 +143,9 @@ public:
 
 	bc::barvector* click(int x, int y);
 
+	void showResultPics(bool show);
+
+	int addClassType(const BackString& name);
 private:
 	int getBarsCount();
 	void resetSource();

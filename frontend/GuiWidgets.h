@@ -34,8 +34,16 @@ struct SelectableKeyValues
 	void add(const BackString& name, T value)
 	{
 		holder.push_back(name);
-		items.push_back(holder.back().c_str());
 		values.push_back(value);
+		++size;
+	}
+
+	void endAdding()
+	{
+		for (size_t i = 0; i < holder.size(); i++)
+		{
+			items.push_back(holder[i].c_str());
+		}
 	}
 
 	const char** getItems()
@@ -96,6 +104,9 @@ public:
 	virtual ~GuiDrawImage()
 	{ }
 
+	GuiImage& operator=(const GuiImage& other) noexcept = delete;
+	GuiImage& operator=(GuiImage&& other) noexcept = delete;
+
 	float getZoom()
 	{
 		return zoom.x;
@@ -127,7 +138,8 @@ public:
 	void drawImage(const char* name, bool zoomable = false)
 	{
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings;
-		window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
+		window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | 
+			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus;
 		if (zoomable)
 			window_flags |= ImGuiWindowFlags_HorizontalScrollbar;
 		if (ImGui::Begin(name, nullptr, window_flags))
@@ -141,7 +153,7 @@ public:
 
 	void checkZoom(ImVec2 realSize)
 	{
-		if (textureId == 0)
+		if (getTextureId() == 0)
 			return;
 		//void show_zoomable_image(unsigned char* image_data, int width, int height, int channels) {
 
@@ -165,9 +177,6 @@ public:
 			offset.x += abs(ads) * 20;
 			offset.y += abs(ads) * 20;
 		}
-		ImGui::SetScrollX(offset.x);
-		ImGui::SetScrollY(offset.y);
-
 		//ImVec2 pmin = ImGui::GetCursorScreenPos();
 		//ImVec2 pmax(ImGui::GetCursorScreenPos().x + width * zoom.x, ImGui::GetCursorScreenPos().y + height * zoom.y);
 		//ImVec2 uvMin(offset.x / width, offset.y / height);
@@ -181,13 +190,17 @@ public:
 
 		ImVec2 nsize = ImVec2((float)realSize.x * zoom.x, (float)realSize.y * zoom.y);
 		displaySize = nsize;
-		ImGui::Image((void*)(intptr_t)textureId, nsize);
+		ImGui::Image((void*)(intptr_t)getTextureId(), nsize);
+
+		ImGui::SetScrollX(offset.x);
+		ImGui::SetScrollY(offset.y);
 	}
 
 private:
 	void drawTexture(ImGuiWindow* win, bool zoomable)
 	{
-		if (textureId == 0)
+		auto textId = getTextureId();
+		if (textId == 0)
 		{
 			ImDrawList* list = ImGui::GetWindowDrawList();
 			localDisplayPos.x = 5;
@@ -227,7 +240,7 @@ private:
 			checkZoom(ImVec2(newWid, newHei));
 		}
 		else
-			ImGui::Image((void*)(intptr_t)textureId, ImVec2(newWid, newHei));
+			ImGui::Image((void*)(intptr_t)textId, ImVec2(newWid, newHei));
 
 		ImVec2 cont =  ImGui::GetCursorPos();
 		if (tileSize)
@@ -353,7 +366,7 @@ class GuiDrawCloudPointClick : public GuiImage
 public:
 	bc::barvector* points = nullptr;
 	GuiDrawImage* par = nullptr;
-	void draw(const char* name)
+	void draw(const char* name, ImVec2 prevWin, ImVec2 scrollOff, ImVec2 winSize)
 	{
 		if (points == nullptr)
 			return;
@@ -365,18 +378,24 @@ public:
 		ImColor midColor(220, 200, 0);
 
 		float zoom = par->getZoom();
-		ApplicationVec2 offset = par->winPos + par->localDisplayPos;
+		ApplicationVec2 offset = prevWin + par->localDisplayPos;
+		ApplicationVec2 csreenStar = prevWin + ImVec2(3 * zoom + 5, 3 * zoom + 5);
+		ApplicationVec2 csreenEnd = prevWin + winSize - ImVec2(3 * zoom + 10, 3 * zoom + 10);
 		bc::barvector& pointsi = *points;
 		for (const auto& p : pointsi)
 		{
 			// TL is a Begin()
 			ItemVec2 pi(par->toDisplayX(p.getX()), par->toDisplayY(p.getY()));
-			//pi *= zoom;
-			pi -= par->offset; // Admit the scrollers
+			pi -= scrollOff; // Admit the scrollers
+			pi += offset; // TL coords from app
 
-			//pi -= par->offset;
-			list->AddCircleFilled(offset + pi, 3 * zoom, bigColor);
-			list->AddCircleFilled(offset + pi, 2 * zoom, midColor);
+			if (pi.x < csreenStar.x || pi.y < csreenStar.y)
+				continue;
+			if (pi.x > csreenEnd.x || pi.y > csreenEnd.y)
+				continue;
+
+			list->AddCircleFilled(pi, 3 * zoom, bigColor);
+			list->AddCircleFilled(pi, 2 * zoom, midColor);
 		}
 	}
 };

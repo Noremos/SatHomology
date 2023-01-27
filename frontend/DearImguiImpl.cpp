@@ -115,20 +115,21 @@ bool GuiImage::setSource(const BackPathStr& path)
 
 void GuiImage::release()
 {
-	if (textureId != 0)
-	{
-		glDeleteTextures(1, &textureId);
-		textureId = 0;
-	}
+	textureId.reset();
+}
+
+TextureId::~TextureId()
+{
+	glDeleteTextures(1, &textureId);
 }
 
 void GuiImage::makeTexture(unsigned char* image_data, int comp)
 {
-	release();
-
 	// Create a OpenGL texture identifier
-	glGenTextures(1, &textureId);
-	glBindTexture(GL_TEXTURE_2D, textureId);
+	GLuint newtext;
+	glGenTextures(1, &newtext);
+	glBindTexture(GL_TEXTURE_2D, newtext);
+	textureId = std::make_shared<GLuint>(newtext);
 
 	// Setup filtering parameters for display
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

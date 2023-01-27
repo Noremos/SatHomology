@@ -40,8 +40,19 @@ using std::string;
 
 struct BarCategories
 {
+	int counter;
 	std::vector<int> value;
 	std::vector<string> name;
+
+	int addValue(const BackString& nname)
+	{
+		if (value.size() > 0 && value.back() > counter)
+			counter = value.back() + 1;
+		name.push_back(nname);
+		int id = counter++;
+		value.push_back(id);
+		return id;
+	}
 };
 
 class GeoBarCache
@@ -115,12 +126,14 @@ public:
 	void openRead(const BackPathStr& str)
 	{
 		state.reset(new StateBinFile::BinStateReader());
-		state->open(str.string());
+		if (!state->open(str.string()))
+			throw;
 	}
 	void openWrite(const BackPathStr& str)
 	{
 		state.reset(new StateBinFile::BinStateWriter());
-		state->open(str.string());
+		if (!state->open(str.string()))
+			throw;
 	}
 
 	void openRead();
@@ -128,7 +141,7 @@ public:
 
 	BarcodeHolder* load(int& index)
 	{
-		return saveLoadBar(index);
+		return saveLoadBar(index, new BarcodeHolder());
 	}
 
 	CloudItem* loadCloudItemByIndex(int index)
@@ -324,12 +337,39 @@ public:
 	BarCategories categs;
 	std::vector < bc::Barcontainer> classes;
 
-	void addClass(bc::barlinevector &cont, int classInd)
+	void addData(int classInd, bc::barlinevector &cont, const bool move = true)
 	{
 		bc::Baritem *item = new bc::Baritem();
-		item->barlines = cont;
+		if (move)
+		{
+			item->barlines = std::move(cont);
+		}
+		else
+		{
+			// Copy
+			for (size_t j = 0; j < cont.size(); j++)
+			{
+				item->barlines.push_back(cont[j]->clone());
+			}
+		}
+
 		item->relen();
 		classes[classInd].addItem(item);
+	}
+
+	void addData(int classInd, bc::Baritem* item)
+	{
+		item->relen();
+		classes[classInd].addItem(item);
+	}
+
+
+	void udpdateClasses()
+	{
+		for (size_t i = classes.size(); i < categs.value.size(); i++)
+		{
+			classes.push_back(bc::Barcontainer());
+		}
 	}
 
 private:
@@ -446,11 +486,6 @@ public:
 //	}
 //}
 
-void addClass(bc::Baritem* item, int classInd)
-{
-	item->relen();
-	classes[classInd].addItem(item);
-}
 
 //void addClass(bc::barline *line, int classInd)
 //{
@@ -518,12 +553,17 @@ public:
 
 	void loadCategories(std::function<void(int classId, const BackString& name)> callback);
 
-	void loadClasses(const BackDirStr& path, barclassificator& barclas, const bc::BarConstructor& consrt)
+	void loadClasses(const BackDirStr& path, barclassificator& barclas)
 	{
+		barclas.udpdateClasses();
 		auto& crgs = barclas.categs.value;
+
 		for (auto categ : crgs)
 		{
 			BackDirStr dirl = path / intToStr(categ);
+			if (!pathExists(dirl))
+				continue;
+
 			for (auto const& entry : std::filesystem::directory_iterator(dirl))
 			{
 				if (!entry.is_regular_file())
@@ -534,12 +574,12 @@ public:
 				auto ext = entry.path().extension();
 				if (ext == ".bbf")
 				{
-					BackPathStr filename = entry.path().filename();
+					BackPathStr filename = entry.path();
 					GeoBarHolderCache reader;
 					reader.openRead(filename.string());
-					int ind;
+					int ind = 0;
 					std::unique_ptr<BarcodeHolder> prt(reader.load(ind));
-					barclas.addClass(prt->lines, categ);
+					barclas.addData(categ, prt->lines, true);
 				}
 				else if (ext == ".jpg")
 				{

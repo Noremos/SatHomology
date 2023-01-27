@@ -25,6 +25,7 @@ Project::Project()
 
 	srand(300);
 	colors.push_back(Barscalar(255, 0, 0));
+	colors.push_back(Barscalar(0, 0, 0));
 	colors.push_back(Barscalar(0, 255, 0));
 	colors.push_back(Barscalar(0, 0, 255));
 	for (int k = 0; k < 40; ++k)
@@ -50,18 +51,8 @@ bool Project::saveProject()
 	saveFile.close();
 
 	mkDirIfNotExists(getPath(BackPath::tiles));
-
-	if (!pathExists(getPath(BackPath::classifier)))
-	{
-		BarCategories acsa;
-		acsa.value.push_back(0);
-		acsa.name.push_back("Bad");
-		acsa.value.push_back(1);
-		acsa.name.push_back("Kurgan");
-
-		BarClassifierCache ccb;
-		ccb.saveCategories(acsa);
-	}
+	BarClassifierCache ccb;
+	ccb.saveCategories(classer.categs);
 	return true;
 }
 
@@ -205,33 +196,21 @@ void Project::classBarcode(BarcodesHolder& baritem, ClassInfo& info)
 		if (matr.size() == 0)
 			continue;
 
+		Barscalar pointCol(255, 0, 0);
 		int type = -1;
 		{
-			// Its clone inside
-//			type = classer.getType(b);
-			//				tlines = std::move(item.barlines);
+			// It clones inside
+			type = classer.getType(b);
+			pointCol = colors[type + 1];
+
+			//if (type == -1)
+			//	type = rand() % colors.size();
+			//pointCol = colors[type];
 		}
 
-		//			if (type > 0)
-		//				geojson[type].push_back(b);
-
-//		if (type <= 0 && !showBad)
-//			continue;
-
-		if (type == -1)
-			type = rand() % colors.size();
-
-		int depth = b->getDeath();
-		//		if (depth == 1)
-		//			continue;
-		//		if (showWhite && type == 0)
-		//			continue;
-
-		Barscalar color = colors[type];
-
 		std::unordered_set<uint> vals;
-
 		std::shared_ptr<SimpleLine> sl = std::make_shared<SimpleLine>(info.ind, i);
+		int depth = b->getDeath();
 		sl->depth = depth;
 		//		simpleHolder.push_back(sl);
 
@@ -275,22 +254,22 @@ void Project::classBarcode(BarcodesHolder& baritem, ClassInfo& info)
 			}
 
 			bc::point cp(x, y);
-			info.mat.set(cp.x, cp.y, Barscalar(255, 0, 0));
+			info.mat.set(cp.x, cp.y, pointCol);
 			if (cp.x - 1 >= 0)
 			{
-				info.mat.set(cp.x - 1, cp.y, Barscalar(255, 0, 0));
+				info.mat.set(cp.x - 1, cp.y, pointCol);
 			}
 			if (cp.x + 1 < info.mat.wid())
 			{
-				info.mat.set(cp.x + 1, cp.y, Barscalar(255, 0, 0));
+				info.mat.set(cp.x + 1, cp.y, pointCol);
 			}
 			if (cp.y - 1 >= 0)
 			{
-				info.mat.set(cp.x, cp.y - 1, Barscalar(255, 0, 0));
+				info.mat.set(cp.x, cp.y - 1, pointCol);
 			}
 			if (cp.y + 1 < info.mat.wid())
 			{
-				info.mat.set(cp.x, cp.y + 1, Barscalar(255, 0, 0));
+				info.mat.set(cp.x, cp.y + 1, pointCol);
 			}
 		}
 	}
@@ -351,6 +330,10 @@ bool Project::loadProject(const BackPathStr& prjFilepath)
 	modelHei = reader->height() / u_displayFactor;
 	readImages();
 
+	BarClassifierCache bcc;
+	classer.categs = bcc.loadCategories();
+	classer.udpdateClasses();
+	bcc.loadClasses(getPath(BackPath::classfiles), classer);
 	return true;
 }
 
@@ -567,13 +550,24 @@ void Project::exportResult(int imgNumber, const BackImage& resultMart)
 }
 
 
-void Project::addClass(int classIndex, BarcodeHolder* points)
+void Project::addClassData(int classIndex, BarcodeHolder* points, BackImage* destIcon)
 {
 	auto rect = bc::getBarRect(points->matrix);
 	BackImage rt(rect.width, rect.height, 3);
 	DataRect r = reader->getRect(rect.x, rect.y, rect.width, rect.height);
-	BackImage imgReprp(r.wid, r.hei, r.data.samples, r.data.ptr.b);
+	BackImage imgReprp;
+	if (destIcon == nullptr)
+		destIcon = &imgReprp;
+
+	*destIcon = BackImage(r.wid, r.hei, r.data.samples, r.data.ptr.b);
 
 	BarClassifierCache saver;
-	saver.save(points, classIndex, &imgReprp);
+	saver.save(points, classIndex, destIcon);
+	classer.addData(classIndex, points->lines, false);
+}
+
+int Project::addClassType(const BackString& name)
+{
+	classer.classes.push_back(Barcontainer());
+	return classer.categs.addValue(name);
 }

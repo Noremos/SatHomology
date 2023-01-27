@@ -155,14 +155,15 @@ namespace MyApp
 	{
 		int classId = 0;
 		std::string valeExtra = "barclass;";
-		bool showLoader = false;
+		bool showClassifier = false;
 		BackString debug;
+		bool drawPics = true;
 	};
 	BottomBar bottomVals;
 
-
 	void loaderCategors(int classId, const BackString& name);
 	void loaderFile(int classId, const BackPathStr& path);
+
 
 	struct ClassiferVals
 	{
@@ -179,7 +180,6 @@ namespace MyApp
 
 		GuiDrawImage iconImage;
 		std::vector<ClassTextures> classImages;
-		int classIndex = 0;
 		int itemCurrent = 0;
 
 		int getClassImagesSize()
@@ -188,12 +188,12 @@ namespace MyApp
 		}
 		ClassTextures& getClassImagesData()
 		{
-			return classImages[classIndex];
+			return classImages[classesLB.currentValue()];
 		}
 
 		ImVec2 getPngSize()
 		{
-			return ImVec2(50, 50);
+			return ImVec2(100, 100);
 		}
 
 		void loadClassImages()
@@ -203,11 +203,35 @@ namespace MyApp
 
 			BarClassifierCache bcc;
 			bcc.loadCategories(casFS);
+			classesLB.endAdding();
 			bcc.loadImgs(casif, classesLB.getValuesIterator(), classesLB.getSize());
 		}
 	};
 	ClassiferVals classerVals;
 
+	void loaderCategors(int classId, const BackString& name)
+	{
+		classerVals.classesLB.add(name, classId);
+		classerVals.classImages.push_back(ClassiferVals::ClassTextures(classId));
+	}
+
+	void loaderFile(int classId, const BackPathStr& path)
+	{
+		BackImage a = imread(path);
+		if (a.wid() == 0)
+			throw;
+		int wid = a.wid();
+		int hei = a.hei();
+		auto sa = classerVals.getPngSize();
+		ResizeImage(wid, hei, sa.x, sa.y);
+		a.resize(wid, hei);
+
+		GuiImage img;
+		img.setImage(a);
+		classerVals.classImages[classId].imgs.push_back(std::move(img));
+	}
+
+	// -------------------
 
 	struct WindowsValues
 	{
@@ -229,19 +253,6 @@ namespace MyApp
 
 	WindowsValues commonValus;
 
-	void loaderCategors(int classId, const BackString& name)
-	{
-		classerVals.classesLB.add(name, classId);
-	}
-
-	void loaderFile(int classId, const BackPathStr& path)
-	{
-		BackImage a = imread(path);
-		a.resize(classerVals.getPngSize().x, classerVals.getPngSize().y);
-		GuiImage img;
-		img.setImage(a);
-		classerVals.classImages[classId].imgs.push_back(img);
-	}
 	// Draws
 
 	// Top Menu
@@ -362,8 +373,8 @@ namespace MyApp
 			if (ImGui::Button("Построить баркод"))
 			{
 				backend.createBarcode(
-				//commonValus.onAir = true;
-				//commonValus.future = std::async(&GuiBackend::createBarcode, std::ref(backend),
+					//commonValus.onAir = true;
+					//commonValus.future = std::async(&GuiBackend::createBarcode, std::ref(backend),
 					tbVals.procCB.currentValue(),
 					tbVals.colorCB.currentValue(),
 					tbVals.componentCB.currentValue(),
@@ -373,9 +384,17 @@ namespace MyApp
 			ImGui::EndDisabled();
 
 			ImGui::SameLine();
-			if (ImGui::Button("Восстановить")) {
+			if (ImGui::Button("Восстановить"))
+			{
 				backend.restoreSource();
 			}
+
+			ImGui::SameLine();
+			if (ImGui::Button("Save"))
+			{
+				backend.save();
+			}
+
 
 			// GBl
 			ImGui::EndDisabled();
@@ -416,6 +435,9 @@ namespace MyApp
 		ImGui::SetNextWindowPos(pos);
 		ImGui::SetNextWindowSize(size);
 		ImGui::SetNextWindowViewport(viewport->ID);
+
+		ImVec2 prevOff = centerVals.processImage.offset;
+		ImVec2 prevwWin = centerVals.processImage.winPos;
 		centerVals.processImage.drawImage("Processed", true);
 		if (centerVals.processImage.clicked)
 		{
@@ -423,7 +445,7 @@ namespace MyApp
 			centerVals.clickHandler.points = backend.click(p.x, p.y);
 		}
 		bottomVals.debug = intToStr(ImGui::GetIO().MousePos.x) + ":" + intToStr(ImGui::GetIO().MousePos.y);
-		centerVals.clickHandler.draw("Processed");
+		centerVals.clickHandler.draw("Processed", prevwWin, prevOff, size);
 	}
 	// ------
 
@@ -435,13 +457,13 @@ namespace MyApp
 		if (ImGui::BeginViewportSideBar("##BottomBar", NULL, ImGuiDir_Down, 100, window_flags))
 		{
 			// GBL
-			ImGui::BeginDisabled(commonValus.onAir);
+			ImGui::BeginDisabled(commonValus.onAir || !tbVals.enableProcessBtn);
 
 			//ImGui::Text("Happy secondary menu bar");
 			ImGui::SameLine();
 			if (ImGui::Button("Update"))
 			{
-				 backend.processMain(bottomVals.valeExtra);
+				backend.processMain(bottomVals.valeExtra);
 				//commonValus.onAir = true;
 				//commonValus.future = std::async(&GuiBackend::processMain, std::ref(backend),
 				//	bottomVals.valeExtra);
@@ -452,7 +474,7 @@ namespace MyApp
 			ImGui::SameLine();
 			if (ImGui::Button("Add class"))
 			{
-				backend.addClass(bottomVals.classId);
+				backend.addClassType("");
 				// Do something when Button 1 is clicked
 			}
 
@@ -478,12 +500,18 @@ namespace MyApp
 			ImGui::SetNextItemWidth(300);
 			ImGui::InputText("Extra", (char*)bottomVals.valeExtra.c_str(), bottomVals.valeExtra.length());
 
-			ImGui::SameLine(0, 30);
-			if (ImGui::Button("Loader"))
+			if (ImGui::Checkbox("Enable pics", &bottomVals.drawPics))
 			{
-				bottomVals.showLoader = true;
+				backend.showResultPics(bottomVals.drawPics);
 			}
 
+			ImGui::SameLine(0, 30);
+			if (ImGui::Button("Классификатор"))
+			{
+				bottomVals.showClassifier = true;
+			}
+
+			ImGui::SameLine(0, 30);
 			ImGui::Text(bottomVals.debug.c_str());
 
 			// GBL
@@ -504,8 +532,30 @@ namespace MyApp
 		{
 			classerVals.classesLB.drawListBox("Классы");
 			//ImGui::ListBox("My List Box", &item_current, items, IM_ARRAYSIZE(items), 4);
+
+
+			if (ImGui::Button("Add selected"))
+			{
+				BackImage icon;
+				int selectedClass = classerVals.classesLB.currentValue();
+				if (backend.addSelectedToClassData(selectedClass, &icon))
+				{
+					GuiImage img;
+					img.setImage(icon);
+					classerVals.classImages[selectedClass].imgs.push_back(img);
+				}
+				//backend.undoAddClass();
+			}
 			ImGui::SameLine();
 
+
+			if (ImGui::Button("Drop"))
+			{
+				// Open a file dialog to select a folder
+				backend.exportResult(getSavePath({ "*.png" }));
+			}
+
+			ImGui::SameLine();
 
 			if (ImGui::Button("Load from image"))
 			{
@@ -548,21 +598,34 @@ namespace MyApp
 				ImGui::EndPopup();
 			}
 
-
-			if (ImGui::Button("Drop")) {
-				// Open a file dialog to select a folder
-				backend.exportResult(getSavePath({ "*.png" }));
-			}
 			ImGui::BeginGroup();
 
 			auto& pngs = classerVals.getClassImagesData().imgs;
-			for (int i = 0; i < classerVals.getClassImagesSize(); i++)
+
+			//int curItem = 0;
+			//auto imgLoader = [](void* data, int idx, const char** out_text) {
+			//		auto& pngs = *static_cast<std::vector<GuiImage>*>(data);
+			//		*out_text = pngs[idx].name.c_str();
+			//		return true;
+			//	};
+			//ImGui::ListBox("Images", &curItem, imgLoader, &pngs, pngs.size());
+
+
+			//if (ImGui::BeginChild("ImagePreview"))
+			//{
+			//	if (curItem >= 0 && selectedImage < pngs.size())
+			//	{
+			//		ImVec2 siz(pngs[curItem].width, pngs[curItem].height)
+			//		ImGui::Image(pngs[curItem].getTexturePtr(), siz);
+			//	}
+			//	ImGui::EndChild();
+			//}
+			for (size_t j = 0; j < pngs.size(); j++)
 			{
-				ImGui::PushID(i);
-				ImGui::Image((void*)(intptr_t)pngs[i].textureId, classerVals.getPngSize());
+				ImGui::PushID(j);
+				ImGui::Image(pngs[j].getTexturePtr(), ImVec2(pngs[j].width, pngs[j].height));
 				ImGui::PopID();
 			}
-
 			ImGui::EndGroup();
 
 		}
@@ -575,7 +638,7 @@ namespace MyApp
 		drawTopBar();
 		drawWorkout();
 		drawBottomBar();
-		if (bottomVals.showLoader)
+		if (bottomVals.showClassifier)
 		{
 			drawClassifierMenu();
 		}
