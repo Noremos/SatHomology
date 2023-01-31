@@ -100,7 +100,7 @@ namespace MyApp
 		SelectableKeyValues<bc::ProcType> procCB =
 		{
 			{bc::ProcType::f0t255, "От 0 до 255"},
-			{bc::ProcType::f255t0, "От 0 до 255"},
+			{bc::ProcType::f255t0, "От 255 до 0"},
 			{bc::ProcType::Radius, "По расстоянию"},
 			{bc::ProcType::invertf0, "Инвертировать"},
 			{bc::ProcType::experiment, "Радар"},
@@ -136,6 +136,20 @@ namespace MyApp
 		}
 
 		FilterInfo filterInfo;
+
+		void createBarcode()
+		{
+			backend.createBarcode(
+				//commonValus.onAir = true;
+				//commonValus.future = std::async(&GuiBackend::createBarcode, std::ref(backend),
+				procCB.currentValue(),
+				colorCB.currentValue(),
+				componentCB.currentValue(),
+				//std::cref(tbVals.filterInfo));
+				filterInfo);
+		}
+
+		SelectableKeyValues<int> imgSubImages;
 	};
 
 	TopbarValues tbVals;
@@ -292,9 +306,56 @@ namespace MyApp
 			// GBl
 			ImGui::BeginDisabled(commonValus.onAir);
 
-			ImGui::SameLine();
+			if (ImGui::Button("Create prj"))
+			{
+				ImGui::OpenPopup("CreateProject");
+			}
 
-			if (ImGui::Button("Load"))
+			if (ImGui::BeginPopupModal("CreateProject", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+			{
+				static char str0[128] = "Hello, world!";
+				ImGui::InputText("Name", str0, IM_ARRAYSIZE(str0));
+
+				static char path[1024] = "";
+
+				ImGui::InputText("Path", path, IM_ARRAYSIZE(str0));
+
+				//if (ImGui::Button("Select proj"))
+				//{
+				//	BackPathStr pathi = openDir();
+				//	memcpy(path, pathi.string().c_str(), pathi.string().length());
+				//}
+
+				if (ImGui::Button("Select img"))
+				{
+					BackPathStr pathi = openImage();
+					memcpy(path, pathi.string().c_str(), pathi.string().length());
+				}
+
+				if (ImGui::Button("OK", ImVec2(120, 0)))
+				{
+					backend.loadImageOrProject(path);
+					if (backend.isImageLoaded())
+					{
+						tbVals.enableProcessBtn = true;
+						centerVals.mainImage.tileSize = backend.getTileSize();
+						classerVals.loadClassImages();
+					}
+
+					ImGui::CloseCurrentPopup();
+				}
+
+				ImGui::SameLine();
+				if (ImGui::Button("Cancel", ImVec2(120, 0)))
+				{
+					ImGui::CloseCurrentPopup();
+				}
+
+				ImGui::EndPopup();
+			}
+
+			ImGui::SameLine();
+			if (ImGui::Button("Load prj"))
 			{
 				BackPathStr path = openImageOrProject();
 				if (!path.empty())
@@ -365,24 +426,49 @@ namespace MyApp
 
 				ImGui::SetItemDefaultFocus();
 				ImGui::SameLine();
-				if (ImGui::Button("Cancel", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+				if (ImGui::Button("Cancel", ImVec2(120, 0)))
+				{
+					ImGui::CloseCurrentPopup();
+				}
+
 				ImGui::EndPopup();
 			}
 
 			ImGui::SameLine();
 			if (ImGui::Button("Построить баркод"))
 			{
-				backend.createBarcode(
-					//commonValus.onAir = true;
-					//commonValus.future = std::async(&GuiBackend::createBarcode, std::ref(backend),
-					tbVals.procCB.currentValue(),
-					tbVals.colorCB.currentValue(),
-					tbVals.componentCB.currentValue(),
-					//std::cref(tbVals.filterInfo));
-					tbVals.filterInfo);
+				auto subs = backend.getSumImageInfos();
+				if (subs.size() != 0)
+				{
+					for (size_t i = 0; i < subs.size(); i++)
+					{
+						SubImgInfo& sub = subs[i];
+						BackString s = intToStr(sub.width) + "x" + intToStr(sub.height);
+						tbVals.imgSubImages.add(s, i);
+					}
+					tbVals.imgSubImages.endAdding();
+					tbVals.imgSubImages.currentIndex = 0;
+					ImGui::OpenPopup("SelectMax");
+				}
+				else
+				{
+					tbVals.createBarcode();
+				}
 			}
 			ImGui::EndDisabled();
 
+			if (ImGui::BeginPopupModal("SelectMax", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+			{
+				tbVals.imgSubImages.drawListBox("Размеры");
+				if (ImGui::Button("Выбрать"))
+				{
+					backend.setSubImage(tbVals.imgSubImages.currentIndex);
+					ImGui::CloseCurrentPopup();
+					tbVals.createBarcode();
+				}
+				ImGui::EndPopup();
+			}
+			// ---------------------------------
 			ImGui::SameLine();
 			if (ImGui::Button("Восстановить"))
 			{
@@ -394,7 +480,6 @@ namespace MyApp
 			{
 				backend.save();
 			}
-
 
 			// GBl
 			ImGui::EndDisabled();

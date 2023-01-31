@@ -104,6 +104,8 @@ public:
 	};
 
 	// Gui
+	void createProject(const BackPathStr& path, const BackString& name, const BackPathStr& imgPath);
+
 	void settup(GuiDrawImage* mainImage, GuiDrawImage* processedImage, GuiItem* sliderPanel);
 	void loadImageOrProject(const BackPathStr& path);
 	void createBarcode(bc::ProcType procType, bc::ColorType colType, bc::ComponentType compType, const FilterInfo& info);
@@ -146,21 +148,42 @@ public:
 	void showResultPics(bool show);
 
 	int addClassType(const BackString& name);
+
+	std::vector<SubImgInfo> getSumImageInfos()
+	{
+		std::vector<SubImgInfo> info;
+		if (proj->imgType != ReadType::Tiff)
+			return info;
+
+		TiffReader* treader = dynamic_cast<TiffReader*>(proj->reader);
+
+		info = treader->getSumImageInfos();
+		return info;
+	}
+
+	void setSubImage(int index)
+	{
+		curImgInd = index;
+		proj->setCurrentSubImage(index, mainMat.width());
+	}
+
 private:
-	int getBarsCount();
 	void resetSource();
 	void printCommon(int st, int ed, bool needSort);
+
+	void endLoaded();
+
 	//void setTempDir(const BackPathStr& path);
 
-	inline bc::Baritem* getBaritem()
-	{
-		return barcode ? barcode->getItem(0) : nullptr;
-	}
+	//inline bc::Baritem* getBaritem()
+	//{
+	//	return barcode ? barcode->getItem(0) : nullptr;
+	//}
 
-	inline bc::Baritem* getSortedBaritem()
-	{
-		return barcode ? barcode->getItem(1) : nullptr;
-	}
+	//inline bc::Baritem* getSortedBaritem()
+	//{
+	//	return barcode ? barcode->getItem(1) : nullptr;
+	//}
 
 
 private:
@@ -199,7 +222,7 @@ private:
 	int curImgInd;
 	int curDisplayImgInd;
 
-	std::unique_ptr<bc::Barcontainer> barcode = nullptr;
+	//std::unique_ptr<bc::Barcontainer> barcode = nullptr;
 	bool created = false;
 
 	bc::ColorType col;
