@@ -374,7 +374,7 @@ public:
 
 		ImDrawList* list = ImGui::FindWindowByName(name)->DrawList;
 
-		ImColor bigColor(255, 0, 0);
+		ImColor bigColor(128, 0, 255);
 		ImColor midColor(220, 200, 0);
 
 		float zoom = par->getZoom();
@@ -382,6 +382,8 @@ public:
 		ApplicationVec2 csreenStar = prevWin + ImVec2(3 * zoom + 5, 3 * zoom + 5);
 		ApplicationVec2 csreenEnd = prevWin + winSize - ImVec2(3 * zoom + 10, 3 * zoom + 10);
 		bc::barvector& pointsi = *points;
+
+		float pixelSize = MAX(1,winSize.x / par->width);
 		for (const auto& p : pointsi)
 		{
 			// TL is a Begin()
@@ -394,8 +396,10 @@ public:
 			if (pi.x > csreenEnd.x || pi.y > csreenEnd.y)
 				continue;
 
-			list->AddCircleFilled(pi, 3 * zoom, bigColor);
-			list->AddCircleFilled(pi, 2 * zoom, midColor);
+			// Center pixel for big images
+			pi += ImVec2(pixelSize / 2, pixelSize / 2);
+			list->AddCircleFilled(pi, 3 * pixelSize, bigColor);
+			list->AddCircleFilled(pi, 2 * pixelSize, midColor);
 		}
 	}
 };
