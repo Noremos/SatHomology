@@ -217,6 +217,7 @@ public:
 	float u_imgMaxVal;
 	float u_imgMinVal;
 	BackPathStr u_geojsonPath;
+	int u_subImageIndex = 0;
 	BackVector<MatrImg*> images;
 
 	int tileSize = 200;
@@ -226,16 +227,24 @@ public:
 
 	ImageReader *reader = nullptr;
 
-	void setCurrentSubImage(int imgIndex)
+	void setCurrentSubImage(int imgIndex, int displayWid)
 	{
 		if (imgType == ReadType::Tiff)
+		{
 			dynamic_cast<TiffReader *>(reader)->setCurrentSubImage(imgIndex);
+			u_displayFactor = (float)reader->widght() / displayWid;
+			u_subImageIndex = imgIndex;
+		}
+		else
+		{
+			u_subImageIndex = 0;
+			u_displayFactor = 1.0f;
+		}
 	}
 
 	void setReadyLaod(int curImgInd, int displayWid)
 	{
-		setCurrentSubImage(curImgInd);
-		u_displayFactor = (float)reader->widght() / displayWid;
+		setCurrentSubImage(curImgInd, displayWid);
 	}
 
 	void closeReader()
@@ -388,7 +397,8 @@ public:
 
 
 	void readImages();
-	bc::Barcontainer* createCacheBarcode(const bc::BarConstructor& constr, int imgIndex, const FilterInfo& info);
+
+	void createCacheBarcode(const bc::BarConstructor& constr, int imgIndex, const FilterInfo& info);
 	void getOffsertByTileIndex(int tileIndex, uint &offX, uint &offY);
 
 

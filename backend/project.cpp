@@ -22,7 +22,6 @@ Project::Project()
 	u_classCache = getDicumnetPath() / "GeoBar";
 	mkDirIfNotExists(u_classCache);
 
-
 	srand(300);
 	colors.push_back(Barscalar(255, 0, 0));
 	colors.push_back(Barscalar(0, 0, 0));
@@ -100,9 +99,9 @@ void saveLoadBarlines(StateBinFile::BinState& state)
 
 // ---------------------------
 
-bc::Barcontainer* Project::createCacheBarcode(const bc::BarConstructor& constr, int imgIndex, const FilterInfo& info)
+void Project::createCacheBarcode(const bc::BarConstructor& constr, int imgIndex, const FilterInfo& info)
 {
-	if (block) return nullptr;
+	if (block) return;
 
 //	reader->setCurrentSubImage(1);
 	if (imgType == ReadType::Tiff)
@@ -111,8 +110,6 @@ bc::Barcontainer* Project::createCacheBarcode(const bc::BarConstructor& constr, 
 	GeoBarHolderCache creator;
 	creator.openWrite(getPath(BackPath::binbar).string());
 
-	Barcontainer *barconsrt = nullptr;
-	Baritem *main = nullptr;
 	const uint fullTile = tileSize + tileOffset;
 	uint stH = 0, stW = 0;
 
@@ -137,8 +134,8 @@ bc::Barcontainer* Project::createCacheBarcode(const bc::BarConstructor& constr, 
 			DataRect rect = reader->getRect(stW, stH, iwid, ihei);
 
 			DataRectBarWrapper warp(rect);
-			main = creator.create(&warp, constr);
-			auto cloud = creator.toCloundBarcode(main, bc::point(stW, stH), info);
+			std::unique_ptr<Baritem> main(creator.create(&warp, constr));
+			auto cloud = creator.toCloundBarcode(main.get(), bc::point(stW, stH), info);
 			creator.save(ke++, &cloud);
 
 			stW += tileSize;
@@ -146,12 +143,7 @@ bc::Barcontainer* Project::createCacheBarcode(const bc::BarConstructor& constr, 
 		stH += tileSize;
 	}
 
-	if (main == nullptr)
-		return nullptr;
-
 	saveProject();
-
-	return barconsrt;
 }
 
 
@@ -220,8 +212,8 @@ void Project::classBarcode(BarcodesHolder& baritem, ClassInfo& info)
 		{
 			int ox = pm.getX();// -xOff;
 			int oy = pm.getY();// -yOff;
-			int x = (ox) / u_displayFactor;
-			int y = (oy) / u_displayFactor;
+			int x = min(info.mat.wid() - 1, static_cast<int>((ox) / u_displayFactor));
+			int y = min(info.mat.hei() - 1, static_cast<int>((oy) / u_displayFactor));
 			uint index = bc::barvalue::getStatInd(x, y);
 			if (vals.find(index) != vals.end())
 				continue;
@@ -342,7 +334,8 @@ static const char* jsn_imgMinVal	= "imgMinVal";
 static const char* jsn_imgMaxVal	= "imgMaxVal";
 static const char* jsn_geojsonPath  = "geojsonPath";
 static const char* jsn_imgPath = "imgPath";
-static const char* jsn_classfiles  = "barfiles";
+static const char* jsn_classfiles = "barfiles";
+static const char* jsn_dispalyImg  = "subImageIndex";
 
 void Project::read(const BackJson& json)
 {
@@ -352,6 +345,7 @@ void Project::read(const BackJson& json)
 	this->u_imgPath = json[jsn_imgPath].get<BackString>();
 	this->u_geojsonPath = json[jsn_geojsonPath].get<BackString>();
 	this->u_classCache = json[jsn_classfiles].get<BackString>();
+	this->u_subImageIndex = json[jsn_dispalyImg].get<int>();
 }
 
 void Project::write(BackJson& json) const
@@ -362,12 +356,14 @@ void Project::write(BackJson& json) const
 	json[jsn_imgPath] = u_imgPath.string();
 	json[jsn_geojsonPath] = this->u_geojsonPath.string();
 	json[jsn_classfiles] = this->u_classCache.string();
+	json[jsn_dispalyImg] = this->u_subImageIndex;
 }
 
 static int getFid(int wid, int s)
 {
 	return (wid + s - 1) / s;
 }
+
 static MatrImg* tiffToImg(ImageReader *reader, const BackPathStr &path, int fctor = 10, bool save = false)
 {
 	bool rgb = reader->getSamples() > 1;
@@ -548,7 +544,6 @@ void Project::exportResult(int imgNumber, const BackImage& resultMart)
 	imwrite(getPath(BackPath::root) / "result.png", resultMart);
 	saveAllJsons(geojson, imgNumber, getPath(BackPath::geojson));
 }
-
 
 void Project::addClassData(int classIndex, BarcodeHolder* points, BackImage* destIcon)
 {
