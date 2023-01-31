@@ -72,13 +72,13 @@ public:
 	float scaleFactor = 1;
 
 
-	bool setSource(const BackPathStr& path);
+	bool setSource(const BackPathStr& path, bool smooth = true);
 
-	void setImage(const BackImage& img)
+	void setImage(const BackImage& img, bool smooth = true)
 	{
 		width = img.width();
 		height = img.height();
-		makeTexture(img.data, img.channels());
+		makeTexture(img.data, img.channels(), smooth);
 	}
 
 	void release();
@@ -96,7 +96,7 @@ public:
 
 private:
     std::shared_ptr<GLuint> textureId;
-	void makeTexture(unsigned char* image_data, int comp);
+	void makeTexture(unsigned char* image_data, int comp, bool smooth = true);
 };
 
 class GuiItem

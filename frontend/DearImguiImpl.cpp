@@ -63,7 +63,6 @@ void imwrite(const BackPathStr& path, const BackImage& mat)
 	imwrite(path.string(), mat);
 }
 
-
 BackPathStr openImageOrProject()
 {
 	// File open
@@ -82,6 +81,42 @@ BackPathStr openImageOrProject()
 	return f.result().size() == 0 ? "" : f.result()[0];
 }
 
+BackPathStr openImage()
+{
+	// File open
+	auto f = pfd::open_file("Choose files to read", pfd::path::home(),
+		{
+			"Images (.png .jpg, .tif)", "*.png *.jpg *.tiff *tif",
+			"All Files", "*"
+		},
+		pfd::opt::none);
+
+	std::cout << "Selected files:";
+	for (auto const& name : f.result())
+		std::cout << " " + name;
+	std::cout << "\n";
+
+	return f.result().size() == 0 ? "" : f.result()[0];
+}
+
+
+BackPathStr openProject()
+{
+	// File open
+	auto f = pfd::open_file("Choose files to read", pfd::path::home(),
+		{
+			"Project (.qwr)", "*.qwr",
+			"All Files", "*"
+		},
+		pfd::opt::none);
+
+	std::cout << "Selected files:";
+	for (auto const& name : f.result())
+		std::cout << " " + name;
+	std::cout << "\n";
+
+	return f.result().size() == 0 ? "" : f.result()[0];
+}
 
 BackPathStr getSavePath(std::initializer_list<std::string> exts)
 {
@@ -100,14 +135,14 @@ BackPathStr getDicumnetPath()
 
 // -----
 
-bool GuiImage::setSource(const BackPathStr& path)
+bool GuiImage::setSource(const BackPathStr& path, bool smooth)
 {
 	int comp = 4;
 	unsigned char* image_data = stbi_load(path.string().c_str(), &width, &height, NULL, 4);
 	if (image_data == NULL)
 		return false;
 
-	makeTexture(image_data, comp);
+	makeTexture(image_data, comp, smooth);
 	stbi_image_free(image_data);
 
 	return true;
@@ -123,7 +158,7 @@ TextureId::~TextureId()
 	glDeleteTextures(1, &textureId);
 }
 
-void GuiImage::makeTexture(unsigned char* image_data, int comp)
+void GuiImage::makeTexture(unsigned char* image_data, int comp, bool smooth)
 {
 	// Create a OpenGL texture identifier
 	GLuint newtext;
@@ -131,9 +166,17 @@ void GuiImage::makeTexture(unsigned char* image_data, int comp)
 	glBindTexture(GL_TEXTURE_2D, newtext);
 	textureId = std::make_shared<GLuint>(newtext);
 
-	// Setup filtering parameters for display
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	if (smooth)
+	{
+		// Setup filtering parameters for display
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	}
+	else
+	{
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	}
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // This is required on WebGL for non power-of-two textures
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Same
 

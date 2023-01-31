@@ -114,6 +114,15 @@ void GuiBackend::clear()
 	veas.clear();
 }
 
+void GuiBackend::createProject(const BackPathStr& path, const BackString& name, const BackPathStr& imgPath)
+{
+	BackPathStr fullPath = path / name;
+	proj->setProjectPath(fullPath);
+	proj->loadImage(imgPath, 1);
+	endLoaded();
+	state = GuiState::ImageLoaded;
+}
+
 void GuiBackend::settup(GuiDrawImage*mainImage, GuiDrawImage* processedImage, GuiItem* sliderPanel)
 {
 	this->mainImage = mainImage;
@@ -136,7 +145,7 @@ void GuiBackend::createBarcode(bc::ProcType procType, bc::ColorType colType, bc:
 	constr.addStructure(procType, colType, compType);
 //	constr.setStep(stepSB);
 
-	barcode.reset(proj->createCacheBarcode(constr, curImgInd, info));
+	proj->createCacheBarcode(constr, curImgInd, info);
 //	createBarcode(constr, curImgInd, 0);
 //	barcode.reset(bc.createBarcode(&mainMat, constr));
 
@@ -153,11 +162,26 @@ void GuiBackend::createBarcode(bc::ProcType procType, bc::ColorType colType, bc:
 //	int ma = getBaritem()->barlines.size();
 //	QMetaObject::invokeMethod(sliderP, "setMax", Qt::AutoConnection, Q_ARG(QVariant, QVariant::fromValue(ma)));
 
-	processedImage->setImage(mainMat);
+	processedImage->setImage(mainMat, false);
 	created = true;
 }
 
 #define ppair(x,y,chr) (std::pair<bc::point,uchar>(bc::point(x,y), chr))
+
+void GuiBackend::endLoaded()
+{
+	curDisplayImgInd = proj->getFirstNormIndex();
+	curImgInd = 0;
+
+	mainMat.assignCopyOf(*proj->images[curDisplayImgInd]);
+	clearResLine();
+	initResLine(mainMat.length());
+	mainImage->setImage(mainMat, false);
+
+	clear();
+	proj->setReadyLaod(curImgInd, mainMat.width());
+}
+
 
 void GuiBackend::loadImageOrProject(const BackPathStr& path)
 {
@@ -178,39 +202,17 @@ void GuiBackend::loadImageOrProject(const BackPathStr& path)
 		newState = GuiState::ImageLoaded;
 	}
 
-	curImgInd = curDisplayImgInd = proj->getFirstNormIndex();
-	mainMat.assignCopyOf(*proj->images[curDisplayImgInd]);
-	clearResLine();
-	initResLine(mainMat.length());
-
-	//mainImage->setSource(proj->getTilePath(curDisplayImgInd));
-	//imwrite(BackString("D:\\32.png"), mainMat);
-	mainImage->setImage(mainMat);
-
-	//maskImg = MatrImg(1, 1, 1);
-
+	endLoaded();
 	if (setProc)
 	{
-		processedImage->setImage(*proj->images[curDisplayImgInd]);
+		processedImage->setImage(*proj->images[curDisplayImgInd], false);
 		created = true;
 	}
 	else
 	{
 		created = false;
 	}
-
-	clear();
-	//resmap = new Cound*[maskImg.length()];
-	//memset(resmap, 0, maskImg.length() * sizeof(Cound *));
-
-	proj->setReadyLaod(curImgInd, mainMat.width());
-
 	state = newState;
-}
-
-int GuiBackend::getBarsCount()
-{
-	return (int)barcode->getItem(0)->barlines.size();
 }
 
 ///////////////////////==============
@@ -233,20 +235,20 @@ void GuiBackend::resetSource()
 
 void GuiBackend::printCommon(int st, int ed, bool needSort)
 {
-	auto bar = needSort ? getSortedBaritem() : getBaritem();
+	//auto bar = needSort ? getSortedBaritem() : getBaritem();
 
-	double masds = mainMat.length();
+	//double masds = mainMat.length();
 
-	comm.clear();
-	for (int i = st; i < ed; ++i)
-	{
-		auto &b = bar->barlines[i];
+	//comm.clear();
+	//for (int i = st; i < ed; ++i)
+	//{
+	//	auto &b = bar->barlines[i];
 
-		// Matrix
-		this->comm.calcCommon(b, masds);
-	}
+	//	// Matrix
+	//	this->comm.calcCommon(b, masds);
+	//}
 
-	comm.print();
+	//comm.print();
 }
 
 //void GuiBackend::setTempDir(const BackPathStr& path)
@@ -326,14 +328,12 @@ void GuiBackend::processMain(BackString extra)
 	Project::ClassInfo infoe{ 0, resultMart, map, extra, resLinesMap };
 	proj->readPrcoessBarcode(infoe);
 
-	processedImage->setImage(resultMart);
+	processedImage->setImage(resultMart, false);
 }
 
 
 void GuiBackend::deleteRange(int st, int ed, bool needSort)
 {
-	if (!barcode)
-		return;
 
 //	bc::barlinevector &baselines = getBaritem()->barlines;
 
@@ -435,10 +435,10 @@ void GuiBackend::showResultPics(bool show)
 {
 	if (show)
 	{
-		processedImage->setImage(resultMart);
+		processedImage->setImage(resultMart, false);
 	}
 	else
-		processedImage->setImage(mainMat);
+		processedImage->setImage(mainMat, false);
 }
 
 int GuiBackend::addClassType(const BackString& name)
