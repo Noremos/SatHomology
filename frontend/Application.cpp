@@ -86,6 +86,33 @@ namespace MyApp
 
 	// Structs
 
+	struct
+	{
+		std::mutex drawMutex;  // protects g_i
+		std::vector<bc::point> debugDraw;
+		std::vector<bc::PloyPoints> debugPlygon;
+		std::vector<std::pair<ImVec2, ImVec2>> debugLine;
+	} debugVals;
+
+	struct WindowsValues
+	{
+		bool onAir = false;
+
+		void onAirC()
+		{
+			if (onAir && future.valid())
+			{
+				if (future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
+				{
+					onAir = false;
+				}
+			}
+		}
+
+		std::future<void> future;
+	};
+	WindowsValues commonValus;
+
 	struct TopbarValues
 	{
 		// Component
@@ -139,14 +166,14 @@ namespace MyApp
 
 		void createBarcode()
 		{
-			backend.createBarcode(
-				//commonValus.onAir = true;
-				//commonValus.future = std::async(&GuiBackend::createBarcode, std::ref(backend),
+			//backend.createBarcode(
+				commonValus.onAir = true;
+				commonValus.future = std::async(&GuiBackend::createBarcode, &backend,
 				procCB.currentValue(),
 				colorCB.currentValue(),
 				componentCB.currentValue(),
-				//std::cref(tbVals.filterInfo));
-				filterInfo);
+				std::cref(filterInfo));
+				//filterInfo);
 		}
 
 		SelectableKeyValues<int> imgSubImages;
@@ -247,25 +274,11 @@ namespace MyApp
 
 	// -------------------
 
-	struct WindowsValues
+	void unsetPoints()
 	{
-		bool onAir = false;
-
-		void onAirC()
-		{
-			if (onAir && future.valid())
-			{
-				if (future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
-				{
-					onAir = false;
-				}
-			}
-		}
-
-		std::future<void> future;
-	};
-
-	WindowsValues commonValus;
+		centerVals.clickHandler.points = nullptr;
+		centerVals.processImage.clicked = false;
+	}
 
 	// Draws
 
@@ -366,6 +379,7 @@ namespace MyApp
 						tbVals.enableProcessBtn = true;
 						centerVals.mainImage.tileSize = backend.getTileSize();
 						classerVals.loadClassImages();
+						unsetPoints();
 					}
 				}
 			}
@@ -453,6 +467,7 @@ namespace MyApp
 				else
 				{
 					tbVals.createBarcode();
+					unsetPoints();
 				}
 			}
 			ImGui::EndDisabled();
@@ -465,6 +480,7 @@ namespace MyApp
 					backend.setSubImage(tbVals.imgSubImages.currentIndex);
 					ImGui::CloseCurrentPopup();
 					tbVals.createBarcode();
+					unsetPoints();
 				}
 				ImGui::EndPopup();
 			}
@@ -717,9 +733,57 @@ namespace MyApp
 		ImGui::End();
 	}
 
+
+	void debugWindow()
+	{
+		const std::lock_guard<std::mutex> lock(debugVals.drawMutex);
+		ImGui::Begin("debug");
+
+		ImDrawList* list = ImGui::GetWindowDrawList();
+		ImVec2 pos = ImGui::GetWindowPos();
+		pos.x += 10;
+		pos.y += 50;
+		const float mul = 3;
+
+		for (auto& i : debugVals.debugPlygon)
+		{
+			std::vector<ImVec2> vec;
+			std::transform(i.begin(), i.end(), std::back_inserter(vec), [mul, pos](bc::point& a)
+				{
+					return ImVec2(a.x, a.y) * mul + pos;
+				});
+
+			list->AddConvexPolyFilled(vec.data(), vec.size(), ImColor(255, 10, 10));
+		}
+
+		size_t total = debugVals.debugDraw.size();
+		for (size_t i = 0; i < total; i += 2)
+		{
+			ImVec2 p1(debugVals.debugDraw[i].x, debugVals.debugDraw[i].y) ;
+			ImVec2 p2(debugVals.debugDraw[i + 1].x, debugVals.debugDraw[i + 1].y);
+			p1 *= mul;
+			p2 *= mul;
+
+			p1 += pos;
+			p2 += pos;
+
+			list->AddLine(p1, p2, ImColor(255, 255, 182), 2);
+			list->AddCircleFilled(p1, 3, ImColor(50, 255, 0));
+			list->AddCircleFilled(p2, 3, ImColor(50, 255, 0));
+		}
+
+		for (auto& l : debugVals.debugLine)
+		{
+			list->AddLine(pos + l.first * mul, pos + l.second * mul, ImColor(255, 0, 0));
+		}
+
+		ImGui::End();
+	}
 	// Layout
 	void drawLayout()
 	{
+		debugWindow();
+
 		drawTopBar();
 		drawWorkout();
 		drawBottomBar();
@@ -746,6 +810,32 @@ namespace MyApp
 	{
 		backend.settup(&centerVals.mainImage, &centerVals.processImage, NULL);
 		centerVals.clickHandler.par = &centerVals.processImage;
+		bc::CloudPointsBarcode::drawLine = [](const bc::point& p1, const bc::point& p2, bool finale)
+		{
+			const std::lock_guard<std::mutex> lock(debugVals.drawMutex);
+
+			if (finale)
+			{
+				debugVals.debugLine.clear();
+				debugVals.debugLine.push_back({ ImVec2(p1.x, p1.y), ImVec2(p2.x, p2.y) });
+			}
+			debugVals.debugDraw.push_back(p1);
+			debugVals.debugDraw.push_back(p2);
+		};
+
+
+		bc::CloudPointsBarcode::drawPlygon = [](bc::PloyPoints& p1, bool finale)
+		{
+			debugVals.debugPlygon.push_back(std::move(p1));
+		};
+		//GeoBabc::CloudPointsBarcoderHolderCache::endPointsE = []()
+		//{
+		//	const std::lock_guard<std::mutex> lock(debugVals.drawMutex);
+		//	
+		//	debugVals.debugLine.clear();
+		//	debugVals.debugDraw.clear();
+		//	debugVals.debugDraw.clear();
+		//};
 	}
 	// Main
 	void MyApp::RenderUI()

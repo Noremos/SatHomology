@@ -8,3 +8,7 @@ libs/glfw/lib-vc2017
 libs/glfw/lib-vc2019
 libs/glfw/lib-mingw-*
 Release
+imgui.ini
+libs/lua
+side/lua
+libs/Lua2

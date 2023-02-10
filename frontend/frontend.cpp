@@ -429,6 +429,8 @@ bc::barvector* GuiBackend::click(int x, int y)
 
 		processedImage->setImage(temp);*/
 	}
+
+	return nullptr;
 }
 
 void GuiBackend::showResultPics(bool show)

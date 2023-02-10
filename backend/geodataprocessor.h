@@ -10,6 +10,11 @@
 #include <vector>
 #include "../frontend/Framework.h"
 
+#define IMGUI_DEFINE_MATH_OPERATORS
+
+#include "imgui.h"
+#include <imgui_internal.h>
+
 struct Cound
 {
 	int total = 0;
@@ -174,6 +179,7 @@ public:
 	CloudItem createSplitCloudBarcode(const bc::CloudPointsBarcode::CloundPoints& cloud)
 	{
 		bc::CloudPointsBarcode clodCrt;
+		clodCrt.useHolde = true;
 		std::unique_ptr<bc::Barcontainer> hold(clodCrt.createBarcode(&cloud));
 
 		BarcodesHolder holder;
