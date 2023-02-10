@@ -232,7 +232,7 @@ public:
 		if (imgType == ReadType::Tiff)
 		{
 			dynamic_cast<TiffReader *>(reader)->setCurrentSubImage(imgIndex);
-			u_displayFactor = (float)reader->widght() / displayWid;
+			u_displayFactor = (float)reader->width() / displayWid;
 			u_subImageIndex = imgIndex;
 		}
 		else
@@ -416,7 +416,7 @@ public:
 		for (int i = 0; i < s; ++i)
 		{
 			treader->setCurrentSubImage(i);
-			if (treader->widght() <= 2000)
+			if (treader->width() <= 2000)
 			{
 				return i;
 			}

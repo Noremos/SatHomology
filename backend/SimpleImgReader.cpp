@@ -59,7 +59,7 @@ int SimpleImgReader::getSamples()
 	return samples;
 }
 
-int SimpleImgReader::widght()
+int SimpleImgReader::width()
 {
 	return main.width();
 }

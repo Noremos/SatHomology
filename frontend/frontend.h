@@ -130,12 +130,12 @@ public:
 	}
 	inline int getImageMinSize()
 	{
- 		return std::min(proj->reader->widght(), proj->reader->height());
+ 		return std::min(proj->reader->width(), proj->reader->height());
 	}
 
 	inline BackSize getImageSize()
 	{
-		return BackSize(proj->reader->widght(), proj->reader->height());
+		return BackSize(proj->reader->width(), proj->reader->height());
 	}
 
 	BackDirStr getClassImagesPath()

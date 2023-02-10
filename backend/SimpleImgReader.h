@@ -22,7 +22,7 @@ public:
 	void close() override;
 	ImageType getType() override;
 	int getSamples() override;
-	int widght() override;
+	int width() override;
 	int height() override;
 	float getNullValue() override;
 	DataRect getRect(int stX, int stRow, int wid, int hei) override;
