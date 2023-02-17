@@ -106,15 +106,15 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>D:\Programs\C++\Barcode\PrjBarlib\modules;D:\Programs\C++\Barcode\PrjBarlib\include;..\imgui;..\imgui\backends;libs\glfw\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Programs\C++\Barcode\PrjBarlib\modules;D:\Programs\C++\Barcode\PrjBarlib\include;..\imgui;..\imgui\backends;libs\glfw\include;side\lua\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <EnableModules>true</EnableModules>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>libs\glfw\lib-vc2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>libs\glfw\lib-vc2022;libs\lua\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;glfw3.lib;liblua.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <IgnoreSpecificDefaultLibraries>msvcrt.lib</IgnoreSpecificDefaultLibraries>
     </Link>
@@ -147,7 +147,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>D:\Programs\C++\Barcode\PrjBarlib\modules;D:\Programs\C++\Barcode\PrjBarlib\include;..\imgui;..\imgui\backends;libs\glfw\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Programs\C++\Barcode\PrjBarlib\modules;D:\Programs\C++\Barcode\PrjBarlib\include;..\imgui;..\imgui\backends;libs\glfw\include;side\lua\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -157,8 +157,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>libs\glfw\lib-vc2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>libs\glfw\lib-vc2022;libs\lua\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;glfw3.lib;liblua.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
@@ -193,6 +193,7 @@
     <ClCompile Include="frontend\GuiCommon.cpp" />
     <ClCompile Include="frontend\GuiCommon.h" />
     <ClCompile Include="frontend\main.cpp" />
+    <ClCompile Include="side\Lua.ixx" />
     <ClCompile Include="side\sago\platform_folders.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -218,6 +219,7 @@
     <ClInclude Include="frontend\GuiWidgets.h" />
     <ClInclude Include="side\IconsFontAwesome5.h" />
     <ClInclude Include="side\PortFileDialog.h" />
+    <ClInclude Include="side\sol3\sol.hpp" />
     <ClInclude Include="side\stb_image.h" />
   </ItemGroup>
   <ItemGroup>

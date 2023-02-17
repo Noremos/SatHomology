@@ -79,9 +79,6 @@
     <ClCompile Include="backend\SimpleImgReader.cpp">
       <Filter>Backend</Filter>
     </ClCompile>
-    <ClCompile Include="frontend\frontend.cpp">
-      <Filter>GUI</Filter>
-    </ClCompile>
     <ClCompile Include="backend\Common.cpp">
       <Filter>Backend</Filter>
     </ClCompile>
@@ -101,10 +98,14 @@
     <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\BinStateFileWrapper.ixx">
       <Filter>Barcode\modules</Filter>
     </ClCompile>
-    <ClCompile Include="backend\geodataprocessor.ixx">
+    <ClCompile Include="backend\CacheFiles.ixx">
       <Filter>Backend</Filter>
     </ClCompile>
-    <ClCompile Include="backend\CacheFiles.ixx">
+    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\Barcode.ixx" />
+    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\TiffReaderWrapper.ixx" />
+    <ClCompile Include="backend\GeoProcessor.ixx" />
+    <ClCompile Include="frontend\frontend.ixx" />
+    <ClCompile Include="side\Lua.ixx">
       <Filter>Backend</Filter>
     </ClCompile>
   </ItemGroup>
@@ -154,9 +155,6 @@
     <ClInclude Include="backend\SimpleImgReader.h">
       <Filter>Backend</Filter>
     </ClInclude>
-    <ClInclude Include="frontend\frontend.h">
-      <Filter>GUI</Filter>
-    </ClInclude>
     <ClInclude Include="frontend\FrontTypes.h">
       <Filter>GUI</Filter>
     </ClInclude>
@@ -180,6 +178,9 @@
     </ClInclude>
     <ClInclude Include="frontend\GuiWidgets.h">
       <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="side\sol3\sol.hpp">
+      <Filter>Side</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

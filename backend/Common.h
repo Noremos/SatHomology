@@ -3,8 +3,7 @@
 #include  <iostream>
 #include <fstream>
 
-#include "barscalar.h"
-#include "barstrucs.h"
+#include "barline.h"
 
 #include "../side/json.hpp"
 using BackString = std::string;
@@ -147,13 +146,37 @@ struct BackSize
 
 struct FilterInfo
 {
-	int minLen = 20;
-	int maxLen = 255;
-	int minStart = 0;
-	int maxStart = 255;
-	bool needSkip(const Barscalar& start, const Barscalar& len) const
+	struct FRange
 	{
-		return  start >= minStart && start <= maxStart && len >= minLen && len <= maxLen;
+		int first;
+		int second;
+
+		//template<class T>
+		//bool inRange(const T& val) const
+		//{
+		//	return val >= first && val <= second;
+		//}
+
+		bool inRange(int val) const
+		{
+			return val >= first && val <= second;
+		}
+
+		bool inRange(const Barscalar& val) const
+		{
+			return val >= first && val <= second;
+		}
+	};
+
+	FRange start{0,255};
+	FRange len{ 0,255 };
+	FRange matrSize{ 0,9999999 };
+	FRange depth{0,1000};
+
+
+	bool needSkip(bc::barline* line) const
+	{
+		return start.inRange(line->start) && len.inRange(line->len()) && matrSize.inRange(line->matr.size()) && depth.inRange(line->getDeath());
 	}
 };
 

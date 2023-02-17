@@ -98,7 +98,7 @@ public:
 		bc::CloudPointsBarcode::CloudPoints cloud;
 		for (size_t var = 0; var < item->barlines.size(); ++var)
 		{
-			if (info.needSkip(item->barlines[var]->start, item->barlines[var]->len()))
+			if (info.needSkip(item->barlines[var]))
 			{
 				continue;
 			}

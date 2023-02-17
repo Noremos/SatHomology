@@ -17,6 +17,7 @@
 #include "presets.h"
 
 import ForntnedModule;
+import Lua;
 
 namespace MyApp
 {
@@ -100,6 +101,41 @@ namespace MyApp
 		std::vector<std::pair<ImVec2, ImVec2>> debugLine;
 	} debugVals;
 
+	struct GuiFilter
+	{
+		FilterInfo filterInfo;
+		char text[10000];
+
+		bool simple = true;
+
+		void _drawPair(const char* name1, const char* name2, FilterInfo::FRange& rng, int max = 256)
+		{
+			ImGui::SliderInt(name1, &rng.first, 0, max, "%d");
+			ImGui::SliderInt(name1, &rng.second, 0, max, "%d");
+		}
+
+		void draw()
+		{
+			if (simple)
+			{
+				ImGui::Text("Пороги отсеивания");
+				_drawPair("MinStart", "MaxStart", filterInfo.start);
+				_drawPair("MinLen", "MaxLen", filterInfo.len);
+				_drawPair("MinMatrSize", "MaxMatrSize", filterInfo.matrSize);
+				_drawPair("MinDepth", "Max depth", filterInfo.depth);
+			}
+			else
+			{
+				ImGui::InputTextMultiline("Lue script", text, 1000, ImVec2(500, 300));
+			}
+		}
+
+		void runStrcit()
+		{
+			LuaState s;
+		}
+	};
+
 	struct WindowsValues
 	{
 		bool onAir = false;
@@ -168,7 +204,7 @@ namespace MyApp
 			return ImVec2(p.wid, p.hei);
 		}
 
-		FilterInfo filterInfo;
+		GuiFilter filterInfo;
 
 		void createBarcode()
 		{
@@ -187,7 +223,7 @@ namespace MyApp
 					procCB.currentValue(),
 					colorCB.currentValue(),
 					componentCB.currentValue(),
-					filterInfo);
+					filterInfo.filterInfo);
 			}
 		}
 
@@ -269,6 +305,13 @@ namespace MyApp
 		}
 	};
 	ClassiferVals classerVals;
+
+	struct LayersVals
+	{
+		std::vector<GuiImage> layers;
+		int selecnedLayer = 0;
+	};
+	LayersVals layersVals;
 
 	void loaderCategors(int classId, const BackString& name)
 	{
@@ -477,7 +520,7 @@ namespace MyApp
 			{
 				tbVals.alg.drawCombobox("Алгоритм");
 				ImGui::Separator();
-				
+
 				if (tbVals.alg.currentIndex == 0)
 				{
 					tbVals.componentCB.drawCombobox("##Форма");
@@ -493,10 +536,7 @@ namespace MyApp
 
 				ImGui::Separator();
 				ImGui::Text("Пороги отсеивания");
-				ImGui::SliderInt("MinStart", &tbVals.filterInfo.minStart, 0, 256, "%d");
-				ImGui::SliderInt("MaxStart", &tbVals.filterInfo.maxStart, 0, 256, "%d");
-				ImGui::SliderInt("MaxLen", &tbVals.filterInfo.minLen, 0, 256, "%d");
-				ImGui::SliderInt("MaxLen", &tbVals.filterInfo.maxLen, 0, 256, "%d");
+				tbVals.filterInfo.draw();
 				ImGui::Separator();
 
 
@@ -593,12 +633,20 @@ namespace MyApp
 			ImGui::SameLine();
 			if (ImGui::Button("Update"))
 			{
-				backend.processMain(bottomVals.valeExtra);
-				//commonValus.onAir = true;
-				//commonValus.future = std::async(&GuiBackend::processMain, std::ref(backend),
-				//	bottomVals.valeExtra);
+				ImGui::OpenPopup("LoadImg");
+			}
 
-				// Do something when Button 1 is clicked
+			if (ImGui::BeginPopupModal("LoadImg", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+			{
+				char text[10000];
+				ImGui::InputTextMultiline("Lue script", text, 1000, ImVec2(500, 300));
+
+				if (ImGui::Button("Update"))
+				{
+					backend.processMain(bottomVals.valeExtra);
+					//commonValus.onAir = true;
+					//commonValus.future = std::async(&GuiBackend::processMain, std::ref(backend),
+				}
 			}
 
 			ImGui::SameLine();
@@ -658,6 +706,9 @@ namespace MyApp
 
 	void drawClassifierMenu()
 	{
+		if (!bottomVals.showClassifier)
+			return;
+
 		if (ImGui::Begin("Classifier"))
 		{
 			classerVals.classesLB.drawListBox("Классы");
@@ -762,6 +813,48 @@ namespace MyApp
 		ImGui::End();
 	}
 
+	void drawLayersWindows()
+	{
+		if (!ImGui::Begin("Layers"))
+		{
+			ImGui::End();
+			return;
+		}
+
+		ImGui::BeginGroup();
+
+		auto& pngs = layersVals.layers;
+
+		//int curItem = 0;
+		//auto imgLoader = [](void* data, int idx, const char** out_text) {
+		//		auto& pngs = *static_cast<std::vector<GuiImage>*>(data);
+		//		*out_text = pngs[idx].name.c_str();
+		//		ImGui::Image(pngs[curItem].getTexturePtr(), siz);
+		//
+		//		return true;
+		//	};
+		//ImGui::ListBox("Images", &curItem, imgLoader, &pngs, pngs.size());
+
+
+		//if (ImGui::BeginChild("ImagePreview"))
+		//{
+		//	if (curItem >= 0 && selectedImage < pngs.size())
+		//	{
+		//		ImVec2 siz(pngs[curItem].width, pngs[curItem].height)
+		//		ImGui::Image(pngs[curItem].getTexturePtr(), siz);
+		//	}
+		//	ImGui::EndChild();
+		//}
+		for (size_t j = 0; j < pngs.size(); j++)
+		{
+			ImGui::PushID(j);
+			ImGui::Image(pngs[j].getTexturePtr(), ImVec2(pngs[j].width, pngs[j].height));
+			ImGui::PopID();
+		}
+		ImGui::EndGroup();
+
+		ImGui::End();
+	}
 
 	void debugWindow()
 	{
@@ -816,10 +909,9 @@ namespace MyApp
 		drawTopBar();
 		drawWorkout();
 		drawBottomBar();
-		if (bottomVals.showClassifier)
-		{
-			drawClassifierMenu();
-		}
+		drawLayersWindows();
+
+		drawClassifierMenu();
 
 		commonValus.onAirC();
 
