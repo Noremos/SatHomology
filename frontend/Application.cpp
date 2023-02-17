@@ -11,7 +11,11 @@
 #include "GuiWidgets.h"
 
 #include "presets.h"
-#include "frontend.h"
+#include "barcodeCreator.h"
+#include "Framework.h"
+
+
+import ForntnedModule;
 
 namespace MyApp
 {

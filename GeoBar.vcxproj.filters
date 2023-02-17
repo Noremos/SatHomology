@@ -73,12 +73,6 @@
     <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\tiffreader.cpp">
       <Filter>Barcode\modules</Filter>
     </ClCompile>
-    <ClCompile Include="backend\geodataprocessor.cpp">
-      <Filter>Backend</Filter>
-    </ClCompile>
-    <ClCompile Include="backend\project.cpp">
-      <Filter>Backend</Filter>
-    </ClCompile>
     <ClCompile Include="backend\project.ixx">
       <Filter>Backend</Filter>
     </ClCompile>
@@ -104,6 +98,15 @@
       <Filter>GUI</Filter>
     </ClCompile>
     <ClCompile Include="frontend\GuiCommon.cpp" />
+    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\BinStateFileWrapper.ixx">
+      <Filter>Barcode\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\geodataprocessor.ixx">
+      <Filter>Backend</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\CacheFiles.ixx">
+      <Filter>Backend</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\imgui\imgui_internal.h">
@@ -136,9 +139,6 @@
     <ClInclude Include="..\..\C++\Barcode\PrjBarlib\modules\base.h">
       <Filter>Barcode\modules</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\C++\Barcode\PrjBarlib\modules\BinFile.h">
-      <Filter>Barcode\modules</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\C++\Barcode\PrjBarlib\modules\convertion.h">
       <Filter>Barcode\modules</Filter>
     </ClInclude>
@@ -148,13 +148,7 @@
     <ClInclude Include="..\..\C++\Barcode\PrjBarlib\modules\tiffreader.h">
       <Filter>Barcode\modules</Filter>
     </ClInclude>
-    <ClInclude Include="backend\geodataprocessor.h">
-      <Filter>Backend</Filter>
-    </ClInclude>
     <ClInclude Include="backend\MatrImg.h">
-      <Filter>Backend</Filter>
-    </ClInclude>
-    <ClInclude Include="backend\project.h">
       <Filter>Backend</Filter>
     </ClInclude>
     <ClInclude Include="backend\SimpleImgReader.h">
@@ -186,9 +180,6 @@
     </ClInclude>
     <ClInclude Include="frontend\GuiWidgets.h">
       <Filter>GUI</Filter>
-    </ClInclude>
-    <ClInclude Include="backend\CacheFiles.h">
-      <Filter>Backend</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

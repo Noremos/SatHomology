@@ -109,6 +109,7 @@
       <AdditionalIncludeDirectories>D:\Programs\C++\Barcode\PrjBarlib\modules;D:\Programs\C++\Barcode\PrjBarlib\include;..\imgui;..\imgui\backends;libs\glfw\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <EnableModules>true</EnableModules>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -150,6 +151,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <EnableModules>true</EnableModules>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -163,8 +165,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\Barcode.ixx" />
+    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\BinStateFileWrapper.ixx" />
     <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\convertation.cpp" />
     <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\tiffreader.cpp" />
+    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\TiffReaderWrapper.ixx" />
     <ClCompile Include="..\..\C++\Barcode\PrjBarlib\source\barclasses.cpp" />
     <ClCompile Include="..\..\C++\Barcode\PrjBarlib\source\barcodeCreator.cpp" />
     <ClCompile Include="..\..\C++\Barcode\PrjBarlib\source\component.cpp" />
@@ -178,13 +183,13 @@
     <ClCompile Include="..\imgui\backends\imgui_impl_opengl3.cpp" />
     <ClCompile Include="backend\BackImage.cpp" />
     <ClCompile Include="backend\Common.cpp" />
-    <ClCompile Include="backend\geodataprocessor.cpp" />
-    <ClCompile Include="backend\project.cpp" />
+    <ClCompile Include="backend\CacheFiles.ixx" />
+    <ClCompile Include="backend\GeoProcessor.ixx" />
     <ClCompile Include="backend\project.ixx" />
     <ClCompile Include="backend\SimpleImgReader.cpp" />
     <ClCompile Include="frontend\Application.cpp" />
     <ClCompile Include="frontend\DearImguiImpl.cpp" />
-    <ClCompile Include="frontend\frontend.cpp" />
+    <ClCompile Include="frontend\frontend.ixx" />
     <ClCompile Include="frontend\GuiCommon.cpp" />
     <ClCompile Include="frontend\GuiCommon.h" />
     <ClCompile Include="frontend\main.cpp" />
@@ -194,7 +199,6 @@
     <ClInclude Include="..\..\C++\Barcode\PrjBarlib\include\barcodeCreator.h" />
     <ClInclude Include="..\..\C++\Barcode\PrjBarlib\include\barscalar.h" />
     <ClInclude Include="..\..\C++\Barcode\PrjBarlib\modules\base.h" />
-    <ClInclude Include="..\..\C++\Barcode\PrjBarlib\modules\BinFile.h" />
     <ClInclude Include="..\..\C++\Barcode\PrjBarlib\modules\convertion.h" />
     <ClInclude Include="..\..\C++\Barcode\PrjBarlib\modules\decoder.h" />
     <ClInclude Include="..\..\C++\Barcode\PrjBarlib\modules\tiffreader.h" />
@@ -205,15 +209,11 @@
     <ClInclude Include="..\imgui\backends\imgui_impl_opengl3.h" />
     <ClInclude Include="..\imgui\backends\imgui_impl_opengl3_loader.h" />
     <ClInclude Include="backend\BackImage.h" />
-    <ClInclude Include="backend\CacheFiles.h" />
     <ClInclude Include="backend\Common.h" />
-    <ClInclude Include="backend\geodataprocessor.h" />
     <ClInclude Include="backend\MatrImg.h" />
-    <ClInclude Include="backend\project.h" />
     <ClInclude Include="backend\SimpleImgReader.h" />
     <ClInclude Include="frontend\Application.h" />
     <ClInclude Include="frontend\Framework.h" />
-    <ClInclude Include="frontend\frontend.h" />
     <ClInclude Include="frontend\FrontTypes.h" />
     <ClInclude Include="frontend\GuiWidgets.h" />
     <ClInclude Include="side\IconsFontAwesome5.h" />
