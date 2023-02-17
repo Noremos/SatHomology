@@ -389,6 +389,7 @@ public:
 		std::vector<std::shared_ptr<SimpleLine>>& resLinesMaps;
 	};
 	void classBarcode(BarcodesHolder& baritem, ClassInfo& info);
+	void classBarcode(bc::Baritem& baritem, ClassInfo& info);
 
 	void readPrcoessBarcode(ClassInfo& info);
 

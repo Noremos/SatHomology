@@ -84,6 +84,7 @@ namespace MyApp
 
 	GuiBackend backend;
 
+	bool useAsync = false;// true;
 	// Structs
 
 	struct
@@ -166,14 +167,23 @@ namespace MyApp
 
 		void createBarcode()
 		{
-			//backend.createBarcode(
+			if (useAsync)
+			{
 				commonValus.onAir = true;
 				commonValus.future = std::async(&GuiBackend::createBarcode, &backend,
-				procCB.currentValue(),
-				colorCB.currentValue(),
-				componentCB.currentValue(),
-				std::cref(filterInfo));
-				//filterInfo);
+						procCB.currentValue(),
+						colorCB.currentValue(),
+						componentCB.currentValue(),
+						std::cref(filterInfo));
+			}
+			else
+			{
+				backend.createBarcode(
+					procCB.currentValue(),
+					colorCB.currentValue(),
+					componentCB.currentValue(),
+					filterInfo);
+			}
 		}
 
 		SelectableKeyValues<int> imgSubImages;
@@ -319,10 +329,10 @@ namespace MyApp
 			// GBl
 			ImGui::BeginDisabled(commonValus.onAir);
 
-			if (ImGui::Button("Create prj"))
-			{
-				ImGui::OpenPopup("CreateProject");
-			}
+			// if (ImGui::Button("Create prj"))
+			// {
+			// 	ImGui::OpenPopup("CreateProject");
+			// }
 
 			if (ImGui::BeginPopupModal("CreateProject", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 			{
@@ -410,6 +420,9 @@ namespace MyApp
 				ImGui::Text("Порог отсеивания");
 				ImGui::SliderInt("##Prog", &tbVals.filterInfo.minLen, 1, 256, "%d");
 
+				ImGui::Checkbox("Async", &useAsync);
+				ImGui::Checkbox("Use holes", &CloudBarcodeCreateHelper::useHols);
+				//ImGui::Checkbox("ignore hight", &CloudBarcodeCreateHelper::useHols);
 				ImGui::Separator();
 
 				ImGui::Text("Tile size");
@@ -516,7 +529,7 @@ namespace MyApp
 	//int height = 512; // Replace this with your own height value
 
 
-	// Workout widght
+	// Workout width
 
 
 	void drawWorkout()
@@ -743,7 +756,7 @@ namespace MyApp
 		ImVec2 pos = ImGui::GetWindowPos();
 		pos.x += 10;
 		pos.y += 50;
-		const float mul = 3;
+		const float mul = 4;
 
 		for (auto& i : debugVals.debugPlygon)
 		{
@@ -810,7 +823,7 @@ namespace MyApp
 	{
 		backend.settup(&centerVals.mainImage, &centerVals.processImage, NULL);
 		centerVals.clickHandler.par = &centerVals.processImage;
-		bc::CloudPointsBarcode::drawLine = [](const bc::point& p1, const bc::point& p2, bool finale)
+		auto drawLine = [](const bc::point& p1, const bc::point& p2, bool finale)
 		{
 			const std::lock_guard<std::mutex> lock(debugVals.drawMutex);
 
@@ -823,19 +836,19 @@ namespace MyApp
 			debugVals.debugDraw.push_back(p2);
 		};
 
-
-		bc::CloudPointsBarcode::drawPlygon = [](bc::PloyPoints& p1, bool finale)
+		auto polyPoint = [](bc::PloyPoints& p1, bool finale)
 		{
+			const std::lock_guard<std::mutex> lock(debugVals.drawMutex);
+
+			assert(p1.size() >= 3);
 			debugVals.debugPlygon.push_back(std::move(p1));
 		};
-		//GeoBabc::CloudPointsBarcoderHolderCache::endPointsE = []()
-		//{
-		//	const std::lock_guard<std::mutex> lock(debugVals.drawMutex);
-		//	
-		//	debugVals.debugLine.clear();
-		//	debugVals.debugDraw.clear();
-		//	debugVals.debugDraw.clear();
-		//};
+
+		if (useAsync)
+		{
+			bc::CloudPointsBarcode::drawLine = drawLine;
+			bc::CloudPointsBarcode::drawPlygon = polyPoint;
+		}
 	}
 	// Main
 	void MyApp::RenderUI()

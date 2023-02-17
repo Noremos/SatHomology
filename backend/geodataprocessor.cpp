@@ -5,6 +5,8 @@
 #include <stack>
 #include <ranges>
 
+bool CloudBarcodeCreateHelper::useHols = true;
+
 double getPsa(const bc::barvector &matr)
 {
 	std::unordered_map<uint, bool> map;
@@ -436,7 +438,7 @@ void saveAsGeojson(const bc::barlinevector &lines, const BackPathStr& savePath, 
 	json += "}";
 
 	std::ofstream file(savePath, std::ios::trunc);
-	if (file.is_open()) 
+	if (file.is_open())
 	{
 		file << json;
 		file.close();
@@ -504,7 +506,7 @@ void BarClassifierCache::saveCategories(BarCategories& barclas)
 void BarClassifierCache::loadImgs(std::function<void(int classId, const BackPathStr& path)> callback, int* categorues, int size)
 {
 	BackPathStr pathp = Project::getPathSt(BackPath::classfiles);
-	GeoBarHolderCache creator;
+	CloudBarcodeCreateHelper creator;
 	for (size_t i = 0; i < size; i++)
 	{
 		int categ = categorues[i];
@@ -544,9 +546,9 @@ void BarClassifierCache::save(BarcodeHolder* curBar, int classIndex, BackImage* 
 	} while (pathExists(doorPat / name));
 	doorPat /= name;
 
-	GeoBarHolderCache writer;
+	GeoBarCloudCache writer;
 	writer.openWrite(doorPat.string());
-	writer.save(0, curBar);
+	writer.save(curBar, 0);
 
 	if (img)
 	{
@@ -555,14 +557,5 @@ void BarClassifierCache::save(BarcodeHolder* curBar, int classIndex, BackImage* 
 	}
 }
 
-void GeoBarHolderCache::openRead()
-{
-	state.reset(new StateBinFile::BinStateReader());
-	state->open(Project::getPathSt(BackPath::binbar).string());
-}
 
-void GeoBarHolderCache::openWrite()
-{
-	state.reset(new StateBinFile::BinStateWriter());
-	state->open(Project::getPathSt(BackPath::binbar).string());
-}
+// Image mode

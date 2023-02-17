@@ -456,13 +456,13 @@ bool GuiBackend::addSelectedToClassData(int classIndex, BackImage* icon)
 	if (!curSelected)
 		return false;
 
-	GeoBarHolderCache reader;
-	reader.openRead();
-	std::unique_ptr<CloudItem> item(reader.loadCloudItemByIndex(curSelected->id));
-	auto *curBarline = item->lines[curSelected->barlineIndex];
+	//GeoBarCloudHolderCache reader;
+	////reader.openRead();
+	//auto item = std::make_unique<BarcodesHolder>(reader.loadSpecific(curSelected->id));
+	//auto *curBarline = item->lines[curSelected->barlineIndex];
 
-	proj->addClassData(classIndex, curBarline, icon);
-	lastIndex = classIndex;
+	//proj->addClassData(classIndex, curBarline, icon);
+	//lastIndex = classIndex;
 }
 
 void GuiBackend::undoAddClass()
@@ -473,5 +473,3 @@ void GuiBackend::undoAddClass()
 		lastIndex = -1;
 	}
 }
-
-

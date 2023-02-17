@@ -180,6 +180,7 @@
     <ClCompile Include="backend\Common.cpp" />
     <ClCompile Include="backend\geodataprocessor.cpp" />
     <ClCompile Include="backend\project.cpp" />
+    <ClCompile Include="backend\project.ixx" />
     <ClCompile Include="backend\SimpleImgReader.cpp" />
     <ClCompile Include="frontend\Application.cpp" />
     <ClCompile Include="frontend\DearImguiImpl.cpp" />
@@ -204,6 +205,7 @@
     <ClInclude Include="..\imgui\backends\imgui_impl_opengl3.h" />
     <ClInclude Include="..\imgui\backends\imgui_impl_opengl3_loader.h" />
     <ClInclude Include="backend\BackImage.h" />
+    <ClInclude Include="backend\CacheFiles.h" />
     <ClInclude Include="backend\Common.h" />
     <ClInclude Include="backend\geodataprocessor.h" />
     <ClInclude Include="backend\MatrImg.h" />

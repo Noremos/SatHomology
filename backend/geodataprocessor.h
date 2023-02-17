@@ -3,9 +3,6 @@
 
 #include "barcodeCreator.h"
 #include "BackImage.h"
-#include "BinFile.h"
-#include "Common.h"
-#include <StateBinFile.h>
 #include <random>
 #include <vector>
 #include "../frontend/Framework.h"
@@ -14,6 +11,9 @@
 
 #include "imgui.h"
 #include <imgui_internal.h>
+#include "CacheFiles.h"
+#include "BinFile.h"
+#include "Common.h"
 
 struct Cound
 {
@@ -43,132 +43,14 @@ using std::string;
 //static int pr = 10;
 //static bool normA = false;
 
-struct BarCategories
-{
-	int counter;
-	std::vector<int> value;
-	std::vector<string> name;
 
-	int addValue(const BackString& nname)
-	{
-		if (value.size() > 0 && value.back() > counter)
-			counter = value.back() + 1;
-		name.push_back(nname);
-		int id = counter++;
-		value.push_back(id);
-		return id;
-	}
-};
-
-class GeoBarCache
-{
-public:
-	bc::Baritem* load(const BackString& str, int& index)
-	{
-		StateBinFile::BinStateReader reader;
-		reader.open(str);
-		return saveLoadBar(&reader, index);
-	}
-	void save(const BackString& str, int& index, bc::Baritem* item)
-	{
-		StateBinFile::BinStateWriter writer;
-		writer.open(str);
-		saveLoadBar(&writer, index, item);
-	}
-
-private:
-
-	bc::Baritem* saveLoadBar(StateBinFile::BinState* state, int& index, bc::Baritem* rsitem = NULL)
-	{
-		state->beginItem();
-
-		state->pInt(index); // Index
-		int typeSize = state->pType(rsitem); // BarType
-
-		bc::barlinevector& vec = rsitem->barlines;
-
-		size_t linesCount = state->pArray(vec.size());
-		state->beginArray(vec, linesCount);
-		for (size_t i = 0; i < linesCount; ++i)
-		{
-			if (state->isReading())
-				vec[i] = new bc::barline();
-
-			bc::barline* line = vec[i];
-
-			uint id = state->pInt(i);
-			line->start = state->pBarscalar(line->start);
-			line->m_end = (state->pBarscalar(line->end()));
-
-			//act matrSize = state->pFixedArray(line->matr, 4 + typeSize);
-			uint matrSize = state->pArray(line->matr.size());
-			state->beginArray(line->matr, matrSize);
-			for (uint j = 0; j < matrSize; ++j)
-			{
-				bc::barvalue& v = line->matr[j];
-				v.index = state->pInt(v.index);
-				v.value = state->pBarscalar(v.value);
-			}
-		}
-		state->endItem();
-
-		return rsitem;
-	}
-};
-
-using CloudBarcodeHolder = BarcodeHolder;
-using CloudItem = BarcodesHolder;
-class GeoBarHolderCache
+class CloudBarcodeCreateHelper
 {
 	bc::BarcodeCreator creator;
 	std::unique_ptr<StateBinFile::BinState> state;
+
 public:
-
-	bool canRead()
-	{
-		return !state->ended();
-	}
-	void openRead(const BackPathStr& str)
-	{
-		state.reset(new StateBinFile::BinStateReader());
-		if (!state->open(str.string()))
-			throw;
-	}
-	void openWrite(const BackPathStr& str)
-	{
-		state.reset(new StateBinFile::BinStateWriter());
-		if (!state->open(str.string()))
-			throw;
-	}
-
-	void openRead();
-	void openWrite();
-
-	BarcodeHolder* load(int& index)
-	{
-		return saveLoadBar(index, new BarcodeHolder());
-	}
-
-	CloudItem* loadCloudItemByIndex(int index)
-	{
-		dynamic_cast<StateBinFile::BinStateReader*>(state.get())->moveIndex(index);
-		return saveLoadBars(index, new CloudItem());
-	}
-
-	CloudItem* loadCloudItem(int& index)
-	{
-		return saveLoadBars(index, new CloudItem());
-	}
-
-	void save(int index, CloudBarcodeHolder* item)
-	{
-		saveLoadBar(index, item);
-	}
-
-	void save(int index, CloudItem* item)
-	{
-		saveLoadBars(index, item);
-	}
+	static bool useHols;
 
 	bc::Baritem* create(bc::DatagridProvider* prov, const bc::BarConstructor& constr)
 	{
@@ -176,10 +58,10 @@ public:
 		return ret->exractItem(0);
 	}
 
-	CloudItem createSplitCloudBarcode(const bc::CloudPointsBarcode::CloundPoints& cloud)
+	CloudItem createSplitCloudBarcode(const bc::CloudPointsBarcode::CloudPoints& cloud)
 	{
 		bc::CloudPointsBarcode clodCrt;
-		clodCrt.useHolde = true;
+		clodCrt.useHolde = useHols;
 		std::unique_ptr<bc::Barcontainer> hold(clodCrt.createBarcode(&cloud));
 
 		BarcodesHolder holder;
@@ -192,156 +74,117 @@ public:
 			auto* line = main->barlines[var];
 			BarcodeHolder* barhold = new BarcodeHolder();
 			holder.lines.push_back(barhold);
-
-			barhold->matrix = std::move(line->matr);
-			line->getAsListSafe(barhold->lines, true, false);
-		}
-
-		return holder;
-	}
-
-	CloudBarcodeHolder createSingleCloudBarcode(const bc::CloudPointsBarcode::CloundPoints& cloud)
-	{
-		bc::CloudPointsBarcode clodCrt;
-		std::unique_ptr<bc::Barcontainer> hold(clodCrt.createBarcode(&cloud));
-
-		CloudBarcodeHolder holder;
-		if (cloud.points.size() == 0)
-			return holder;
-
-		bc::Baritem* main = hold->getItem(0);
-		for (size_t var = 0; var < main->barlines.size(); ++var)
-		{
-			auto* line = main->barlines[var];
-			holder.lines.push_back(line);
-			holder.matrix.insert(holder.matrix.begin(), line->matr.begin(), line->matr.end());
+			barhold->depth = line->getDeath();
+			//barhold->matrix = std::move(line->matr);
+			line->getAsListSafe(barhold->lines, true, true);
+			for (auto& i : barhold->lines)
+			{
+				barhold->matrix.insert(barhold->matrix.begin(), i->matr.begin(), i->matr.end());
+				i->matr.clear();
+			}
 		}
 
 		return holder;
 	}
 
 
-	CloudItem createCloudBarcode(bc::DatagridProvider* prov, const bc::BarConstructor& constr)
+	CloudItem toCloudBarcode(bc::Baritem* item, bc::point offset, const FilterInfo& info)
 	{
-		std::unique_ptr<bc::Baritem> item(create(prov, constr));
-
-		bc::CloudPointsBarcode::CloundPoints cloud;
+		bc::CloudPointsBarcode::CloudPoints cloud;
 		for (size_t var = 0; var < item->barlines.size(); ++var)
 		{
-			auto& m = item->barlines[var]->matr[0];
-			bc::point rp(m.getX(), m.getY());
-			cloud.points.push_back(bc::CloudPointsBarcode::CloundPoint(rp.x, rp.y, m.value.getAvgFloat()));
-		}
-
-		return createSplitCloudBarcode(cloud);
-	}
-
-
-	BarcodeHolder createSingleCloudBarcode(bc::DatagridProvider* prov, const bc::BarConstructor& constr)
-	{
-		std::unique_ptr<bc::Baritem> item(create(prov, constr));
-
-		bc::CloudPointsBarcode::CloundPoints cloud;
-		for (size_t var = 0; var < item->barlines.size(); ++var)
-		{
-			auto& m = item->barlines[var]->matr[0];
-			bc::point rp(m.getX(), m.getY());
-			cloud.points.push_back(bc::CloudPointsBarcode::CloundPoint(rp.x, rp.y, m.value.getAvgFloat()));
-		}
-
-		return createSingleCloudBarcode(cloud);
-	}
-
-
-	CloudItem toCloundBarcode(bc::Baritem* item, bc::point offset, const FilterInfo& info)
-	{
-		bc::CloudPointsBarcode::CloundPoints cloud;
-		for (size_t var = 0; var < item->barlines.size(); ++var)
-		{
-			if (info.needSkip(item->barlines[var]->len()))
+			if (info.needSkip(item->barlines[var]->start))
 			{
 				continue;
 			}
 
 			auto& m = item->barlines[var]->matr[0];
 			bc::point rp(m.getX() + offset.x, m.getY() + offset.y);
-			cloud.points.push_back(bc::CloudPointsBarcode::CloundPoint(rp.x, rp.y, m.value.getAvgFloat()));
+			cloud.points.push_back(bc::CloudPointsBarcode::CloudPoint(rp.x, rp.y, m.value.getAvgFloat()));
 		}
 
 		return createSplitCloudBarcode(cloud);
 	}
 
+	// CloudBarcodeHolder createSingleCloudBarcode(const bc::CloudPointsBarcode::CloudPoints& cloud)
+	// {
+	// 	bc::CloudPointsBarcode clodCrt;
+	// 	std::unique_ptr<bc::Barcontainer> hold(clodCrt.createBarcode(&cloud));
 
-private:
+	// 	CloudBarcodeHolder holder;
+	// 	if (cloud.points.size() == 0)
+	// 		return holder;
 
-	BarcodeHolder* saveLoadBarBody(BarcodeHolder* rsitem = NULL)
+	// 	bc::Baritem* main = hold->getItem(0);
+	// 	for (size_t var = 0; var < main->barlines.size(); ++var)
+	// 	{
+	// 		auto* line = main->barlines[var];
+	// 		holder.lines.push_back(line);
+	// 		holder.matrix.insert(holder.matrix.begin(), line->matr.begin(), line->matr.end());
+	// 	}
+
+	// 	return holder;
+	// }
+
+
+	// CloudItem createCloudBarcode(bc::DatagridProvider* prov, const bc::BarConstructor& constr)
+	// {
+	// 	std::unique_ptr<bc::Baritem> item(create(prov, constr));
+
+	// 	bc::CloudPointsBarcode::CloudPoints cloud;
+	// 	for (size_t var = 0; var < item->barlines.size(); ++var)
+	// 	{
+	// 		auto& m = item->barlines[var]->matr[0];
+	// 		bc::point rp(m.getX(), m.getY());
+	// 		cloud.points.push_back(bc::CloudPointsBarcode::CloudPoints(rp.x, rp.y, m.value.getAvgFloat()));
+	// 	}
+
+	// 	return createSplitCloudBarcode(cloud);
+	// }
+
+
+	// BarcodeHolder createSingleCloudBarcode(bc::DatagridProvider* prov, const bc::BarConstructor& constr)
+	// {
+	// 	std::unique_ptr<bc::Baritem> item(create(prov, constr));
+
+	// 	bc::CloudPointsBarcode::CloudPoints cloud;
+	// 	for (size_t var = 0; var < item->barlines.size(); ++var)
+	// 	{
+	// 		auto& m = item->barlines[var]->matr[0];
+	// 		bc::point rp(m.getX(), m.getY());
+	// 		cloud.points.push_back(bc::CloudPointsBarcode::CloudPoints(rp.x, rp.y, m.value.getAvgFloat()));
+	// 	}
+
+	// 	return createSingleCloudBarcode(cloud);
+	// }
+
+
+};
+
+
+struct BarCategories
+{
+	int counter;
+	std::vector<int> value;
+	std::vector<std::string> name;
+
+	int addValue(const BackString& nname)
 	{
-		bc::barlinevector& vec = rsitem->lines;
-
-		size_t linesCount = state->pArray(vec.size());
-		state->beginArray(vec, linesCount);
-		for (size_t i = 0; i < linesCount; ++i)
-		{
-			if (state->isReading())
-				vec[i] = new bc::barline();
-
-			bc::barline* line = vec[i];
-
-			uint id = state->pInt(i);
-			line->start = state->pBarscalar(line->start);
-			line->m_end = (state->pBarscalar(line->end()));
-		}
-
-		//act matrSize = state->pFixedArray(line->matr, 4 + typeSize);
-		uint matrSize = state->pArray(rsitem->matrix.size());
-		state->beginArray(rsitem->matrix, matrSize);
-		for (uint j = 0; j < matrSize; ++j)
-		{
-			bc::barvalue& v = rsitem->matrix[j];
-			v.index = state->pInt(v.index);
-			v.value = state->pBarscalar(v.value);
-		}
-
-		return rsitem;
-	}
-
-	BarcodeHolder* saveLoadBar(int& index, BarcodeHolder* rsitem = NULL)
-	{
-		state->beginItem();
-		state->pInt(index);
-		state->pType(rsitem->matrix.size() > 0 ? rsitem->matrix[0].value.type : BarType::FLOAT32_1);
-
-		rsitem = saveLoadBarBody(rsitem);
-		state->endItem();
-		return rsitem;
-	}
-
-	CloudItem* saveLoadBars(int& index, CloudItem* rsitem = NULL)
-	{
-		state->beginItem();
-		index = state->pInt(index);
-		auto& lines = rsitem->lines;
-		state->pType(lines.size() > 0 && lines[0]->matrix.size() > 0 ? lines[0]->matrix[0].value.type : BarType::FLOAT32_1);
-
-		uint linesSize = state->pArray(rsitem->lines.size());
-		state->beginArray(rsitem->lines, linesSize);
-		for (size_t i = 0; i < linesSize; i++)
-		{
-			if (state->isReading())
-				rsitem->lines[i] = new BarcodeHolder();
-
-			saveLoadBarBody(rsitem->lines[i]);
-		}
-		state->endItem();
-		return rsitem;
+		if (value.size() > 0 && value.back() > counter)
+			counter = value.back() + 1;
+		name.push_back(nname);
+		int id = counter++;
+		value.push_back(id);
+		return id;
 	}
 };
+
 
 class barclassificator
 {
 public:
 	BarCategories categs;
-	std::vector < bc::Barcontainer> classes;
+	std::vector <bc::Barcontainer> classes;
 
 	void addData(int classInd, bc::barlinevector &cont, const bool move = true)
 	{
@@ -378,6 +221,51 @@ public:
 		}
 	}
 
+	void removeLast(int classInd)
+	{
+		classes[classInd].remoeLast();
+	}
+
+	//	int getType(bc::barlinevector &bar0lines)
+	int getType(const BarcodeHolder* bar0)
+	{
+		auto cp = bc::CompireStrategy::CommonToLen;
+		float res = 0;
+
+		//		bc::Baritem *bar0 = new bc::Baritem();
+		//		bar0->barlines = bar0lines;
+		bc::Baritem newOne;
+		bar0->cloneLines(newOne.barlines);
+		//		newOne.shdowCopy = true;
+		newOne.relen();
+
+		int maxInd = -1;
+		float maxP = res;
+		for (size_t i = 0; i < classes.size(); i++)
+		{
+			float ps = classes[i].compireBest(&newOne, cp);
+			if (ps > maxP)
+			{
+				maxP = ps;
+				maxInd = i;
+			}
+		}
+
+		//		bar0.barlines.clear();
+		//		delete bar0;
+
+		assert(maxP <= 1.0);
+		return maxP > 0.5 ? maxInd : -1;
+	}
+
+
+	~barclassificator()
+	{
+		//		for (size_t i = 0; i < N * 2; i++)
+		//		{
+		//			delete classes[i];
+		//		}
+	}
 private:
 	Barscalar asScalar(const BackJson &arr)
 	{
@@ -401,7 +289,7 @@ private:
 
 	//BarcodesHolder toHoldes(BarcodesHolder& lines, MatrImg& mat, bc::point offset, float factor)
 	//{
-	//	bc::CloudPointsBarcode::CloundPoints cloud;
+	//	bc::CloudPointsBarcode::CloudPoints cloud;
 	//	for (size_t var = 0; var < lines.lines.size(); ++var)
 	//	{
 	//		//if (needSkip(lines.lines[var]->lines[0]->len()))
@@ -431,13 +319,13 @@ private:
 	//		}
 	//		assert(cp.x >= 0);
 	//		assert(cp.y >= 0);
-	//		cloud.points.push_back(bc::CloudPointsBarcode::CloundPoint(rp.x, rp.y, m.value.getAvgFloat()));
+	//		cloud.points.push_back(bc::CloudPointsBarcode::CloudPoints(rp.x, rp.y, m.value.getAvgFloat()));
 	//	}
 
 	//	return toHoldes(cloud);
 	//}
 
-	//BarcodesHolder toHoldes(const bc::CloudPointsBarcode::CloundPoints& cloud)
+	//BarcodesHolder toHoldes(const bc::CloudPointsBarcode::CloudPoints& cloud)
 	//{
 	//	bc::CloudPointsBarcode clodCrt;
 	//	std::unique_ptr<bc::Barcontainer> hold(clodCrt.createBarcode(&cloud));
@@ -461,7 +349,7 @@ private:
 	//}
 
 
-public:
+//public:
 	//void addClass(const BackPathStr& binFile, int classInd)
 	//{
 	//	BackString val;
@@ -501,52 +389,6 @@ public:
 
 //	classes[classInd].addItem(item);
 //}
-
-void removeLast(int classInd)
-{
-	classes[classInd].remoeLast();
-}
-
-//	int getType(bc::barlinevector &bar0lines)
-int getType(const BarcodeHolder* bar0)
-{
-	auto cp = bc::CompireStrategy::CommonToLen;
-	float res = 0;
-
-	//		bc::Baritem *bar0 = new bc::Baritem();
-	//		bar0->barlines = bar0lines;
-	bc::Baritem newOne;
-	bar0->cloneLines(newOne.barlines);
-	//		newOne.shdowCopy = true;
-	newOne.relen();
-
-	int maxInd = -1;
-	float maxP = res;
-	for (size_t i = 0; i < classes.size(); i++)
-	{
-		float ps = classes[i].compireBest(&newOne, cp);
-		if (ps > maxP)
-		{
-			maxP = ps;
-			maxInd = i;
-		}
-	}
-
-	//		bar0.barlines.clear();
-	//		delete bar0;
-
-	assert(maxP <= 1.0);
-	return maxP > 0.5 ? maxInd : -1;
-}
-
-
-~barclassificator()
-{
-	//		for (size_t i = 0; i < N * 2; i++)
-	//		{
-	//			delete classes[i];
-	//		}
-}
 };
 
 
@@ -581,7 +423,7 @@ public:
 				if (ext == ".bbf")
 				{
 					BackPathStr filename = entry.path();
-					GeoBarHolderCache reader;
+					GeoBarCloudCache reader;
 					reader.openRead(filename.string());
 					int ind = 0;
 					std::unique_ptr<BarcodeHolder> prt(reader.load(ind));
@@ -599,7 +441,6 @@ public:
 
 	void save(BarcodeHolder* curBar, int classIndex, BackImage* img = nullptr);
 };
-
 
 
 inline void testC()

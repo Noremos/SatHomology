@@ -79,6 +79,9 @@
     <ClCompile Include="backend\project.cpp">
       <Filter>Backend</Filter>
     </ClCompile>
+    <ClCompile Include="backend\project.ixx">
+      <Filter>Backend</Filter>
+    </ClCompile>
     <ClCompile Include="backend\SimpleImgReader.cpp">
       <Filter>Backend</Filter>
     </ClCompile>
@@ -183,6 +186,9 @@
     </ClInclude>
     <ClInclude Include="frontend\GuiWidgets.h">
       <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="backend\CacheFiles.h">
+      <Filter>Backend</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
