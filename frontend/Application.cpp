@@ -14,6 +14,7 @@
 #include "barcodeCreator.h"
 #include "Framework.h"
 
+#include "presets.h"
 
 import ForntnedModule;
 
@@ -173,12 +174,12 @@ namespace MyApp
 		{
 			if (useAsync)
 			{
-				commonValus.onAir = true;
-				commonValus.future = std::async(&GuiBackend::createBarcode, &backend,
-						procCB.currentValue(),
-						colorCB.currentValue(),
-						componentCB.currentValue(),
-						std::cref(filterInfo));
+				//commonValus.onAir = true;
+				//commonValus.future = std::async(&GuiBackend::createBarcode, &backend,
+				//		procCB.currentValue(),
+				//		colorCB.currentValue(),
+				//		componentCB.currentValue(),
+				//		std::cref(filterInfo));
 			}
 			else
 			{
@@ -191,6 +192,11 @@ namespace MyApp
 		}
 
 		SelectableKeyValues<int> imgSubImages;
+		SelectableKeyValues<int> alg =
+		{
+			{0, "Растровый"},
+			{1, "Растр в точки"}
+		};
 	};
 
 	TopbarValues tbVals;
@@ -397,15 +403,6 @@ namespace MyApp
 					}
 				}
 			}
-
-			ImGui::SameLine();
-			tbVals.componentCB.drawCombobox("##Форма");
-			ImGui::SameLine();
-			tbVals.procCB.drawCombobox("##Обработка");
-			ImGui::SameLine();
-			tbVals.colorCB.drawCombobox("##Цвет");
-
-
 			// Always center this window when appearing
 			ImVec2 center = ImGui::GetMainViewport()->GetCenter();
 			ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
@@ -421,14 +418,6 @@ namespace MyApp
 
 			if (ImGui::BeginPopupModal("ProcSetts", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 			{
-				ImGui::Text("Порог отсеивания");
-				ImGui::SliderInt("##Prog", &tbVals.filterInfo.minLen, 1, 256, "%d");
-
-				ImGui::Checkbox("Async", &useAsync);
-				ImGui::Checkbox("Use holes", &CloudBarcodeCreateHelper::useHols);
-				//ImGui::Checkbox("ignore hight", &CloudBarcodeCreateHelper::useHols);
-				ImGui::Separator();
-
 				ImGui::Text("Tile size");
 				ImGui::SliderInt("##Tile size", &tbVals.newTileSize, 1, backend.getImageMinSize() / 10, "%d0");
 				if (tbVals.newTileSize + tbVals.newOffsetSize > backend.getImageMinSize() / 10)
@@ -479,25 +468,48 @@ namespace MyApp
 					}
 					tbVals.imgSubImages.endAdding();
 					tbVals.imgSubImages.currentIndex = 0;
-					ImGui::OpenPopup("SelectMax");
 				}
-				else
-				{
-					tbVals.createBarcode();
-					unsetPoints();
-				}
+				ImGui::OpenPopup("SelectMax");
 			}
 			ImGui::EndDisabled();
 
 			if (ImGui::BeginPopupModal("SelectMax", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 			{
-				tbVals.imgSubImages.drawListBox("Размеры");
-				if (ImGui::Button("Выбрать"))
+				tbVals.alg.drawCombobox("Алгоритм");
+				ImGui::Separator();
+				
+				if (tbVals.alg.currentIndex == 0)
 				{
-					backend.setSubImage(tbVals.imgSubImages.currentIndex);
-					ImGui::CloseCurrentPopup();
-					tbVals.createBarcode();
-					unsetPoints();
+					tbVals.componentCB.drawCombobox("##Форма");
+					tbVals.procCB.drawCombobox("##Обработка");
+					tbVals.colorCB.drawCombobox("##Цвет");
+
+				}
+				else
+				{
+					ImGui::Checkbox("Use holes", &CloudBarcodeCreateHelper::useHols);
+					ImGui::Checkbox("ignore hight", &CloudBarcodeCreateHelper::ignoreHeight);
+				}
+
+				ImGui::Separator();
+				ImGui::Text("Пороги отсеивания");
+				ImGui::SliderInt("MinStart", &tbVals.filterInfo.minStart, 0, 256, "%d");
+				ImGui::SliderInt("MaxStart", &tbVals.filterInfo.maxStart, 0, 256, "%d");
+				ImGui::SliderInt("MaxLen", &tbVals.filterInfo.minLen, 0, 256, "%d");
+				ImGui::SliderInt("MaxLen", &tbVals.filterInfo.maxLen, 0, 256, "%d");
+				ImGui::Separator();
+
+
+				if (tbVals.imgSubImages.getSize() > 0)
+				{
+					tbVals.imgSubImages.drawListBox("Размеры");
+					if (ImGui::Button("Запустить"))
+					{
+						backend.setSubImage(tbVals.imgSubImages.currentIndex);
+						ImGui::CloseCurrentPopup();
+						tbVals.createBarcode();
+						unsetPoints();
+					}
 				}
 				ImGui::EndPopup();
 			}

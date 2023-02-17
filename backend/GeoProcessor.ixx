@@ -52,6 +52,7 @@ export class CloudBarcodeCreateHelper
 
 public:
 	static bool useHols;
+	static bool ignoreHeight;
 
 	CloudBarcodeCreateHelper()
 	{ }
@@ -97,14 +98,14 @@ public:
 		bc::CloudPointsBarcode::CloudPoints cloud;
 		for (size_t var = 0; var < item->barlines.size(); ++var)
 		{
-			if (info.needSkip(item->barlines[var]->start))
+			if (info.needSkip(item->barlines[var]->start, item->barlines[var]->len()))
 			{
 				continue;
 			}
 
 			auto& m = item->barlines[var]->matr[0];
 			bc::point rp(m.getX() + offset.x, m.getY() + offset.y);
-			cloud.points.push_back(bc::CloudPointsBarcode::CloudPoint(rp.x, rp.y, m.value.getAvgFloat()));
+			cloud.points.push_back(bc::CloudPointsBarcode::CloudPoint(rp.x, rp.y, ignoreHeight ? 0 : m.value.getAvgFloat()));
 		}
 
 		return createSplitCloudBarcode(cloud);
@@ -495,6 +496,7 @@ inline void testC()
 #include <ranges>
 
 bool CloudBarcodeCreateHelper::useHols = true;
+bool CloudBarcodeCreateHelper::ignoreHeight = false;
 
 double getPsa(const bc::barvector& matr)
 {

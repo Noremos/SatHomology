@@ -148,10 +148,12 @@ struct BackSize
 struct FilterInfo
 {
 	int minLen = 20;
-
-	bool needSkip(const Barscalar& scl) const
+	int maxLen = 255;
+	int minStart = 0;
+	int maxStart = 255;
+	bool needSkip(const Barscalar& start, const Barscalar& len) const
 	{
-		return scl < minLen;
+		return  start >= minStart && start <= maxStart && len >= minLen && len <= maxLen;
 	}
 };
 
