@@ -1,11 +1,9 @@
 module;
 
 #include "barcodeCreator.h"
-#include "BackImage.h"
 #include <random>
 #include <vector>
-#include "../frontend/Framework.h"
-#include "Common.h"
+#include "../Bind/Common.h"
 
 #include <stack>
 #include <ranges>
@@ -19,6 +17,7 @@ module;
 export module GeoprocessorModule;
 
 import CacheFilesModule;
+import Platform;
 
 
 export struct Cound

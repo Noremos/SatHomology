@@ -2,7 +2,6 @@ module;
 
 #include "barcodeCreator.h"
 #include "../backend/MatrImg.h"
-#include "../frontend/Framework.h"
 #include "../frontend/GuiCommon.h"
 #include "../frontend/GuiWidgets.h"
 
@@ -16,6 +15,7 @@ export module ForntnedModule;
 import ProjectModule;
 import TiffReaderModule;
 import GeoprocessorModule;
+import Platform;
 
 // Todo.
 // 2 режима

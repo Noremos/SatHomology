@@ -2,10 +2,15 @@
 #include <filesystem>
 #include  <iostream>
 #include <fstream>
+#include "../backend/MatrImg.h"
 
 #include "barline.h"
 
 #include "../side/json.hpp"
+
+
+
+using BackImage = MatrImg;
 using BackString = std::string;
 using BackDirStr = std::filesystem::path;
 using BackPathStr = std::filesystem::path;

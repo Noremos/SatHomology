@@ -1,7 +1,6 @@
 module;
 
 #include "MatrImg.h"
-#include "../frontend/Framework.h"
 
 #include <unordered_set>
 #include <random>
@@ -13,7 +12,7 @@ module;
 
 #include "ReaderTypes.h"
 #include "tiffreader.h"
-#include "Common.h"
+#include "../Bind/Common.h"
 
 
 #include "MatrImg.h"
@@ -24,6 +23,7 @@ export module ProjectModule;
 
 import CacheFilesModule;
 import GeoprocessorModule;
+import Platform;
 
 
 export struct BarcodeProperies

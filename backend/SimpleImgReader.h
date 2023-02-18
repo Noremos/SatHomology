@@ -2,7 +2,8 @@
 #define SIMPLEIMGREADER_H
 
 #include "tiffreader.h"
-#include "BackImage.h"
+#include "../Bind/Common.h"
+
 
 class SimpleImgReader : public ImageReader
 {

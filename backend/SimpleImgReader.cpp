@@ -1,5 +1,6 @@
 #include "SimpleImgReader.h"
-#include "../frontend/Framework.h"
+
+import Platform;
 
 rowptr SimpleImgReader::getRowData(int ri)
 {

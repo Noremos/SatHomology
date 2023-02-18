@@ -1,7 +1,7 @@
 module;
 
 #include "barcodeCreator.h"
-#include "Common.h"
+#include "../Bind/Common.h"
 #include <StateBinFile.h>
 #include <vector>
 #include "BinFile.h"

@@ -79,17 +79,8 @@
     <ClCompile Include="backend\SimpleImgReader.cpp">
       <Filter>Backend</Filter>
     </ClCompile>
-    <ClCompile Include="backend\Common.cpp">
-      <Filter>Backend</Filter>
-    </ClCompile>
     <ClCompile Include="side\sago\platform_folders.cpp">
       <Filter>Side</Filter>
-    </ClCompile>
-    <ClCompile Include="backend\BackImage.cpp">
-      <Filter>Backend</Filter>
-    </ClCompile>
-    <ClCompile Include="frontend\DearImguiImpl.cpp">
-      <Filter>GUI</Filter>
     </ClCompile>
     <ClCompile Include="frontend\GuiCommon.h">
       <Filter>GUI</Filter>
@@ -107,6 +98,10 @@
     <ClCompile Include="frontend\frontend.ixx" />
     <ClCompile Include="side\Lua.ixx">
       <Filter>Backend</Filter>
+    </ClCompile>
+    <ClCompile Include="Bind\Framework.ixx" />
+    <ClCompile Include="Bind\Side.ixx">
+      <Filter>Side</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -167,21 +162,13 @@
     <ClInclude Include="side\stb_image.h">
       <Filter>Side</Filter>
     </ClInclude>
-    <ClInclude Include="backend\Common.h">
-      <Filter>Backend</Filter>
-    </ClInclude>
-    <ClInclude Include="backend\BackImage.h">
-      <Filter>Backend</Filter>
-    </ClInclude>
-    <ClInclude Include="frontend\Framework.h">
-      <Filter>GUI</Filter>
-    </ClInclude>
     <ClInclude Include="frontend\GuiWidgets.h">
       <Filter>GUI</Filter>
     </ClInclude>
     <ClInclude Include="side\sol3\sol.hpp">
       <Filter>Side</Filter>
     </ClInclude>
+    <ClInclude Include="Bind\Common.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\imgui\misc\debuggers\imgui.natvis">

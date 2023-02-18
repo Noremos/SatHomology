@@ -1,8 +1,8 @@
 #pragma once
 #define IMGUI_DEFINE_MATH_OPERATORS
 
-#include "../backend/BackImage.h"
- 
+#include "../Bind/Common.h"
+
 typedef unsigned int GLuint;
 
 void ResizeImage(int& width, int& height, int max_width, int max_height);
@@ -62,7 +62,7 @@ public:
 		release();
 	}
 
-	// Load from file  
+	// Load from file
 	int width = 0;
 	int height = 0;
 

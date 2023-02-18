@@ -12,11 +12,12 @@
 
 #include "presets.h"
 #include "barcodeCreator.h"
-#include "Framework.h"
 
 #include "presets.h"
 
 import ForntnedModule;
+import Platform;
+
 //import Lua;
 
 #include "../side/sol3/sol.hpp"
