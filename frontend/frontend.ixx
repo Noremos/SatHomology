@@ -118,7 +118,7 @@ public:
 	void loadImageOrProject(const BackPathStr& path);
 	void createBarcode(const BarcodeProperies& propertices, const FilterInfo& info);
 	bool addSelectedToClassData(int classIndex, BackImage* icon = nullptr);
-	void processMain(BackString extra);
+	void processMain(BackString extra, FilterInfo& filter);
 	void restoreSource();
 	void undoAddClass();
 	void exportResult(BackDirStr path);
@@ -419,6 +419,8 @@ void GuiBackend::endLoaded()
 
 void GuiBackend::loadImageOrProject(const BackPathStr& path)
 {
+	curSelected = nullptr;
+
 	GuiState newState = state;
 	bool setProc = false;
 	if (path.extension() == ".qwr")
@@ -543,7 +545,7 @@ void fitInto(int sourceLen, int newLen, int& st, int& ed)
 //	processedImage->setImage(resultMart);
 //}
 
-void GuiBackend::processMain(BackString extra)
+void GuiBackend::processMain(BackString extra, FilterInfo& filter)
 {
 	if (!created)
 		return;
@@ -555,7 +557,7 @@ void GuiBackend::processMain(BackString extra)
 	proj->setReadyLaod(curImgInd, mainMat.width());
 
 	Project::ClassInfo infoe{ 0, resultMart, map, extra, resLinesMap };
-	proj->readPrcoessBarcode(infoe);
+	proj->readPrcoessBarcode(infoe, filter);
 
 	processedImage->setImage(resultMart, false);
 }

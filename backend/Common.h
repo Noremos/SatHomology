@@ -168,17 +168,30 @@ struct FilterInfo
 		{
 			return val >= first && val <= second;
 		}
+
+		bool notInRange(int val) const
+		{
+			return val < first || val > second;
+		}
+
+		bool notInRange(const Barscalar& val) const
+		{
+			return val < first && val > second;
+		}
 	};
 
 	FRange start{0,255};
 	FRange len{ 0,255 };
-	FRange matrSize{ 0,9999999 };
+	FRange matrSizeProc{ 0,100 };
 	FRange depth{0,1000};
-
+	int imgLen = 0;
 
 	bool needSkip(bc::barline* line) const
 	{
-		return start.inRange(line->start) && len.inRange(line->len()) && matrSize.inRange(line->matr.size()) && depth.inRange(line->getDeath());
+		return start.notInRange(line->start) ||
+				len.notInRange(line->len()) || 
+				matrSizeProc.notInRange(line->matr.size() * 100 / imgLen) ||
+				depth.notInRange(line->getDeath());
 	}
 };
 

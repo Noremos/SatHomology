@@ -207,8 +207,170 @@ export enum class ReadType
 	Simple
 };
 
+
+int getCon(int total, int part)
+{
+	return total / part + (total % part == 0 ? 0 : 1);
+}
+
+
+union SettVariant
+{
+	int* i;
+	float* f;
+	double* d;
+	BackString* s;
+	BackPathStr* p;
+};
+
+struct SettingValue
+{
+	SettVariant data;
+	BackString name;
+
+private:
+	enum SettVariantType
+	{
+		sv_int,
+		sv_float,
+		sv_double,
+		sv_str,
+		sv_path
+	};
+	SettVariantType type;
+
+public:
+	SettingValue(const BackString& name, int& val)
+	{
+		this->name = name;
+		data.i = &val;
+		type = sv_int;
+	}
+
+	SettingValue(const BackString& name, float& val)
+	{
+		this->name = name;
+		data.f = &val;
+		type = sv_double;
+	}
+	SettingValue(const BackString& name, double& val)
+	{
+		this->name = name;
+		data.d = &val;
+		type = sv_double;
+	}
+
+	SettingValue(const BackString& name, BackString& val)
+	{
+		this->name = name;
+		data.s = &val;
+		type = sv_str;
+	}
+	SettingValue(const BackString& name, BackPathStr& val)
+	{
+		this->name = name;
+		data.p = &val;
+		type = sv_path;
+	}
+
+	void writeData(BackJson& json) const
+	{
+		switch (type)
+		{
+		case sv_int:
+			json[name] = *data.i;
+			break;
+		case sv_float:
+			json[name] = *data.f;
+			break;
+		case sv_double:
+			json[name] = *data.d;
+			break;
+		case sv_str:
+			json[name] = *data.s;
+			break;
+		case sv_path:
+			json[name] = *data.p;
+			break;
+		}
+	}
+
+	void readData(const BackJson& json)
+	{
+		switch (type)
+		{
+		case sv_int:
+			*data.i = json[name].get<int>();
+			break;
+		case sv_float:
+			*data.f = json[name].get<double>();
+			break;
+		case sv_double:
+			*data.d = json[name].get<double>();
+			break;
+		case sv_str:
+			*data.s = json[name].get<BackString>();
+			break;
+		case sv_path:
+			*data.p = json[name].get<BackString>();
+			break;
+		}
+	}
+};
+
+class SettingsIO
+{
+	std::vector<SettingValue> settings;
+public:
+
+	SettingsIO(std::initializer_list<SettingValue> l) : settings(l)
+	{ }
+
+	void write(BackJson& json) const
+	{
+		for (auto& set : settings)
+		{
+			set.writeData(json);
+		}
+	}
+	void read(const BackJson& json)
+	{
+		for (auto& set : settings)
+		{
+			set.readData(json);
+		}
+	}
+};
+
+static const char* jsn_displayFacto = "step";
+static const char* jsn_imgMinVal = "imgMinVal";
+static const char* jsn_imgMaxVal = "imgMaxVal";
+static const char* jsn_geojsonPath = "geojsonPath";
+static const char* jsn_imgPath = "imgPath";
+static const char* jsn_classfiles = "barfiles";
+static const char* jsn_dispalyImg = "subImageIndex";
+static const char* jsn_alg = "algIndex";
+static const char* jsn_tileSize = "tileSize";
+static const char* jsn_tileOffset = "tileOffset";
+
+
 export class Project
 {
+
+	SettingsIO settings =
+	{
+		{jsn_displayFacto, u_displayFactor},
+		{jsn_imgMaxVal, u_imgMaxVal},
+		{jsn_imgMinVal, u_imgMinVal},
+		{jsn_imgPath, u_imgPath},
+		{jsn_geojsonPath, this->u_geojsonPath},
+		{jsn_classfiles, this->u_classCache},
+		{jsn_dispalyImg, this->u_subImageIndex},
+		{jsn_alg, this->u_algorithm},
+		{jsn_tileSize, this->tileSize},
+		{jsn_tileOffset, this->tileOffset}
+	};
+
 public:
 	//	Q_PROPERTY(SeachingSettings* searchSetts READ getSerchSetts)
 	//	Q_PROPERTY(SeachingSettings searchSetts MEMBER searchSetts)
@@ -441,10 +603,10 @@ public:
 		}
 	};
 
-	void classBarcodeByRaster(bc::Baritem& baritem, ClassInfo& info);
-	void classBarcodeByCloud(BarcodesHolder& baritem, ClassInfo& info);
+	void classBarcodeByRaster(bc::Baritem& baritem, ClassInfo& info, const FilterInfo& filter);
+	void classBarcodeByCloud(BarcodesHolder& baritem, ClassInfo& info, const FilterInfo& filter);
 
-	void readPrcoessBarcode(ClassInfo& info);
+	void readPrcoessBarcode(ClassInfo& info, FilterInfo& filter);
 
 
 	void exportResult(int imgNumber, const BackImage& resultMart);
@@ -453,8 +615,18 @@ public:
 	void readImages();
 
 	void createCacheBarcode(const BarcodeProperies& propertices, int imgIndex, const FilterInfo& info);
-	void getOffsertByTileIndex(int tileIndex, uint& offX, uint& offY);
+	void getOffsertByTileIndex(uint tileIndex, uint& offX, uint& offY)
+	{
+		int tilesInRow = getCon(reader->width(), tileSize);
+		offY = (tileIndex / tilesInRow) * tileSize;
+		offX = (tileIndex % tilesInRow) * tileSize;
+	}
 
+	uint getTileIndexByOffset(uint offX, uint offY)
+	{
+		int tilesInRow = getCon(reader->width(), tileSize);
+		return (offY / tileSize) * tilesInRow + offX / tileSize;
+	}
 
 	int getFirstNormIndex()
 	{
@@ -565,24 +737,6 @@ float Project::getImgMaxVal() const
 	return u_imgMaxVal;
 }
 
-
-int getCon(int total, int part)
-{
-	return total / part + (total % part == 0 ? 0 : 1);
-}
-
-
-void Project::getOffsertByTileIndex(int tileIndex, uint& offX, uint& offY)
-{
-	//	reader->setPrevImage();
-
-	//	int rhei = getCon(reader->height(), tileSize);
-	int rwid = getCon(reader->width(), tileSize);
-	offY = (tileIndex / rwid) * tileSize;
-	offX = (tileIndex % rwid) * tileSize;
-}
-
-
 // ---------------------------
 
 
@@ -606,9 +760,10 @@ public:
 class RasterCacheClassifier : public BarCacheClasser
 {
 	GeoBarRasterCache reader;
+	const FilterInfo& filter;
 
 public:
-	RasterCacheClassifier(Project* proj) : BarCacheClasser(proj)
+	RasterCacheClassifier(Project* proj, const FilterInfo& filter) : BarCacheClasser(proj), filter(filter)
 	{ }
 
 	bool canRead() const
@@ -627,16 +782,16 @@ public:
 		std::unique_ptr<bc::Baritem> baritem(reader.load(info.ind));
 		std::cout << info.ind << std::endl;
 
-		proj->classBarcodeByRaster(*baritem.get(), info);
+		proj->classBarcodeByRaster(*baritem.get(), info, filter);
 	}
 };
 
 class CloudCacheClassifier : public BarCacheClasser
 {
 	GeoBarCloudHolderCache reader;
-
+	const FilterInfo& filter;
 public:
-	CloudCacheClassifier(Project* proj) : BarCacheClasser(proj)
+	CloudCacheClassifier(Project* proj, const FilterInfo& filter) : BarCacheClasser(proj), filter(filter)
 	{ }
 
 	bool canRead() const
@@ -654,7 +809,48 @@ public:
 		std::unique_ptr<CloudItem> baritem(reader.load(info.ind));
 		std::cout << info.ind << std::endl;
 
-		proj->classBarcodeByCloud(*baritem.get(), info);
+		proj->classBarcodeByCloud(*baritem.get(), info, filter);
+	}
+};
+
+struct TileIterator
+{
+	uint start;
+	uint tileSize;
+	uint fullTileSize;
+
+	uint maxLen;
+
+	TileIterator(uint start, uint tileSize, uint offset, uint maxLen) :
+		start(start), tileSize(tileSize), fullTileSize(tileSize + offset), maxLen(maxLen)
+	{ }
+
+	void reset(uint st = 0)
+	{
+		start = st;
+	}
+
+	uint pos()
+	{
+		return start;
+	}
+
+	uint accum()
+	{
+		start += tileSize;
+		return start;
+	}
+
+
+	uint getFullTileSize()
+	{
+		return (start + fullTileSize <= maxLen ? fullTileSize : maxLen - start);
+	}
+
+	bool shouldSkip(uint& len)
+	{
+		len = getFullTileSize();
+		return len <= (fullTileSize - tileSize); // len < offset
 	}
 };
 
@@ -697,34 +893,36 @@ void Project::createCacheBarcode(const BarcodeProperies& propertices, int imgInd
 	barcodeHelper->prepare(getPath(BackPath::binbar));
 
 	const uint fullTile = tileSize + tileOffset;
-	uint stH = 0, stW = 0;
 
 	uint rwid = reader->width();
 	uint rhei = reader->height();
+	TileIterator stW(0, tileSize, tileOffset, rwid);
+	TileIterator stH(0, tileSize, tileOffset, rhei);
 
-	int ke = 0;
 	for (uint i = 0; i < rhei; i += tileSize)
 	{
-		uint ihei = (stH + fullTile > rhei ? rhei - stH : fullTile);
-		if (ihei <= tileOffset)
+		uint ihei;
+		if (stH.shouldSkip(ihei))
 			break;
 
-		stW = 0;
+		stW.reset(0);
 		std::cout << i << std::endl;
 		for (uint j = 0; j < rwid; j += tileSize)
 		{
-			uint iwid = (stW + fullTile > rwid ? rwid - stW : fullTile);
-			if (iwid <= tileOffset)
+			uint iwid;
+			if (stW.shouldSkip(iwid))
 				break;
 
-			DataRect rect = reader->getRect(stW, stH, iwid, ihei);
+			bc::point offset(stW.pos(), stH.pos());
+			DataRect rect = reader->getRect(offset.x, offset.y, iwid, ihei);
 
+			uint k = getTileIndexByOffset(offset.x, offset.y);
 			DataRectBarWrapper warp(rect);
-			barcodeHelper->createCache(ke++, &warp, constr, bc::point(stW, stH), info);
+			barcodeHelper->createCache(k, &warp, constr, offset, info);
 
-			stW += tileSize;
+			stW.accum();
 		}
-		stH += tileSize;
+		stH.accum();
 	}
 
 	u_algorithm = propertices.alg;
@@ -732,15 +930,18 @@ void Project::createCacheBarcode(const BarcodeProperies& propertices, int imgInd
 }
 
 
-void Project::readPrcoessBarcode(ClassInfo& info)
+void Project::readPrcoessBarcode(ClassInfo& info, FilterInfo& filter)
 {
 	if (u_displayFactor < 1.0)
 		throw std::exception();
 
+	filter.imgLen = tileSize + tileOffset;
+
+
 	// Cacher
 	BarCacheClasser* classifier;
-	RasterCacheClassifier _rsClass(this);
-	CloudCacheClassifier _clClass(this);
+	RasterCacheClassifier _rsClass(this, filter);
+	CloudCacheClassifier _clClass(this, filter);
 
 	if (u_algorithm == 0)
 	{
@@ -760,7 +961,7 @@ void Project::readPrcoessBarcode(ClassInfo& info)
 }
 
 
-void Project::classBarcodeByRaster(bc::Baritem& baritem, ClassInfo& info)
+void Project::classBarcodeByRaster(bc::Baritem& baritem, ClassInfo& info, const FilterInfo& filter)
 {
 	bool showBad = true;
 	bool showWhite = true; //extra.indexOf("showw;") != -1;
@@ -773,6 +974,9 @@ void Project::classBarcodeByRaster(bc::Baritem& baritem, ClassInfo& info)
 	for (size_t i = 0; i < vec.size(); ++i)
 	{
 		auto* curLine = vec.at(i);
+		if (filter.needSkip(curLine))
+			continue;
+
 		const auto& matr = curLine->matr;
 
 		if (matr.size() == 0)
@@ -811,7 +1015,7 @@ void Project::classBarcodeByRaster(bc::Baritem& baritem, ClassInfo& info)
 
 }
 
-void Project::classBarcodeByCloud(BarcodesHolder& baritem, ClassInfo& info)
+void Project::classBarcodeByCloud(BarcodesHolder& baritem, ClassInfo& info, const FilterInfo& filter)
 {
 	bool wr = info.extra.find("json;") != -1;
 	//	bool ent = extra.indexOf("entr;") != -1;
@@ -828,6 +1032,10 @@ void Project::classBarcodeByCloud(BarcodesHolder& baritem, ClassInfo& info)
 	for (size_t i = 0; i < vec.size(); ++i)
 	{
 		auto* curLine = vec.at(i);
+
+		if (filter.needSkip(curLine->lines[0]))
+			continue;
+
 		const auto& matr = curLine->matrix;
 
 		if (matr.size() == 0)
@@ -848,6 +1056,9 @@ void Project::classBarcodeByCloud(BarcodesHolder& baritem, ClassInfo& info)
 		std::shared_ptr<SimpleLine> sl = std::make_shared<SimpleLine>(info.ind, i);
 		int depth = curLine->getDeath();
 		sl->depth = depth;
+		sl->start = curLine->lines[0]->start;
+		sl->end = curLine->lines[0]->end();
+		sl->matrSrcSize = matr.size();
 		//		simpleHolder.push_back(sl);
 
 		info.map[(size_t)sl.get()] = type;
@@ -965,37 +1176,34 @@ bool Project::loadProject(const BackPathStr& prjFilepath)
 	return true;
 }
 
-static const char* jsn_displayFacto = "step";
-static const char* jsn_imgMinVal = "imgMinVal";
-static const char* jsn_imgMaxVal = "imgMaxVal";
-static const char* jsn_geojsonPath = "geojsonPath";
-static const char* jsn_imgPath = "imgPath";
-static const char* jsn_classfiles = "barfiles";
-static const char* jsn_dispalyImg = "subImageIndex";
-static const char* jsn_alg = "algIndex";
-
 void Project::read(const BackJson& json)
 {
-	this->u_displayFactor = json[jsn_displayFacto].get<double>();
-	this->u_imgMaxVal = json[jsn_imgMaxVal].get<double>();
-	this->u_imgMinVal = json[jsn_imgMinVal].get<double>();
-	this->u_imgPath = json[jsn_imgPath].get<BackString>();
-	this->u_geojsonPath = json[jsn_geojsonPath].get<BackString>();
-	this->u_classCache = json[jsn_classfiles].get<BackString>();
-	this->u_subImageIndex = json[jsn_dispalyImg].get<int>();
-	this->u_algorithm = json[jsn_alg].get<int>();
+	settings.read(json);
+	//this->u_displayFactor = json[jsn_displayFacto].get<double>();
+	//this->u_imgMaxVal = json[jsn_imgMaxVal].get<double>();
+	//this->u_imgMinVal = json[jsn_imgMinVal].get<double>();
+	//this->u_imgPath = json[jsn_imgPath].get<BackString>();
+	//this->u_geojsonPath = json[jsn_geojsonPath].get<BackString>();
+	//this->u_classCache = json[jsn_classfiles].get<BackString>();
+	//this->u_subImageIndex = json[jsn_dispalyImg].get<int>();
+	//this->u_algorithm = json[jsn_alg].get<int>();
+	//this->tileSize = json[jsn_tileSize].get<int>();
+	//this->tileOffset = json[jsn_tileOffset].get<int>();
 }
 
 void Project::write(BackJson& json) const
 {
-	json[jsn_displayFacto] = this->u_displayFactor;
-	json[jsn_imgMaxVal] = this->u_imgMaxVal;
-	json[jsn_imgMinVal] = this->u_imgMinVal;
-	json[jsn_imgPath] = u_imgPath.string();
-	json[jsn_geojsonPath] = this->u_geojsonPath.string();
-	json[jsn_classfiles] = this->u_classCache.string();
-	json[jsn_dispalyImg] = this->u_subImageIndex;
-	json[jsn_alg] = this->u_algorithm;
+	settings.write(json);
+	//json[jsn_displayFacto] = this->u_displayFactor;
+	//json[jsn_imgMaxVal] = this->u_imgMaxVal;
+	//json[jsn_imgMinVal] = this->u_imgMinVal;
+	//json[jsn_imgPath] = u_imgPath.string();
+	//json[jsn_geojsonPath] = this->u_geojsonPath.string();
+	//json[jsn_classfiles] = this->u_classCache.string();
+	//json[jsn_dispalyImg] = this->u_subImageIndex;
+	//json[jsn_alg] = this->u_algorithm;
+	//json[jsn_tileSize] = this->tileSize;
+	//json[jsn_tileOffset] = this->tileOffset;
 }
 
 static int getFid(int wid, int s)

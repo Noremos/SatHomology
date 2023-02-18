@@ -116,7 +116,7 @@ namespace MyApp
 		void _drawPair(const char* name1, const char* name2, FilterInfo::FRange& rng, int max = 256)
 		{
 			ImGui::SliderInt(name1, &rng.first, 0, max, "%d");
-			ImGui::SliderInt(name1, &rng.second, 0, max, "%d");
+			ImGui::SliderInt(name2, &rng.second, 0, max, "%d");
 		}
 
 		void draw()
@@ -127,7 +127,7 @@ namespace MyApp
 				ImGui::Text("Пороги отсеивания");
 				_drawPair("MinStart", "MaxStart", filterInfo.start);
 				_drawPair("MinLen", "MaxLen", filterInfo.len);
-				_drawPair("MinMatrSize", "MaxMatrSize", filterInfo.matrSize);
+				_drawPair("MinMatrSize %", "MaxMatrSize %", filterInfo.matrSizeProc, 100);
 				_drawPair("MinDepth", "Max depth", filterInfo.depth);
 			}
 			else
@@ -272,6 +272,7 @@ namespace MyApp
 		BackString debug;
 		bool drawPics = true;
 		bool showUpdaePopup = false;
+		GuiFilter filtere;
 	};
 	BottomBar bottomVals;
 
@@ -697,15 +698,14 @@ namespace MyApp
 
 			if (ImGui::BeginPopupModal("LoadImg", &bottomVals.showUpdaePopup, ImGuiWindowFlags_AlwaysAutoResize))
 			{
-				static GuiFilter filtere;
-				filtere.draw();
+				bottomVals.filtere.draw();
 
 				if (ImGui::Button("Update"))
 				{
 					unsetPoints();
 					bottomVals.showUpdaePopup = false;
 					ImGui::CloseCurrentPopup();
-					backend.processMain(bottomVals.valeExtra);
+					backend.processMain(bottomVals.valeExtra, bottomVals.filtere.filterInfo);
 					//commonValus.onAir = true;
 					//commonValus.future = std::async(&GuiBackend::processMain, std::ref(backend),
 				}
@@ -1000,6 +1000,8 @@ namespace MyApp
 			centerVals.clickHandler.points = &line->matr;
 		}
 		ImGui::EndDisabled();
+
+		ImGui::Separator();
 
 		BackString s = line->start.text<BackString, toStdStr>();
 		s = "Start: " + s;
