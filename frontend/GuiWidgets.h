@@ -137,9 +137,9 @@ public:
 
 	void drawImage(const char* name, bool zoomable = false)
 	{
-		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings;
+		ImGuiWindowFlags window_flags;
 		window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | 
-			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus;
+			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoDocking;
 		if (zoomable)
 			window_flags |= ImGuiWindowFlags_HorizontalScrollbar;
 		if (ImGui::Begin(name, nullptr, window_flags))

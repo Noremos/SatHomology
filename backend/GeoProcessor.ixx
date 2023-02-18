@@ -7,6 +7,9 @@ module;
 #include "../frontend/Framework.h"
 #include "Common.h"
 
+#include <stack>
+#include <ranges>
+
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 #include "imgui.h"
@@ -45,18 +48,67 @@ using std::string;
 //static int pr = 10;
 //static bool normA = false;
 
+export class BarcodeCreateHelper
+{
+public:
+	BarcodeCreateHelper()
+	{ }
 
-export class CloudBarcodeCreateHelper
+	virtual void prepare(const BackPathStr& cacheFilePath) = 0;
+	virtual void createCache(int index, bc::DatagridProvider* prov, const bc::BarConstructor& constr, bc::point offset, const FilterInfo& info) = 0;
+};
+
+
+export class RasterBarcodeCreateHelper : public BarcodeCreateHelper
 {
 	bc::BarcodeCreator creator;
 
+protected:
+	GeoBarRasterCache cacher;
 public:
-	static bool useHols;
-	static bool ignoreHeight;
 
-	CloudBarcodeCreateHelper()
+	RasterBarcodeCreateHelper() : BarcodeCreateHelper()
 	{ }
 
+	void prepare(const BackPathStr& cacheFilePath)
+	{
+		cacher.openWrite(cacheFilePath);
+	}
+
+	void createCache(int index, bc::DatagridProvider* prov, const bc::BarConstructor& constr, bc::point offset, const FilterInfo& info)
+	{
+		std::unique_ptr<bc::Barcontainer> ret(creator.createBarcode(prov, constr));
+
+		cacher.save(ret->getItem(0), index);
+	}
+};
+
+export class CloudBarcodeCreateHelper : public BarcodeCreateHelper
+{
+	bc::BarcodeCreator creator;
+
+protected:
+	GeoBarCloudHolderCache cacher;
+public:
+	bool useHoles = false;
+	bool ignoreHeight = false;
+
+	CloudBarcodeCreateHelper() : BarcodeCreateHelper()
+	{ }
+
+	void prepare(const BackPathStr& cacheFilePath)
+	{
+		cacher.openWrite(cacheFilePath);
+	}
+
+	void createCache(int index, bc::DatagridProvider* prov, const bc::BarConstructor& constr, bc::point offset, const FilterInfo& info)
+	{
+		std::unique_ptr<bc::Baritem> item(create(prov, constr));
+		auto cloud = toCloudBarcode(item.get(), offset, info);
+		cacher.save(&cloud, index);
+	}
+
+private:
 	bc::Baritem* create(bc::DatagridProvider* prov, const bc::BarConstructor& constr)
 	{
 		std::unique_ptr<bc::Barcontainer> ret(creator.createBarcode(prov, constr));
@@ -66,7 +118,7 @@ public:
 	CloudItem createSplitCloudBarcode(const bc::CloudPointsBarcode::CloudPoints& cloud)
 	{
 		bc::CloudPointsBarcode clodCrt;
-		clodCrt.useHolde = useHols;
+		clodCrt.useHolde = useHoles;
 		std::unique_ptr<bc::Barcontainer> hold(clodCrt.createBarcode(&cloud));
 
 		BarcodesHolder holder;
@@ -92,7 +144,6 @@ public:
 		return holder;
 	}
 
-
 	CloudItem toCloudBarcode(bc::Baritem* item, bc::point offset, const FilterInfo& info)
 	{
 		bc::CloudPointsBarcode::CloudPoints cloud;
@@ -110,60 +161,6 @@ public:
 
 		return createSplitCloudBarcode(cloud);
 	}
-
-	// CloudBarcodeHolder createSingleCloudBarcode(const bc::CloudPointsBarcode::CloudPoints& cloud)
-	// {
-	// 	bc::CloudPointsBarcode clodCrt;
-	// 	std::unique_ptr<bc::Barcontainer> hold(clodCrt.createBarcode(&cloud));
-
-	// 	CloudBarcodeHolder holder;
-	// 	if (cloud.points.size() == 0)
-	// 		return holder;
-
-	// 	bc::Baritem* main = hold->getItem(0);
-	// 	for (size_t var = 0; var < main->barlines.size(); ++var)
-	// 	{
-	// 		auto* line = main->barlines[var];
-	// 		holder.lines.push_back(line);
-	// 		holder.matrix.insert(holder.matrix.begin(), line->matr.begin(), line->matr.end());
-	// 	}
-
-	// 	return holder;
-	// }
-
-
-	// CloudItem createCloudBarcode(bc::DatagridProvider* prov, const bc::BarConstructor& constr)
-	// {
-	// 	std::unique_ptr<bc::Baritem> item(create(prov, constr));
-
-	// 	bc::CloudPointsBarcode::CloudPoints cloud;
-	// 	for (size_t var = 0; var < item->barlines.size(); ++var)
-	// 	{
-	// 		auto& m = item->barlines[var]->matr[0];
-	// 		bc::point rp(m.getX(), m.getY());
-	// 		cloud.points.push_back(bc::CloudPointsBarcode::CloudPoints(rp.x, rp.y, m.value.getAvgFloat()));
-	// 	}
-
-	// 	return createSplitCloudBarcode(cloud);
-	// }
-
-
-	// BarcodeHolder createSingleCloudBarcode(bc::DatagridProvider* prov, const bc::BarConstructor& constr)
-	// {
-	// 	std::unique_ptr<bc::Baritem> item(create(prov, constr));
-
-	// 	bc::CloudPointsBarcode::CloudPoints cloud;
-	// 	for (size_t var = 0; var < item->barlines.size(); ++var)
-	// 	{
-	// 		auto& m = item->barlines[var]->matr[0];
-	// 		bc::point rp(m.getX(), m.getY());
-	// 		cloud.points.push_back(bc::CloudPointsBarcode::CloudPoints(rp.x, rp.y, m.value.getAvgFloat()));
-	// 	}
-
-	// 	return createSingleCloudBarcode(cloud);
-	// }
-
-
 };
 
 
@@ -492,11 +489,7 @@ inline void testC()
 	std::cout << "Good" << std::endl;
 }
 
-#include <stack>
-#include <ranges>
 
-bool CloudBarcodeCreateHelper::useHols = true;
-bool CloudBarcodeCreateHelper::ignoreHeight = false;
 
 double getPsa(const bc::barvector& matr)
 {

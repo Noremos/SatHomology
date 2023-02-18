@@ -26,10 +26,21 @@ import CacheFilesModule;
 import GeoprocessorModule;
 
 
+export struct BarcodeProperies
+{
+	bc::barstruct barstruct;
+	int alg = 0; // 0 - raster; 1 - cloud
+	bool alg1UseHoles = false;
+	bool alg1IgnoreHeight = false;
+};
+
+
 export struct toStdStr
 {
+	using STRTYPE = std::string;
+
 	template<class T>
-	static std::string toStr(T val)
+	static STRTYPE toStr(T val)
 	{
 		return std::to_string(val);
 	}
@@ -226,6 +237,7 @@ public:
 	float u_imgMinVal;
 	BackPathStr u_geojsonPath;
 	int u_subImageIndex = 0;
+	int u_algorithm = 0;
 	BackVector<MatrImg*> images;
 
 	int tileSize = 200;
@@ -394,8 +406,37 @@ public:
 		std::unordered_map<size_t, char>& map;
 		BackString extra;
 		std::vector<std::shared_ptr<SimpleLine>>& resLinesMaps;
+
+		void setMatrPoint(int x, int y, int curLineDepth, std::shared_ptr<SimpleLine>& newLine)
+		{
+			int indLocal = mat.getLineIndex(x, y);
+			SimpleLine* existLine = resLinesMaps[indLocal].get();
+
+			if (existLine == nullptr)
+			{
+				resLinesMaps[indLocal] = newLine;
+			}
+			else if (existLine->getDeath() < curLineDepth)
+			{
+				newLine->parent = existLine;
+				resLinesMaps[indLocal] = newLine;
+			}
+
+			int ylek = 2;
+			for (int i = MAX(x - ylek, 0); i < std::min(x + ylek, mat.wid()); i++)
+			{
+				for (int j = MAX(y - ylek, 0); j < std::min(y + ylek, mat.hei()); j++)
+				{
+					int indLocal2 = mat.getLineIndex(i, j);
+
+					resLinesMaps[indLocal2] = newLine;
+				}
+			}
+		}
 	};
-	void classBarcode(BarcodesHolder& baritem, ClassInfo& info);
+
+	void classBarcodeByRaster(bc::Baritem& baritem, ClassInfo& info);
+	void classBarcodeByCloud(BarcodesHolder& baritem, ClassInfo& info);
 
 	void readPrcoessBarcode(ClassInfo& info);
 
@@ -405,7 +446,7 @@ public:
 
 	void readImages();
 
-	void createCacheBarcode(const bc::BarConstructor& constr, int imgIndex, const FilterInfo& info);
+	void createCacheBarcode(const BarcodeProperies& propertices, int imgIndex, const FilterInfo& info);
 	void getOffsertByTileIndex(int tileIndex, uint& offX, uint& offY);
 
 
@@ -538,7 +579,80 @@ void Project::getOffsertByTileIndex(int tileIndex, uint& offX, uint& offY)
 
 // ---------------------------
 
-void Project::createCacheBarcode(const bc::BarConstructor& constr, int imgIndex, const FilterInfo& info)
+
+class BarCacheClasser
+{
+protected:
+	Project* proj;
+public:
+
+	BarCacheClasser(Project* proj = nullptr) :
+		proj(proj)
+	{ }
+
+	virtual bool canRead() const = 0;
+
+	virtual void openRead() = 0;
+
+	virtual void classBarcode(Project::ClassInfo& info) = 0;
+};
+
+class RasterCacheClassifier : public BarCacheClasser
+{
+	GeoBarRasterCache reader;
+
+public:
+	RasterCacheClassifier(Project* proj) : BarCacheClasser(proj)
+	{ }
+
+	bool canRead() const
+	{
+		return reader.canRead();
+	}
+
+	void openRead()
+	{
+		reader.openRead(proj->getPath(BackPath::binbar));
+	}
+
+	void classBarcode(Project::ClassInfo& info)
+	{
+
+		std::unique_ptr<bc::Baritem> baritem(reader.load(info.ind));
+		std::cout << info.ind << std::endl;
+
+		proj->classBarcodeByRaster(*baritem.get(), info);
+	}
+};
+
+class CloudCacheClassifier : public BarCacheClasser
+{
+	GeoBarCloudHolderCache reader;
+
+public:
+	CloudCacheClassifier(Project* proj) : BarCacheClasser(proj)
+	{ }
+
+	bool canRead() const
+	{
+		return reader.canRead();
+	}
+
+	void openRead()
+	{
+		reader.openRead(proj->getPath(BackPath::binbar));
+	}
+
+	void classBarcode(Project::ClassInfo& info)
+	{
+		std::unique_ptr<CloudItem> baritem(reader.load(info.ind));
+		std::cout << info.ind << std::endl;
+
+		proj->classBarcodeByCloud(*baritem.get(), info);
+	}
+};
+
+void Project::createCacheBarcode(const BarcodeProperies& propertices, int imgIndex, const FilterInfo& info)
 {
 	if (block) return;
 
@@ -546,9 +660,35 @@ void Project::createCacheBarcode(const bc::BarConstructor& constr, int imgIndex,
 	if (imgType == ReadType::Tiff)
 		dynamic_cast<TiffReader*>(reader)->setCurrentSubImage(imgIndex);
 
-	CloudBarcodeCreateHelper creator;
-	GeoBarCloudHolderCache cacher;
-	cacher.openWrite(getPath(BackPath::binbar).string());
+	// Settup
+	bc::BarConstructor constr;
+	constr.createBinaryMasks = true;
+	constr.createGraph = true;
+	constr.attachMode = bc::AttachMode::morePointsEatLow;
+	constr.returnType = bc::ReturnType::barcode2d;
+	constr.structure.push_back(propertices.barstruct);
+	//	constr.setStep(stepSB);
+
+	// -------
+
+	// Cacher
+	BarcodeCreateHelper* barcodeHelper;
+	RasterBarcodeCreateHelper _rsbarcodeHelper;
+
+	CloudBarcodeCreateHelper _clBarcodeHelper;
+
+	if (propertices.alg == 0)
+	{
+		barcodeHelper = &_rsbarcodeHelper;
+	}
+	else
+	{
+		_clBarcodeHelper.useHoles = propertices.alg1UseHoles;
+		_clBarcodeHelper.ignoreHeight = propertices.alg1IgnoreHeight;
+		barcodeHelper = &_clBarcodeHelper;
+	}
+
+	barcodeHelper->prepare(getPath(BackPath::binbar));
 
 	const uint fullTile = tileSize + tileOffset;
 	uint stH = 0, stW = 0;
@@ -574,15 +714,14 @@ void Project::createCacheBarcode(const bc::BarConstructor& constr, int imgIndex,
 			DataRect rect = reader->getRect(stW, stH, iwid, ihei);
 
 			DataRectBarWrapper warp(rect);
-			std::unique_ptr<Baritem> main(creator.create(&warp, constr));
-			auto cloud = creator.toCloudBarcode(main.get(), bc::point(stW, stH), info);
-			cacher.save(&cloud, ke++);
+			barcodeHelper->createCache(ke++, &warp, constr, bc::point(stW, stH), info);
 
 			stW += tileSize;
 		}
 		stH += tileSize;
 	}
 
+	u_algorithm = propertices.alg;
 	saveProject();
 }
 
@@ -592,21 +731,81 @@ void Project::readPrcoessBarcode(ClassInfo& info)
 	if (u_displayFactor < 1.0)
 		throw std::exception();
 
-	GeoBarCloudHolderCache reader;
-	reader.openRead(getPath(BackPath::binbar).string());
+	// Cacher
+	BarCacheClasser* classifier;
+	RasterCacheClassifier _rsClass(this);
+	CloudCacheClassifier _clClass(this);
 
-	while (reader.canRead())
+	if (u_algorithm == 0)
 	{
-		std::unique_ptr<CloudItem> baritem(reader.load(info.ind));
-		std::cout << info.ind << std::endl;
+		classifier = &_rsClass;
+	}
+	else
+	{
+		classifier = &_clClass;
+	}
 
-		classBarcode(*baritem.get(), info);
-		//classBarcode(baritem, ind, mat, map, extra);
+	classifier->openRead();
+
+	while (classifier->canRead())
+	{
+		classifier->classBarcode(info);
 	}
 }
 
 
-void Project::classBarcode(BarcodesHolder& baritem, ClassInfo& info)
+void Project::classBarcodeByRaster(bc::Baritem& baritem, ClassInfo& info)
+{
+	bool showBad = true;
+	bool showWhite = true; //extra.indexOf("showw;") != -1;
+
+	uint xOff = 0;
+	uint yOff = 0;
+	getOffsertByTileIndex(info.ind, xOff, yOff);
+
+	auto& vec = baritem.barlines;
+	for (size_t i = 0; i < vec.size(); ++i)
+	{
+		auto* curLine = vec.at(i);
+		const auto& matr = curLine->matr;
+
+		if (matr.size() == 0)
+			continue;
+
+		Barscalar pointCol(255, 0, 0);
+		pointCol = colors[rand() % colors.size()];
+
+		std::unordered_set<uint> vals;
+		std::shared_ptr<SimpleLine> sl = std::make_shared<SimpleLine>(info.ind, i);
+		int depth = curLine->getDeath();
+		sl->depth = depth;
+		sl->start = curLine->start;
+		sl->end = curLine->end();
+		sl->matrSrcSize = matr.size();
+
+		for (const auto& pm : matr)
+		{
+			int ox = (pm.getX() + xOff) / u_displayFactor;
+			int oy = (pm.getY() + yOff) / u_displayFactor;
+			int x = min(info.mat.wid() - 1, ox);
+			int y = min(info.mat.hei() - 1, oy);
+			uint index = bc::barvalue::getStatInd(x, y);
+			if (vals.find(index) != vals.end())
+				continue;
+
+			vals.insert(index);
+
+			bc::point p = bc::barvalue::getStatPoint(index);
+			sl->matr.push_back(bc::barvalue(p, pm.value));
+
+			info.mat.set(x, y, pointCol);
+			info.setMatrPoint(x, y, curLine->getDeath(), sl);
+		}
+	}
+
+}
+
+void Project::classBarcodeByCloud(BarcodesHolder& baritem, ClassInfo& info)
 {
 	bool wr = info.extra.find("json;") != -1;
 	//	bool ent = extra.indexOf("entr;") != -1;
@@ -664,29 +863,8 @@ void Project::classBarcode(BarcodesHolder& baritem, ClassInfo& info)
 
 			//info.mat.set(x, y, color);
 			//			outMask.set(x, y, 255);
-			int indLocal = (y * info.mat.wid() + x);
-			SimpleLine* existLine = info.resLinesMaps[indLocal].get();
 
-			if (existLine == nullptr)
-			{
-				info.resLinesMaps[indLocal] = sl;
-			}
-			else if (existLine->getDeath() < curLine->getDeath())
-			{
-				sl->parent = existLine;
-				info.resLinesMaps[indLocal] = sl;
-			}
-
-			int ylek = 2;
-			for (int i = MAX(x - ylek, 0); i < std::min(x + ylek, info.mat.wid()); i++)
-			{
-				for (int j = MAX(y - ylek, 0); j < std::min(y + ylek, info.mat.hei()); j++)
-				{
-					int indLocal2 = (j * info.mat.wid() + i);
-
-					info.resLinesMaps[indLocal2] = sl;
-				}
-			}
+			info.setMatrPoint(x, y, curLine->getDeath(), sl);
 
 			bc::point cp(x, y);
 			info.mat.set(cp.x, cp.y, pointCol);
@@ -788,6 +966,7 @@ static const char* jsn_geojsonPath = "geojsonPath";
 static const char* jsn_imgPath = "imgPath";
 static const char* jsn_classfiles = "barfiles";
 static const char* jsn_dispalyImg = "subImageIndex";
+static const char* jsn_alg = "algIndex";
 
 void Project::read(const BackJson& json)
 {
@@ -798,6 +977,7 @@ void Project::read(const BackJson& json)
 	this->u_geojsonPath = json[jsn_geojsonPath].get<BackString>();
 	this->u_classCache = json[jsn_classfiles].get<BackString>();
 	this->u_subImageIndex = json[jsn_dispalyImg].get<int>();
+	this->u_algorithm = json[jsn_alg].get<int>();
 }
 
 void Project::write(BackJson& json) const
@@ -809,6 +989,7 @@ void Project::write(BackJson& json) const
 	json[jsn_geojsonPath] = this->u_geojsonPath.string();
 	json[jsn_classfiles] = this->u_classCache.string();
 	json[jsn_dispalyImg] = this->u_subImageIndex;
+	json[jsn_alg] = this->u_algorithm;
 }
 
 static int getFid(int wid, int s)

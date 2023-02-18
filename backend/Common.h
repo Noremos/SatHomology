@@ -127,6 +127,8 @@ struct SimpleLine
 	Barscalar start, end;
 
 	int depth;
+	int matrSrcSize;
+
 	int getDeath()
 	{
 		return depth;

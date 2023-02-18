@@ -37,6 +37,7 @@ public:
 	virtual int height() const { return _hei; }
 	inline int wid() const override  { return _wid; }
 	inline int hei() const override  { return _hei; }
+	inline int getLineIndex(int x, int y) const { return y * _wid + x; }
 
 protected:
 	void setMetadata(int width, int height, int chnls)

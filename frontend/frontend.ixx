@@ -116,7 +116,7 @@ public:
 
 	void settup(GuiDrawImage* mainImage, GuiDrawImage* processedImage, GuiItem* sliderPanel);
 	void loadImageOrProject(const BackPathStr& path);
-	void createBarcode(bc::ProcType procType, bc::ColorType colType, bc::ComponentType compType, const FilterInfo& info);
+	void createBarcode(const BarcodeProperies& propertices, const FilterInfo& info);
 	bool addSelectedToClassData(int classIndex, BackImage* icon = nullptr);
 	void processMain(BackString extra);
 	void restoreSource();
@@ -152,6 +152,16 @@ public:
 	}
 
 	bc::barvector* click(int x, int y);
+	SimpleLine* getSelectedComp()
+	{
+		return curSelected;
+	}
+
+	SimpleLine* moveToParenr()
+	{
+		return curSelected = curSelected->parent;
+	}
+
 
 	void showResultPics(bool show);
 
@@ -281,26 +291,6 @@ bool getNumber(BackString path, int& numI, BackString& num)
 	return *endptr == '\0';
 }
 
-
-bc::Baritem* createBar(BackString path)
-{
-	MatrImg img = imread(path);
-
-	bc::BarConstructor constr;
-	constr.createBinaryMasks = false;
-	constr.createGraph = false;
-	constr.attachMode = bc::AttachMode::morePointsEatLow;
-	constr.returnType = bc::ReturnType::barcode2d;
-	constr.addStructure(bc::ProcType::f0t255, bc::ColorType::rgb, bc::ComponentType::Component);
-
-	bc::BarcodeCreator bc;
-	auto* barc = bc.createBarcode(&img, constr);
-	auto* item = barc->exractItem(0);
-	delete barc;
-
-	return item;
-}
-
 GuiBackend::GuiBackend()
 {
 	proj = Project::getProject();
@@ -397,36 +387,12 @@ void GuiBackend::settup(GuiDrawImage* mainImage, GuiDrawImage* processedImage, G
 	this->sliderP = sliderPanel;
 }
 
-void GuiBackend::createBarcode(bc::ProcType procType, bc::ColorType colType, bc::ComponentType compType, const FilterInfo& info)
+void GuiBackend::createBarcode(const BarcodeProperies& propertices, const FilterInfo& info)
 {
 	if (!isImageLoaded() || mainMat.width() <= 1 || mainMat.height() <= 1)
 		return;
 
-	bc::BarcodeCreator bc;
-	bc::BarConstructor constr;
-	constr.createBinaryMasks = true;
-	constr.createGraph = true;
-	constr.attachMode = bc::AttachMode::morePointsEatLow;
-	constr.returnType = bc::ReturnType::barcode2d;
-	constr.addStructure(procType, colType, compType);
-	//	constr.setStep(stepSB);
-
-	proj->createCacheBarcode(constr, curImgInd, info);
-	//	createBarcode(constr, curImgInd, 0);
-	//	barcode.reset(bc.createBarcode(&mainMat, constr));
-
-	//	auto bar = getBaritem()->clone();
-	//	for (int i = 0; i < bar->barlines.size(); ++i)
-	//	{
-	//		bar->barlines[i]->getDeath();
-	//	}
-
-
-	//	bar->sortBySize();
-	//	barcode->addItem(bar);
-
-	//	int ma = getBaritem()->barlines.size();
-	//	QMetaObject::invokeMethod(sliderP, "setMax", Qt::AutoConnection, Q_ARG(QVariant, QVariant::fromValue(ma)));
+	proj->createCacheBarcode(propertices, curImgInd, info);
 
 	processedImage->setImage(mainMat, false);
 	created = true;

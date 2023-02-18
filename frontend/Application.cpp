@@ -17,7 +17,9 @@
 #include "presets.h"
 
 import ForntnedModule;
-import Lua;
+//import Lua;
+
+#include "../side/sol3/sol.hpp"
 
 namespace MyApp
 {
@@ -116,6 +118,7 @@ namespace MyApp
 
 		void draw()
 		{
+			ImGui::Checkbox("Simple", &simple);
 			if (simple)
 			{
 				ImGui::Text("Пороги отсеивания");
@@ -132,7 +135,9 @@ namespace MyApp
 
 		void runStrcit()
 		{
-			LuaState s;
+			sol::state lua;
+			lua.script(text);
+			//assert(lua. <int>("beep").boop == 1);
 		}
 	};
 
@@ -205,6 +210,15 @@ namespace MyApp
 		}
 
 		GuiFilter filterInfo;
+		BarcodeProperies properties;
+
+		void grabSets()
+		{
+			properties.barstruct.proctype = procCB.currentValue();
+			properties.barstruct.coltype = colorCB.currentValue();
+			properties.barstruct.comtype = componentCB.currentValue();
+			properties.alg = alg.currentIndex;
+		}
 
 		void createBarcode()
 		{
@@ -219,11 +233,8 @@ namespace MyApp
 			}
 			else
 			{
-				backend.createBarcode(
-					procCB.currentValue(),
-					colorCB.currentValue(),
-					componentCB.currentValue(),
-					filterInfo.filterInfo);
+				grabSets();
+				backend.createBarcode(properties, filterInfo.filterInfo);
 			}
 		}
 
@@ -255,6 +266,7 @@ namespace MyApp
 		bool showClassifier = false;
 		BackString debug;
 		bool drawPics = true;
+		bool showUpdaePopup = false;
 	};
 	BottomBar bottomVals;
 
@@ -530,8 +542,8 @@ namespace MyApp
 				}
 				else
 				{
-					ImGui::Checkbox("Use holes", &CloudBarcodeCreateHelper::useHols);
-					ImGui::Checkbox("ignore hight", &CloudBarcodeCreateHelper::ignoreHeight);
+					ImGui::Checkbox("Use holes", &tbVals.properties.alg1UseHoles);
+					ImGui::Checkbox("ignore hight", &tbVals.properties.alg1IgnoreHeight);
 				}
 
 				ImGui::Separator();
@@ -539,17 +551,17 @@ namespace MyApp
 				tbVals.filterInfo.draw();
 				ImGui::Separator();
 
-
 				if (tbVals.imgSubImages.getSize() > 0)
 				{
 					tbVals.imgSubImages.drawListBox("Размеры");
-					if (ImGui::Button("Запустить"))
-					{
-						backend.setSubImage(tbVals.imgSubImages.currentIndex);
-						ImGui::CloseCurrentPopup();
-						tbVals.createBarcode();
-						unsetPoints();
-					}
+				}
+
+				if (ImGui::Button("Запустить"))
+				{
+					backend.setSubImage(tbVals.imgSubImages.currentIndex);
+					ImGui::CloseCurrentPopup();
+					tbVals.createBarcode();
+					unsetPoints();
 				}
 				ImGui::EndPopup();
 			}
@@ -590,10 +602,29 @@ namespace MyApp
 
 	void drawWorkout()
 	{
-		const ImGuiViewport* viewport = ImGui::GetMainViewport();
+		//// Set up the sidebar
+		//ImGui::BeginChild("Properties", ImVec2(150, 0), true);
 
+		//// First collapsible section
+		//if (ImGui::CollapsingHeader("Section 1"))
+		//{
+		//	// Content of first section
+		//	ImGui::Text("Hello from Section 1!");
+		//}
+
+		//// Second collapsible section
+		//if (ImGui::CollapsingHeader("Section 2"))
+		//{
+		//	// Content of second section
+		//	ImGui::Text("Hello from Section 2!");
+		//}
+		//ImGui::EndChild();
+
+		const ImGuiViewport* viewport = ImGui::GetMainViewport();
+		static int leftProps = 200;
 		ImVec2 pos = viewport->WorkPos;
 		ImVec2 size = viewport->WorkSize;
+		size.x -= leftProps;
 		size.x /= 2;
 
 		ImGui::SetNextWindowPos(pos);
@@ -616,6 +647,23 @@ namespace MyApp
 		}
 		bottomVals.debug = intToStr(ImGui::GetIO().MousePos.x) + ":" + intToStr(ImGui::GetIO().MousePos.y);
 		centerVals.clickHandler.draw("Processed", prevwWin, prevOff, size);
+
+		pos.x += size.x;
+		size.x = leftProps;
+		ImGui::SetNextWindowPos(pos);
+		ImGui::SetNextWindowSize(size);
+		//ImGui::SetNextWindowViewport(viewport->ID);
+		if (ImGui::Begin("properties", nullptr, ImGuiWindowFlags_NoBringToFrontOnFocus))
+		{
+			leftProps = 200;
+			//if (ImGui::CollapsingHeader("Layers"))
+			//{
+			//	drawLayout();
+			//}
+		}
+		else
+			leftProps = 20;
+		ImGui::End();
 	}
 	// ------
 
@@ -634,19 +682,35 @@ namespace MyApp
 			if (ImGui::Button("Update"))
 			{
 				ImGui::OpenPopup("LoadImg");
+				bottomVals.showUpdaePopup = true;
 			}
 
-			if (ImGui::BeginPopupModal("LoadImg", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+			if (ImGui::BeginPopupModal("LoadImg", &bottomVals.showUpdaePopup, ImGuiWindowFlags_AlwaysAutoResize))
 			{
-				char text[10000];
-				ImGui::InputTextMultiline("Lue script", text, 1000, ImVec2(500, 300));
+				static GuiFilter filtere;
+				filtere.draw();
 
 				if (ImGui::Button("Update"))
 				{
+					bottomVals.showUpdaePopup = false;
+					ImGui::CloseCurrentPopup();
 					backend.processMain(bottomVals.valeExtra);
 					//commonValus.onAir = true;
 					//commonValus.future = std::async(&GuiBackend::processMain, std::ref(backend),
 				}
+				ImGui::SameLine();
+
+				if (ImGui::Button("Close"))
+				{
+					ImGui::CloseCurrentPopup();
+					bottomVals.showUpdaePopup = false;
+					backend.processMain(bottomVals.valeExtra);
+					//commonValus.onAir = true;
+					//commonValus.future = std::async(&GuiBackend::processMain, std::ref(backend),
+				}
+
+
+				ImGui::End();
 			}
 
 			ImGui::SameLine();
@@ -694,8 +758,8 @@ namespace MyApp
 
 			// GBL
 			ImGui::EndDisabled();
+			ImGui::End();
 		}
-		ImGui::End();
 	}
 
 
@@ -858,8 +922,11 @@ namespace MyApp
 
 	void debugWindow()
 	{
-		const std::lock_guard<std::mutex> lock(debugVals.drawMutex);
-		ImGui::Begin("debug");
+		if (!ImGui::Begin("debug"))
+		{
+			ImGui::End();
+			return;
+		}
 
 		ImDrawList* list = ImGui::GetWindowDrawList();
 		ImVec2 pos = ImGui::GetWindowPos();
@@ -867,40 +934,80 @@ namespace MyApp
 		pos.y += 50;
 		const float mul = 4;
 
-		for (auto& i : debugVals.debugPlygon)
+		if (commonValus.onAir)
 		{
-			std::vector<ImVec2> vec;
-			std::transform(i.begin(), i.end(), std::back_inserter(vec), [mul, pos](bc::point& a)
-				{
-					return ImVec2(a.x, a.y) * mul + pos;
-				});
+			const std::lock_guard<std::mutex> lock(debugVals.drawMutex);
+			for (auto& i : debugVals.debugPlygon)
+			{
+				std::vector<ImVec2> vec;
+				std::transform(i.begin(), i.end(), std::back_inserter(vec), [mul, pos](bc::point& a)
+					{
+						return ImVec2(a.x, a.y) * mul + pos;
+					});
 
-			list->AddConvexPolyFilled(vec.data(), vec.size(), ImColor(255, 10, 10));
-		}
+				list->AddConvexPolyFilled(vec.data(), vec.size(), ImColor(255, 10, 10));
+			}
 
-		size_t total = debugVals.debugDraw.size();
-		for (size_t i = 0; i < total; i += 2)
-		{
-			ImVec2 p1(debugVals.debugDraw[i].x, debugVals.debugDraw[i].y) ;
-			ImVec2 p2(debugVals.debugDraw[i + 1].x, debugVals.debugDraw[i + 1].y);
-			p1 *= mul;
-			p2 *= mul;
+			size_t total = debugVals.debugDraw.size();
+			for (size_t i = 0; i < total; i += 2)
+			{
+				ImVec2 p1(debugVals.debugDraw[i].x, debugVals.debugDraw[i].y);
+				ImVec2 p2(debugVals.debugDraw[i + 1].x, debugVals.debugDraw[i + 1].y);
+				p1 *= mul;
+				p2 *= mul;
 
-			p1 += pos;
-			p2 += pos;
+				p1 += pos;
+				p2 += pos;
 
-			list->AddLine(p1, p2, ImColor(255, 255, 182), 2);
-			list->AddCircleFilled(p1, 3, ImColor(50, 255, 0));
-			list->AddCircleFilled(p2, 3, ImColor(50, 255, 0));
-		}
+				list->AddLine(p1, p2, ImColor(255, 255, 182), 2);
+				list->AddCircleFilled(p1, 3, ImColor(50, 255, 0));
+				list->AddCircleFilled(p2, 3, ImColor(50, 255, 0));
+			}
 
-		for (auto& l : debugVals.debugLine)
-		{
-			list->AddLine(pos + l.first * mul, pos + l.second * mul, ImColor(255, 0, 0));
+			for (auto& l : debugVals.debugLine)
+			{
+				list->AddLine(pos + l.first * mul, pos + l.second * mul, ImColor(255, 0, 0));
+			}
 		}
 
 		ImGui::End();
 	}
+
+	void drawPropertisWindow()
+	{
+		SimpleLine* line = backend.getSelectedComp();
+		if (!line)
+		{
+			return;
+		}
+
+		if (!ImGui::Begin("Свойства"))
+		{
+			ImGui::End();
+			return;
+		}
+
+		ImGui::BeginDisabled(line->parent == nullptr);
+		if (ImGui::Selectable("Parent"))
+		{
+			line = backend.moveToParenr();
+		}
+		ImGui::EndDisabled();
+
+		BackString s = line->start.text<BackString, toStdStr>();
+		s = "Start: " + s;
+		ImGui::Text(s.c_str());
+
+		s = line->end.text<BackString, toStdStr>();
+		s = "End: " + s;
+		ImGui::Text(s.c_str());
+
+		ImGui::Text("Depth %d", line->depth);
+		ImGui::Text("Matr size %d", line->matrSrcSize);
+
+		ImGui::End();
+	}
+
 	// Layout
 	void drawLayout()
 	{
@@ -909,9 +1016,13 @@ namespace MyApp
 		drawTopBar();
 		drawWorkout();
 		drawBottomBar();
-		drawLayersWindows();
+
 
 		drawClassifierMenu();
+
+		// Subs
+		drawLayersWindows();
+		drawPropertisWindow();
 
 		commonValus.onAirC();
 
