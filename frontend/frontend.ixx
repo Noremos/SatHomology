@@ -372,6 +372,7 @@ void GuiBackend::clear()
 
 void GuiBackend::createProject(const BackPathStr& path, const BackString& name, const BackPathStr& imgPath)
 {
+	curSelected = nullptr;
 	BackPathStr fullPath = path / name;
 	proj->setProjectPath(fullPath);
 	proj->loadImage(imgPath, 1);
@@ -392,6 +393,7 @@ void GuiBackend::createBarcode(const BarcodeProperies& propertices, const Filter
 	if (!isImageLoaded() || mainMat.width() <= 1 || mainMat.height() <= 1)
 		return;
 
+	curSelected = nullptr;
 	proj->createCacheBarcode(propertices, curImgInd, info);
 
 	processedImage->setImage(mainMat, false);

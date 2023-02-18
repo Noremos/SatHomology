@@ -103,6 +103,9 @@ namespace MyApp
 		std::vector<std::pair<ImVec2, ImVec2>> debugLine;
 	} debugVals;
 
+
+	void clearBeforeCreate();
+
 	struct GuiFilter
 	{
 		FilterInfo filterInfo;
@@ -222,6 +225,8 @@ namespace MyApp
 
 		void createBarcode()
 		{
+			clearBeforeCreate();
+
 			if (useAsync)
 			{
 				//commonValus.onAir = true;
@@ -353,6 +358,11 @@ namespace MyApp
 	{
 		centerVals.clickHandler.points = nullptr;
 		centerVals.processImage.clicked = false;
+	}
+
+	void clearBeforeCreate()
+	{
+		unsetPoints();
 	}
 
 	// Draws
@@ -559,9 +569,9 @@ namespace MyApp
 				if (ImGui::Button("Запустить"))
 				{
 					backend.setSubImage(tbVals.imgSubImages.currentIndex);
+
 					ImGui::CloseCurrentPopup();
 					tbVals.createBarcode();
-					unsetPoints();
 				}
 				ImGui::EndPopup();
 			}
@@ -692,6 +702,7 @@ namespace MyApp
 
 				if (ImGui::Button("Update"))
 				{
+					unsetPoints();
 					bottomVals.showUpdaePopup = false;
 					ImGui::CloseCurrentPopup();
 					backend.processMain(bottomVals.valeExtra);
@@ -703,12 +714,7 @@ namespace MyApp
 				if (ImGui::Button("Close"))
 				{
 					ImGui::CloseCurrentPopup();
-					bottomVals.showUpdaePopup = false;
-					backend.processMain(bottomVals.valeExtra);
-					//commonValus.onAir = true;
-					//commonValus.future = std::async(&GuiBackend::processMain, std::ref(backend),
 				}
-
 
 				ImGui::End();
 			}
@@ -991,6 +997,7 @@ namespace MyApp
 		if (ImGui::Selectable("Parent"))
 		{
 			line = backend.moveToParenr();
+			centerVals.clickHandler.points = &line->matr;
 		}
 		ImGui::EndDisabled();
 

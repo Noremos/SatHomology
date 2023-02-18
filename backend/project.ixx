@@ -418,8 +418,14 @@ public:
 			}
 			else if (existLine->getDeath() < curLineDepth)
 			{
+				// main(depth) < child(depth)
 				newLine->parent = existLine;
 				resLinesMaps[indLocal] = newLine;
+			}
+			else if (existLine != newLine.get())
+			{
+				// Skip same
+				existLine->parent = newLine.get();
 			}
 
 			int ylek = 2;

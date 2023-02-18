@@ -131,7 +131,10 @@ private:
 					couId = p->second;
 				}
 				else
+				{
 					couId = counterId++;
+					writeIds.insert(std::make_pair(line, couId));
+				}
 
 				state->pInt(couId);
 
@@ -142,7 +145,10 @@ private:
 					parId = p->second;
 				}
 				else
+				{
 					parId = counterId++;
+					writeIds.insert(std::make_pair(line->parent, parId));
+				}
 
 				state->pInt(parId);
 			}
@@ -152,27 +158,22 @@ private:
 
 				// Main line
 				uint couId = state->pInt(0);
-				auto p = ids[couId];
-				if (p)
+				line = ids[couId];
+				if (line == nullptr)
 				{
-					line = p;
-				}
-				else
 					line = new bc::barline();
-
+					ids[couId] = line;
+				}
 				vec[i] = line;
 
 				// Parent
 				uint parId = state->pInt(0);
-
-				p = ids[parId];
-				bc::barline* par;
-				if (p)
+				bc::barline* par = ids[parId];
+				if (par == nullptr)
 				{
-					par = p;
-				}
-				else
 					par = new bc::barline();
+					ids[parId] = par;
+				}
 
 				line->setparent(par);
 			}
