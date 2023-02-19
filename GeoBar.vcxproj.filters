@@ -76,9 +76,6 @@
     <ClCompile Include="backend\project.ixx">
       <Filter>Backend</Filter>
     </ClCompile>
-    <ClCompile Include="backend\SimpleImgReader.cpp">
-      <Filter>Backend</Filter>
-    </ClCompile>
     <ClCompile Include="side\sago\platform_folders.cpp">
       <Filter>Side</Filter>
     </ClCompile>
@@ -103,6 +100,10 @@
     <ClCompile Include="Bind\Side.ixx">
       <Filter>Side</Filter>
     </ClCompile>
+    <ClCompile Include="backend\SimpleImgReader.ixx">
+      <Filter>Backend</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\ImageReader.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\imgui\imgui_internal.h">
@@ -145,9 +146,6 @@
       <Filter>Barcode\modules</Filter>
     </ClInclude>
     <ClInclude Include="backend\MatrImg.h">
-      <Filter>Backend</Filter>
-    </ClInclude>
-    <ClInclude Include="backend\SimpleImgReader.h">
       <Filter>Backend</Filter>
     </ClInclude>
     <ClInclude Include="frontend\FrontTypes.h">

@@ -13,7 +13,7 @@ module;
 export module ForntnedModule;
 
 import ProjectModule;
-import TiffReaderModule;
+import ImgReader;
 import GeoprocessorModule;
 import Platform;
 

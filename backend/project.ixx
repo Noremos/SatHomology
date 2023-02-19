@@ -6,12 +6,9 @@ module;
 #include <random>
 
 
-#include "SimpleImgReader.h"
 #include "barcodeCreator.h"
 //#include "BinFile.h"
 
-#include "ReaderTypes.h"
-#include "tiffreader.h"
 #include "../Bind/Common.h"
 
 
@@ -24,6 +21,9 @@ export module ProjectModule;
 import CacheFilesModule;
 import GeoprocessorModule;
 import Platform;
+
+import ImgReader;
+import SimpleImgReaderModule;
 
 
 export struct BarcodeProperies
