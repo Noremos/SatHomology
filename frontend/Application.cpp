@@ -250,6 +250,8 @@ namespace MyApp
 			{0, "Растровый"},
 			{1, "Растр в точки"}
 		};
+
+		bool openPop = false;
 	};
 
 	TopbarValues tbVals;
@@ -261,6 +263,28 @@ namespace MyApp
 		GuiDrawImage mainImage;
 		GuiDrawImage processImage;
 		GuiDrawCloudPointClick clickHandler;
+
+		bc::barvector reservPoints;
+
+		void setPoints(const bc::barvector* points)
+		{
+
+			if (points == nullptr)
+			{
+				clickHandler.points = points;
+				return;
+			}
+
+			clickHandler.points = points;
+			
+			//if (backend.getAlg() == 0)
+			//{
+			//	getCountourSimple(*points, reservPoints);
+			//	clickHandler.points = &reservPoints;
+			//}
+			//else
+			//	clickHandler.points = points;
+		}
 	};
 
 	ImagesValues centerVals;
@@ -490,8 +514,8 @@ namespace MyApp
 				if (tbVals.newTileSize + tbVals.newOffsetSize > backend.getImageMinSize() / 10)
 					tbVals.newOffsetSize = backend.getImageMinSize() / 10 - tbVals.newTileSize;
 
-				ImGui::Text("##Tile offset size");
-				ImGui::SliderInt("Offset size", &tbVals.newOffsetSize, 0, backend.getImageMinSize() / 10 - tbVals.newTileSize, "%d0");
+				ImGui::Text("Tile offset size");
+				ImGui::SliderInt("##Offset size", &tbVals.newOffsetSize, 0, backend.getImageMinSize() / 10 - tbVals.newTileSize, "%d0");
 
 				ImGui::Separator();
 				auto id = ImGui::FindWindowByName("ProcSetts")->ID;
@@ -575,6 +599,12 @@ namespace MyApp
 					ImGui::CloseCurrentPopup();
 					tbVals.createBarcode();
 				}
+
+				ImGui::SameLine();
+				if (ImGui::Button("Отмена"))
+				{
+					ImGui::CloseCurrentPopup();
+				}
 				ImGui::EndPopup();
 			}
 			// ---------------------------------
@@ -655,7 +685,9 @@ namespace MyApp
 		if (centerVals.processImage.clicked)
 		{
 			auto p = centerVals.processImage.clickedPos;
-			centerVals.clickHandler.points = backend.click(p.x, p.y);
+
+			auto points = backend.click(p.x, p.y);
+			centerVals.setPoints(points);
 		}
 		bottomVals.debug = intToStr(ImGui::GetIO().MousePos.x) + ":" + intToStr(ImGui::GetIO().MousePos.y);
 		centerVals.clickHandler.draw("Processed", prevwWin, prevOff, size);
@@ -994,26 +1026,32 @@ namespace MyApp
 			return;
 		}
 
-		ImGui::BeginDisabled(line->parent == nullptr);
-		if (ImGui::Selectable("Parent"))
+		if (line->depth > 0)
 		{
-			line = backend.moveToParenr();
-			centerVals.clickHandler.points = &line->matr;
+			ImGui::BeginDisabled(line->parent == nullptr);
+			if (ImGui::Selectable("Parent"))
+			{
+				line = backend.moveToParenr();
+				centerVals.setPoints(&line->matr);
+			}
+			ImGui::EndDisabled();
+
+			ImGui::Separator();
+			BackString s = line->start.text<BackString, toStdStr>();
+			s = "Start: " + s;
+			ImGui::Text(s.c_str());
+
+			s = line->end.text<BackString, toStdStr>();
+			s = "End: " + s;
+			ImGui::Text(s.c_str());
+
+			ImGui::Text("Depth %d", line->depth);
+			ImGui::Text("Matr size %d", line->matrSrcSize);
 		}
-		ImGui::EndDisabled();
-
-		ImGui::Separator();
-
-		BackString s = line->start.text<BackString, toStdStr>();
-		s = "Start: " + s;
-		ImGui::Text(s.c_str());
-
-		s = line->end.text<BackString, toStdStr>();
-		s = "End: " + s;
-		ImGui::Text(s.c_str());
-
-		ImGui::Text("Depth %d", line->depth);
-		ImGui::Text("Matr size %d", line->matrSrcSize);
+		else
+		{
+			ImGui::Text("Достугнут конец");
+		}
 
 		ImGui::End();
 	}

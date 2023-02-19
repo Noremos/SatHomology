@@ -816,6 +816,65 @@ void getCountour(const bc::barvector& points, mcountor& contur, bool aproximate)
 }
 
 
+
+struct DictWrap
+{
+	std::unordered_set<uint> points;
+	int wid = 0, hei = 0;
+
+	void set(uint i)
+	{
+		points.insert(i);
+	}
+
+	bool has(uint i) const
+	{
+		return points.find(i) != points.end();
+	}
+
+	bool has(int x, int y) const
+	{
+		if (x < 0 || y < 0)
+			return false;
+		return points.find(bc::barvalue::getStatInd(x, y)) != points.end();
+	}
+
+	bool hasCorners(int x, int y) const
+	{
+		return (has(x - 1, y) && has(x - 1, y - 1) && has(x, y - 1) && has(x, y + 1) && has(x + 1, y + 1));
+	}
+};
+
+export void getCountourSimple(const bc::barvector& points, bc::barvector& contur)
+{
+	contur.clear();
+
+	DictWrap dictPoints;
+	for (auto& p : points)
+	{
+		dictPoints.set(p.getIndex());
+		int x = p.getX();
+		int y = p.getY();
+		if (x > dictPoints.hei)
+		{
+			dictPoints.hei = x;
+		}
+		if (y > dictPoints.wid)
+		{
+			dictPoints.wid = y;
+		}
+	}
+
+	for (auto& p : points)
+	{
+		if (!dictPoints.hasCorners(p.getX(), p.getY()))
+		{
+			contur.push_back(p);
+		}
+	}
+}
+
+
 void saveJson(const string& text, int st)
 {
 	BackFileWrited file(std::format("D:\\{}.json", st));

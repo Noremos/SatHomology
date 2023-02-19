@@ -116,7 +116,7 @@ public:
 
 	void settup(GuiDrawImage* mainImage, GuiDrawImage* processedImage, GuiItem* sliderPanel);
 	void loadImageOrProject(const BackPathStr& path);
-	void createBarcode(const BarcodeProperies& propertices, const FilterInfo& info);
+	void createBarcode(const BarcodeProperies& propertices, FilterInfo& info);
 	bool addSelectedToClassData(int classIndex, BackImage* icon = nullptr);
 	void processMain(BackString extra, FilterInfo& filter);
 	void restoreSource();
@@ -126,6 +126,11 @@ public:
 	void save()
 	{
 		proj->saveProject();
+	}
+
+	int getAlg()
+	{
+		return proj->u_algorithm;
 	}
 
 	inline int& getTileSize() const
@@ -159,9 +164,8 @@ public:
 
 	SimpleLine* moveToParenr()
 	{
-		return curSelected = curSelected->parent;
+		return curSelected = curSelected->parent.get();
 	}
-
 
 	void showResultPics(bool show);
 
@@ -388,15 +392,24 @@ void GuiBackend::settup(GuiDrawImage* mainImage, GuiDrawImage* processedImage, G
 	this->sliderP = sliderPanel;
 }
 
-void GuiBackend::createBarcode(const BarcodeProperies& propertices, const FilterInfo& info)
+void GuiBackend::createBarcode(const BarcodeProperies& propertices, FilterInfo& info)
 {
 	if (!isImageLoaded() || mainMat.width() <= 1 || mainMat.height() <= 1)
 		return;
 
 	curSelected = nullptr;
-	proj->createCacheBarcode(propertices, curImgInd, info);
 
-	processedImage->setImage(mainMat, false);
+	resultMart = mainMat;
+	std::unordered_map<size_t, char> map;
+
+	comm.clear();
+	proj->setReadyLaod(curImgInd, mainMat.width());
+
+	Project::ClassInfo infoe{ 0, resultMart, map, "", resLinesMap };
+
+	proj->createCacheBarcode(propertices, curImgInd, info, infoe);
+
+	processedImage->setImage(resultMart, false);
 	created = true;
 }
 
@@ -643,7 +656,7 @@ bc::barvector* GuiBackend::click(int x, int y)
 	if (line)
 	{
 		if (curSelected == line && line->parent)
-			line = line->parent;
+			line = line->parent.get();
 
 		curSelected = line;
 		return &curSelected->matr;

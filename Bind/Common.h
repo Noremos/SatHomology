@@ -123,10 +123,11 @@ static bool endsWith(const BackString& string, const BackString endl)
 struct SimpleLine
 {
 	int id, barlineIndex;
-	SimpleLine(int id = 0, int barlineIndex = 0) : id(id), barlineIndex(barlineIndex), parent(nullptr), start(0), end(0), depth(0)
+	SimpleLine(int id = 0, int barlineIndex = 0) : 
+		id(id), barlineIndex(barlineIndex), start(0), end(0), depth(0), matrSrcSize(0)
 	{}
 	bc::barvector matr;
-	SimpleLine* parent;
+	std::shared_ptr<SimpleLine> parent;
 	//	ushort counter = 0;
 
 	Barscalar start, end;

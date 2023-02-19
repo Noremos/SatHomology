@@ -363,9 +363,26 @@ public:
 
 class GuiDrawCloudPointClick : public GuiImage
 {
+	//bool dropPoints = false;
 public:
-	bc::barvector* points = nullptr;
 	GuiDrawImage* par = nullptr;
+	const bc::barvector* points = nullptr;
+
+	//void setPoints(bc::barvector* _point, bool drop)
+	//{
+	//	if (dropPoints)
+	//		delete points;
+
+	//	points = _point;
+	//	dropPoints = drop;
+	//}
+
+	//~GuiDrawCloudPointClick()
+	//{
+	//	setPoints(nullptr, false);
+	//}
+
+
 	void draw(const char* name, ImVec2 prevWin, ImVec2 scrollOff, ImVec2 winSize)
 	{
 		if (points == nullptr)
@@ -381,7 +398,7 @@ public:
 		ApplicationVec2 offset = prevWin + par->localDisplayPos;
 		ApplicationVec2 csreenStar = prevWin + ImVec2(3 * zoom + 5, 3 * zoom + 5);
 		ApplicationVec2 csreenEnd = prevWin + winSize - ImVec2(3 * zoom + 10, 3 * zoom + 10);
-		bc::barvector& pointsi = *points;
+		const bc::barvector& pointsi = *points;
 
 		float pixelSize = MAX(1,winSize.x / par->width);
 		for (const auto& p : pointsi)

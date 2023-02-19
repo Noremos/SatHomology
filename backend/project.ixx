@@ -581,25 +581,26 @@ public:
 			else if (existLine->getDeath() < curLineDepth)
 			{
 				// main(depth) < child(depth)
-				newLine->parent = existLine;
+				//newLine->parent = existLine;
 				resLinesMaps[indLocal] = newLine;
-			}
-			else if (existLine != newLine.get())
-			{
-				// Skip same
-				existLine->parent = newLine.get();
-			}
 
-			int ylek = 2;
-			for (int i = MAX(x - ylek, 0); i < std::min(x + ylek, mat.wid()); i++)
-			{
-				for (int j = MAX(y - ylek, 0); j < std::min(y + ylek, mat.hei()); j++)
+				int ylek = 2;
+				for (int i = MAX(x - ylek, 0); i < std::min(x + ylek, mat.wid()); i++)
 				{
-					int indLocal2 = mat.getLineIndex(i, j);
+					for (int j = MAX(y - ylek, 0); j < std::min(y + ylek, mat.hei()); j++)
+					{
+						int indLocal2 = mat.getLineIndex(i, j);
 
-					resLinesMaps[indLocal2] = newLine;
+						resLinesMaps[indLocal2] = newLine;
+					}
 				}
 			}
+			//else if (existLine != newLine.get())
+			//{
+			//	// Skip same
+			//	existLine->parent = newLine.get();
+			//}
+
 		}
 	};
 
@@ -614,7 +615,7 @@ public:
 
 	void readImages();
 
-	void createCacheBarcode(const BarcodeProperies& propertices, int imgIndex, const FilterInfo& info);
+	void createCacheBarcode(const BarcodeProperies& propertices, int imgIndex, FilterInfo& info, ClassInfo& classif);
 	void getOffsertByTileIndex(uint tileIndex, uint& offX, uint& offY)
 	{
 		int tilesInRow = getCon(reader->width(), tileSize);
@@ -778,7 +779,6 @@ public:
 
 	void classBarcode(Project::ClassInfo& info)
 	{
-
 		std::unique_ptr<bc::Baritem> baritem(reader.load(info.ind));
 		std::cout << info.ind << std::endl;
 
@@ -854,7 +854,7 @@ struct TileIterator
 	}
 };
 
-void Project::createCacheBarcode(const BarcodeProperies& propertices, int imgIndex, const FilterInfo& info)
+void Project::createCacheBarcode(const BarcodeProperies& propertices, int imgIndex, FilterInfo& info, ClassInfo& classif)
 {
 	if (block) return;
 
@@ -893,6 +893,7 @@ void Project::createCacheBarcode(const BarcodeProperies& propertices, int imgInd
 	barcodeHelper->prepare(getPath(BackPath::binbar));
 
 	const uint fullTile = tileSize + tileOffset;
+	info.imgLen = fullTile * fullTile;
 
 	uint rwid = reader->width();
 	uint rhei = reader->height();
@@ -920,6 +921,12 @@ void Project::createCacheBarcode(const BarcodeProperies& propertices, int imgInd
 			DataRectBarWrapper warp(rect);
 			barcodeHelper->createCache(k, &warp, constr, offset, info);
 
+			BarcodeCreator cr;
+			auto t = cr.createBarcode(&warp, constr);
+			classif.ind = k;
+			classBarcodeByRaster(*t->getItem(0), classif, info);
+			delete t;
+
 			stW.accum();
 		}
 		stH.accum();
@@ -935,7 +942,7 @@ void Project::readPrcoessBarcode(ClassInfo& info, FilterInfo& filter)
 	if (u_displayFactor < 1.0)
 		throw std::exception();
 
-	filter.imgLen = tileSize + tileOffset;
+	filter.imgLen = (tileSize + tileOffset) * (tileSize + tileOffset);
 
 
 	// Cacher
@@ -969,7 +976,7 @@ void Project::classBarcodeByRaster(bc::Baritem& baritem, ClassInfo& info, const 
 	uint xOff = 0;
 	uint yOff = 0;
 	getOffsertByTileIndex(info.ind, xOff, yOff);
-
+	std::unordered_map<bc::barline*, std::shared_ptr<SimpleLine>> parentne;
 	auto& vec = baritem.barlines;
 	for (size_t i = 0; i < vec.size(); ++i)
 	{
@@ -986,13 +993,38 @@ void Project::classBarcodeByRaster(bc::Baritem& baritem, ClassInfo& info, const 
 		pointCol = colors[rand() % colors.size()];
 
 		std::unordered_set<uint> vals;
-		std::shared_ptr<SimpleLine> sl = std::make_shared<SimpleLine>(info.ind, i);
+		std::shared_ptr<SimpleLine> sl;
+		auto p = parentne.find(curLine);
+		if (p != parentne.end())
+		{
+			sl = p->second;
+			sl->barlineIndex = i;
+		}
+		else
+		{
+			sl = std::make_shared<SimpleLine>(info.ind, i);
+			parentne.insert(std::make_pair(curLine, sl));
+		}
+
+		p = parentne.find(curLine->parent);
+		if (p != parentne.end())
+		{
+			sl->parent = p->second;
+		}
+		else
+		{
+			sl->parent = std::make_shared<SimpleLine>(info.ind, -1);
+			parentne.insert(std::make_pair(curLine, sl->parent));
+			//sl->parent->matr = curLine->parent->matr;
+		}
+
 		int depth = curLine->getDeath();
 		sl->depth = depth;
 		sl->start = curLine->start;
 		sl->end = curLine->end();
 		sl->matrSrcSize = matr.size();
 
+		bc::barvector temp;
 		for (const auto& pm : matr)
 		{
 			int ox = (pm.getX() + xOff) / u_displayFactor;
@@ -1006,13 +1038,15 @@ void Project::classBarcodeByRaster(bc::Baritem& baritem, ClassInfo& info, const 
 			vals.insert(index);
 
 			bc::point p = bc::barvalue::getStatPoint(index);
-			sl->matr.push_back(bc::barvalue(p, pm.value));
+			temp.push_back(bc::barvalue(p, pm.value));
 
 			info.mat.set(x, y, pointCol);
 			info.setMatrPoint(x, y, curLine->getDeath(), sl);
 		}
-	}
 
+		getCountourSimple(temp, sl->matr);
+
+	}
 }
 
 void Project::classBarcodeByCloud(BarcodesHolder& baritem, ClassInfo& info, const FilterInfo& filter)
