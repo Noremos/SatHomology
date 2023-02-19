@@ -16,8 +16,8 @@ export
 {
 	using ::BarcodeHolder;
 	using ::BarcodesHolder;
-	using ::CloudItem;
-	using ::CloudBarcodeHolder;
+	using CloudItem = BarcodesHolder;
+	using CloudBarcodeHolder = BarcodesHolder;
 }
 
 export template<class TItem, class THolder>

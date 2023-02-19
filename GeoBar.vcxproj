@@ -165,7 +165,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\Barcode.ixx" />
     <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\BinStateFileWrapper.ixx" />
     <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\convertation.cpp" />
     <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\ImageReader.ixx" />
