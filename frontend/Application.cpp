@@ -2,25 +2,23 @@
 #include "Application.h"
 
 #include <cmath>
-#include <unordered_map>
-#include <map>
 #include <initializer_list>
 #include <memory>
 #include <future>
 
 #include "GuiWidgets.h"
 
-#include "presets.h"
-#include "barcodeCreator.h"
-
-#include "presets.h"
+#include "../side/sol3/sol.hpp"
+//
+//#include <GLFW/glfw3.h>
+//#include "../libs/glew/include/GL/glew.h"
 
 import ForntnedModule;
 import Platform;
+import LayersGui;
+import BarcodeModule;
 
 //import Lua;
-
-#include "../side/sol3/sol.hpp"
 
 namespace MyApp
 {
@@ -252,6 +250,7 @@ namespace MyApp
 		};
 
 		bool openPop = false;
+		bool showHighmap = false;
 	};
 
 	TopbarValues tbVals;
@@ -262,6 +261,7 @@ namespace MyApp
 	{
 		GuiDrawImage mainImage;
 		GuiDrawImage processImage;
+		GuiDrawImage heiImage;
 		GuiDrawCloudPointClick clickHandler;
 
 		bc::barvector reservPoints;
@@ -276,7 +276,7 @@ namespace MyApp
 			}
 
 			clickHandler.points = points;
-			
+
 			//if (backend.getAlg() == 0)
 			//{
 			//	getCountourSimple(*points, reservPoints);
@@ -341,19 +341,14 @@ namespace MyApp
 			std::function<void(int, const BackString&)> casFS = loaderCategors;
 			std::function<void(int, const BackPathStr&)> casif = loaderFile;
 
-			BarClassifierCache bcc;
+			/*BarClassifierCache bcc;
 			bcc.loadCategories(casFS);
 			classesLB.endAdding();
-			bcc.loadImgs(casif, classesLB.getValuesIterator(), classesLB.getSize());
+			bcc.loadImgs(casif, classesLB.getValuesIterator(), classesLB.getSize());*/
 		}
 	};
 	ClassiferVals classerVals;
 
-	struct LayersVals
-	{
-		std::vector<GuiImage> layers;
-		int selecnedLayer = 0;
-	};
 	LayersVals layersVals;
 
 	void loaderCategors(int classId, const BackString& name)
@@ -494,12 +489,19 @@ namespace MyApp
 					}
 				}
 			}
+
+
 			// Always center this window when appearing
 			ImVec2 center = ImGui::GetMainViewport()->GetCenter();
 			ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 
 			ImGui::SameLine();
 			ImGui::BeginDisabled(!tbVals.enableProcessBtn);
+
+			ImGui::SameLine();
+			ImGui::Checkbox("Переключить вид", &tbVals.showHighmap);
+
+			ImGui::SameLine();
 			if (ImGui::Button("Настроки"))
 			{
 				tbVals.newTileSize = backend.getTileSize() / 10;
@@ -672,7 +674,10 @@ namespace MyApp
 		ImGui::SetNextWindowPos(pos);
 		ImGui::SetNextWindowSize(size);
 		ImGui::SetNextWindowViewport(viewport->ID);
-		centerVals.mainImage.drawImage("Main");
+		if (tbVals.showHighmap)
+			centerVals.heiImage.drawImage("Main");
+		else
+			centerVals.mainImage.drawImage("Main");
 
 		pos.x += size.x;
 		ImGui::SetNextWindowPos(pos);
@@ -795,6 +800,7 @@ namespace MyApp
 			ImGui::SameLine(0, 30);
 			ImGui::Text(bottomVals.debug.c_str());
 
+
 			// GBL
 			ImGui::EndDisabled();
 			ImGui::End();
@@ -916,48 +922,48 @@ namespace MyApp
 		ImGui::End();
 	}
 
-	void drawLayersWindows()
-	{
-		if (!ImGui::Begin("Layers"))
-		{
-			ImGui::End();
-			return;
-		}
+	//void drawLayersWindows()
+	//{
+	//	if (!ImGui::Begin("Layers"))
+	//	{
+	//		ImGui::End();
+	//		return;
+	//	}
 
-		ImGui::BeginGroup();
+	//	ImGui::BeginGroup();
 
-		auto& pngs = layersVals.layers;
+	//	auto& pngs = layersVals.layers;
 
-		//int curItem = 0;
-		//auto imgLoader = [](void* data, int idx, const char** out_text) {
-		//		auto& pngs = *static_cast<std::vector<GuiImage>*>(data);
-		//		*out_text = pngs[idx].name.c_str();
-		//		ImGui::Image(pngs[curItem].getTexturePtr(), siz);
-		//
-		//		return true;
-		//	};
-		//ImGui::ListBox("Images", &curItem, imgLoader, &pngs, pngs.size());
+	//	//int curItem = 0;
+	//	//auto imgLoader = [](void* data, int idx, const char** out_text) {
+	//	//		auto& pngs = *static_cast<std::vector<GuiImage>*>(data);
+	//	//		*out_text = pngs[idx].name.c_str();
+	//	//		ImGui::Image(pngs[curItem].getTexturePtr(), siz);
+	//	//
+	//	//		return true;
+	//	//	};
+	//	//ImGui::ListBox("Images", &curItem, imgLoader, &pngs, pngs.size());
 
 
-		//if (ImGui::BeginChild("ImagePreview"))
-		//{
-		//	if (curItem >= 0 && selectedImage < pngs.size())
-		//	{
-		//		ImVec2 siz(pngs[curItem].width, pngs[curItem].height)
-		//		ImGui::Image(pngs[curItem].getTexturePtr(), siz);
-		//	}
-		//	ImGui::EndChild();
-		//}
-		for (size_t j = 0; j < pngs.size(); j++)
-		{
-			ImGui::PushID(j);
-			ImGui::Image(pngs[j].getTexturePtr(), ImVec2(pngs[j].width, pngs[j].height));
-			ImGui::PopID();
-		}
-		ImGui::EndGroup();
+	//	//if (ImGui::BeginChild("ImagePreview"))
+	//	//{
+	//	//	if (curItem >= 0 && selectedImage < pngs.size())
+	//	//	{
+	//	//		ImVec2 siz(pngs[curItem].width, pngs[curItem].height)
+	//	//		ImGui::Image(pngs[curItem].getTexturePtr(), siz);
+	//	//	}
+	//	//	ImGui::EndChild();
+	//	//}
+	//	for (size_t j = 0; j < pngs.size(); j++)
+	//	{
+	//		ImGui::PushID(j);
+	//		ImGui::Image(pngs[j].getTexturePtr(), ImVec2(pngs[j].width, pngs[j].height));
+	//		ImGui::PopID();
+	//	}
+	//	ImGui::EndGroup();
 
-		ImGui::End();
-	}
+	//	ImGui::End();
+	//}
 
 	void debugWindow()
 	{
@@ -1056,6 +1062,129 @@ namespace MyApp
 		ImGui::End();
 	}
 
+	void draw3d()
+	{
+		// Define the vertices of the terrain
+		//const GLfloat terrainVertices[] = {
+		//	// Position              // Texture coordinates
+		//	-1.0f, -1.0f, 0.0f,      0.0f, 0.0f,
+		//	1.0f, -1.0f, 0.0f,       1.0f, 0.0f,
+		//	-1.0f, 1.0f, 0.0f,       0.0f, 1.0f,
+		//	1.0f, 1.0f, 0.0f,        1.0f, 1.0f
+		//};
+
+		//// Define the indices of the terrain
+		//const GLuint terrainIndices[] = {
+		//	0, 1, 2,
+		//	2, 1, 3
+		//};
+
+
+		//// Define the vertex shader
+		//const char* vertexShaderSource =
+		//	"#version 330 core\n"
+		//	"layout (location = 0) in vec3 aPos;\n"
+		//	"layout (location = 1) in vec2 aTexCoord;\n"
+		//	"out vec2 TexCoord;\n"
+		//	"uniform mat4 model;\n"
+		//	"uniform mat4 view;\n"
+		//	"uniform mat4 projection;\n"
+		//	"void main()\n"
+		//	"{\n"
+		//	"   gl_Position = projection * view * model * vec4(aPos, 1.0);\n"
+		//	"   TexCoord = aTexCoord;\n"
+		//	"}\0";
+
+		//// Define the fragment shader
+		//const char* fragmentShaderSource =
+		//	"#version 330 core\n"
+		//	"out vec4 FragColor;\n"
+		//	"in vec2 TexCoord;\n"
+		//	"uniform sampler2D texture1;\n"
+		//	"void main()\n"
+		//	"{\n"
+		//	"   FragColor = texture(texture1, TexCoord);\n"
+		//	"}\n\0";
+
+		//glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection);
+
+		//ImGuiIO& io = ImGui::GetIO();
+		//int display_w, display_h;
+		//GLFWwindow* window = glfwCreateWindow(800, 600, "Terrarian", NULL, NULL);
+
+
+		//// Create a vertex shader
+		//GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+		//glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+		//glCompileShader(vertexShader);
+
+		//// Check for vertex shader compile errors
+		//int success;
+		//char infoLog[512];
+		//glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+		//if (!success) {
+		//	glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+		//	std::cout << "Vertex shader compile error: " << infoLog << std::endl;
+		//}
+
+		//// Create a fragment shader
+		//GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+		//glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+		//glCompileShader(fragmentShader);
+
+		//glfwGetFramebufferSize(window, &display_w, &display_h);
+		//glViewport(0, 0, display_w, display_h);
+		//GLuint modelTexture;
+		//glGenTextures(1, &modelTexture);
+		//glBindTexture(GL_TEXTURE_2D, modelTexture);
+
+
+
+		//// Define camera position, target, and up direction
+		//glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+		//glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+		//glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+		//// Calculate camera direction and right vector
+		//glm::vec3 cameraDirection = glm::normalize(cameraTarget - cameraPos);
+		//glm::vec3 cameraRight = glm::normalize(glm::cross(cameraDirection, cameraUp));
+		//cameraUp = glm::normalize(glm::cross(cameraRight, cameraDirection));
+
+		//// Define camera front vector
+		//glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+
+		//// Set up the model, view, and projection matrices
+		//glm::mat4 model = glm::mat4(1.0f); // Identity matrix
+		//glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+		//glm::mat4 projection = glm::perspective(glm::radians(fov), (float)width / (float)height, 0.1f, 100.0f);
+
+		//// Get the location of the uniform variables in the shader program
+		//unsigned int modelLoc = glGetUniformLocation(shaderProgram, "model");
+		//unsigned int viewLoc = glGetUniformLocation(shaderProgram, "view");
+		//unsigned int projectionLoc = glGetUniformLocation(shaderProgram, "projection");
+
+		//// Pass the matrices to the shader program
+		//glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		//glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+
+		//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		//// Render the 3D model to the texture
+		//glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+		//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, modelTexture, 0);
+		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		//// render 3D model here...
+		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		//// Display the 3D model in an ImGui window
+		//ImGui::Begin("3D Model");
+		//ImVec2 size(ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
+		//ImGui::Image((void*)(intptr_t)modelTexture, size);
+		//ImGui::End();
+	}
+
 	// Layout
 	void drawLayout()
 	{
@@ -1069,7 +1198,7 @@ namespace MyApp
 		drawClassifierMenu();
 
 		// Subs
-		drawLayersWindows();
+		layersVals.drawLayers();
 		drawPropertisWindow();
 
 		commonValus.onAirC();
@@ -1089,6 +1218,7 @@ namespace MyApp
 	void MyApp::Init()
 	{
 		backend.settup(&centerVals.mainImage, &centerVals.processImage, NULL);
+		backend.heimapImage = &centerVals.heiImage;
 		centerVals.clickHandler.par = &centerVals.processImage;
 		auto drawLine = [](const bc::point& p1, const bc::point& p2, bool finale)
 		{
@@ -1116,6 +1246,21 @@ namespace MyApp
 			bc::CloudPointsBarcode::drawLine = drawLine;
 			bc::CloudPointsBarcode::drawPlygon = polyPoint;
 		}
+
+		Layer a;
+		a.name = "main";
+		a.icon.setSource("D:\\Learning\\BAR\\sybery\\2.png");
+		layersVals.layers.push_back(a);
+
+		Layer b;
+		b.name = "sub";
+		b.icon.setSource("D:\\Learning\\BAR\\sybery\\2.png");
+		layersVals.layers.push_back(b);
+
+		Layer c;
+		c.name = "filter";
+		c.icon.setSource("D:\\Learning\\BAR\\sybery\\2.png");
+		layersVals.layers.push_back(c);
 	}
 	// Main
 	void MyApp::RenderUI()

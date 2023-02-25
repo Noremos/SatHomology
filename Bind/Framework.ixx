@@ -4,11 +4,11 @@ module;
 
 // Side
 #include "../side/PortFileDialog.h"
-
 #include "../side/sago/platform_folders.h"
 
 export module Platform;
 import SideBind;
+import IOCore;
 
 export
 {
@@ -23,7 +23,7 @@ export
 	BackPathStr openImageOrProject();
 	BackPathStr openProject();
 	BackPathStr openImage();
-};
+}
 
 
 //#define GL_RGB                            0x1907
@@ -38,7 +38,7 @@ BackImage imread(const BackString& path)
 	if (chls == 4)
 	{
 		const int req = 3;
-		uint length = width * height;
+		unsigned int length = width * height;
 		unsigned char* fixedData = new uchar[length * req];
 		//memcpy(fixedData, image_data, length * req);
 		for (size_t i = 0, destinationIndex = 0; i < length * chls; i += chls, destinationIndex += req)

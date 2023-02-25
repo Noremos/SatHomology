@@ -1,30 +1,31 @@
 module;
 
-#include "MatrImg.h"
-
 #include <unordered_set>
 #include <random>
-
-
-#include "barcodeCreator.h"
-//#include "BinFile.h"
+#include <iostream>
 
 #include "../Bind/Common.h"
 
-
-#include "MatrImg.h"
-//#include "geodataprocessor.h"
-
-
-export module ProjectModule;
-
 import CacheFilesModule;
-import GeoprocessorModule;
 import Platform;
 
 import ImgReader;
 import SimpleImgReaderModule;
+import BarholdersModule;
+import IOCore;
+import LayersCore;
+import ClassifiersCore;
+import BarcodeModule;
+import GeoprocessorModule;
 
+export module ProjectModule;
+
+
+namespace bc
+{
+	using barlinevector = std::vector<bc::barline*>;
+	using barvector = std::vector<bc::barvalue>;
+}
 
 export struct BarcodeProperies
 {
@@ -45,6 +46,49 @@ export struct toStdStr
 		return std::to_string(val);
 	}
 };
+
+
+struct TileIterator
+{
+	uint start;
+	uint tileSize;
+	uint fullTileSize;
+
+	uint maxLen;
+
+	TileIterator(uint start, uint tileSize, uint offset, uint maxLen) :
+		start(start), tileSize(tileSize), fullTileSize(tileSize + offset), maxLen(maxLen)
+	{ }
+
+	void reset(uint st = 0)
+	{
+		start = st;
+	}
+
+	uint pos()
+	{
+		return start;
+	}
+
+	uint accum()
+	{
+		start += tileSize;
+		return start;
+	}
+
+
+	uint getFullTileSize()
+	{
+		return (start + fullTileSize <= maxLen ? fullTileSize : maxLen - start);
+	}
+
+	bool shouldSkip(uint& len)
+	{
+		len = getFullTileSize();
+		return len <= (fullTileSize - tileSize); // len < offset
+	}
+};
+
 
 export class DataRectBarWrapper : public bc::DatagridProvider
 {
@@ -79,7 +123,7 @@ public:
 		baseobj.maxVal = scalarToRow(max);
 		baseobj.minVal = scalarToRow(min);
 	}
-	size_t typeSize() const override { return getImgTypeSize(baseobj.data.type); }
+	size_t typeSize() const override { return getReaderTypeSize(baseobj.data.type); }
 	Barscalar get(int x, int y) const override { return rowToScalar(baseobj.get(x, y)); }
 	//BarType getType()
 	//{
@@ -342,21 +386,19 @@ public:
 	}
 };
 
-static const char* jsn_displayFacto = "step";
-static const char* jsn_imgMinVal = "imgMinVal";
-static const char* jsn_imgMaxVal = "imgMaxVal";
-static const char* jsn_geojsonPath = "geojsonPath";
-static const char* jsn_imgPath = "imgPath";
-static const char* jsn_classfiles = "barfiles";
-static const char* jsn_dispalyImg = "subImageIndex";
-static const char* jsn_alg = "algIndex";
-static const char* jsn_tileSize = "tileSize";
-static const char* jsn_tileOffset = "tileOffset";
+const char* const jsn_displayFacto = "step";
+const char* const jsn_imgMinVal = "imgMinVal";
+const char* const jsn_imgMaxVal = "imgMaxVal";
+const char* const jsn_geojsonPath = "geojsonPath";
+const char* const jsn_imgPath = "imgPath";
+const char* const jsn_classfiles = "barfiles";
+const char* const jsn_dispalyImg = "subImageIndex";
+const char* const jsn_alg = "algIndex";
+const char* const jsn_tileSize = "tileSize";
+const char* const jsn_tileOffset = "tileOffset";
 
-
-export class Project
+class Project
 {
-
 	SettingsIO settings =
 	{
 		{jsn_displayFacto, u_displayFactor},
@@ -376,7 +418,24 @@ public:
 	//	Q_PROPERTY(SeachingSettings searchSetts MEMBER searchSetts)
 	//	SeachingSettings* getSerchSetts(){return &searchSetts;}
 
-	Project();
+	Project()
+	{
+		projectPath = "D:\\Programs\\Barcode\\_bar\\_p2\\";
+
+		u_classCache = getDicumnetPath() / "GeoBar";
+		mkDirIfNotExists(u_classCache);
+
+		srand(300);
+		//BarClasser::colors.push_back(Barscalar(255, 0, 0));
+		//BarClasser::colors.push_back(Barscalar(0, 0, 0));
+		//BarClasser::colors.push_back(Barscalar(0, 255, 0));
+		//BarClasser::colors.push_back(Barscalar(0, 0, 255));
+		//for (int k = 0; k < 40; ++k)
+		//	BarClasser::colors.push_back(Barscalar(5 + rand() % 250, 5 + rand() % 250, 5 + rand() % 250));
+
+		//BarClasser::colors.push_back(Barscalar(255, 255, 255));
+	}
+
 	~Project()
 	{
 		closeReader();
@@ -400,7 +459,7 @@ public:
 	BackPathStr u_geojsonPath;
 	int u_subImageIndex = 0;
 	int u_algorithm = 0;
-	BackVector<MatrImg*> images;
+	std::vector<BackImage*> images;
 
 	int tileSize = 200;
 	int tileOffset = 50;
@@ -549,73 +608,135 @@ public:
 			throw;
 		}
 	}
-
+//
 	void loadImage(const BackPathStr& path, int step);
 	float getImgMaxVal() const;
 
 	float getImgMinVal() const;
-
-
+//
+//
 	void readGeojson();
-	void readMarkers();
 	void readMyGeo(bool reinitY);
 
-
-	struct ClassInfo
+	void readPrcoessBarcode(RasterLineLayer& info, FilterInfo& filter)
 	{
-		int ind;
-		MatrImg& mat;
-		std::unordered_map<size_t, char>& map;
-		BackString extra;
-		std::vector<std::shared_ptr<SimpleLine>>& resLinesMaps;
+		if (u_displayFactor < 1.0)
+			throw std::exception();
 
-		void setMatrPoint(int x, int y, int curLineDepth, std::shared_ptr<SimpleLine>& newLine)
+		filter.imgLen = (tileSize + tileOffset) * (tileSize + tileOffset);
+
+
+		// Cacher
+		BarClasser* classifier;
+		RasterBarClasser _rsClass;// (this, &filter);
+		//CloudBarClasser _clClass;// (this, &filter);
+
+		if (u_algorithm == 0)
 		{
-			int indLocal = mat.getLineIndex(x, y);
-			SimpleLine* existLine = resLinesMaps[indLocal].get();
-
-			if (existLine == nullptr)
-			{
-				resLinesMaps[indLocal] = newLine;
-			}
-			else if (existLine->getDeath() < curLineDepth)
-			{
-				// main(depth) < child(depth)
-				//newLine->parent = existLine;
-				resLinesMaps[indLocal] = newLine;
-
-				int ylek = 2;
-				for (int i = MAX(x - ylek, 0); i < std::min(x + ylek, mat.wid()); i++)
-				{
-					for (int j = MAX(y - ylek, 0); j < std::min(y + ylek, mat.hei()); j++)
-					{
-						int indLocal2 = mat.getLineIndex(i, j);
-
-						resLinesMaps[indLocal2] = newLine;
-					}
-				}
-			}
-			//else if (existLine != newLine.get())
-			//{
-			//	// Skip same
-			//	existLine->parent = newLine.get();
-			//}
-
+			classifier = &_rsClass;
 		}
-	};
+		else
+		{
+			//classifier = &_clClass;
+		}
 
-	void classBarcodeByRaster(bc::Baritem& baritem, ClassInfo& info, const FilterInfo& filter);
-	void classBarcodeByCloud(BarcodesHolder& baritem, ClassInfo& info, const FilterInfo& filter);
+		classifier->setFilter(&filter);
+		classifier->openRead(getPath(BackPath::binbar));
 
-	void readPrcoessBarcode(ClassInfo& info, FilterInfo& filter);
+		LayerProvider prov(u_displayFactor);
+		prov.init(tileSize, reader->width());
 
+		while (classifier->canRead())
+		{
+			classifier->classBarcodeFromCache(info, prov);
+		}
+	}
 
+//
 	void exportResult(int imgNumber, const BackImage& resultMart);
 
 
 	void readImages();
 
-	void createCacheBarcode(const BarcodeProperies& propertices, int imgIndex, FilterInfo& info, ClassInfo& classif);
+	void createCacheBarcode(const BarcodeProperies& propertices, int imgIndex, FilterInfo& info, RasterLineLayer& classif)
+	{
+		if (block) return;
+
+		//	reader->setCurrentSubImage(1);
+		if (imgType == ReadType::Tiff)
+			dynamic_cast<TiffReader*>(reader)->setCurrentSubImage(imgIndex);
+
+		// Settup
+		bc::BarConstructor constr;
+		constr.createBinaryMasks = true;
+		constr.createGraph = true;
+		constr.attachMode = bc::AttachMode::morePointsEatLow;
+		constr.returnType = bc::ReturnType::barcode2d;
+		constr.structure.push_back(propertices.barstruct);
+		//	constr.setStep(stepSB);
+
+		// -------
+
+		// Cacher
+		//BarClasser* barcodeHelper;
+		//RasterBarClasser _rsbarcodeHelper;
+
+		//CloudBarClasser _clBarcodeHelper;
+
+		/*if (propertices.alg == 0)
+		{
+			barcodeHelper = &_rsbarcodeHelper;
+		}
+		else
+		{
+			_clBarcodeHelper.useHoles = propertices.alg1UseHoles;
+			_clBarcodeHelper.ignoreHeight = propertices.alg1IgnoreHeight;
+			barcodeHelper = &_clBarcodeHelper;
+		}
+		barcodeHelper->doCache(true);
+		barcodeHelper->setFilter(&info);
+		barcodeHelper->prepare(getPath(BackPath::binbar));
+
+		const uint fullTile = tileSize + tileOffset;
+		info.imgLen = fullTile * fullTile;
+
+		uint rwid = reader->width();
+		uint rhei = reader->height();
+		TileIterator stW(0, tileSize, tileOffset, rwid);
+		TileIterator stH(0, tileSize, tileOffset, rhei);
+		LayerProvider prov(u_displayFactor);
+		prov.init(tileSize, reader->width());*/
+
+		//for (uint i = 0; i < rhei; i += tileSize)
+		//{
+		//	uint ihei;
+		//	if (stH.shouldSkip(ihei))
+		//		break;
+
+		//	stW.reset(0);
+		//	std::cout << i << std::endl;
+		//	for (uint j = 0; j < rwid; j += tileSize)
+		//	{
+		//		uint iwid;
+		//		if (stW.shouldSkip(iwid))
+		//			break;
+
+		//		bc::point offset(stW.pos(), stH.pos());
+		//		DataRect rect = reader->getRect(offset.x, offset.y, iwid, ihei);
+		//		uint k = getTileIndexByOffset(offset.x, offset.y);
+
+		//		DataRectBarWrapper warp(rect);
+		//		barcodeHelper->create(k, &warp, constr, prov, &classif);
+		//		stW.accum();
+		//	}
+		//	stH.accum();
+		//}
+
+		//u_algorithm = propertices.alg;
+		//saveProject();
+	}
+
+
 	void getOffsertByTileIndex(uint tileIndex, uint& offX, uint& offY)
 	{
 		int tilesInRow = getCon(reader->width(), tileSize);
@@ -649,7 +770,6 @@ public:
 			}
 		}
 
-		// None
 		return -1;
 	}
 
@@ -660,15 +780,7 @@ private:
 	void write(BackJson& json) const;
 	void writeImages();
 	void read(const BackJson& json);
-
-
-public:
-	barclassificator classer;
-	BarClassifierCache classLoader;
-private:
-	std::vector<Barscalar> colors;
 };
-
 
 
 bc::barlinevector geojson[3];
@@ -678,25 +790,6 @@ using std::vector;
 
 Project* Project::proj = nullptr;
 using namespace bc;
-
-
-Project::Project()
-{
-	projectPath = "D:\\Programs\\Barcode\\_bar\\_p2\\";
-
-	u_classCache = getDicumnetPath() / "GeoBar";
-	mkDirIfNotExists(u_classCache);
-
-	srand(300);
-	colors.push_back(Barscalar(255, 0, 0));
-	colors.push_back(Barscalar(0, 0, 0));
-	colors.push_back(Barscalar(0, 255, 0));
-	colors.push_back(Barscalar(0, 0, 255));
-	for (int k = 0; k < 40; ++k)
-		colors.push_back(Barscalar(5 + rand() % 250, 5 + rand() % 250, 5 + rand() % 250));
-
-	colors.push_back(Barscalar(255, 255, 255));
-}
 
 bool Project::saveProject()
 {
@@ -715,8 +808,8 @@ bool Project::saveProject()
 	saveFile.close();
 
 	mkDirIfNotExists(getPath(BackPath::tiles));
-	BarClassifierCache ccb;
-	ccb.saveCategories(classer.categs);
+	//BarClassifierCache ccb;
+	//ccb.saveCategories(classer.categs);
 	return true;
 }
 
@@ -741,420 +834,14 @@ float Project::getImgMaxVal() const
 // ---------------------------
 
 
-class BarCacheClasser
-{
-protected:
-	Project* proj;
-public:
-
-	BarCacheClasser(Project* proj = nullptr) :
-		proj(proj)
-	{ }
-
-	virtual bool canRead() const = 0;
-
-	virtual void openRead() = 0;
-
-	virtual void classBarcode(Project::ClassInfo& info) = 0;
-};
-
-class RasterCacheClassifier : public BarCacheClasser
-{
-	GeoBarRasterCache reader;
-	const FilterInfo& filter;
-
-public:
-	RasterCacheClassifier(Project* proj, const FilterInfo& filter) : BarCacheClasser(proj), filter(filter)
-	{ }
-
-	bool canRead() const
-	{
-		return reader.canRead();
-	}
-
-	void openRead()
-	{
-		reader.openRead(proj->getPath(BackPath::binbar));
-	}
-
-	void classBarcode(Project::ClassInfo& info)
-	{
-		std::unique_ptr<bc::Baritem> baritem(reader.load(info.ind));
-		std::cout << info.ind << std::endl;
-
-		proj->classBarcodeByRaster(*baritem.get(), info, filter);
-	}
-};
-
-class CloudCacheClassifier : public BarCacheClasser
-{
-	GeoBarCloudHolderCache reader;
-	const FilterInfo& filter;
-public:
-	CloudCacheClassifier(Project* proj, const FilterInfo& filter) : BarCacheClasser(proj), filter(filter)
-	{ }
-
-	bool canRead() const
-	{
-		return reader.canRead();
-	}
-
-	void openRead()
-	{
-		reader.openRead(proj->getPath(BackPath::binbar));
-	}
-
-	void classBarcode(Project::ClassInfo& info)
-	{
-		std::unique_ptr<CloudItem> baritem(reader.load(info.ind));
-		std::cout << info.ind << std::endl;
-
-		proj->classBarcodeByCloud(*baritem.get(), info, filter);
-	}
-};
-
-struct TileIterator
-{
-	uint start;
-	uint tileSize;
-	uint fullTileSize;
-
-	uint maxLen;
-
-	TileIterator(uint start, uint tileSize, uint offset, uint maxLen) :
-		start(start), tileSize(tileSize), fullTileSize(tileSize + offset), maxLen(maxLen)
-	{ }
-
-	void reset(uint st = 0)
-	{
-		start = st;
-	}
-
-	uint pos()
-	{
-		return start;
-	}
-
-	uint accum()
-	{
-		start += tileSize;
-		return start;
-	}
-
-
-	uint getFullTileSize()
-	{
-		return (start + fullTileSize <= maxLen ? fullTileSize : maxLen - start);
-	}
-
-	bool shouldSkip(uint& len)
-	{
-		len = getFullTileSize();
-		return len <= (fullTileSize - tileSize); // len < offset
-	}
-};
-
-void Project::createCacheBarcode(const BarcodeProperies& propertices, int imgIndex, FilterInfo& info, ClassInfo& classif)
-{
-	if (block) return;
-
-	//	reader->setCurrentSubImage(1);
-	if (imgType == ReadType::Tiff)
-		dynamic_cast<TiffReader*>(reader)->setCurrentSubImage(imgIndex);
-
-	// Settup
-	bc::BarConstructor constr;
-	constr.createBinaryMasks = true;
-	constr.createGraph = true;
-	constr.attachMode = bc::AttachMode::morePointsEatLow;
-	constr.returnType = bc::ReturnType::barcode2d;
-	constr.structure.push_back(propertices.barstruct);
-	//	constr.setStep(stepSB);
-
-	// -------
-
-	// Cacher
-	BarcodeCreateHelper* barcodeHelper;
-	RasterBarcodeCreateHelper _rsbarcodeHelper;
-
-	CloudBarcodeCreateHelper _clBarcodeHelper;
-
-	if (propertices.alg == 0)
-	{
-		barcodeHelper = &_rsbarcodeHelper;
-	}
-	else
-	{
-		_clBarcodeHelper.useHoles = propertices.alg1UseHoles;
-		_clBarcodeHelper.ignoreHeight = propertices.alg1IgnoreHeight;
-		barcodeHelper = &_clBarcodeHelper;
-	}
-
-	barcodeHelper->prepare(getPath(BackPath::binbar));
-
-	const uint fullTile = tileSize + tileOffset;
-	info.imgLen = fullTile * fullTile;
-
-	uint rwid = reader->width();
-	uint rhei = reader->height();
-	TileIterator stW(0, tileSize, tileOffset, rwid);
-	TileIterator stH(0, tileSize, tileOffset, rhei);
-
-	for (uint i = 0; i < rhei; i += tileSize)
-	{
-		uint ihei;
-		if (stH.shouldSkip(ihei))
-			break;
-
-		stW.reset(0);
-		std::cout << i << std::endl;
-		for (uint j = 0; j < rwid; j += tileSize)
-		{
-			uint iwid;
-			if (stW.shouldSkip(iwid))
-				break;
-
-			bc::point offset(stW.pos(), stH.pos());
-			DataRect rect = reader->getRect(offset.x, offset.y, iwid, ihei);
-
-			uint k = getTileIndexByOffset(offset.x, offset.y);
-			DataRectBarWrapper warp(rect);
-			barcodeHelper->createCache(k, &warp, constr, offset, info);
-
-			BarcodeCreator cr;
-			auto t = cr.createBarcode(&warp, constr);
-			classif.ind = k;
-			classBarcodeByRaster(*t->getItem(0), classif, info);
-			delete t;
-
-			stW.accum();
-		}
-		stH.accum();
-	}
-
-	u_algorithm = propertices.alg;
-	saveProject();
-}
-
-
-void Project::readPrcoessBarcode(ClassInfo& info, FilterInfo& filter)
-{
-	if (u_displayFactor < 1.0)
-		throw std::exception();
-
-	filter.imgLen = (tileSize + tileOffset) * (tileSize + tileOffset);
-
-
-	// Cacher
-	BarCacheClasser* classifier;
-	RasterCacheClassifier _rsClass(this, filter);
-	CloudCacheClassifier _clClass(this, filter);
-
-	if (u_algorithm == 0)
-	{
-		classifier = &_rsClass;
-	}
-	else
-	{
-		classifier = &_clClass;
-	}
-
-	classifier->openRead();
-
-	while (classifier->canRead())
-	{
-		classifier->classBarcode(info);
-	}
-}
-
-
-void Project::classBarcodeByRaster(bc::Baritem& baritem, ClassInfo& info, const FilterInfo& filter)
-{
-	bool showBad = true;
-	bool showWhite = true; //extra.indexOf("showw;") != -1;
-
-	uint xOff = 0;
-	uint yOff = 0;
-	getOffsertByTileIndex(info.ind, xOff, yOff);
-	std::unordered_map<bc::barline*, std::shared_ptr<SimpleLine>> parentne;
-	auto& vec = baritem.barlines;
-	for (size_t i = 0; i < vec.size(); ++i)
-	{
-		auto* curLine = vec.at(i);
-		if (filter.needSkip(curLine))
-			continue;
-
-		const auto& matr = curLine->matr;
-
-		if (matr.size() == 0)
-			continue;
-
-		Barscalar pointCol(255, 0, 0);
-		pointCol = colors[rand() % colors.size()];
-
-		std::unordered_set<uint> vals;
-		std::shared_ptr<SimpleLine> sl;
-		auto p = parentne.find(curLine);
-		if (p != parentne.end())
-		{
-			sl = p->second;
-			sl->barlineIndex = i;
-		}
-		else
-		{
-			sl = std::make_shared<SimpleLine>(info.ind, i);
-			parentne.insert(std::make_pair(curLine, sl));
-		}
-
-		p = parentne.find(curLine->parent);
-		if (p != parentne.end())
-		{
-			sl->parent = p->second;
-		}
-		else
-		{
-			sl->parent = std::make_shared<SimpleLine>(info.ind, -1);
-			parentne.insert(std::make_pair(curLine, sl->parent));
-			//sl->parent->matr = curLine->parent->matr;
-		}
-
-		int depth = curLine->getDeath();
-		sl->depth = depth;
-		sl->start = curLine->start;
-		sl->end = curLine->end();
-		sl->matrSrcSize = matr.size();
-
-		bc::barvector temp;
-		for (const auto& pm : matr)
-		{
-			int ox = (pm.getX() + xOff) / u_displayFactor;
-			int oy = (pm.getY() + yOff) / u_displayFactor;
-			int x = min(info.mat.wid() - 1, ox);
-			int y = min(info.mat.hei() - 1, oy);
-			uint index = bc::barvalue::getStatInd(x, y);
-			if (vals.find(index) != vals.end())
-				continue;
-
-			vals.insert(index);
-
-			bc::point p = bc::barvalue::getStatPoint(index);
-			temp.push_back(bc::barvalue(p, pm.value));
-
-			info.mat.set(x, y, pointCol);
-			info.setMatrPoint(x, y, curLine->getDeath(), sl);
-		}
-
-		getCountourSimple(temp, sl->matr);
-
-	}
-}
-
-void Project::classBarcodeByCloud(BarcodesHolder& baritem, ClassInfo& info, const FilterInfo& filter)
-{
-	bool wr = info.extra.find("json;") != -1;
-	//	bool ent = extra.indexOf("entr;") != -1;
-	//	bool classif = extra.indexOf("barclass;") != -1;
-	bool showBad = true;
-	//extra.indexOf("show0;") != -1;
-	bool showWhite = true; //extra.indexOf("showw;") != -1;
-
-	uint xOff = 0;
-	uint yOff = 0;
-	getOffsertByTileIndex(info.ind, xOff, yOff);
-
-	auto& vec = baritem.lines;
-	for (size_t i = 0; i < vec.size(); ++i)
-	{
-		auto* curLine = vec.at(i);
-
-		if (filter.needSkip(curLine->lines[0]))
-			continue;
-
-		const auto& matr = curLine->matrix;
-
-		if (matr.size() == 0)
-			continue;
-
-		Barscalar pointCol(255, 0, 0);
-		int type = -1;
-		{
-			// It clones inside
-			type = classer.getType(curLine);
-			pointCol = colors[type + 1];
-
-			if (type == -1)
-				pointCol = colors[rand() % colors.size()];
-		}
-
-		std::unordered_set<uint> vals;
-		std::shared_ptr<SimpleLine> sl = std::make_shared<SimpleLine>(info.ind, i);
-		int depth = curLine->getDeath();
-		sl->depth = depth;
-		sl->start = curLine->lines[0]->start;
-		sl->end = curLine->lines[0]->end();
-		sl->matrSrcSize = matr.size();
-		//		simpleHolder.push_back(sl);
-
-		info.map[(size_t)sl.get()] = type;
-
-		for (const auto& pm : matr)
-		{
-			int ox = pm.getX();// -xOff;
-			int oy = pm.getY();// -yOff;
-			int x = min(info.mat.wid() - 1, static_cast<int>((ox) / u_displayFactor));
-			int y = min(info.mat.hei() - 1, static_cast<int>((oy) / u_displayFactor));
-			uint index = bc::barvalue::getStatInd(x, y);
-			if (vals.find(index) != vals.end())
-				continue;
-
-			vals.insert(index);
-
-			bc::point p = bc::barvalue::getStatPoint(index);
-			sl->matr.push_back(bc::barvalue(p, pm.value));
-
-			//info.mat.set(x, y, color);
-			//			outMask.set(x, y, 255);
-
-			info.setMatrPoint(x, y, curLine->getDeath(), sl);
-
-			bc::point cp(x, y);
-			info.mat.set(cp.x, cp.y, pointCol);
-			if (cp.x - 1 >= 0)
-			{
-				info.mat.set(cp.x - 1, cp.y, pointCol);
-			}
-			if (cp.x + 1 < info.mat.wid())
-			{
-				info.mat.set(cp.x + 1, cp.y, pointCol);
-			}
-			if (cp.y - 1 >= 0)
-			{
-				info.mat.set(cp.x, cp.y - 1, pointCol);
-			}
-			if (cp.y + 1 < info.mat.hei())
-			{
-				info.mat.set(cp.x, cp.y + 1, pointCol);
-			}
-		}
-	}
-
-	// for (size_t i = 0; i < vec.size(); ++i)
-	// {
-	// 	auto* b = vec.at(i);
-	// 	int indLocal = b->matrix[0].getIndex(info.mat.wid());
-
-	// 	SimpleLine* cur = info.resLinesMaps[indLocal].get();
-	// 	// b.
-	// }
-}
 
 // ---------------------------
-
-
-bool needSkip(const Barscalar& scal)
-{
-	return false; //scal > 10;
-}
+//
+//
+//bool needSkip(const Barscalar& scal) const
+//{
+//	return false; //scal > 10;
+//}
 
 
 BarcodeHolder Project::threasholdLines(bc::Baritem* item)
@@ -1203,10 +890,10 @@ bool Project::loadProject(const BackPathStr& prjFilepath)
 	modelHei = reader->height() / u_displayFactor;
 	readImages();
 
-	BarClassifierCache bcc;
-	classer.categs = bcc.loadCategories();
-	classer.udpdateClasses();
-	bcc.loadClasses(getPath(BackPath::classfiles), classer);
+	//BarClassifierCache bcc;
+	//classer.categs = bcc.loadCategories();
+	//classer.udpdateClasses();
+	//bcc.loadClasses(getPath(BackPath::classfiles), classer);
 	return true;
 }
 
@@ -1245,7 +932,7 @@ static int getFid(int wid, int s)
 	return (wid + s - 1) / s;
 }
 
-static MatrImg* tiffToImg(ImageReader* reader, const BackPathStr& path, int fctor = 10, bool save = false)
+BackImage* tiffToImg(ImageReader* reader, const BackPathStr& path, int fctor = 10, bool save = false)
 {
 	bool rgb = reader->getSamples() > 1;
 	int widf = getFid(reader->width(), fctor);
@@ -1437,13 +1124,17 @@ void Project::addClassData(int classIndex, BarcodeHolder* points, BackImage* des
 
 	*destIcon = BackImage(r.wid, r.hei, r.data.samples, r.data.ptr.b);
 
-	BarClassifierCache saver;
-	saver.save(points, classIndex, destIcon);
-	classer.addData(classIndex, points->lines, false);
+	//BarClassifierCache saver;
+	//saver.save(points, classIndex, destIcon);
+	//classer.addData(classIndex, points->lines, false);
 }
 
 int Project::addClassType(const BackString& name)
 {
-	classer.classes.push_back(Barcontainer());
-	return classer.categs.addValue(name);
+	//classer.classes.push_back(Barcontainer());
+	//return classer.categs.addValue(name);
+	return 0;
 }
+
+
+export class Project;

@@ -1,9 +1,17 @@
-#ifndef MATRIMG_H
-#define MATRIMG_H
-#include "barImg.h"
+module;
+#include <string.h>
+#include <assert.h>
+#include <algorithm>
+#include <cmath>
+
+export module MatrModule;
+
+import BarcodeModule;
+
+using uchar = unsigned char;
 
 
-class MatrImg : public bc::DatagridProvider
+export class MatrImg : public bc::DatagridProvider
 {
 public:
 	void fill(const Barscalar &s)
@@ -482,4 +490,3 @@ public:
 	}
 
 };
-#endif // MATRIMG_H

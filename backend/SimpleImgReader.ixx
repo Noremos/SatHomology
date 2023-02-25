@@ -6,11 +6,12 @@ export module SimpleImgReaderModule;
 
 import Platform;
 import ImgReader;
+import IOCore;
 
 
 export class SimpleImgReader : public ImageReader
 {
-	MatrImg main;
+	BackImage main;
 	ImageType type;
 	int typeSize;
 	int samples;

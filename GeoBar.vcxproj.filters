@@ -14,9 +14,6 @@
     <Filter Include="Barcode">
       <UniqueIdentifier>{1143bbac-360a-4d74-9348-ba8b2d78ade1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Barcode\src">
-      <UniqueIdentifier>{fbf976c3-cb9f-4232-8ef1-af48702a654d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Side">
       <UniqueIdentifier>{f13c016b-6080-4d17-9175-6a9c0ee2e169}</UniqueIdentifier>
     </Filter>
@@ -25,6 +22,9 @@
     </Filter>
     <Filter Include="GUI">
       <UniqueIdentifier>{38104a2c-7ea1-49a6-a83d-b611fcb16364}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GUI\Core">
+      <UniqueIdentifier>{6554f127-e3cd-4f97-9989-751f472a38c4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -49,30 +49,6 @@
     <ClCompile Include="..\imgui\imgui_widgets.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
-    <ClCompile Include="frontend\main.cpp">
-      <Filter>GUI</Filter>
-    </ClCompile>
-    <ClCompile Include="frontend\Application.cpp">
-      <Filter>GUI</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\source\hole.cpp">
-      <Filter>Barcode\src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\source\barclasses.cpp">
-      <Filter>Barcode\src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\source\barcodeCreator.cpp">
-      <Filter>Barcode\src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\source\component.cpp">
-      <Filter>Barcode\src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\convertation.cpp">
-      <Filter>Barcode\modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\tiffreader.cpp">
-      <Filter>Barcode\modules</Filter>
-    </ClCompile>
     <ClCompile Include="backend\project.ixx">
       <Filter>Backend</Filter>
     </ClCompile>
@@ -82,28 +58,75 @@
     <ClCompile Include="frontend\GuiCommon.h">
       <Filter>GUI</Filter>
     </ClCompile>
-    <ClCompile Include="frontend\GuiCommon.cpp" />
-    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\BinStateFileWrapper.ixx">
-      <Filter>Barcode\modules</Filter>
-    </ClCompile>
     <ClCompile Include="backend\CacheFiles.ixx">
       <Filter>Backend</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\Barcode.ixx" />
-    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\TiffReaderWrapper.ixx" />
-    <ClCompile Include="backend\GeoProcessor.ixx" />
-    <ClCompile Include="frontend\frontend.ixx" />
     <ClCompile Include="side\Lua.ixx">
       <Filter>Backend</Filter>
     </ClCompile>
-    <ClCompile Include="Bind\Framework.ixx" />
     <ClCompile Include="Bind\Side.ixx">
       <Filter>Side</Filter>
     </ClCompile>
     <ClCompile Include="backend\SimpleImgReader.ixx">
       <Filter>Backend</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\ImageReader.ixx" />
+    <ClCompile Include="frontend\Viewer3d.ixx">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="frontend\GuiLayers.ixx">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="frontend\Object3d.ixx">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\Classifiers.ixx">
+      <Filter>Backend</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\BarHolders.ixx">
+      <Filter>Backend</Filter>
+    </ClCompile>
+    <ClCompile Include="Bind\CoreIO.ixx">
+      <Filter>Backend</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\Layers.ixx">
+      <Filter>Backend</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\Barcode.ixx">
+      <Filter>Barcode\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\Barline.ixx">
+      <Filter>Barcode\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\StateBinFiles.ixx">
+      <Filter>Barcode\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\MatrImg.ixx">
+      <Filter>Backend</Filter>
+    </ClCompile>
+    <ClCompile Include="frontend\frontend.ixx">
+      <Filter>GUI\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\TiffReader.ixx">
+      <Filter>Barcode\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\ImageReader.ixx">
+      <Filter>Barcode\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\GeoProcessor.ixx">
+      <Filter>Barcode\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Bind\Framework.ixx">
+      <Filter>Barcode\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="frontend\GuiCommon.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="frontend\Application.cpp">
+      <Filter>GUI\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="frontend\main.cpp">
+      <Filter>GUI\Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\imgui\imgui_internal.h">
@@ -121,32 +144,8 @@
     <ClInclude Include="..\imgui\backends\imgui_impl_opengl3_loader.h">
       <Filter>imgui</Filter>
     </ClInclude>
-    <ClInclude Include="frontend\Application.h">
-      <Filter>GUI</Filter>
-    </ClInclude>
     <ClInclude Include="..\imgui\imconfig.h">
       <Filter>imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\C++\Barcode\PrjBarlib\include\barscalar.h">
-      <Filter>Barcode</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\C++\Barcode\PrjBarlib\include\barcodeCreator.h">
-      <Filter>Barcode</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\C++\Barcode\PrjBarlib\modules\base.h">
-      <Filter>Barcode\modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\C++\Barcode\PrjBarlib\modules\convertion.h">
-      <Filter>Barcode\modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\C++\Barcode\PrjBarlib\modules\decoder.h">
-      <Filter>Barcode\modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\C++\Barcode\PrjBarlib\modules\tiffreader.h">
-      <Filter>Barcode\modules</Filter>
-    </ClInclude>
-    <ClInclude Include="backend\MatrImg.h">
-      <Filter>Backend</Filter>
     </ClInclude>
     <ClInclude Include="frontend\FrontTypes.h">
       <Filter>GUI</Filter>
@@ -167,6 +166,9 @@
       <Filter>Side</Filter>
     </ClInclude>
     <ClInclude Include="Bind\Common.h" />
+    <ClInclude Include="frontend\Application.h">
+      <Filter>GUI\Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\imgui\misc\debuggers\imgui.natvis">

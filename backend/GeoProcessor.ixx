@@ -1,24 +1,34 @@
 module;
-
-#include "barcodeCreator.h"
+// Std
 #include <random>
 #include <vector>
-#include "../Bind/Common.h"
-
+#include <iostream>
 #include <stack>
 #include <ranges>
+#include <unordered_set>
 
+// Lib
 #define IMGUI_DEFINE_MATH_OPERATORS
-
 #include "imgui.h"
 #include <imgui_internal.h>
 
+// My
+#include "../Bind/Common.h"
+#include "../side/flat_hash_map/unordered_map.hpp"
 
 export module GeoprocessorModule;
 
-import CacheFilesModule;
 import Platform;
+import IOCore;
+import BarcodeModule;
 
+
+namespace bc
+{
+	using barlinevector = std::vector<bc::barline*>;
+	using barvector = std::vector<bc::barvalue>;
+}
+using uint = unsigned int;
 
 export struct Cound
 {
@@ -32,11 +42,11 @@ export struct ProcPoint
 	float x, y;
 };
 
-export void getMaskRes(const MatrImg& matres, std::vector<Cound*>& veas, Cound** resmap);
+export void getMaskRes(const BackImage& matres, std::vector<Cound*>& veas, Cound** resmap);
 
-export void parseGeojson();
+//export void parseGeojson();
 export double getPsa(const bc::barvector& matr);
-export void getMaskRes(const MatrImg& mat, MatrImg& maskMat);
+export void getMaskRes(const BackImage& mat, BackImage& maskMat);
 export using mcountor = std::vector<uint>;
 export void saveAsGeojson(const bc::barlinevector& lines, const BackPathStr& savePath, ProcPoint startOffset, double coof);
 export void saveJson(const std::string& text, int st);
@@ -46,402 +56,6 @@ void getCountour(const bc::barvector& points, mcountor& contur, bool aproximate 
 using std::string;
 //static int pr = 10;
 //static bool normA = false;
-
-export class BarcodeCreateHelper
-{
-public:
-	BarcodeCreateHelper()
-	{ }
-
-	virtual void prepare(const BackPathStr& cacheFilePath) = 0;
-	virtual void createCache(int index, bc::DatagridProvider* prov, const bc::BarConstructor& constr, bc::point offset, const FilterInfo& info) = 0;
-};
-
-
-export class RasterBarcodeCreateHelper : public BarcodeCreateHelper
-{
-	bc::BarcodeCreator creator;
-
-protected:
-	GeoBarRasterCache cacher;
-public:
-
-	RasterBarcodeCreateHelper() : BarcodeCreateHelper()
-	{ }
-
-	void prepare(const BackPathStr& cacheFilePath)
-	{
-		cacher.openWrite(cacheFilePath);
-	}
-
-	void createCache(int index, bc::DatagridProvider* prov, const bc::BarConstructor& constr, bc::point offset, const FilterInfo& info)
-	{
-		std::unique_ptr<bc::Barcontainer> ret(creator.createBarcode(prov, constr));
-
-		cacher.save(ret->getItem(0), index);
-	}
-};
-
-export class CloudBarcodeCreateHelper : public BarcodeCreateHelper
-{
-	bc::BarcodeCreator creator;
-
-protected:
-	GeoBarCloudHolderCache cacher;
-public:
-	bool useHoles = false;
-	bool ignoreHeight = false;
-
-	CloudBarcodeCreateHelper() : BarcodeCreateHelper()
-	{ }
-
-	void prepare(const BackPathStr& cacheFilePath)
-	{
-		cacher.openWrite(cacheFilePath);
-	}
-
-	void createCache(int index, bc::DatagridProvider* prov, const bc::BarConstructor& constr, bc::point offset, const FilterInfo& info)
-	{
-		std::unique_ptr<bc::Baritem> item(create(prov, constr));
-		auto cloud = toCloudBarcode(item.get(), offset, info);
-		cacher.save(&cloud, index);
-	}
-
-private:
-	bc::Baritem* create(bc::DatagridProvider* prov, const bc::BarConstructor& constr)
-	{
-		std::unique_ptr<bc::Barcontainer> ret(creator.createBarcode(prov, constr));
-		return ret->exractItem(0);
-	}
-
-	CloudItem createSplitCloudBarcode(const bc::CloudPointsBarcode::CloudPoints& cloud)
-	{
-		bc::CloudPointsBarcode clodCrt;
-		clodCrt.useHolde = useHoles;
-		std::unique_ptr<bc::Barcontainer> hold(clodCrt.createBarcode(&cloud));
-
-		BarcodesHolder holder;
-		if (cloud.points.size() == 0)
-			return holder;
-
-		bc::Baritem* main = hold->getItem(0);
-		for (size_t var = 0; var < main->barlines.size(); ++var)
-		{
-			auto* line = main->barlines[var];
-			BarcodeHolder* barhold = new BarcodeHolder();
-			holder.lines.push_back(barhold);
-			barhold->depth = line->getDeath();
-			//barhold->matrix = std::move(line->matr);
-			line->getAsListSafe(barhold->lines, true, true);
-			for (auto& i : barhold->lines)
-			{
-				barhold->matrix.insert(barhold->matrix.begin(), i->matr.begin(), i->matr.end());
-				i->matr.clear();
-			}
-		}
-
-		return holder;
-	}
-
-	CloudItem toCloudBarcode(bc::Baritem* item, bc::point offset, const FilterInfo& info)
-	{
-		bc::CloudPointsBarcode::CloudPoints cloud;
-		for (size_t var = 0; var < item->barlines.size(); ++var)
-		{
-			if (info.needSkip(item->barlines[var]))
-			{
-				continue;
-			}
-
-			auto& m = item->barlines[var]->matr[0];
-			bc::point rp(m.getX() + offset.x, m.getY() + offset.y);
-			cloud.points.push_back(bc::CloudPointsBarcode::CloudPoint(rp.x, rp.y, ignoreHeight ? 0 : m.value.getAvgFloat()));
-		}
-
-		return createSplitCloudBarcode(cloud);
-	}
-};
-
-
-export struct BarCategories
-{
-	int counter;
-	std::vector<int> value;
-	std::vector<std::string> name;
-
-	int addValue(const BackString& nname)
-	{
-		if (value.size() > 0 && value.back() > counter)
-			counter = value.back() + 1;
-		name.push_back(nname);
-		int id = counter++;
-		value.push_back(id);
-		return id;
-	}
-};
-
-
-export class barclassificator
-{
-public:
-	BarCategories categs;
-	std::vector <bc::Barcontainer> classes;
-
-	void addData(int classInd, bc::barlinevector& cont, const bool move = true)
-	{
-		bc::Baritem* item = new bc::Baritem();
-		if (move)
-		{
-			item->barlines = std::move(cont);
-		}
-		else
-		{
-			// Copy
-			for (size_t j = 0; j < cont.size(); j++)
-			{
-				item->barlines.push_back(cont[j]->clone());
-			}
-		}
-
-		item->relen();
-		classes[classInd].addItem(item);
-	}
-
-	void addData(int classInd, bc::Baritem* item)
-	{
-		item->relen();
-		classes[classInd].addItem(item);
-	}
-
-
-	void udpdateClasses()
-	{
-		for (size_t i = classes.size(); i < categs.value.size(); i++)
-		{
-			classes.push_back(bc::Barcontainer());
-		}
-	}
-
-	void removeLast(int classInd)
-	{
-		classes[classInd].remoeLast();
-	}
-
-	//	int getType(bc::barlinevector &bar0lines)
-	int getType(const BarcodeHolder* bar0)
-	{
-		auto cp = bc::CompireStrategy::CommonToLen;
-		float res = 0;
-
-		//		bc::Baritem *bar0 = new bc::Baritem();
-		//		bar0->barlines = bar0lines;
-		bc::Baritem newOne;
-		bar0->cloneLines(newOne.barlines);
-		//		newOne.shdowCopy = true;
-		newOne.relen();
-
-		int maxInd = -1;
-		float maxP = res;
-		for (size_t i = 0; i < classes.size(); i++)
-		{
-			float ps = classes[i].compireBest(&newOne, cp);
-			if (ps > maxP)
-			{
-				maxP = ps;
-				maxInd = i;
-			}
-		}
-
-		//		bar0.barlines.clear();
-		//		delete bar0;
-
-		assert(maxP <= 1.0);
-		return maxP > 0.5 ? maxInd : -1;
-	}
-
-
-	~barclassificator()
-	{
-		//		for (size_t i = 0; i < N * 2; i++)
-		//		{
-		//			delete classes[i];
-		//		}
-	}
-private:
-	Barscalar asScalar(const BackJson& arr)
-	{
-		return Barscalar(arr.at(0).get<double>(), arr.at(1).get<double>(), arr.at(2).get<double>());
-	}
-
-	//void parseItem(const JsonObject &obj, bc::barlinevector &lines)
-	//{
-	//	bc::barline *line = new bc::barline();
-	//	line->start = asScalar(obj["start"].array());
-	//	line->m_end = asScalar(obj["end"].array());
-
-	//	lines.push_back(line);
-
-	//	auto arrcoors = obj["children"].array();
-	//	for (size_t i = 0; i < arrcoors.size(); i++)
-	//	{
-	//		parseItem(arrcoors.at(i).object(), lines);
-	//	}
-	//}
-
-	//BarcodesHolder toHoldes(BarcodesHolder& lines, MatrImg& mat, bc::point offset, float factor)
-	//{
-	//	bc::CloudPointsBarcode::CloudPoints cloud;
-	//	for (size_t var = 0; var < lines.lines.size(); ++var)
-	//	{
-	//		//if (needSkip(lines.lines[var]->lines[0]->len()))
-	//		//{
-	//		//	continue;
-	//		//}
-
-	//		auto& m = lines.lines[var]->matrix[0];
-	//		bc::point rp(m.getX() + offset.x, m.getY() + offset.y);
-	//		bc::point cp = rp * factor;
-	//		mat.set(cp.x, cp.y, Barscalar(255, 0, 0));
-	//		if (cp.x - 1 >= 0)
-	//		{
-	//			mat.set(cp.x - 1, cp.y, Barscalar(255, 0, 0));
-	//		}
-	//		if (cp.x + 1 < mat.wid())
-	//		{
-	//			mat.set(cp.x + 1, cp.y, Barscalar(255, 0, 0));
-	//		}
-	//		if (cp.y - 1 >= 0)
-	//		{
-	//			mat.set(cp.x, cp.y - 1, Barscalar(255, 0, 0));
-	//		}
-	//		if (cp.y + 1 < mat.wid())
-	//		{
-	//			mat.set(cp.x, cp.y + 1, Barscalar(255, 0, 0));
-	//		}
-	//		assert(cp.x >= 0);
-	//		assert(cp.y >= 0);
-	//		cloud.points.push_back(bc::CloudPointsBarcode::CloudPoints(rp.x, rp.y, m.value.getAvgFloat()));
-	//	}
-
-	//	return toHoldes(cloud);
-	//}
-
-	//BarcodesHolder toHoldes(const bc::CloudPointsBarcode::CloudPoints& cloud)
-	//{
-	//	bc::CloudPointsBarcode clodCrt;
-	//	std::unique_ptr<bc::Barcontainer> hold(clodCrt.createBarcode(&cloud));
-
-	//	BarcodesHolder holder;
-	//	if (cloud.points.size() == 0)
-	//		return holder;
-
-	//	bc::Baritem* main = hold->getItem(0);
-	//	for (size_t var = 0; var < main->barlines.size(); ++var)
-	//	{
-	//		auto* line = main->barlines[var];
-	//		BarcodeHolder* barhold = new BarcodeHolder();
-	//		holder.lines.push_back(barhold);
-
-	//		barhold->matrix = std::move(line->matr);
-	//		line->getChilredAsList(barhold->lines, true, true, false);
-	//	}
-
-	//	return holder;
-	//}
-
-
-//public:
-	//void addClass(const BackPathStr& binFile, int classInd)
-	//{
-	//	BackString val;
-
-	//	std::ifstream file(path.string());
-	//	BackJson jsonDocument = BackJson::parse(file);
-
-	//	// �� �������� �������� ������ � ������� ������� QJsonObject
-	//	if (jsonDocument.is_array())
-	//	{
-	//		BackJson jsonItems = jsonDocument.array();
-
-	//		for (size_t i = 0; i < jsonItems.size(); i++)
-	//		{
-	//			JsonObject jsItem = jsonItems.at(i).object();
-	//			bc::Baritem *item = new bc::Baritem();
-	//			parseItem(jsItem, item->barlines);
-	//			item->relen();
-	//			classes[classInd].addItem(item);
-	//		}
-	//	}
-	//	else
-	//	{
-	//		bc::Baritem *item = new bc::Baritem();
-	//		parseItem(jsonDocument.object(), item->barlines);
-	//		item->relen();
-	//		classes[classInd].addItem(item);
-//	}
-//}
-
-
-//void addClass(bc::barline *line, int classInd)
-//{
-//	bc::Baritem *item = new bc::Baritem();
-//	line->getChilredAsList(item->barlines, true, true);
-//	item->relen();
-
-//	classes[classInd].addItem(item);
-//}
-};
-
-
-export class BarClassifierCache
-{
-public:
-	BarCategories loadCategories();
-
-	void saveCategories(BarCategories& barclas);
-
-	void loadCategories(std::function<void(int classId, const BackString& name)> callback);
-
-	void loadClasses(const BackDirStr& path, barclassificator& barclas)
-	{
-		barclas.udpdateClasses();
-		auto& crgs = barclas.categs.value;
-
-		for (auto categ : crgs)
-		{
-			BackDirStr dirl = path / intToStr(categ);
-			if (!pathExists(dirl))
-				continue;
-
-			for (auto const& entry : std::filesystem::directory_iterator(dirl))
-			{
-				if (!entry.is_regular_file())
-				{
-					continue;
-				}
-
-				auto ext = entry.path().extension();
-				if (ext == ".bbf")
-				{
-					BackPathStr filename = entry.path();
-					GeoBarCloudCache reader;
-					reader.openRead(filename.string());
-					int ind = 0;
-					std::unique_ptr<BarcodeHolder> prt(reader.load(ind));
-					barclas.addData(categ, prt->lines, true);
-				}
-				else if (ext == ".jpg")
-				{
-
-				}
-			}
-		}
-	}
-
-	void loadImgs(std::function<void(int classId, const BackPathStr& path)> callback, int* categorues, int size);
-
-	void save(BarcodeHolder* curBar, int classIndex, BackImage* img = nullptr);
-};
 
 
 inline void testC()
@@ -492,7 +106,7 @@ inline void testC()
 
 double getPsa(const bc::barvector& matr)
 {
-	std::unordered_map<uint, bool> map;
+	ska::unordered_map<uint, bool> map;
 
 	int minX = 10000, maxX = 0, minY = 1000, maxY = 0;
 	for (const auto& pm : matr)
@@ -555,7 +169,7 @@ double getPsa(const bc::barvector& matr)
 
 
 
-void getMaskRes(const MatrImg& matres, std::vector<Cound*>& veas, Cound** resmap)
+void getMaskRes(const BackImage& matres, std::vector<Cound*>& veas, Cound** resmap)
 {
 	if (veas.size() == 0)
 		return;
@@ -604,7 +218,7 @@ void getMaskRes(const MatrImg& matres, std::vector<Cound*>& veas, Cound** resmap
 	std::cout << "Res bad: " << proc - ew << std::endl;
 }
 
-void getMaskRes(const MatrImg& mat, MatrImg& maskMat)
+void getMaskRes(const BackImage& mat, BackImage& maskMat)
 {
 	if (maskMat.wid() == 1)
 		return;
@@ -655,7 +269,7 @@ class MapCountur
 	int x = 0, y = 0;
 	int stIndex = 0;
 	mcountor& contur;
-	std::unordered_map<uint, bool> points;
+	ska::unordered_map<uint, bool> points;
 
 	enum StartPos : char { LeftMid = 0, LeftTop = 1, TopMid = 2, RigthTop = 3, RigthMid = 4, RigthBottom = 5, BottomMid = 6, LeftBottom = 7 };
 
@@ -877,7 +491,7 @@ export void getCountourSimple(const bc::barvector& points, bc::barvector& contur
 
 void saveJson(const string& text, int st)
 {
-	BackFileWrited file(std::format("D:\\{}.json", st));
+	BackFileWriter file(std::format("D:\\{}.json", st));
 	if (file.is_open())
 	{
 		file << text;
@@ -987,114 +601,4 @@ void saveAsGeojson(const bc::barlinevector& lines, const BackPathStr& savePath, 
 	}
 	//	widget->importedMakrers->release();
 	//	//	Size2 size = imgsrch.getTileSize();
-}
-
-
-void BarClassifierCache::loadCategories(std::function<void(int classId, const BackString& name)> callback)
-{
-	barclassificator barclas;
-	BackJson loadDoc = jsonFromFile("");// Project::getPathSt(BackPath::classifier));
-
-	JsonArray list = loadDoc["categories"];
-	for (size_t i = 0; i < list.size(); i++)
-	{
-		JsonObject catId = list.at(i);
-		callback(catId["id"], catId["name"].get<std::string>());
-	}
-}
-
-BarCategories BarClassifierCache::loadCategories()
-{
-	BackPathStr path = "";// Project::getProject()->getPath(BackPath::classifier);
-
-	BarCategories categ;
-	if (!pathExists(path))
-	{
-		categ.value.push_back(0);
-		categ.name.push_back("Bad");
-		categ.value.push_back(1);
-		categ.name.push_back("Kurgan");
-		return categ;
-	}
-
-	auto loadColback = [&categ](int classId, const BackString& name)
-	{
-		categ.value.push_back(classId);
-		categ.name.push_back(name);
-	};
-	loadCategories(loadColback);
-
-	return categ;
-}
-
-void BarClassifierCache::saveCategories(BarCategories& barclas)
-{
-	BackPathStr path = "";// Project::getProject()->getPath(BackPath::classifier);
-
-	JsonArray arr;
-	for (size_t i = 0; i < barclas.name.size(); i++)
-	{
-		JsonObject catId;
-		catId["id"] = barclas.value[i];
-		catId["name"] = barclas.name[i];
-		arr.push_back(catId);
-	}
-
-	BackJson loadDoc;
-	loadDoc["categories"] = arr;
-	jsonToFile(loadDoc, path);
-}
-
-void BarClassifierCache::loadImgs(std::function<void(int classId, const BackPathStr& path)> callback, int* categorues, int size)
-{
-	BackPathStr pathp = "";// Project::getPathSt(BackPath::classfiles);
-	CloudBarcodeCreateHelper creator;
-	for (size_t i = 0; i < size; i++)
-	{
-		int categ = categorues[i];
-		BackDirStr dirl = pathp / (BackPathStr)intToStr(categ);
-		if (!pathExists(dirl))
-			continue;
-
-		for (auto const& entry : std::filesystem::directory_iterator(dirl))
-		{
-			if (!entry.is_regular_file())
-			{
-				continue;
-			}
-
-			BackPathStr filename = entry.path().string();
-			auto ext = entry.path().extension();
-			if (ext == ".jpg")
-			{
-				callback(categ, filename);
-			}
-		}
-	}
-}
-
-void BarClassifierCache::save(BarcodeHolder* curBar, int classIndex, BackImage* img)
-{
-	BackPathStr path = "";// Project::getProject()->getPath(BackPath::classfiles);
-	BackDirStr doorPat = path / intToStr(classIndex);
-	mkDirIfNotExists(doorPat);
-
-	std::mt19937 generator(std::random_device{}());
-	std::uniform_int_distribution<int> distribution(1, 1000);
-	BackString name;
-	do
-	{
-		name = std::format("{}.bbf", distribution(generator));
-	} while (pathExists(doorPat / name));
-	doorPat /= name;
-
-	GeoBarCloudCache writer;
-	writer.openWrite(doorPat.string());
-	writer.save(curBar, 0);
-
-	if (img)
-	{
-		doorPat = doorPat.replace_extension("jpg");
-		imwrite(doorPat, *img);
-	}
 }

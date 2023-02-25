@@ -1,14 +1,15 @@
 module;
 
-#include "barcodeCreator.h"
-#include "../backend/MatrImg.h"
+#include <unordered_set>
+#include <random>
+#include <memory>
+
+#include "../side/PortFileDialog.h"
+#include "../side/sago/platform_folders.h"
+#include "../side/flat_hash_map/unordered_map.hpp"
+
 #include "../frontend/GuiCommon.h"
 #include "../frontend/GuiWidgets.h"
-
-#include "../backend/MatrImg.h"
-#include "../side/PortFileDialog.h"
-#include <random>
-
 
 export module ForntnedModule;
 
@@ -16,6 +17,10 @@ import ProjectModule;
 import ImgReader;
 import GeoprocessorModule;
 import Platform;
+import IOCore;
+import BarcodeModule;
+import LayersCore;
+import ClassifiersCore;
 
 // Todo.
 // 2 режима
@@ -48,6 +53,8 @@ public:
 	}
 
 	void clear();
+
+	GuiDrawImage* heimapImage = nullptr;
 
 	struct ComFinder
 	{
@@ -122,6 +129,8 @@ public:
 	void restoreSource();
 	void undoAddClass();
 	void exportResult(BackDirStr path);
+
+	void createHeimap();
 
 	void save()
 	{
@@ -278,11 +287,6 @@ private:
 };
 
 
-
-#include "../side/sago/platform_folders.h"
-#include <unordered_set>
-
-
 bool getNumber(BackString path, int& numI, BackString& num)
 {
 	int del = path.find_last_of('/');
@@ -400,15 +404,18 @@ void GuiBackend::createBarcode(const BarcodeProperies& propertices, FilterInfo& 
 	curSelected = nullptr;
 
 	resultMart = mainMat;
-	std::unordered_map<size_t, char> map;
+	ska::unordered_map<size_t, char> map;
 
 	comm.clear();
 	proj->setReadyLaod(curImgInd, mainMat.width());
 
-	Project::ClassInfo infoe{ 0, resultMart, map, "", resLinesMap };
+	RasterLineLayer layer;
+	layer.clickResponser = resLinesMap;
+	layer.mat = resultMart;
 
-	proj->createCacheBarcode(propertices, curImgInd, info, infoe);
+	proj->createCacheBarcode(propertices, curImgInd, info, layer);
 
+	resultMart = std::move(layer.mat);
 	processedImage->setImage(resultMart, false);
 	created = true;
 }
@@ -424,11 +431,81 @@ void GuiBackend::endLoaded()
 	clearResLine();
 	initResLine(mainMat.length());
 	mainImage->setImage(mainMat, false);
+	createHeimap();
 
 	clear();
 	proj->setReadyLaod(curImgInd, mainMat.width());
 }
 
+struct vec3
+{
+	short x, y, z;
+
+	vec3(const Barscalar& col)
+	{
+		x = col.data.b3[0];
+		y = col.data.b3[1];
+		z = col.data.b3[2];
+	}
+
+	vec3(short _x, short _y, short _z) : x(_x), y(_y), z(_z)
+	{ }
+
+	vec3 operator+(const vec3& b) const
+	{
+		return vec3(x + b.x, y + b.y, z + b.z);
+	}
+
+	vec3 operator-(const vec3& b) const
+	{
+		return vec3(x - b.x, y - b.y, z - b.z);
+	}
+
+	vec3 operator*(float v) const
+	{
+		return vec3(x * v, y * v, z * v);
+	}
+
+	Barscalar getSc()
+	{
+		assert(x >= 0);
+		assert(x < 256);
+		assert(y >= 0);
+		assert(y < 256);
+		assert(z >= 0);
+		assert(z < 256);
+		return Barscalar(x, y, z);
+	}
+	float length()
+	{
+		return std::sqrtf(x * x + y * y + z * z);
+	}
+};
+
+void GuiBackend::createHeimap()
+{
+	Barscalar mi, ma;
+	mainMat.maxAndMin(mi, ma);
+
+	vec3 mixc{ mi.data.b3[0], mi.data.b3[1], mi.data.b3[2] };
+	vec3 maxc{ ma.data.b3[0], ma.data.b3[1], ma.data.b3[2] };
+	vec3 cDiff = maxc - mixc;
+
+	vec3 minHeiCol{ 0, 0, 255 };
+	vec3 maxHeiCol{ 255, 0, 0 };
+	vec3 colDiff = maxHeiCol - minHeiCol;
+
+	BackImage heim(mainMat.width(), mainMat.height(), 3);
+	for (size_t i = 0; i < mainMat.length(); i++)
+	{
+		vec3 col = mainMat.getLiner(i);
+		float t = (col - mixc).length() / cDiff.length();
+		vec3 newCol = minHeiCol + colDiff * t;
+		heim.setLiner(i, newCol.getSc());
+	}
+
+	heimapImage->setImage(heim);
+}
 
 void GuiBackend::loadImageOrProject(const BackPathStr& path)
 {
@@ -461,6 +538,7 @@ void GuiBackend::loadImageOrProject(const BackPathStr& path)
 	{
 		created = false;
 	}
+
 	state = newState;
 }
 
@@ -563,15 +641,17 @@ void GuiBackend::processMain(BackString extra, FilterInfo& filter)
 	if (!created)
 		return;
 
-	resultMart = mainMat;
-	std::unordered_map<size_t, char> map;
+	//resultMart = mainMat;
+	ska::unordered_map<size_t, char> map;
 
 	comm.clear();
 	proj->setReadyLaod(curImgInd, mainMat.width());
+	RasterLineLayer layer;
+	layer.mat = mainMat;
+	layer.clickResponser.resize(mainMat.length());
+	proj->readPrcoessBarcode(layer, filter);
 
-	Project::ClassInfo infoe{ 0, resultMart, map, extra, resLinesMap };
-	proj->readPrcoessBarcode(infoe, filter);
-
+	resultMart = std::move(layer.mat);
 	processedImage->setImage(resultMart, false);
 }
 
@@ -713,7 +793,7 @@ void GuiBackend::undoAddClass()
 {
 	if (lastIndex != -1)
 	{
-		proj->classer.removeLast(lastIndex);
+		//proj->classer.removeLast(lastIndex);
 		lastIndex = -1;
 	}
 }

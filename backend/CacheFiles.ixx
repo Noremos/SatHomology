@@ -1,24 +1,16 @@
 module;
 
-#include "barcodeCreator.h"
-#include "../Bind/Common.h"
-#include <StateBinFile.h>
-#include <vector>
-#include "BinFile.h"
 #include <string>
+#include "../Bind/Common.h"
+#include "../side/flat_hash_map/unordered_map.hpp"
 // #include "project.h"
 
 export module CacheFilesModule;
 
-export StateBinFile::BinState;
+import BarholdersModule;
+import BarcodeModule;
 
-export
-{
-	using ::BarcodeHolder;
-	using ::BarcodesHolder;
-	using CloudItem = BarcodesHolder;
-	using CloudBarcodeHolder = BarcodesHolder;
-}
+using uint = unsigned int;
 
 export template<class TItem, class THolder>
 class GeoBar
@@ -26,30 +18,6 @@ class GeoBar
 protected:
 	std::unique_ptr<StateBinFile::BinState> state;
 public:
-	//THolder* loadFull(const BackString& str, int& index)
-	//{
-	//	openRead();
-	//	return saveLoadBar(index);
-	//}
-	//void saveFull(const BackString& str, int& index, THolder* item)
-	//{
-	//	openWrite();
-
-	//	while (state->isReading())
-	//	{
-	//		saveLoadBar(index, item);
-	//	}
-	//}
-
-	//void openRead()
-	//{
-	//	openRead(Project::getPathSt(BackPath::binbar).string());
-	//}
-
-	//void openWrite()
-	//{
-	//	openWrite(Project::getPathSt(BackPath::binbar).string());
-	//}
 
 	void openRead(const BackPathStr& str)
 	{
@@ -104,7 +72,7 @@ private:
 		state->beginItem();
 
 		index = state->pInt(index); // Index
-		state->pType(rsitem); // BarType
+		state->pType(rsitem->getType()); // BarType
 		size_t linesCount = state->pArray(vec.size());
 
 		// Parent read/write stuff
@@ -112,7 +80,7 @@ private:
 		std::vector<bc::barline*> ids;
 		ids.resize(linesCount * 2);
 		std::fill(ids.begin(), ids.end(), nullptr);
-		std::unordered_map<bc::barline*, uint> writeIds;
+		ska::unordered_map<size_t, uint> writeIds;
 
 		// Begin
 		state->beginArray(vec, linesCount);
@@ -125,7 +93,7 @@ private:
 				line = vec[i];
 
 				uint couId;
-				auto p = writeIds.find(line);
+				auto p = writeIds.find((size_t)line);
 				if (p != writeIds.end())
 				{
 					couId = p->second;
@@ -133,13 +101,13 @@ private:
 				else
 				{
 					couId = counterId++;
-					writeIds.insert(std::make_pair(line, couId));
+					writeIds.insert(std::make_pair((size_t)line, couId));
 				}
 
 				state->pInt(couId);
 
 				uint parId;
-				p = writeIds.find(line->parent);
+				p = writeIds.find((size_t)line->parent);
 				if (p != writeIds.end())
 				{
 					parId = p->second;
@@ -147,7 +115,7 @@ private:
 				else
 				{
 					parId = counterId++;
-					writeIds.insert(std::make_pair(line->parent, parId));
+					writeIds.insert(std::make_pair((size_t)line->parent, parId));
 				}
 
 				state->pInt(parId);
@@ -197,6 +165,7 @@ private:
 	}
 };
 
+
 export class GeoBarRasterClassiferCache : public GeoBar <bc::Baritem, bc::Barcontainer>
 {
 private:
@@ -205,11 +174,11 @@ private:
 		state->beginItem();
 
 		state->pInt(index); // Index
-		int typeSize = state->pType(rsitem); // BarType
+		state->pType(rsitem->getType()); // BarType
 
 		uint realIndex = 0;
 		bc::barlinevector& vec = rsitem->barlines;
-		std::unordered_map<bc::barline*, uint> ids;
+		ska::unordered_map<size_t, uint> ids;
 
 		size_t linesCount = state->pArray(vec.size());
 		state->beginArray(vec, linesCount);
@@ -334,7 +303,7 @@ private:
 	{
 		uint counterId = 0;
 		std::vector<bc::barline*> ids;
-		std::unordered_map<bc::barline*, uint> writeIds;
+		ska::unordered_map<size_t, uint> writeIds;
 
 		bc::barlinevector& vec = rsitem->lines;
 		size_t linesCount = state->pArray(vec.size());
@@ -351,7 +320,7 @@ private:
 			uint parId;
 			if (!isReading)
 			{
-				auto p = writeIds.find(vec[i]);
+				auto p = writeIds.find((size_t)vec[i]);
 				if (p != writeIds.end())
 				{
 					couId = p->second;
@@ -361,7 +330,7 @@ private:
 
 				state->pInt(couId);
 
-				p = writeIds.find(vec[i]->parent);
+				p = writeIds.find((size_t)vec[i]->parent);
 				if (p != writeIds.end())
 				{
 					parId = p->second;

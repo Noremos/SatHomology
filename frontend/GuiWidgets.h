@@ -4,6 +4,7 @@
 #include "imgui.h"
 #include <imgui_internal.h>
 #include "GuiCommon.h"
+#include <algorithm>
 
 using ApplicationVec2 = ImVec2;
 using WindowVec2 = ImVec2; // The top-left is a begin window
@@ -171,8 +172,8 @@ public:
 			float ads = ImGui::GetIO().MouseWheel * 0.1f;
 			zoom.x += ads;
 			zoom.y += ads;
-			zoom.x = std::max(zoom.x, 0.1f);
-			zoom.y = std::max(zoom.y, 0.1f);
+			zoom.x = zoom.x > 0.1f ? zoom.x : 0.1f;
+			zoom.y = zoom.y > 0.1f ? zoom.y : 0.1f;
 
 			offset.x += abs(ads) * 20;
 			offset.y += abs(ads) * 20;
@@ -387,6 +388,32 @@ public:
 	{
 		if (points == nullptr)
 			return;
+
+		//const ImVec2 p0 = ImGui::GetItemRectMin();
+		//const ImVec2 p1 = ImGui::GetItemRectMax();
+		//const char* text_str = "Line 1 hello\nLine 2 clip me!";
+		//const ImVec2 text_pos = ImVec2(p0.x + offset.x, p0.y + offset.y);
+		//ImDrawList* draw_list = ImGui::GetWindowDrawList();
+		//switch (n)
+		//{
+		//case 0:
+		//	ImGui::PushClipRect(p0, p1, true);
+		//	draw_list->AddRectFilled(p0, p1, IM_COL32(90, 90, 120, 255));
+		//	draw_list->AddText(text_pos, IM_COL32_WHITE, text_str);
+		//	ImGui::PopClipRect();
+		//	break;
+		//case 1:
+		//	draw_list->PushClipRect(p0, p1, true);
+		//	draw_list->AddRectFilled(p0, p1, IM_COL32(90, 90, 120, 255));
+		//	draw_list->AddText(text_pos, IM_COL32_WHITE, text_str);
+		//	draw_list->PopClipRect();
+		//	break;
+		//case 2:
+		//	ImVec4 clip_rect(p0.x, p0.y, p1.x, p1.y); // AddText() takes a ImVec4* here so let's convert.
+		//	draw_list->AddRectFilled(p0, p1, IM_COL32(90, 90, 120, 255));
+		//	draw_list->AddText(ImGui::GetFont(), ImGui::GetFontSize(), text_pos, IM_COL32_WHITE, text_str, NULL, 0.0f, &clip_rect);
+		//	break;
+		//}
 		// ptoj->getVector();
 
 		ImDrawList* list = ImGui::FindWindowByName(name)->DrawList;

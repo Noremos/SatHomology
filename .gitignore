@@ -13,3 +13,5 @@ libs/lua
 side/lua
 libs/Lua2
 Proga
+side/glm
+shaders

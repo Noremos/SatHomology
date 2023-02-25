@@ -50,7 +50,7 @@ void GuiImage::makeTexture(unsigned char* image_data, int comp, bool smooth)
 	GLuint newtext;
 	glGenTextures(1, &newtext);
 	glBindTexture(GL_TEXTURE_2D, newtext);
-	textureId = std::make_shared<GLuint>(newtext);
+	textureId = std::make_shared<TextureId>(newtext);
 
 	if (smooth)
 	{

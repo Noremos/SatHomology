@@ -3,6 +3,8 @@
 
 #include "../Bind/Common.h"
 
+import MatrModule;
+
 typedef unsigned int GLuint;
 
 void ResizeImage(int& width, int& height, int max_width, int max_height);
@@ -12,6 +14,7 @@ struct TextureId
     GLuint textureId;
     ~TextureId();
 };
+
 class GuiImage
 {
 public:
@@ -74,7 +77,7 @@ public:
 
 	bool setSource(const BackPathStr& path, bool smooth = true);
 
-	void setImage(const BackImage& img, bool smooth = true)
+	void setImage(const MatrImg& img, bool smooth = true)
 	{
 		width = img.width();
 		height = img.height();
@@ -86,7 +89,7 @@ public:
     GLuint getTextureId()
     {
         auto ptr = textureId.get();
-        return ptr ? *ptr : 0;
+        return ptr ? ptr->textureId: 0;
     }
 
     void* getTexturePtr()
@@ -95,7 +98,7 @@ public:
     }
 
 private:
-    std::shared_ptr<GLuint> textureId;
+    std::shared_ptr<TextureId> textureId;
 	void makeTexture(unsigned char* image_data, int comp, bool smooth = true);
 };
 
