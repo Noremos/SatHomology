@@ -52,8 +52,6 @@ public:
 
 	void clear();
 
-	GuiDrawImage* heimapImage = nullptr;
-
 	struct ComFinder
 	{
 		double totalMtrixCountMin = 1.f; // Кол-во в процентах

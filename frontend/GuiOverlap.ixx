@@ -1,7 +1,8 @@
 module;
 #include "GuiWidgets.h"
 
-export module GuiFilter;
+export module GuiOverlap;
+
 import IOCore;
 import LayersCore;
 
@@ -54,11 +55,12 @@ struct vec3
 export class IOverlapProcess
 {
 public:
+	bool enable = true;
 	//virtual void init() = 0;
 	virtual void draw(ImVec2 pos, ImVec2 size) = 0;
 };
 
-class HeimapOverlap : IOverlapProcess
+export class HeimapOverlap : public IOverlapProcess
 {
 	GuiDrawImage heimap;
 public:
@@ -89,6 +91,9 @@ public:
 	}
 	virtual void draw(ImVec2 pos, ImVec2 size)
 	{
+		if (!enable)
+			return;
+
 		ImGui::SetNextWindowPos(pos);
 		ImGui::SetNextWindowSize(size);
 		const ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -98,22 +103,29 @@ public:
 };
 
 
-class TileOverlap : IOverlapProcess
+export class TilemapOverlap : public IOverlapProcess
 {
 	GuiDrawImage* img;
 	int tileSize = 0;
 
 public:
+
 	void init(GuiDrawImage* src, int tileSize)
 	{
 		img = src;
 		this->tileSize = tileSize;
 	}
 
+	void setTilesize(int tileSize)
+	{
+		this->tileSize = tileSize;
+	}
+
 	virtual void draw(ImVec2 pos, ImVec2)
 	{
-		if (tileSize == 0)
+		if (tileSize == 0 || !enable)
 			return;
+
 		ImVec2 cont = ImGui::GetCursorPos();
 		ImDrawList* list = ImGui::GetWindowDrawList();
 

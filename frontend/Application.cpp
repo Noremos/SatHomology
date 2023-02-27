@@ -18,6 +18,7 @@ import Platform;
 import LayersGui;
 import BarcodeModule;
 import ClassifiersCore;
+import GuiOverlap;
 
 //import Lua;
 
@@ -260,9 +261,10 @@ namespace MyApp
 
 	struct ImagesValues
 	{
-		GuiDrawImage heiImage;
+		HeimapOverlap heimap;
+		TilemapOverlap tilemap;
 
-
+		// vecotr<IOverlap*>
 	};
 
 	ImagesValues centerVals;
@@ -435,7 +437,7 @@ namespace MyApp
 					if (backend.isImageLoaded())
 					{
 						tbVals.enableProcessBtn = true;
-						//centerVals.mainImage.tileSize = backend.getTileSize();
+						//centerVals.tilemap.init(tileSize = backend.getTileSize();
 						//classerVals.loadClassImages();
 					}
 
@@ -462,7 +464,7 @@ namespace MyApp
 					{
 						tbVals.enableProcessBtn = true;
 						auto* layer = layersVals.addMainLayer<RasterGuiLayer>();
-						//layer->main.tileSize = backend.getTileSize();
+						centerVals.tilemap.init(&layer->main, backend.getTileSize());
 						classerVals.loadClassImages();
 						unsetPoints();
 					}
@@ -478,7 +480,7 @@ namespace MyApp
 			ImGui::BeginDisabled(!tbVals.enableProcessBtn);
 
 			ImGui::SameLine();
-			ImGui::Checkbox("Переключить вид", &tbVals.showHighmap);
+			ImGui::Checkbox("Переключить вид", &centerVals.heimap.enable);
 
 			ImGui::SameLine();
 			if (ImGui::Button("Настроки"))
@@ -513,7 +515,7 @@ namespace MyApp
 					ImGui::CloseCurrentPopup();
 					backend.getTileSize() = tbVals.getTileSize();
 					backend.getOffsetSize() = tbVals.getOffsetSize();
-					//layersVals.getMainImg()->main.tileSize = tbVals.getTileSize();
+					centerVals.tilemap.setTilesize(tbVals.getTileSize());
 				}
 
 				ImGui::SetItemDefaultFocus();
@@ -642,17 +644,18 @@ namespace MyApp
 		//	ImGui::Text("Hello from Section 2!");
 		//}
 		//ImGui::EndChild();
+		const ImGuiViewport* viewport = ImGui::GetMainViewport();
+		ImVec2 pos = viewport->WorkPos;
+		ImVec2 drawSize = viewport->WorkSize;
 
 		if (tbVals.showHighmap)
-			centerVals.heiImage.drawImage("Main");
+			centerVals.heimap.draw(pos, drawSize);
 		else
 		{
-			const ImGuiViewport* viewport = ImGui::GetMainViewport();
-			ImVec2 pos = viewport->WorkPos;
-			ImVec2 drawSize = viewport->WorkSize;
 			layersVals.draw(pos, drawSize);
 		}
 
+		centerVals.tilemap.draw(pos, drawSize);
 		//
 		//pos.x += size.x;
 		//size.x = leftProps;
@@ -1086,7 +1089,6 @@ namespace MyApp
 
 	void MyApp::Init()
 	{
-		backend.heimapImage = &centerVals.heiImage;
 		auto drawLine = [](const bc::point& p1, const bc::point& p2, bool finale)
 		{
 			const std::lock_guard<std::mutex> lock(debugVals.drawMutex);
