@@ -287,7 +287,7 @@ public:
 		cache = doIt;
 	}
 
-	//static std::vector<Barscalar> colors;
+	static std::vector<Barscalar> colors;
 
 	virtual bool canRead() const = 0;
 	virtual void openRead(const BackPathStr& path) = 0;
@@ -298,6 +298,9 @@ public:
 	virtual void prepare(const BackPathStr& cacheFilePath) = 0;
 	virtual void create(int tileIndex, bc::DatagridProvider* img, const bc::BarConstructor& constr, const LayerProvider& prov, RasterLineLayer* layer = nullptr) = 0;
 };
+
+
+std::vector<Barscalar> BarClasser::colors;
 
 //template <typename T, typename TItem, typename THolder>
 //concept InheritsFromGeoBar = std::is_base_of<GeoBar<TItem, THolder>, T>::value;
@@ -401,7 +404,7 @@ private:
 				continue;
 
 			Barscalar pointCol(255, 0, 0);
-			//pointCol = colors[rand() % colors.size()];
+			pointCol = colors[rand() % colors.size()];
 
 			std::unordered_set<uint> vals;
 			std::shared_ptr<SimpleLine> sl;
@@ -515,8 +518,8 @@ private:
 				//type = classer.getType(curLine);
 				//pointCol = colors[type + 1];
 
-				//if (type == -1)
-					//pointCol = colors[rand() % colors.size()];
+				if (type == -1)
+					pointCol = colors[rand() % colors.size()];
 			}
 
 			std::unordered_set<uint> vals;

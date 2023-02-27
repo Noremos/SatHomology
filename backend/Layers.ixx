@@ -2,6 +2,8 @@ module;
 #include <memory>
 #include "../bind/common.h"
 #include <algorithm>
+#include <list>
+#include <memory>
 
 export module LayersCore;
 
@@ -49,8 +51,109 @@ public:
 	std::vector<bc::point> draws;
 };
 
+//export struct IGuiLayer
+//{
+//	virtual void draw() = 0;
+//};
+
 export class ILayer
 {
+	int id;
+
+	BackString name;
+	int iconId;
+
+	//IGuiLayer* toGuiLayer();
+};
+
+
+export template <class T> 
+class LayersList
+{
+	std::list<std::unique_ptr<T>> layers;
+
+public:
+	T* at(uint id)
+	{
+		assert(id < layers.size());
+		auto t = layers.begin();
+		std::advance(t, id);
+		return t->get();
+	}
+
+	auto begin()
+	{
+		return layers.begin();
+	}
+
+	auto end()
+	{
+		return layers.end();
+	}
+
+	template<class TReal>
+	TReal* add()
+	{
+		auto t = std::make_unique<TReal>();
+		auto tptr = t.get();
+		layers.push_back(std::move(t));
+		return tptr;
+	}
+
+	void set(uint id, T* val)
+	{
+		auto t = layers.begin();
+		std::advance(t, id);
+
+		layers.emplace(t, std::unique_ptr<T>(val));
+	}
+
+	void set(uint id, std::unique_ptr<T>& val)
+	{
+		auto t = layers.begin();
+		std::advance(t, id);
+
+		layers.emplace(t, val);
+	}
+
+	void move(uint oldId, uint newId)
+	{
+		auto t1 = layers.begin();
+		auto t2 = layers.begin();
+		std::advance(t1, oldId);
+		std::advance(t2, newId);
+
+		auto* ptr = t1.get().release();
+		layers.remove(t1);
+		layers.insert(t2, std::make_unique(ptr));
+		//std::swap(t1, t2);
+	}
+	
+
+	void clear()
+	{
+		layers.clear();
+	}
+
+	size_t size()
+	{
+		return layers.size();
+	}
+	//template<class TReal>
+	//TReal* getOrAdd(int id)
+	//{
+	//	if (id == -1)
+	//	{
+
+	//	}
+
+	//	auto t = std::make_unique<TReal>();
+	//	auto tptr = t.get();
+	//	layers.push_back(std::move(t));
+	//	return tptr;
+	//}
+
+
 };
 
 export class RasterLayer : public ILayer
@@ -74,6 +177,27 @@ export class RasterLineLayer : public RasterLayer
 {
 public:
 	std::vector<std::shared_ptr<SimpleLine>> clickResponser;
+
+
+	void init(const BackImage& src)
+	{
+		clear();
+		mat.assignCopyOf(src);
+		clickResponser.resize(mat.length());
+	}
+
+	void init(int wid, int hei)
+	{
+		clear();
+		mat.reinit(wid, hei, 4);
+		clickResponser.resize(mat.length());
+	}
+
+	void clear()
+	{
+		clickResponser.clear();
+	}
+
 
 	void setMatrPoint(int x, int y, int curLineDepth, std::shared_ptr<SimpleLine>& newLine)
 	{

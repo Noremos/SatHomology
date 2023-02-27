@@ -26,6 +26,15 @@
     <Filter Include="GUI\Core">
       <UniqueIdentifier>{6554f127-e3cd-4f97-9989-751f472a38c4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Backend\Bind">
+      <UniqueIdentifier>{0c2426f0-241b-42ea-8959-992252c682fa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GUI\BaseWidgets">
+      <UniqueIdentifier>{7f8165fd-e084-4de4-835c-bf3b77bebe9e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GUI\WindowWidgets">
+      <UniqueIdentifier>{a9993416-ea44-4b29-b242-09d275d590c2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\imgui\imgui.cpp">
@@ -61,31 +70,13 @@
     <ClCompile Include="backend\CacheFiles.ixx">
       <Filter>Backend</Filter>
     </ClCompile>
-    <ClCompile Include="side\Lua.ixx">
-      <Filter>Backend</Filter>
-    </ClCompile>
-    <ClCompile Include="Bind\Side.ixx">
-      <Filter>Side</Filter>
-    </ClCompile>
     <ClCompile Include="backend\SimpleImgReader.ixx">
       <Filter>Backend</Filter>
-    </ClCompile>
-    <ClCompile Include="frontend\Viewer3d.ixx">
-      <Filter>GUI</Filter>
-    </ClCompile>
-    <ClCompile Include="frontend\GuiLayers.ixx">
-      <Filter>GUI</Filter>
-    </ClCompile>
-    <ClCompile Include="frontend\Object3d.ixx">
-      <Filter>GUI</Filter>
     </ClCompile>
     <ClCompile Include="backend\Classifiers.ixx">
       <Filter>Backend</Filter>
     </ClCompile>
     <ClCompile Include="backend\BarHolders.ixx">
-      <Filter>Backend</Filter>
-    </ClCompile>
-    <ClCompile Include="Bind\CoreIO.ixx">
       <Filter>Backend</Filter>
     </ClCompile>
     <ClCompile Include="backend\Layers.ixx">
@@ -127,6 +118,27 @@
     <ClCompile Include="frontend\main.cpp">
       <Filter>GUI\Core</Filter>
     </ClCompile>
+    <ClCompile Include="Bind\CoreIO.ixx">
+      <Filter>Backend\Bind</Filter>
+    </ClCompile>
+    <ClCompile Include="side\Lua.ixx">
+      <Filter>Backend\Bind</Filter>
+    </ClCompile>
+    <ClCompile Include="Bind\Side.ixx">
+      <Filter>Backend\Bind</Filter>
+    </ClCompile>
+    <ClCompile Include="frontend\GuiLayers.ixx">
+      <Filter>GUI\WindowWidgets</Filter>
+    </ClCompile>
+    <ClCompile Include="frontend\Object3d.ixx">
+      <Filter>GUI\BaseWidgets</Filter>
+    </ClCompile>
+    <ClCompile Include="frontend\Viewer3d.ixx">
+      <Filter>GUI\BaseWidgets</Filter>
+    </ClCompile>
+    <ClCompile Include="frontend\GuiOverlap.ixx">
+      <Filter>GUI\WindowWidgets</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\imgui\imgui_internal.h">
@@ -159,15 +171,17 @@
     <ClInclude Include="side\stb_image.h">
       <Filter>Side</Filter>
     </ClInclude>
-    <ClInclude Include="frontend\GuiWidgets.h">
-      <Filter>GUI</Filter>
-    </ClInclude>
     <ClInclude Include="side\sol3\sol.hpp">
       <Filter>Side</Filter>
     </ClInclude>
-    <ClInclude Include="Bind\Common.h" />
     <ClInclude Include="frontend\Application.h">
       <Filter>GUI\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Bind\Common.h">
+      <Filter>Backend\Bind</Filter>
+    </ClInclude>
+    <ClInclude Include="frontend\GuiWidgets.h">
+      <Filter>GUI\WindowWidgets</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

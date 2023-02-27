@@ -67,7 +67,21 @@ void GuiImage::makeTexture(unsigned char* image_data, int comp, bool smooth)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Same
 
 	std::vector<unsigned char> rgba_image_data(width * height * 4);
-	if (comp == 3)
+	
+	if (comp == 1)
+	{
+		size_t length = width * height;
+		rgba_image_data.resize(length * 4);
+		for (size_t i = 0; i < length; i++) {
+			rgba_image_data[i * 4 + 0] = image_data[i * 3];
+			rgba_image_data[i * 4 + 1] = image_data[i * 3];
+			rgba_image_data[i * 4 + 2] = image_data[i * 3];
+			rgba_image_data[i * 4 + 3] = 255;
+		}
+
+		image_data = rgba_image_data.data();
+	}
+	else if (comp == 3)
 	{
 		size_t length = width * height;
 		rgba_image_data.resize(length * 4);

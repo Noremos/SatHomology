@@ -58,6 +58,11 @@ protected:
 			type = BarType::BYTE8_3;
 			TSize = 3;
 		}
+		else if (chnls == 4)
+		{
+			type = BarType::BYTE8_4;
+			TSize = 4;
+		}
 		else
 		{
 			type = BarType::BYTE8_1;
@@ -119,8 +124,7 @@ protected:
 public:
 	MatrImg(int width = 1, int height = 1, int chnls = 1)
 	{
-		setMetadata(width, height, chnls);
-		valInit();
+		reinit(width, height, chnls);
 	}
 
 	MatrImg(int width, int height, int chnls, uchar *_data, bool copy = true, bool deleteData = true)
@@ -131,6 +135,13 @@ public:
 		}
 		else
 			assignRawData(width, height, chnls, _data, deleteData);
+	}
+
+
+	void reinit(int width = 1, int height = 1, int chnls = 1)
+	{
+		setMetadata(width, height, chnls);
+		valInit();
 	}
 
 	void assign(const MatrImg &copy) { assignCopyOf(copy); }

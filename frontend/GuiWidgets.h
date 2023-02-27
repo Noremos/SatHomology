@@ -115,8 +115,6 @@ public:
 	WindowVec2 offset = ImVec2(0, 0);
 	ItemVec2 clickedPos = ImVec2(0, 0);
 	bool clicked = false;
-	int tileSize = 0;
-
 
 	int getRealX(int x)
 	{
@@ -242,40 +240,6 @@ private:
 		}
 		else
 			ImGui::Image((void*)(intptr_t)textId, ImVec2(newWid, newHei));
-
-		ImVec2 cont =  ImGui::GetCursorPos();
-		if (tileSize)
-		{
-			ImDrawList* list = ImGui::GetWindowDrawList();
-
-			ImVec2 drawTileSize(tileSize / scaleFactor, tileSize / scaleFactor);
-			ImVec2 maxPos = win->Pos + localDisplayPos;
-
-			ImColor lineColor(115, 115, 115);
-
-			for (float w = 0; w < newWid; w += drawTileSize.x)
-			{
-				ImVec2 ts(maxPos.x + w, maxPos.y);
-				ImVec2 te(maxPos.x + w, maxPos.y + newHei);
-
-				list->AddLine(ts, te, lineColor, 3);
-			}
-			ImVec2 ts(maxPos.x + newWid, maxPos.y);
-			ImVec2 te(maxPos.x + newWid, maxPos.y + newHei);
-			list->AddLine(ts, te, lineColor, 3);
-
-			for (float h = 0; h < newHei; h += drawTileSize.y)
-			{
-				ImVec2 ts(maxPos.x, maxPos.y + h);
-				ImVec2 te(maxPos.x + newWid, maxPos.y + h);
-				list->AddLine(ts, te, lineColor, 3);
-			}
-			ImVec2 tse(maxPos.x, maxPos.y + newHei);
-			ImVec2 tee(maxPos.x + newWid, maxPos.y + newHei);
-			list->AddLine(tse, tee, lineColor, 3);
-		}
-
-		ImGui::SetCursorPos(cont);
 	}
 };
 

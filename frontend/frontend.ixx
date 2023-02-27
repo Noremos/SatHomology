@@ -36,8 +36,6 @@ public:
 	GuiBackend();
 	~GuiBackend()
 	{
-		clearResLine();
-
 		clear();
 		Project::dropProject();
 	}
@@ -121,16 +119,44 @@ public:
 	// Gui
 	void createProject(const BackPathStr& path, const BackString& name, const BackPathStr& imgPath);
 
-	void settup(GuiDrawImage* mainImage, GuiDrawImage* processedImage, GuiItem* sliderPanel);
+	void createBarcode(const BarcodeProperies& propertices, FilterInfo& info, int* layerId = nullptr)
+	{
+		if (!isImageLoaded() || mainMat.width() <= 1 || mainMat.height() <= 1)
+			return;
+
+		curSelected = nullptr;
+
+		resultMart = mainMat;
+		ska::unordered_map<size_t, char> map;
+
+		comm.clear();
+		proj->setReadyLaod(curImgInd);
+
+		proj->createCacheBarcode(propertices, curImgInd, &info, layerId);
+
+		created = true;
+	}
+
+
+	void processMain(BackString extra, FilterInfo& filter, int& layerId)
+	{
+		if (!created)
+			return;
+
+		//resultMart = mainMat;
+		ska::unordered_map<size_t, char> map;
+
+		comm.clear();
+		proj->setReadyLaod(curImgInd);
+		proj->readPrcoessBarcode(layerId, filter);
+	}
+
+
 	void loadImageOrProject(const BackPathStr& path);
-	void createBarcode(const BarcodeProperies& propertices, FilterInfo& info);
 	bool addSelectedToClassData(int classIndex, BackImage* icon = nullptr);
-	void processMain(BackString extra, FilterInfo& filter);
 	void restoreSource();
 	void undoAddClass();
 	void exportResult(BackDirStr path);
-
-	void createHeimap();
 
 	void save()
 	{
@@ -165,7 +191,6 @@ public:
 		return proj->getPath(BackPath::classfiles);
 	}
 
-	bc::barvector* click(int x, int y);
 	SimpleLine* getSelectedComp()
 	{
 		return curSelected;
@@ -242,11 +267,6 @@ private:
 	void maskInit();
 
 	GuiState state = GuiState::Empty;
-	GuiItem* root = nullptr;
-	GuiDrawImage* mainImage = nullptr;
-	//std::atomic<GuiDrawImage*> processedImage = nullptr;
-	GuiDrawImage* processedImage = nullptr;
-	GuiItem* sliderP = nullptr;
 
 	BackImage mainMat;
 	BackImage resultMart;
@@ -263,25 +283,7 @@ private:
 	//BackDirStr base_root;
 	//BackDirStr auto_root = base_root;
 	SimpleLine* curSelected = nullptr;
-	std::vector<std::shared_ptr<SimpleLine>> resLinesMap;
-	//	std::vector<SimpleLine*> simpleHolder;
 	int lastIndex = 0;
-
-	void initResLine(int size)
-	{
-		resLinesMap.resize(size);
-	}
-
-	void clearResLine()
-	{
-		//		memset(resLinesMap, 0, mainMat.length() * sizeof(SimpleLine *));
-		//		for (size_t i = 0; i < simpleHolder.size(); ++i)
-		//		{
-		//			delete simpleHolder[i];
-		//		}
-		//		simpleHolder.clear();
-		resLinesMap.clear();
-	}
 
 	static std::string openImageOrProject();
 };
@@ -388,37 +390,6 @@ void GuiBackend::createProject(const BackPathStr& path, const BackString& name, 
 	state = GuiState::ImageLoaded;
 }
 
-void GuiBackend::settup(GuiDrawImage* mainImage, GuiDrawImage* processedImage, GuiItem* sliderPanel)
-{
-	this->mainImage = mainImage;
-	this->processedImage = processedImage;
-	//    QtCharts::QChart *obj = barchartP->findChild<QtCharts::QChart *>("barchart");
-	this->sliderP = sliderPanel;
-}
-
-void GuiBackend::createBarcode(const BarcodeProperies& propertices, FilterInfo& info)
-{
-	if (!isImageLoaded() || mainMat.width() <= 1 || mainMat.height() <= 1)
-		return;
-
-	curSelected = nullptr;
-
-	resultMart = mainMat;
-	ska::unordered_map<size_t, char> map;
-
-	comm.clear();
-	proj->setReadyLaod(curImgInd, mainMat.width());
-
-	RasterLineLayer layer;
-	layer.clickResponser = resLinesMap;
-	layer.mat = resultMart;
-
-	proj->createCacheBarcode(propertices, curImgInd, info, layer);
-
-	resultMart = std::move(layer.mat);
-	processedImage->setImage(resultMart, false);
-	created = true;
-}
 
 #define ppair(x,y,chr) (std::pair<bc::point,uchar>(bc::point(x,y), chr))
 
@@ -427,85 +398,10 @@ void GuiBackend::endLoaded()
 	curDisplayImgInd = proj->getFirstNormIndex();
 	curImgInd = 0;
 
-	mainMat.assignCopyOf(*proj->images[curDisplayImgInd]);
-	clearResLine();
-	initResLine(mainMat.length());
-	mainImage->setImage(mainMat, false);
-	createHeimap();
-
 	clear();
-	proj->setReadyLaod(curImgInd, mainMat.width());
+	proj->setReadyLaod(curImgInd);
 }
 
-struct vec3
-{
-	short x, y, z;
-
-	vec3(const Barscalar& col)
-	{
-		x = col.data.b3[0];
-		y = col.data.b3[1];
-		z = col.data.b3[2];
-	}
-
-	vec3(short _x, short _y, short _z) : x(_x), y(_y), z(_z)
-	{ }
-
-	vec3 operator+(const vec3& b) const
-	{
-		return vec3(x + b.x, y + b.y, z + b.z);
-	}
-
-	vec3 operator-(const vec3& b) const
-	{
-		return vec3(x - b.x, y - b.y, z - b.z);
-	}
-
-	vec3 operator*(float v) const
-	{
-		return vec3(x * v, y * v, z * v);
-	}
-
-	Barscalar getSc()
-	{
-		assert(x >= 0);
-		assert(x < 256);
-		assert(y >= 0);
-		assert(y < 256);
-		assert(z >= 0);
-		assert(z < 256);
-		return Barscalar(x, y, z);
-	}
-	float length()
-	{
-		return std::sqrtf(x * x + y * y + z * z);
-	}
-};
-
-void GuiBackend::createHeimap()
-{
-	Barscalar mi, ma;
-	mainMat.maxAndMin(mi, ma);
-
-	vec3 mixc{ mi.data.b3[0], mi.data.b3[1], mi.data.b3[2] };
-	vec3 maxc{ ma.data.b3[0], ma.data.b3[1], ma.data.b3[2] };
-	vec3 cDiff = maxc - mixc;
-
-	vec3 minHeiCol{ 0, 0, 255 };
-	vec3 maxHeiCol{ 255, 0, 0 };
-	vec3 colDiff = maxHeiCol - minHeiCol;
-
-	BackImage heim(mainMat.width(), mainMat.height(), 3);
-	for (size_t i = 0; i < mainMat.length(); i++)
-	{
-		vec3 col = mainMat.getLiner(i);
-		float t = (col - mixc).length() / cDiff.length();
-		vec3 newCol = minHeiCol + colDiff * t;
-		heim.setLiner(i, newCol.getSc());
-	}
-
-	heimapImage->setImage(heim);
-}
 
 void GuiBackend::loadImageOrProject(const BackPathStr& path)
 {
@@ -531,7 +427,7 @@ void GuiBackend::loadImageOrProject(const BackPathStr& path)
 	endLoaded();
 	if (setProc)
 	{
-		processedImage->setImage(*proj->images[curDisplayImgInd], false);
+		//processedImage->setImage(*proj->images[curDisplayImgInd], false);
 		created = true;
 	}
 	else
@@ -636,25 +532,6 @@ void fitInto(int sourceLen, int newLen, int& st, int& ed)
 //	processedImage->setImage(resultMart);
 //}
 
-void GuiBackend::processMain(BackString extra, FilterInfo& filter)
-{
-	if (!created)
-		return;
-
-	//resultMart = mainMat;
-	ska::unordered_map<size_t, char> map;
-
-	comm.clear();
-	proj->setReadyLaod(curImgInd, mainMat.width());
-	RasterLineLayer layer;
-	layer.mat = mainMat;
-	layer.clickResponser.resize(mainMat.length());
-	proj->readPrcoessBarcode(layer, filter);
-
-	resultMart = std::move(layer.mat);
-	processedImage->setImage(resultMart, false);
-}
-
 
 void GuiBackend::deleteRange(int st, int ed, bool needSort)
 {
@@ -715,56 +592,14 @@ void GuiBackend::exportAsJson(int st, int ed, bool needSort)
 	//	filed.close();
 }
 
-bc::barvector* GuiBackend::click(int x, int y)
-{
-	if (mainImage == nullptr || resLinesMap.size() == 0)
-		return nullptr;
-
-	x = processedImage->getRealX(x);
-	y = processedImage->getRealY(y);
-
-
-	if (x < 0 || x >= mainMat.wid())
-		return NULL;
-
-	if (y < 0 || y >= mainMat.hei())
-		return NULL;
-
-	std::cout << x << " : " << y << std::endl;
-
-	SimpleLine* line = resLinesMap[y * mainMat.wid() + x].get();
-	if (line)
-	{
-		if (curSelected == line && line->parent)
-			line = line->parent.get();
-
-		curSelected = line;
-		return &curSelected->matr;
-		/*std::cout << line->matr.size() * 100.f / mainMat.length() << std::endl;
-		MatrImg temp;
-		temp.assignCopyOf(resultMart);
-		auto &fullmatr = line->matr;
-
-		for (int i = 0, total = fullmatr.size(); i < total; ++i)
-		{
-			auto p = bc::barvalue::getStatPoint(fullmatr[i].index);
-			temp.set(p.x, p.y, Barscalar(255, 191, 0));
-		}
-
-		processedImage->setImage(temp);*/
-	}
-
-	return nullptr;
-}
-
 void GuiBackend::showResultPics(bool show)
 {
-	if (show)
-	{
-		processedImage->setImage(resultMart, false);
-	}
-	else
-		processedImage->setImage(mainMat, false);
+	//if (show)
+	//{
+	//	processedImage->setImage(resultMart, false);
+	//}
+	//else
+	//	processedImage->setImage(mainMat, false);
 }
 
 int GuiBackend::addClassType(const BackString& name)
@@ -781,7 +616,7 @@ bool GuiBackend::addSelectedToClassData(int classIndex, BackImage* icon)
 		return false;
 
 	//GeoBarCloudHolderCache reader;
-	////reader.openRead();
+	//reader.openRead();
 	//auto item = std::make_unique<BarcodesHolder>(reader.loadSpecific(curSelected->id));
 	//auto *curBarline = item->lines[curSelected->barlineIndex];
 

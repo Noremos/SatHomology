@@ -36,18 +36,6 @@ export struct BarcodeProperies
 };
 
 
-export struct toStdStr
-{
-	using STRTYPE = std::string;
-
-	template<class T>
-	static STRTYPE toStr(T val)
-	{
-		return std::to_string(val);
-	}
-};
-
-
 struct TileIterator
 {
 	uint start;
@@ -426,14 +414,14 @@ public:
 		mkDirIfNotExists(u_classCache);
 
 		srand(300);
-		//BarClasser::colors.push_back(Barscalar(255, 0, 0));
-		//BarClasser::colors.push_back(Barscalar(0, 0, 0));
-		//BarClasser::colors.push_back(Barscalar(0, 255, 0));
-		//BarClasser::colors.push_back(Barscalar(0, 0, 255));
-		//for (int k = 0; k < 40; ++k)
-		//	BarClasser::colors.push_back(Barscalar(5 + rand() % 250, 5 + rand() % 250, 5 + rand() % 250));
+		BarClasser::colors.push_back(Barscalar(255, 0, 0));
+		BarClasser::colors.push_back(Barscalar(0, 0, 0));
+		BarClasser::colors.push_back(Barscalar(0, 255, 0));
+		BarClasser::colors.push_back(Barscalar(0, 0, 255));
+		for (int k = 0; k < 40; ++k)
+			BarClasser::colors.push_back(Barscalar(5 + rand() % 250, 5 + rand() % 250, 5 + rand() % 250));
 
-		//BarClasser::colors.push_back(Barscalar(255, 255, 255));
+		BarClasser::colors.push_back(Barscalar(255, 255, 255));
 	}
 
 	~Project()
@@ -442,6 +430,11 @@ public:
 		closeImages();
 	}
 public:
+
+	int curLayerIndex;
+	//ILayer* curLayer;
+	LayersList<ILayer> layers;
+
 	bool block = false;
 	int modelWid;
 	int modelHei;
@@ -483,8 +476,10 @@ public:
 		}
 	}
 
-	void setReadyLaod(int curImgInd, int displayWid)
+	void setReadyLaod(int curImgInd)
 	{
+		int displayWid = images[curImgInd]->width();
+
 		setCurrentSubImage(curImgInd, displayWid);
 	}
 
@@ -618,39 +613,6 @@ public:
 	void readGeojson();
 	void readMyGeo(bool reinitY);
 
-	void readPrcoessBarcode(RasterLineLayer& info, FilterInfo& filter)
-	{
-		if (u_displayFactor < 1.0)
-			throw std::exception();
-
-		filter.imgLen = (tileSize + tileOffset) * (tileSize + tileOffset);
-
-
-		// Cacher
-		BarClasser* classifier;
-		RasterBarClasser _rsClass;// (this, &filter);
-		//CloudBarClasser _clClass;// (this, &filter);
-
-		if (u_algorithm == 0)
-		{
-			classifier = &_rsClass;
-		}
-		else
-		{
-			//classifier = &_clClass;
-		}
-
-		classifier->setFilter(&filter);
-		classifier->openRead(getPath(BackPath::binbar));
-
-		LayerProvider prov(u_displayFactor);
-		prov.init(tileSize, reader->width());
-
-		while (classifier->canRead())
-		{
-			classifier->classBarcodeFromCache(info, prov);
-		}
-	}
 
 //
 	void exportResult(int imgNumber, const BackImage& resultMart);
@@ -658,7 +620,7 @@ public:
 
 	void readImages();
 
-	void createCacheBarcode(const BarcodeProperies& propertices, int imgIndex, FilterInfo& info, RasterLineLayer& classif)
+	void createCacheBarcode(const BarcodeProperies& propertices, int imgIndex, FilterInfo* info = nullptr, int* destLayerId = nullptr)
 	{
 		if (block) return;
 
@@ -677,13 +639,13 @@ public:
 
 		// -------
 
-		// Cacher
-		//BarClasser* barcodeHelper;
-		//RasterBarClasser _rsbarcodeHelper;
+		 //Cacher
+		BarClasser* barcodeHelper;
+		RasterBarClasser _rsbarcodeHelper;
 
-		//CloudBarClasser _clBarcodeHelper;
+		CloudBarClasser _clBarcodeHelper;
 
-		/*if (propertices.alg == 0)
+		if (propertices.alg == 0)
 		{
 			barcodeHelper = &_rsbarcodeHelper;
 		}
@@ -694,46 +656,109 @@ public:
 			barcodeHelper = &_clBarcodeHelper;
 		}
 		barcodeHelper->doCache(true);
-		barcodeHelper->setFilter(&info);
+		barcodeHelper->setFilter(info);
 		barcodeHelper->prepare(getPath(BackPath::binbar));
 
 		const uint fullTile = tileSize + tileOffset;
-		info.imgLen = fullTile * fullTile;
+		info->imgLen = fullTile * fullTile;
 
 		uint rwid = reader->width();
 		uint rhei = reader->height();
 		TileIterator stW(0, tileSize, tileOffset, rwid);
 		TileIterator stH(0, tileSize, tileOffset, rhei);
 		LayerProvider prov(u_displayFactor);
-		prov.init(tileSize, reader->width());*/
+		prov.init(tileSize, reader->width());
 
-		//for (uint i = 0; i < rhei; i += tileSize)
-		//{
-		//	uint ihei;
-		//	if (stH.shouldSkip(ihei))
-		//		break;
+		RasterLineLayer* layer = nullptr;
+		if (destLayerId)
+		{
+			if (*destLayerId == -1)
+			{
+				*destLayerId = layers.size();
+				layer = layers.add<RasterLineLayer>();
+			}
+			else
+			{
+				layer = new RasterLineLayer();
+				layers.set(*destLayerId, layer);
+			}
+		}
 
-		//	stW.reset(0);
-		//	std::cout << i << std::endl;
-		//	for (uint j = 0; j < rwid; j += tileSize)
-		//	{
-		//		uint iwid;
-		//		if (stW.shouldSkip(iwid))
-		//			break;
+		int id = getFirstNormIndex();
+		layer->init(*images[id]);
 
-		//		bc::point offset(stW.pos(), stH.pos());
-		//		DataRect rect = reader->getRect(offset.x, offset.y, iwid, ihei);
-		//		uint k = getTileIndexByOffset(offset.x, offset.y);
+		for (uint i = 0; i < rhei; i += tileSize)
+		{
+			uint ihei;
+			if (stH.shouldSkip(ihei))
+				break;
 
-		//		DataRectBarWrapper warp(rect);
-		//		barcodeHelper->create(k, &warp, constr, prov, &classif);
-		//		stW.accum();
-		//	}
-		//	stH.accum();
-		//}
+			stW.reset(0);
+			std::cout << i << std::endl;
+			for (uint j = 0; j < rwid; j += tileSize)
+			{
+				uint iwid;
+				if (stW.shouldSkip(iwid))
+					break;
 
-		//u_algorithm = propertices.alg;
-		//saveProject();
+				bc::point offset(stW.pos(), stH.pos());
+				DataRect rect = reader->getRect(offset.x, offset.y, iwid, ihei);
+				uint k = getTileIndexByOffset(offset.x, offset.y);
+
+				DataRectBarWrapper warp(rect);
+				barcodeHelper->create(k, &warp, constr, prov, layer);
+				stW.accum();
+			}
+			stH.accum();
+		}
+
+		u_algorithm = propertices.alg;
+		saveProject();
+	}
+
+	void readPrcoessBarcode(int& destLayerId, FilterInfo& filter)
+	{
+		if (u_displayFactor < 1.0)
+			throw std::exception();
+
+		filter.imgLen = (tileSize + tileOffset) * (tileSize + tileOffset);
+
+		RasterLineLayer* layer = nullptr;
+		if (destLayerId == -1)
+		{
+			destLayerId = layers.size();
+			layer = layers.add<RasterLineLayer>();
+		}
+		else
+		{
+			layer = new RasterLineLayer();
+			layers.set(destLayerId, layer);
+		}
+
+		// Cacher
+		BarClasser* classifier;
+		RasterBarClasser _rsClass;// (this, &filter);
+		CloudBarClasser _clClass;// (this, &filter);
+
+		if (u_algorithm == 0)
+		{
+			classifier = &_rsClass;
+		}
+		else
+		{
+			classifier = &_clClass;
+		}
+
+		classifier->setFilter(&filter);
+		classifier->openRead(getPath(BackPath::binbar));
+
+		LayerProvider prov(u_displayFactor);
+		prov.init(tileSize, reader->width());
+
+		while (classifier->canRead())
+		{
+			classifier->classBarcodeFromCache(*layer, prov);
+		}
 	}
 
 

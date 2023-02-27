@@ -17,6 +17,7 @@ import ForntnedModule;
 import Platform;
 import LayersGui;
 import BarcodeModule;
+import ClassifiersCore;
 
 //import Lua;
 
@@ -259,32 +260,9 @@ namespace MyApp
 
 	struct ImagesValues
 	{
-		GuiDrawImage mainImage;
-		GuiDrawImage processImage;
 		GuiDrawImage heiImage;
-		GuiDrawCloudPointClick clickHandler;
 
-		bc::barvector reservPoints;
 
-		void setPoints(const bc::barvector* points)
-		{
-
-			if (points == nullptr)
-			{
-				clickHandler.points = points;
-				return;
-			}
-
-			clickHandler.points = points;
-
-			//if (backend.getAlg() == 0)
-			//{
-			//	getCountourSimple(*points, reservPoints);
-			//	clickHandler.points = &reservPoints;
-			//}
-			//else
-			//	clickHandler.points = points;
-		}
 	};
 
 	ImagesValues centerVals;
@@ -349,7 +327,7 @@ namespace MyApp
 	};
 	ClassiferVals classerVals;
 
-	LayersVals layersVals;
+	LayersVals layersVals;// (backend);
 
 	void loaderCategors(int classId, const BackString& name)
 	{
@@ -377,8 +355,8 @@ namespace MyApp
 
 	void unsetPoints()
 	{
-		centerVals.clickHandler.points = nullptr;
-		centerVals.processImage.clicked = false;
+		//centerVals.clickHandler.points = nullptr;
+		//centerVals.processImage.clicked = false;
 	}
 
 	void clearBeforeCreate()
@@ -457,8 +435,8 @@ namespace MyApp
 					if (backend.isImageLoaded())
 					{
 						tbVals.enableProcessBtn = true;
-						centerVals.mainImage.tileSize = backend.getTileSize();
-						classerVals.loadClassImages();
+						//centerVals.mainImage.tileSize = backend.getTileSize();
+						//classerVals.loadClassImages();
 					}
 
 					ImGui::CloseCurrentPopup();
@@ -483,7 +461,8 @@ namespace MyApp
 					if (backend.isImageLoaded())
 					{
 						tbVals.enableProcessBtn = true;
-						centerVals.mainImage.tileSize = backend.getTileSize();
+						auto* layer = layersVals.addMainLayer<RasterGuiLayer>();
+						//layer->main.tileSize = backend.getTileSize();
 						classerVals.loadClassImages();
 						unsetPoints();
 					}
@@ -534,7 +513,7 @@ namespace MyApp
 					ImGui::CloseCurrentPopup();
 					backend.getTileSize() = tbVals.getTileSize();
 					backend.getOffsetSize() = tbVals.getOffsetSize();
-					centerVals.mainImage.tileSize = tbVals.getTileSize();
+					//layersVals.getMainImg()->main.tileSize = tbVals.getTileSize();
 				}
 
 				ImGui::SetItemDefaultFocus();
@@ -664,55 +643,33 @@ namespace MyApp
 		//}
 		//ImGui::EndChild();
 
-		const ImGuiViewport* viewport = ImGui::GetMainViewport();
-		static int leftProps = 200;
-		ImVec2 pos = viewport->WorkPos;
-		ImVec2 size = viewport->WorkSize;
-		size.x -= leftProps;
-		size.x /= 2;
-
-		ImGui::SetNextWindowPos(pos);
-		ImGui::SetNextWindowSize(size);
-		ImGui::SetNextWindowViewport(viewport->ID);
 		if (tbVals.showHighmap)
 			centerVals.heiImage.drawImage("Main");
 		else
-			centerVals.mainImage.drawImage("Main");
-
-		pos.x += size.x;
-		ImGui::SetNextWindowPos(pos);
-		ImGui::SetNextWindowSize(size);
-		ImGui::SetNextWindowViewport(viewport->ID);
-
-		ImVec2 prevOff = centerVals.processImage.offset;
-		ImVec2 prevwWin = centerVals.processImage.winPos;
-		centerVals.processImage.drawImage("Processed", true);
-		if (centerVals.processImage.clicked)
 		{
-			auto p = centerVals.processImage.clickedPos;
-
-			auto points = backend.click(p.x, p.y);
-			centerVals.setPoints(points);
+			const ImGuiViewport* viewport = ImGui::GetMainViewport();
+			ImVec2 pos = viewport->WorkPos;
+			ImVec2 drawSize = viewport->WorkSize;
+			layersVals.draw(pos, drawSize);
 		}
-		bottomVals.debug = intToStr(ImGui::GetIO().MousePos.x) + ":" + intToStr(ImGui::GetIO().MousePos.y);
-		centerVals.clickHandler.draw("Processed", prevwWin, prevOff, size);
 
-		pos.x += size.x;
-		size.x = leftProps;
-		ImGui::SetNextWindowPos(pos);
-		ImGui::SetNextWindowSize(size);
-		//ImGui::SetNextWindowViewport(viewport->ID);
-		if (ImGui::Begin("properties", nullptr, ImGuiWindowFlags_NoBringToFrontOnFocus))
-		{
-			leftProps = 200;
-			//if (ImGui::CollapsingHeader("Layers"))
-			//{
-			//	drawLayout();
-			//}
-		}
-		else
-			leftProps = 20;
-		ImGui::End();
+		//
+		//pos.x += size.x;
+		//size.x = leftProps;
+		//ImGui::SetNextWindowPos(pos);
+		//ImGui::SetNextWindowSize(size);
+		////ImGui::SetNextWindowViewport(viewport->ID);
+		//if (ImGui::Begin("properties", nullptr, ImGuiWindowFlags_NoBringToFrontOnFocus))
+		//{
+		//	leftProps = 200;
+		//	//if (ImGui::CollapsingHeader("Layers"))
+		//	//{
+		//	//	drawLayout();
+		//	//}
+		//}
+		//else
+		//	leftProps = 20;
+		//ImGui::End();
 	}
 	// ------
 
@@ -743,7 +700,7 @@ namespace MyApp
 					unsetPoints();
 					bottomVals.showUpdaePopup = false;
 					ImGui::CloseCurrentPopup();
-					backend.processMain(bottomVals.valeExtra, bottomVals.filtere.filterInfo);
+					backend.processMain(bottomVals.valeExtra, bottomVals.filtere.filterInfo, layersVals.temporalyId);
 					//commonValus.onAir = true;
 					//commonValus.future = std::async(&GuiBackend::processMain, std::ref(backend),
 				}
@@ -879,7 +836,7 @@ namespace MyApp
 					ImGui::CloseCurrentPopup();
 					backend.getTileSize() = tbVals.getTileSize();
 					backend.getOffsetSize() = tbVals.getOffsetSize();
-					centerVals.mainImage.tileSize = tbVals.getTileSize();
+					//layersVals.getMainImg().tileSize = tbVals.getTileSize();
 				}
 
 				ImGui::SetItemDefaultFocus();
@@ -921,49 +878,6 @@ namespace MyApp
 		}
 		ImGui::End();
 	}
-
-	//void drawLayersWindows()
-	//{
-	//	if (!ImGui::Begin("Layers"))
-	//	{
-	//		ImGui::End();
-	//		return;
-	//	}
-
-	//	ImGui::BeginGroup();
-
-	//	auto& pngs = layersVals.layers;
-
-	//	//int curItem = 0;
-	//	//auto imgLoader = [](void* data, int idx, const char** out_text) {
-	//	//		auto& pngs = *static_cast<std::vector<GuiImage>*>(data);
-	//	//		*out_text = pngs[idx].name.c_str();
-	//	//		ImGui::Image(pngs[curItem].getTexturePtr(), siz);
-	//	//
-	//	//		return true;
-	//	//	};
-	//	//ImGui::ListBox("Images", &curItem, imgLoader, &pngs, pngs.size());
-
-
-	//	//if (ImGui::BeginChild("ImagePreview"))
-	//	//{
-	//	//	if (curItem >= 0 && selectedImage < pngs.size())
-	//	//	{
-	//	//		ImVec2 siz(pngs[curItem].width, pngs[curItem].height)
-	//	//		ImGui::Image(pngs[curItem].getTexturePtr(), siz);
-	//	//	}
-	//	//	ImGui::EndChild();
-	//	//}
-	//	for (size_t j = 0; j < pngs.size(); j++)
-	//	{
-	//		ImGui::PushID(j);
-	//		ImGui::Image(pngs[j].getTexturePtr(), ImVec2(pngs[j].width, pngs[j].height));
-	//		ImGui::PopID();
-	//	}
-	//	ImGui::EndGroup();
-
-	//	ImGui::End();
-	//}
 
 	void debugWindow()
 	{
@@ -1013,50 +927,6 @@ namespace MyApp
 			{
 				list->AddLine(pos + l.first * mul, pos + l.second * mul, ImColor(255, 0, 0));
 			}
-		}
-
-		ImGui::End();
-	}
-
-	void drawPropertisWindow()
-	{
-		SimpleLine* line = backend.getSelectedComp();
-		if (!line)
-		{
-			return;
-		}
-
-		if (!ImGui::Begin("Свойства"))
-		{
-			ImGui::End();
-			return;
-		}
-
-		if (line->depth > 0)
-		{
-			ImGui::BeginDisabled(line->parent == nullptr);
-			if (ImGui::Selectable("Parent"))
-			{
-				line = backend.moveToParenr();
-				centerVals.setPoints(&line->matr);
-			}
-			ImGui::EndDisabled();
-
-			ImGui::Separator();
-			BackString s = line->start.text<BackString, toStdStr>();
-			s = "Start: " + s;
-			ImGui::Text(s.c_str());
-
-			s = line->end.text<BackString, toStdStr>();
-			s = "End: " + s;
-			ImGui::Text(s.c_str());
-
-			ImGui::Text("Depth %d", line->depth);
-			ImGui::Text("Matr size %d", line->matrSrcSize);
-		}
-		else
-		{
-			ImGui::Text("Достугнут конец");
 		}
 
 		ImGui::End();
@@ -1198,8 +1068,7 @@ namespace MyApp
 		drawClassifierMenu();
 
 		// Subs
-		layersVals.drawLayers();
-		drawPropertisWindow();
+		layersVals.drawLayersWindow();
 
 		commonValus.onAirC();
 
@@ -1217,9 +1086,7 @@ namespace MyApp
 
 	void MyApp::Init()
 	{
-		backend.settup(&centerVals.mainImage, &centerVals.processImage, NULL);
 		backend.heimapImage = &centerVals.heiImage;
-		centerVals.clickHandler.par = &centerVals.processImage;
 		auto drawLine = [](const bc::point& p1, const bc::point& p2, bool finale)
 		{
 			const std::lock_guard<std::mutex> lock(debugVals.drawMutex);
@@ -1247,20 +1114,20 @@ namespace MyApp
 			bc::CloudPointsBarcode::drawPlygon = polyPoint;
 		}
 
-		Layer a;
-		a.name = "main";
-		a.icon.setSource("D:\\Learning\\BAR\\sybery\\2.png");
-		layersVals.layers.push_back(a);
+		//Layer a;
+		//a.name = "main";
+		//a.icon.setSource("D:\\Learning\\BAR\\sybery\\2.png");
+		//layersVals.layers.push_back(a);
 
-		Layer b;
-		b.name = "sub";
-		b.icon.setSource("D:\\Learning\\BAR\\sybery\\2.png");
-		layersVals.layers.push_back(b);
+		//Layer b;
+		//b.name = "sub";
+		//b.icon.setSource("D:\\Learning\\BAR\\sybery\\2.png");
+		//layersVals.layers.push_back(b);
 
-		Layer c;
-		c.name = "filter";
-		c.icon.setSource("D:\\Learning\\BAR\\sybery\\2.png");
-		layersVals.layers.push_back(c);
+		//Layer c;
+		//c.name = "filter";
+		//c.icon.setSource("D:\\Learning\\BAR\\sybery\\2.png");
+		//layersVals.layers.push_back(c);
 	}
 	// Main
 	void MyApp::RenderUI()

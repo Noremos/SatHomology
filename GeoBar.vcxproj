@@ -191,6 +191,7 @@
     <ClCompile Include="frontend\frontend.ixx" />
     <ClCompile Include="frontend\GuiCommon.cpp" />
     <ClCompile Include="frontend\GuiCommon.h" />
+    <ClCompile Include="frontend\GuiOverlap.ixx" />
     <ClCompile Include="frontend\GuiLayers.ixx" />
     <ClCompile Include="frontend\main.cpp" />
     <ClCompile Include="frontend\Object3d.ixx" />

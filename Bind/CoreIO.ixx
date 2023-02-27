@@ -12,6 +12,18 @@ export
 	using BackImage = MatrImg;
 }
 
+export struct toStdStr
+{
+	using STRTYPE = std::string;
+
+	template<class T>
+	static STRTYPE toStr(T val)
+	{
+		return std::to_string(val);
+	}
+};
+
+
 export BackJson jsonFromFile(const BackPathStr& path)
 {
 	BackString temp;
