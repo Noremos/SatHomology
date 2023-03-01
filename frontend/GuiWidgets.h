@@ -134,20 +134,17 @@ public:
 		return static_cast<float>(y) / (height / displaySize.y);
 	}
 
-	void drawImage(const char* name, bool zoomable = false)
+	void drawImage(const char* name, ImVec2 pos, ImVec2 size, bool zoomable = false)
 	{
-		ImGuiWindowFlags window_flags;
-		window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | 
-			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoDocking;
-		if (zoomable)
-			window_flags |= ImGuiWindowFlags_HorizontalScrollbar;
-		if (ImGui::Begin(name, nullptr, window_flags))
+		auto window_flags = ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoScrollbar;
+
+		ImGui::SetCursorPos(pos);
+		if (ImGui::BeginChild(name, size, false, window_flags))
 		{
-			ImGuiWindow* win = ImGui::FindWindowByName(name);
-			winPos = win->Pos;
-			drawTexture(win, zoomable);
+			winPos = pos;
+			drawTexture(pos, size, zoomable);
 		}
-		ImGui::End();
+		ImGui::EndChild();
 	}
 
 	void checkZoom(ImVec2 realSize)
@@ -196,7 +193,7 @@ public:
 	}
 
 private:
-	void drawTexture(ImGuiWindow* win, bool zoomable)
+	void drawTexture(ImVec2 pos, ImVec2 size, bool zoomable)
 	{
 		auto textId = getTextureId();
 		if (textId == 0)
@@ -204,35 +201,34 @@ private:
 			ImDrawList* list = ImGui::GetWindowDrawList();
 			localDisplayPos.x = 5;
 			localDisplayPos.y = 5;
-			ImVec2 maxPos = win->Pos;
-			maxPos.x += win->Size.x - 10;
-			maxPos.y += win->Size.y - 30;
+			ImVec2 maxPos = pos;
+			maxPos.x += size.x - 10;
+			maxPos.y += size.y - 30;
 
-			ImVec2 minPos = win->Pos + localDisplayPos;
+			ImVec2 minPos = pos + localDisplayPos;
 			list->AddRectFilled(minPos, maxPos, ImColor(115, 140, 153));
-			//ImGui::Image((void*)0, win->Size);
+			//ImGui::Image((void*)0, size);
 			return;
 		}
 
 		int newWid = width;
 		int newHei = height;
 
-		ResizeImage(newWid, newHei, win->Size.x, win->Size.y - 30);
+		ResizeImage(newWid, newHei, size.x, size.y);
 		this->scaleFactor = width / static_cast<float>(newWid);
 		displaySize.x = newWid;
 		displaySize.y = newHei;
 
-		localDisplayPos.x = (win->Size.x - newWid) / 2;
-		localDisplayPos.y = (win->Size.y - newHei) / 2;
-		ImGui::SetCursorPosX(localDisplayPos.x);
-		ImGui::SetCursorPosY(localDisplayPos.y);
+		localDisplayPos.x = (size.x - newWid) / 2;
+		localDisplayPos.y = (size.y - newHei) / 2;
+		ImGui::SetCursorPos(localDisplayPos);
 
 		if (zoomable)
 		{
 			clicked = false;
 			if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
 			{
-				clickedPos = ImGui::GetIO().MousePos - win->Pos - localDisplayPos + offset;
+				clickedPos = ImGui::GetIO().MousePos - pos - localDisplayPos + offset;
 				clicked = true;
 			}
 
@@ -256,19 +252,14 @@ public:
 	void draw(ImGuiID parentId, int tileSize, int offset, ImVec2 imgSize)
 	{
 		//ImGui::ShowDemoWindow();
-		ImGui::ShowMetricsWindow();
+		// ImGui::ShowMetricsWindow();
 
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings;
 		window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
 
 		ImGuiWindow* win = ImGui::FindWindowByID(parentId);
 		//if (ImGui::BeginChild(parentId))
-		//if (ImGui::Begin("MyDraw",NULL, window_flags))
 		{
-			//win = ImGui::FindWindowByName("MyDraw");
-
-			//ImDrawList* list = win->DrawList;// ImGui::GetWindowDrawList();
-
 			int y = getAddnl(imgSize.x, tileSize) * getAddnl(imgSize.y, tileSize);
 			ImGui::Text("The image will be splitted into %d tiles", y);
 

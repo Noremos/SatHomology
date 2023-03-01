@@ -24,6 +24,53 @@ export struct toStdStr
 };
 
 
+export struct TileIterator
+{
+	uint start;
+	uint tileSize;
+	uint fullTileSize;
+
+	uint maxLen;
+
+	TileIterator(uint start, uint tileSize, uint offset, uint maxLen) :
+		start(start), tileSize(tileSize), fullTileSize(tileSize + offset), maxLen(maxLen)
+	{ }
+
+	void reset(uint st = 0)
+	{
+		start = st;
+	}
+
+	uint pos()
+	{
+		return start;
+	}
+
+	uint accum()
+	{
+		start += tileSize;
+		return start;
+	}
+
+
+	uint getFullTileSize()
+	{
+		return (start + fullTileSize <= maxLen ? fullTileSize : maxLen - start);
+	}
+
+	bool shouldSkip(uint& len)
+	{
+		len = getFullTileSize();
+		return len <= (fullTileSize - tileSize); // len < offset
+	}
+
+	bool notEnded()
+	{
+		return start < maxLen;
+	}
+};
+
+
 export BackJson jsonFromFile(const BackPathStr& path)
 {
 	BackString temp;

@@ -16,7 +16,7 @@ export struct SimpleLine
 {
 	int id, barlineIndex;
 	SimpleLine(int id = 0, int barlineIndex = 0) :
-		id(id), barlineIndex(barlineIndex), start(0), end(0), depth(0), matrSrcSize(0), parent(nullptr)
+	id(id), barlineIndex(barlineIndex), start(0), end(0), depth(0), matrSrcSize(0), parent(nullptr)
 	{}
 	//	ushort counter = 0;
 	Barscalar start, end;
@@ -58,16 +58,22 @@ public:
 
 export class ILayer
 {
-	int id;
+public:
+	int id = -1;
 
 	BackString name;
-	int iconId;
+	int iconId = -1;
+
+	int getSysId()
+	{
+		return id;
+	}
 
 	//IGuiLayer* toGuiLayer();
 };
 
 
-export template <class T> 
+export template <class T>
 class LayersList
 {
 	std::list<std::unique_ptr<T>> layers;
@@ -75,10 +81,19 @@ class LayersList
 public:
 	T* at(uint id)
 	{
-		assert(id < layers.size());
-		auto t = layers.begin();
-		std::advance(t, id);
-		return t->get();
+		for (auto& layer : layers)
+		{
+			if (layer->getSysId() == id)
+			{
+				return layer.get();
+			}
+		}
+
+		return nullptr;
+		//assert(id < layers.size());
+		//auto t = layers.begin();
+		//std::advance(t, id);
+		//return t->get();
 	}
 
 	auto begin()
@@ -100,35 +115,73 @@ public:
 		return tptr;
 	}
 
-	void set(uint id, T* val)
+	template<class TReal, class TArg>
+	TReal* add(TArg arg)
 	{
-		auto t = layers.begin();
-		std::advance(t, id);
-
-		layers.emplace(t, std::unique_ptr<T>(val));
+		auto t = std::make_unique<TReal>(arg);
+		auto tptr = t.get();
+		layers.push_back(std::move(t));
+		return tptr;
 	}
 
-	void set(uint id, std::unique_ptr<T>& val)
+	bool set(uint id, T* val)
 	{
 		auto t = layers.begin();
-		std::advance(t, id);
 
-		layers.emplace(t, val);
+		for (auto& layer : layers)
+		{
+			if (layer->getSysId() == id)
+			{
+				layer.reset(val);
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	bool set(uint id, std::unique_ptr<T>& val)
+	{
+		auto t = layers.begin();
+
+		for (auto& layer : layers)
+		{
+			if (layer->getSysId() == id)
+			{
+				layer = std::move(val);
+				return true;
+			}
+		}
+		return false;
 	}
 
 	void move(uint oldId, uint newId)
 	{
-		auto t1 = layers.begin();
-		auto t2 = layers.begin();
-		std::advance(t1, oldId);
-		std::advance(t2, newId);
-
-		auto* ptr = t1.get().release();
-		layers.remove(t1);
-		layers.insert(t2, std::make_unique(ptr));
-		//std::swap(t1, t2);
+		auto t1 = layers.end();
+		auto t2 = layers.end();
+		bool foundFirst = false;
+		for (auto it = layers.begin(); it != layers.end(); it++)
+		{
+			if (it->getSysId() == oldId)
+			{
+				t1 = it;
+				if (foundFirst)
+					break;
+				foundFirst = true;
+			}
+			else if (it->getSysId() == newId)
+			{
+				t2 = it;
+				if (foundFirst)
+					break;
+				foundFirst = true;
+			}
+		}
+		//auto* ptr = t1.get().release();
+		//layers.remove(t1);
+		//layers.insert(t2, std::unique_ptr(ptr));
+		std::swap(t1, t2);
 	}
-	
 
 	void clear()
 	{
@@ -255,8 +308,9 @@ public:
 	float displayFactor;
 	bc::point layerOffset;
 
-	LayerProvider(float displayFactor) :
-		layerOffset(0,0), displayFactor(displayFactor)
+	LayerProvider(float _displayFactor) :
+		tilesInRow(0), tileSize(0),
+		layerOffset(0,0), displayFactor(_displayFactor)
 	{ }
 
 	int getCon(int total, int part)
@@ -273,6 +327,7 @@ public:
 	TileProvider tileByIndex(uint tileIndex) const
 	{
 		TileProvider p(tileIndex);
+		p.factor = displayFactor;
 		p.offset.x = (tileIndex / tilesInRow) * tileSize;
 		p.offset.y = (tileIndex % tilesInRow) * tileSize;
 		return p;
@@ -281,6 +336,7 @@ public:
 	TileProvider tileByOffset(uint offX, uint offY) const
 	{
 		TileProvider p(offX, offY);
+		p.factor = displayFactor;
 		p.index = (offY / tileSize) * tilesInRow + offX / tileSize;
 		return p;
 	}

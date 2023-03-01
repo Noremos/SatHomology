@@ -94,11 +94,7 @@ public:
 		if (!enable)
 			return;
 
-		ImGui::SetNextWindowPos(pos);
-		ImGui::SetNextWindowSize(size);
-		const ImGuiViewport* viewport = ImGui::GetMainViewport();
-		ImGui::SetNextWindowViewport(viewport->ID);
-		heimap.drawImage("Heimap", true);
+		heimap.drawImage("Heimap", pos, size, true);
 	}
 };
 
@@ -121,39 +117,57 @@ public:
 		this->tileSize = tileSize;
 	}
 
-	virtual void draw(ImVec2 pos, ImVec2)
+	virtual void draw(ImVec2 pos, ImVec2 size)
 	{
 		if (tileSize == 0 || !enable)
 			return;
 
-		ImVec2 cont = ImGui::GetCursorPos();
+		auto window_flags = ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoScrollbar;
+		ImGui::SetCursorPos(pos);
+		if (!ImGui::BeginChild("Tilemap", size, false, window_flags))
+		{
+			ImGui::EndChild();
+			return;
+		}
+		// ImGui::SetCursorPos(cont);
+		ImColor lineColor(115, 115, 115);
+
 		ImDrawList* list = ImGui::GetWindowDrawList();
+		ImVec2 cont = ImGui::GetCurrentWindow()->Pos + img->localDisplayPos;
 
 		ImVec2 drawTileSize(tileSize / img->scaleFactor, tileSize / img->scaleFactor);
-		ImVec2 maxPos = pos + img->localDisplayPos;
 
 		int newWid = img->displaySize.x;
 		int newHei = img->displaySize.y;
-		ImColor lineColor(115, 115, 115);
-		for (float w = 0; w < newWid; w += drawTileSize.x)
-		{
-			ImVec2 ts(maxPos.x + w, maxPos.y);
-			ImVec2 te(maxPos.x + w, maxPos.y + newHei);
 
-			list->AddLine(ts, te, lineColor, 3);
-		}
-		ImVec2 ts(maxPos.x + newWid, maxPos.y);
-		ImVec2 te(maxPos.x + newWid, maxPos.y + newHei);
-		list->AddLine(ts, te, lineColor, 3);
-
-		for (float h = 0; h < newHei; h += drawTileSize.y)
+		ImVec2 tst(0, cont.y);
+		ImVec2 ted(0, cont.y + newHei);
+		for (TileIterator twid(cont.x, drawTileSize.x, 0, cont.x + newWid); twid.notEnded(); twid.accum())
 		{
-			ImVec2 ts(maxPos.x, maxPos.y + h);
-			ImVec2 te(maxPos.x + newWid, maxPos.y + h);
-			list->AddLine(ts, te, lineColor, 3);
+			tst.x = twid.pos();
+			ted.x = twid.pos();
+
+			list->AddLine(tst, ted, lineColor, 3);
 		}
-		ImVec2 tse(maxPos.x, maxPos.y + newHei);
-		ImVec2 tee(maxPos.x + newWid, maxPos.y + newHei);
-		list->AddLine(tse, tee, lineColor, 3);
+
+		tst.x = cont.x + newWid;
+		ted.x = cont.x + newWid;
+		list->AddLine(tst, ted, lineColor, 3);
+
+
+		tst.x = cont.x;
+		ted.x = cont.x + newWid;
+		for (TileIterator thei(cont.y, drawTileSize.y, 0, cont.y + newHei); thei.notEnded(); thei.accum())
+		{
+			tst.y = thei.pos();
+			ted.y = thei.pos();
+			list->AddLine(tst, ted, lineColor, 3);
+		}
+
+		tst.y = cont.y + newHei;
+		ted.y = cont.y + newHei;
+		list->AddLine(tst, ted, lineColor, 3);
+
+		ImGui::EndChild();
 	}
 };

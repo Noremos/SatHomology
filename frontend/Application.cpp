@@ -163,6 +163,7 @@ namespace MyApp
 		std::future<void> future;
 	};
 	WindowsValues commonValus;
+	LayersVals layersVals;// (backend);
 
 	struct TopbarValues
 	{
@@ -240,7 +241,10 @@ namespace MyApp
 			else
 			{
 				grabSets();
-				backend.createBarcode(properties, filterInfo.filterInfo);
+				int layerId = -1;
+				RasterLineLayer* layerData = backend.createBarcode(properties, filterInfo.filterInfo, &layerId);
+				assert(layerData);
+				layersVals.setLayer<RasterLineGuiLayer, RasterLineLayer>("barcode", layerData);
 			}
 		}
 
@@ -252,7 +256,6 @@ namespace MyApp
 		};
 
 		bool openPop = false;
-		bool showHighmap = false;
 	};
 
 	TopbarValues tbVals;
@@ -329,7 +332,6 @@ namespace MyApp
 	};
 	ClassiferVals classerVals;
 
-	LayersVals layersVals;// (backend);
 
 	void loaderCategors(int classId, const BackString& name)
 	{
@@ -398,7 +400,7 @@ namespace MyApp
 
 	void drawTopBar()
 	{
-		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings;
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar;
 		float heighto = ImGui::GetFrameHeight();
 		if (ImGui::BeginViewportSideBar("##TopMenu", NULL, ImGuiDir_Up, 50, window_flags))
 		{
@@ -464,6 +466,8 @@ namespace MyApp
 					{
 						tbVals.enableProcessBtn = true;
 						auto* layer = layersVals.addMainLayer<RasterGuiLayer>();
+						//layer->data = backend.getMain();
+						centerVals.heimap.init(layer->data->mat);
 						centerVals.tilemap.init(&layer->main, backend.getTileSize());
 						classerVals.loadClassImages();
 						unsetPoints();
@@ -627,9 +631,6 @@ namespace MyApp
 
 	void drawWorkout()
 	{
-		//// Set up the sidebar
-		//ImGui::BeginChild("Properties", ImVec2(150, 0), true);
-
 		//// First collapsible section
 		//if (ImGui::CollapsingHeader("Section 1"))
 		//{
@@ -647,15 +648,47 @@ namespace MyApp
 		const ImGuiViewport* viewport = ImGui::GetMainViewport();
 		ImVec2 pos = viewport->WorkPos;
 		ImVec2 drawSize = viewport->WorkSize;
+		// drawSize.x -= 200;
 
-		if (tbVals.showHighmap)
-			centerVals.heimap.draw(pos, drawSize);
-		else
+		ImGui::SetNextWindowPos(pos);
+		ImGui::SetNextWindowSize(drawSize);
+		ImGui::SetNextWindowViewport(viewport->ID);
+
+		drawSize.x -= 10;
+		drawSize.y -= 20;
+		pos = {0,0};
+
+
+		auto window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
+			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoDocking;
+			window_flags |= ImGuiWindowFlags_HorizontalScrollbar;
+
+		if (ImGui::Begin("ImagePreview", NULL, window_flags))
 		{
 			layersVals.draw(pos, drawSize);
+
+			centerVals.heimap.draw(pos, drawSize);
+			centerVals.tilemap.draw(pos, drawSize);
+		}
+		ImGui::End();
+
+
+		pos.x += drawSize.x;
+		// drawSize.x = 200;
+		drawSize.y += 20;
+
+		// ImGui::SetNextWindowPos(pos);
+		// ImGui::SetNextWindowSize(drawSize);
+		ImGui::SetNextWindowViewport(viewport->ID);
+
+		window_flags = 0;//ImGuiWindowFlags_NoTitleBar;// | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_HorizontalScrollbar;
+		if (ImGui::BeginViewportSideBar("Sidebar", NULL, ImGuiDir_Right, 200, window_flags))
+		{
+		// if (ImGui::Begin("Sidebar", NULL, window_flags))
+
+			ImGui::End();
 		}
 
-		centerVals.tilemap.draw(pos, drawSize);
 		//
 		//pos.x += size.x;
 		//size.x = leftProps;
@@ -679,7 +712,7 @@ namespace MyApp
 	// Bootom bar
 	void drawBottomBar()
 	{
-		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings;
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar;
 		// https://github.com/bkaradzic/bgfx/blob/master/3rdparty/dear-imgui/widgets/range_slider.inl
 		if (ImGui::BeginViewportSideBar("##BottomBar", NULL, ImGuiDir_Down, 100, window_flags))
 		{
@@ -703,7 +736,9 @@ namespace MyApp
 					unsetPoints();
 					bottomVals.showUpdaePopup = false;
 					ImGui::CloseCurrentPopup();
-					backend.processMain(bottomVals.valeExtra, bottomVals.filtere.filterInfo, layersVals.temporalyId);
+					auto* layerData = backend.processMain(bottomVals.valeExtra, bottomVals.filtere.filterInfo, layersVals.temporalyId);
+					layersVals.setLayer<RasterLineGuiLayer, RasterLineLayer>("barcode", layerData);
+
 					//commonValus.onAir = true;
 					//commonValus.future = std::async(&GuiBackend::processMain, std::ref(backend),
 				}
@@ -860,16 +895,6 @@ namespace MyApp
 			//	};
 			//ImGui::ListBox("Images", &curItem, imgLoader, &pngs, pngs.size());
 
-
-			//if (ImGui::BeginChild("ImagePreview"))
-			//{
-			//	if (curItem >= 0 && selectedImage < pngs.size())
-			//	{
-			//		ImVec2 siz(pngs[curItem].width, pngs[curItem].height)
-			//		ImGui::Image(pngs[curItem].getTexturePtr(), siz);
-			//	}
-			//	ImGui::EndChild();
-			//}
 			for (size_t j = 0; j < pngs.size(); j++)
 			{
 				ImGui::PushID(j);
@@ -1089,6 +1114,7 @@ namespace MyApp
 
 	void MyApp::Init()
 	{
+		centerVals.heimap.enable = false;
 		auto drawLine = [](const bc::point& p1, const bc::point& p2, bool finale)
 		{
 			const std::lock_guard<std::mutex> lock(debugVals.drawMutex);

@@ -2,7 +2,7 @@ module;
 
 #include <string>
 #include "../Bind/Common.h"
-#include "../side/flat_hash_map/unordered_map.hpp"
+
 // #include "project.h"
 
 export module CacheFilesModule;
@@ -11,6 +11,7 @@ import BarholdersModule;
 import BarcodeModule;
 
 using uint = unsigned int;
+
 
 export template<class TItem, class THolder>
 class GeoBar
@@ -80,7 +81,7 @@ private:
 		std::vector<bc::barline*> ids;
 		ids.resize(linesCount * 2);
 		std::fill(ids.begin(), ids.end(), nullptr);
-		ska::unordered_map<size_t, uint> writeIds;
+		MMMAP<size_t, uint> writeIds;
 
 		// Begin
 		state->beginArray(vec, linesCount);
@@ -101,7 +102,7 @@ private:
 				else
 				{
 					couId = counterId++;
-					writeIds.insert(std::make_pair((size_t)line, couId));
+					writeIds.insert({ (size_t)line, couId });
 				}
 
 				state->pInt(couId);
@@ -115,7 +116,7 @@ private:
 				else
 				{
 					parId = counterId++;
-					writeIds.insert(std::make_pair((size_t)line->parent, parId));
+					writeIds.insert({ (size_t)line->parent, parId });
 				}
 
 				state->pInt(parId);
@@ -178,7 +179,7 @@ private:
 
 		uint realIndex = 0;
 		bc::barlinevector& vec = rsitem->barlines;
-		ska::unordered_map<size_t, uint> ids;
+		MMMAP<size_t, uint> ids;
 
 		size_t linesCount = state->pArray(vec.size());
 		state->beginArray(vec, linesCount);
@@ -303,7 +304,7 @@ private:
 	{
 		uint counterId = 0;
 		std::vector<bc::barline*> ids;
-		ska::unordered_map<size_t, uint> writeIds;
+		MMMAP<size_t, uint> writeIds;
 
 		bc::barlinevector& vec = rsitem->lines;
 		size_t linesCount = state->pArray(vec.size());

@@ -4,6 +4,10 @@
 
 #include "../side/json.hpp"
 
+#include "../side/emhash/hash_table5.hpp"
+#define MMMAP emhash5::HashMap
+
+
 #ifndef MIN
 #define MIN(a,b) ((a)<(b)?(a):(b))
 #endif

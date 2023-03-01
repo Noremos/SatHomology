@@ -35,49 +35,6 @@ export struct BarcodeProperies
 	bool alg1IgnoreHeight = false;
 };
 
-
-struct TileIterator
-{
-	uint start;
-	uint tileSize;
-	uint fullTileSize;
-
-	uint maxLen;
-
-	TileIterator(uint start, uint tileSize, uint offset, uint maxLen) :
-		start(start), tileSize(tileSize), fullTileSize(tileSize + offset), maxLen(maxLen)
-	{ }
-
-	void reset(uint st = 0)
-	{
-		start = st;
-	}
-
-	uint pos()
-	{
-		return start;
-	}
-
-	uint accum()
-	{
-		start += tileSize;
-		return start;
-	}
-
-
-	uint getFullTileSize()
-	{
-		return (start + fullTileSize <= maxLen ? fullTileSize : maxLen - start);
-	}
-
-	bool shouldSkip(uint& len)
-	{
-		len = getFullTileSize();
-		return len <= (fullTileSize - tileSize); // len < offset
-	}
-};
-
-
 export class DataRectBarWrapper : public bc::DatagridProvider
 {
 	DataRect& baseobj;
@@ -412,16 +369,6 @@ public:
 
 		u_classCache = getDicumnetPath() / "GeoBar";
 		mkDirIfNotExists(u_classCache);
-
-		srand(300);
-		BarClasser::colors.push_back(Barscalar(255, 0, 0));
-		BarClasser::colors.push_back(Barscalar(0, 0, 0));
-		BarClasser::colors.push_back(Barscalar(0, 255, 0));
-		BarClasser::colors.push_back(Barscalar(0, 0, 255));
-		for (int k = 0; k < 40; ++k)
-			BarClasser::colors.push_back(Barscalar(5 + rand() % 250, 5 + rand() % 250, 5 + rand() % 250));
-
-		BarClasser::colors.push_back(Barscalar(255, 255, 255));
 	}
 
 	~Project()
@@ -441,7 +388,6 @@ public:
 
 	ReadType imgType;
 
-	bool loadProject(const BackPathStr& path);
 	bool saveProject();
 
 	BackPathStr u_imgPath;
@@ -461,8 +407,21 @@ public:
 
 	ImageReader* reader = nullptr;
 
-	void setCurrentSubImage(int imgIndex, int displayWid)
+	int layerCounter = 0;
+	template<class LDATA>
+	LDATA* addLayerData()
 	{
+		LDATA* d = layers.add<LDATA>();
+		d->id = layerCounter++;
+		return d;
+	}
+
+	RasterLineLayer main;
+
+	// void setCurrentSubImage(int imgIndex, int displayWid)
+	void setCurrentSubImage(int imgIndex)
+	{
+		int displayWid = images[imgIndex]->width();
 		if (imgType == ReadType::Tiff)
 		{
 			dynamic_cast<TiffReader*>(reader)->setCurrentSubImage(imgIndex);
@@ -474,13 +433,15 @@ public:
 			u_subImageIndex = 0;
 			u_displayFactor = 1.0f;
 		}
+
+		main.init(*images[imgIndex]);
+		main.name = "Main";
 	}
 
 	void setReadyLaod(int curImgInd)
 	{
-		int displayWid = images[curImgInd]->width();
-
-		setCurrentSubImage(curImgInd, displayWid);
+		//int displayWid = images[curImgInd]->width();
+		setCurrentSubImage(curImgInd);
 	}
 
 	void closeReader()
@@ -604,7 +565,47 @@ public:
 		}
 	}
 //
-	void loadImage(const BackPathStr& path, int step);
+
+	void loadImage(const BackPathStr& path, int step)
+	{
+		closeReader();
+
+		this->u_imgPath = path;
+
+		openReader();
+		if (!reader->ready)
+			return;
+
+			//	this->u_imgMinVal = reader->min;
+			//	this->u_imgMaxVal = reader->max;
+			//	this->u_displayFactor = step;
+
+		saveProject();
+		writeImages();
+	}
+
+	bool loadProject(const BackPathStr& prjFilepath)
+	{
+		setProjectPath(prjFilepath);
+
+		BackJson loadDoc = jsonFromFile(prjFilepath);
+		read(loadDoc);
+
+		//	qDebug() << searchSetts.height.start;
+		//	qDebug() << searchSetts.heightMin();
+
+		openReader();
+		modelWid = reader->width() / u_displayFactor;
+		modelHei = reader->height() / u_displayFactor;
+		readImages();
+
+		//BarClassifierCache bcc;
+		//classer.categs = bcc.loadCategories();
+		//classer.udpdateClasses();
+		//bcc.loadClasses(getPath(BackPath::classfiles), classer);
+		return true;
+	}
+
 	float getImgMaxVal() const;
 
 	float getImgMinVal() const;
@@ -620,9 +621,9 @@ public:
 
 	void readImages();
 
-	void createCacheBarcode(const BarcodeProperies& propertices, int imgIndex, FilterInfo* info = nullptr, int* destLayerId = nullptr)
+	RasterLineLayer* createCacheBarcode(const BarcodeProperies& propertices, int imgIndex, FilterInfo* info = nullptr, int* destLayerId = nullptr)
 	{
-		if (block) return;
+		if (block) return nullptr;
 
 		//	reader->setCurrentSubImage(1);
 		if (imgType == ReadType::Tiff)
@@ -675,17 +676,17 @@ public:
 			if (*destLayerId == -1)
 			{
 				*destLayerId = layers.size();
-				layer = layers.add<RasterLineLayer>();
+				layer = addLayerData<RasterLineLayer>();
 			}
 			else
 			{
 				layer = new RasterLineLayer();
 				layers.set(*destLayerId, layer);
 			}
-		}
 
-		int id = getFirstNormIndex();
-		layer->init(*images[id]);
+			int id = getFirstNormIndex();
+			layer->init(*images[id]);
+		}
 
 		for (uint i = 0; i < rhei; i += tileSize)
 		{
@@ -714,9 +715,11 @@ public:
 
 		u_algorithm = propertices.alg;
 		saveProject();
+
+		return layer;
 	}
 
-	void readPrcoessBarcode(int& destLayerId, FilterInfo& filter)
+	RasterLineLayer* readPrcoessBarcode(int& destLayerId, FilterInfo& filter)
 	{
 		if (u_displayFactor < 1.0)
 			throw std::exception();
@@ -724,10 +727,11 @@ public:
 		filter.imgLen = (tileSize + tileOffset) * (tileSize + tileOffset);
 
 		RasterLineLayer* layer = nullptr;
+		RasterLineLayer* outputLayer = nullptr;
 		if (destLayerId == -1)
 		{
-			destLayerId = layers.size();
-			layer = layers.add<RasterLineLayer>();
+			outputLayer = layer = addLayerData<RasterLineLayer>();
+			destLayerId = layer->id;
 		}
 		else
 		{
@@ -759,6 +763,8 @@ public:
 		{
 			classifier->classBarcodeFromCache(*layer, prov);
 		}
+
+		return outputLayer;
 	}
 
 
@@ -880,46 +886,6 @@ BarcodeHolder Project::threasholdLines(bc::Baritem* item)
 		}
 	}
 	return vec;
-}
-
-void Project::loadImage(const BackPathStr& path, int step)
-{
-	closeReader();
-
-	this->u_imgPath = path;
-
-	openReader();
-	if (!reader->ready)
-		return;
-
-	//	this->u_imgMinVal = reader->min;
-	//	this->u_imgMaxVal = reader->max;
-	//	this->u_displayFactor = step;
-
-	saveProject();
-	writeImages();
-}
-
-bool Project::loadProject(const BackPathStr& prjFilepath)
-{
-	setProjectPath(prjFilepath);
-
-	BackJson loadDoc = jsonFromFile(prjFilepath);
-	read(loadDoc);
-
-	//	qDebug() << searchSetts.height.start;
-	//	qDebug() << searchSetts.heightMin();
-
-	openReader();
-	modelWid = reader->width() / u_displayFactor;
-	modelHei = reader->height() / u_displayFactor;
-	readImages();
-
-	//BarClassifierCache bcc;
-	//classer.categs = bcc.loadCategories();
-	//classer.udpdateClasses();
-	//bcc.loadClasses(getPath(BackPath::classfiles), classer);
-	return true;
 }
 
 void Project::read(const BackJson& json)

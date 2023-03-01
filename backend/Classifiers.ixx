@@ -6,7 +6,6 @@
 #include <functional>
 
 #include "../Bind/Common.h"
-#include "../side/flat_hash_map/unordered_map.hpp"
 
 export module ClassifiersCore;
 //import std.core;
@@ -275,7 +274,20 @@ public:
 
 	BarClasser(const FilterInfo* filter = nullptr) :
 		filter(filter)
-	{ }
+	{ 
+		if (colors.size() == 0)
+		{
+			srand(300);
+			BarClasser::colors.push_back(Barscalar(255, 0, 0));
+			BarClasser::colors.push_back(Barscalar(0, 0, 0));
+			BarClasser::colors.push_back(Barscalar(0, 255, 0));
+			BarClasser::colors.push_back(Barscalar(0, 0, 255));
+			for (int k = 0; k < 40; ++k)
+				BarClasser::colors.push_back(Barscalar(5 + rand() % 250, 5 + rand() % 250, 5 + rand() % 250));
+
+			BarClasser::colors.push_back(Barscalar(255, 255, 255));
+		}
+	}
 
 	void setFilter(FilterInfo* _filter)
 	{
@@ -390,7 +402,7 @@ private:
 		bool showWhite = true; //extra.indexOf("showw;") != -1;
 
 		auto tileProv = prov.tileByIndex(tileIndex);
-		ska::unordered_map<size_t, std::shared_ptr<SimpleLine>> parentne;
+		MMMAP<size_t, std::shared_ptr<SimpleLine>> parentne;
 		auto& vec = baritem.barlines;
 		for (size_t i = 0; i < vec.size(); ++i)
 		{

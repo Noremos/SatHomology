@@ -117,36 +117,34 @@ public:
 	// Gui
 	void createProject(const BackPathStr& path, const BackString& name, const BackPathStr& imgPath);
 
-	void createBarcode(const BarcodeProperies& propertices, FilterInfo& info, int* layerId = nullptr)
+	RasterLineLayer* createBarcode(const BarcodeProperies& propertices, FilterInfo& info, int* layerId = nullptr)
 	{
-		if (!isImageLoaded() || mainMat.width() <= 1 || mainMat.height() <= 1)
-			return;
+		if (!isImageLoaded())
+			return nullptr;
 
 		curSelected = nullptr;
-
-		resultMart = mainMat;
-		ska::unordered_map<size_t, char> map;
 
 		comm.clear();
 		proj->setReadyLaod(curImgInd);
 
-		proj->createCacheBarcode(propertices, curImgInd, &info, layerId);
+		auto* layer = proj->createCacheBarcode(propertices, curImgInd, &info, layerId);
 
 		created = true;
+		return layer;
 	}
 
 
-	void processMain(BackString extra, FilterInfo& filter, int& layerId)
+	RasterLineLayer* processMain(BackString extra, FilterInfo& filter, int& layerId)
 	{
 		if (!created)
-			return;
+			return nullptr;
 
 		//resultMart = mainMat;
 		ska::unordered_map<size_t, char> map;
 
 		comm.clear();
 		proj->setReadyLaod(curImgInd);
-		proj->readPrcoessBarcode(layerId, filter);
+		return proj->readPrcoessBarcode(layerId, filter);
 	}
 
 
@@ -218,14 +216,28 @@ public:
 	void setSubImage(int index)
 	{
 		curImgInd = index;
-		proj->setCurrentSubImage(index, mainMat.width());
+		proj->setCurrentSubImage(index);
 	}
 
 private:
 	void resetSource();
 	void printCommon(int st, int ed, bool needSort);
 
-	void endLoaded();
+	void endLoaded()
+	{
+		curDisplayImgInd = proj->getFirstNormIndex();
+		curImgInd = 0;
+
+		clear();
+		proj->setReadyLaod(curImgInd);
+	}
+
+
+	RasterLineLayer* getMain()
+	{
+		return &proj->main;
+	}
+
 
 	//void setTempDir(const BackPathStr& path);
 
@@ -248,12 +260,6 @@ private:
 	//void createHolesBarcode(const bc::BarConstructor& constr, int imgIndex, int);
 
 
-	// Sub
-	const BackImage& getMainImage() const
-	{
-		return mainMat;
-	}
-
 private:
 	Project* proj = nullptr;
 	int imgNumber = -1;
@@ -266,8 +272,6 @@ private:
 
 	GuiState state = GuiState::Empty;
 
-	BackImage mainMat;
-	BackImage resultMart;
 	int curImgInd;
 	int curDisplayImgInd;
 
@@ -391,14 +395,6 @@ void GuiBackend::createProject(const BackPathStr& path, const BackString& name, 
 
 #define ppair(x,y,chr) (std::pair<bc::point,uchar>(bc::point(x,y), chr))
 
-void GuiBackend::endLoaded()
-{
-	curDisplayImgInd = proj->getFirstNormIndex();
-	curImgInd = 0;
-
-	clear();
-	proj->setReadyLaod(curImgInd);
-}
 
 
 void GuiBackend::loadImageOrProject(const BackPathStr& path)
@@ -440,18 +436,18 @@ void GuiBackend::loadImageOrProject(const BackPathStr& path)
 
 void GuiBackend::exportResult(BackDirStr path)
 {
-	imwrite(path / "result.png", resultMart);
+	//imwrite(path / "result.png", resultMart);
 	//saveAllJsons(geojson, imgNumber, path);
 }
 
 void GuiBackend::restoreSource()
 {
-	mainMat.assignCopyOf(*proj->images[curDisplayImgInd]);
+	//mainMat.assignCopyOf(*proj->images[curDisplayImgInd]);
 }
 
 void GuiBackend::resetSource()
 {
-	mainMat.assignCopyOf(resultMart);
+	//mainMat.assignCopyOf(resultMart);
 }
 
 void GuiBackend::printCommon(int st, int ed, bool needSort)

@@ -5,44 +5,94 @@ module;
 export module LayersGui;
 
 import LayersCore;
-//import ForntnedModule;
+import ProjectModule;
 import BarcodeModule;
 
 
 class LayersVals;
 
+Project* proj = Project::getProject();
+
 export class GuiLayer
 {
+protected:
+	BackString strId;
 public:
-	//std::unique_ptr<ILayer> coreData;
-	int id;
-	GuiImage icon;
-	BackString name;
-	ILayer layer;
+	virtual void draw(LayersVals& context, ImVec2 pos, ImVec2 size) = 0;
+	virtual const char* getName() = 0;
+	virtual GuiImage* getIcon() = 0;
 
-	virtual void draw(LayersVals& context) = 0;
-
-private:
 	virtual void toGuiData() = 0;
+
+	virtual int getSysId() = 0;
+	virtual const char* getStrId()
+	{
+		return strId.c_str();
+	}
 };
 
 
-export class RasterGuiLayer : public GuiLayer
+export template<class T>
+class GuiLayerData : public GuiLayer
 {
 public:
-	RasterLayer data;
+	T* data;
+	GuiLayerData()
+	{
+		data = proj->addLayerData<T>();
+	}
+
+	GuiLayerData(T* fromCore)
+	{
+		data = fromCore;
+	}
+
+	virtual int getSysId()
+	{
+		return data->id;
+	}
+
+	virtual GuiImage* getIcon()
+	{
+		return &icon;
+	}
+
+	virtual const char* getName()
+	{
+		return data->name.c_str();
+	}
+
+
+	void setName(const BackString& name)
+	{
+		data->name = name;
+		strId = name + intToStr(data->id);
+	}
+
+	GuiImage icon;
+};
+
+export class RasterGuiLayer : public GuiLayerData<RasterLayer>
+{
+public:
 	//bool showHighmap = false;
 	GuiDrawImage main;
 
-	virtual void draw(LayersVals&)
+	RasterGuiLayer() : GuiLayerData()
+	{ }
+
+	RasterGuiLayer(RasterLineLayer* fromCore) : GuiLayerData(fromCore)
+	{ }
+
+	virtual void draw(LayersVals&, ImVec2 pos, ImVec2 size)
 	{
-		main.drawImage(name.c_str());
+		main.drawImage(data->name.c_str(), pos, size);
 	}
 
-private:
 	virtual void toGuiData()
 	{
-		main.setImage(data.mat, false);
+		main.setImage(data->mat, false);
+		icon.setImage(data->mat, 32, 32, true);
 	}
 };
 
@@ -76,23 +126,63 @@ public:
 		return temporalyId < 0 ? nullptr : layers.at(temporalyId);
 	}
 
+	void update()
+	{
+		if (temporalyId == -1)
+			return;
+	}
 
 	template<typename T>
 	T* addMainLayer()
 	{
-		curLayerId = 0;
-		temporalyId = -1;
 		layers.clear();
-		return layers.add<T>();
+		proj->layers.clear();
+		T* val = layers.add<T>(&proj->main);
+		val->setName("Main");
+		val->toGuiData();
+
+		curLayerId = val->data->id;
+		temporalyId = -1;
+		return val;
 	}
 
 	template<typename T>
-	T* addLayer()
+	T* addLayer(const BackString& name)
 	{
 		auto t = layers.add<T>();
-		curLayerId = temporalyId;
-		temporalyId = layers.size();
+		curLayerId = temporalyId = t->data->id;
+		t->setName(name);
 		return t;
+	}
+
+	template<typename TGui, typename TData>
+	TGui* addLayer(const BackString& name, TData* core)
+	{
+		if (core == nullptr)
+			return nullptr;
+
+		auto t = layers.add<TGui>(core);
+		curLayerId = temporalyId = t->data->id;
+		t->setName(name);
+		t->toGuiData();
+		return t;
+	}
+
+	template<typename TGui, typename TData>
+	TGui* setLayer(const BackString& name, TData* core)
+	{
+		if (core == nullptr)
+			return nullptr;
+
+		auto ptr = new TGui(core);
+		if (layers.set(core->id, ptr))
+		{
+			ptr->setName(name);
+			return nullptr;
+		}
+		delete ptr;
+
+		return addLayer<TGui, TData>(name, core);
 	}
 
 	void draw(const ImVec2 pos, const ImVec2 size)
@@ -105,11 +195,11 @@ public:
 		uint i = 0;
 		for (auto& lay : layers)
 		{
-			ImGui::SetNextWindowPos(pos);
-			ImGui::SetNextWindowSize(size);
-			ImGui::SetNextWindowViewport(viewport->ID);
+			// ImGui::SetNextWindowPos(pos);
+			// ImGui::SetNextWindowSize(size);
+			// ImGui::SetNextWindowViewport(viewport->ID);
 			ImGui::PushID(i);
-			lay->draw(*this);
+			lay->draw(*this, pos, size);
 			ImGui::PopID();
 			++i;
 		}
@@ -161,29 +251,30 @@ public:
 		//	ImGui::EndChild();
 		//}
 
-		if (ImGui::BeginListBox("LayersList"))
+		if (ImGui::BeginListBox("##LayersList"))
 		{
 			uint j = 0;
 			for (auto& lay : layers)
 			{
 				ImGui::PushID(j);
 
-				if (j == temporalyId)
-				{
-					ImFont* italicFont = ImGui::GetIO().Fonts->Fonts[1];  // Assuming the second font in the ImFontAtlas is italic
-					ImGui::PushFont(italicFont);
-				}
-				
-				ImGui::Selectable(lay->name.c_str(), false, 0, ImVec2(wid, 30));
+				//if (lay->getSysId()s == temporalyId)
+				//{
+				//	ImFont* italicFont = ImGui::GetIO().Fonts->Fonts[1];  // Assuming the second font in the ImFontAtlas is italic
+				//	ImGui::PushFont(italicFont);
+				//}
 
-				if (j == temporalyId)
-				{
-					ImGui::PopFont();
-				}
-
-				auto& icon = lay->icon;
+				auto& icon = *lay->getIcon();
+				auto pos = ImGui::GetCursorPos();
 				ImGui::Image((void*)(intptr_t)icon.getTextureId(), ImVec2(icon.width, icon.height));
 				ImGui::SameLine();
+				ImGui::Selectable(lay->getName(), false, 0, ImVec2(wid, 30));
+
+				//if (j == temporalyId)
+				//{
+				//	ImGui::PopFont();
+				//}
+
 				//ImGui::Text(lay.name.c_str());
 				//ImVec2 pos(50, 50);
 				float size = 100.0f;
@@ -205,26 +296,35 @@ public:
 
 
 
-export class RasterLineGuiLayer : public GuiLayer
+export class RasterLineGuiLayer : public GuiLayerData<RasterLineLayer>
 {
 public:
-	RasterLineLayer data;
-
 	GuiDrawImage main;
 	BackString debug;
 	SimpleLine* selecedLine = nullptr;
 	GuiDrawCloudPointClick clickHandler;
 
-	RasterLineGuiLayer()
+	RasterLineGuiLayer() : GuiLayerData()
 	{
 		clickHandler.par = &main;
 	}
 
-	virtual void draw(LayersVals& context)
+	RasterLineGuiLayer(RasterLineLayer* fromCore) : GuiLayerData(fromCore)
+	{
+		clickHandler.par = &main;
+	}
+
+	virtual void toGuiData()
+	{
+		main.setImage(data->mat, false);
+		icon.setImage(data->mat, 32, 32, true);
+	}
+
+	virtual void draw(LayersVals& context, ImVec2 pos, ImVec2 size)
 	{
 		ImVec2 prevOff = main.offset;
 		ImVec2 prevwWin = main.winPos;
-		main.drawImage(name.c_str(), true);
+		main.drawImage(data->name.c_str(), pos, size, true);
 		if (main.clicked)
 		{
 			auto p = main.clickedPos;
@@ -261,7 +361,7 @@ public:
 
 	bc::barvector* click(int x, int y)
 	{
-		if (data.clickResponser.size() == 0)
+		if (data->clickResponser.size() == 0)
 			return nullptr;
 
 		x = main.getRealX(x);
@@ -276,7 +376,7 @@ public:
 
 		//std::cout << x << " : " << y << std::endl;
 
-		SimpleLine* line = data.clickResponser[y * main.width + x].get();
+		SimpleLine* line = data->clickResponser[y * main.width + x].get();
 		if (line)
 		{
 			if (selecedLine == line && line->parent)
@@ -321,7 +421,7 @@ public:
 			return;
 		}
 
-		if (!ImGui::Begin("Свойства"))
+		if (!ImGui::Begin("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"))
 		{
 			ImGui::End();
 			return;
@@ -350,15 +450,11 @@ public:
 		}
 		else
 		{
-			ImGui::Text("Достугнут конец");
+			ImGui::Text("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ");
 		}
 
 		ImGui::End();
 	}
 
 private:
-	virtual void toGuiData()
-	{
-		main.setImage(data.mat, false);
-	}
 };

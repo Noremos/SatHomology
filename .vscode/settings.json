@@ -2,6 +2,15 @@
     "files.trimTrailingWhitespace": true,
     "files.trimFinalNewlines": true,
     "files.associations": {
-        "*.ixx": "cpp"
+        "*.ixx": "cpp",
+        "bitset": "cpp",
+        "array": "cpp",
+        "hash_map": "cpp",
+        "string_view": "cpp",
+        "initializer_list": "cpp",
+        "regex": "cpp",
+        "utility": "cpp",
+        "valarray": "cpp",
+        "dense_hash_map": "cpp"
     }
 }
