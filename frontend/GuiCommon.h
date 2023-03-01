@@ -9,6 +9,8 @@ import BarcodeModule;
 
 typedef unsigned int GLuint;
 
+const int ImGuiWindowFlags_NoDocking = 0;
+
 void ResizeImage(int& width, int& height, int max_width, int max_height);
 
 struct TextureId

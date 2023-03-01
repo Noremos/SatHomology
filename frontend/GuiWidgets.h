@@ -95,6 +95,96 @@ class GuiDrawInfo
 	ImVec2 size;
 };
 
+class GuiResizableContainer
+{
+	ImVec2 zoom = ImVec2(1, 1);
+public:
+	ImVec2 displaySize;
+	WindowVec2 offset = ImVec2(0, 0);
+	ItemVec2 clickedPos = ImVec2(0, 0);
+
+	GuiImage& operator=(const GuiImage& other) noexcept = delete;
+	GuiImage& operator=(GuiImage&& other) noexcept = delete;
+
+	float getZoom()
+	{
+		return zoom.x;
+	}
+
+	bool clicked = false;
+
+	bool good;
+	bool Begin(const char* name)
+	{
+		auto window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
+			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoDocking;
+		window_flags |= ImGuiWindowFlags_HorizontalScrollbar;
+		if (!ImGui::Begin(name, NULL, window_flags))
+		{
+			good = false;
+		}
+		else
+			good = true;
+
+		return good;
+	}
+
+	void end(ImVec2, ImVec2 realSize)
+	{
+		if (!good)
+			return;
+
+		ImVec2 wpos = ImGui::GetCurrentWindow()->Pos;
+		clicked = false;
+		const bool hovered = ImGui::IsWindowHovered() || ImGui::IsItemHovered();
+
+		bool clicked = false;
+		bool drgged = false;
+		bool wheeled = false;
+		if (hovered)
+		{
+			drgged = ImGui::IsMouseDragging(ImGuiMouseButton_Right);
+			clicked = ImGui::IsMouseClicked(ImGuiMouseButton_Left);
+			wheeled = ImGui::GetIO().MouseWheel != 0;
+		}
+		if (clicked)
+		{
+			clickedPos = ImGui::GetIO().MousePos - wpos + offset;
+			clicked = true;
+		}
+
+		offset.x = ImGui::GetScrollX();
+		offset.y = ImGui::GetScrollY();
+
+		if (drgged)
+		{
+			offset.x -= ImGui::GetIO().MouseDelta.x;
+			offset.y -= ImGui::GetIO().MouseDelta.y;
+		}
+		if (wheeled)
+		{
+			float ads = ImGui::GetIO().MouseWheel * 0.1f;
+			zoom.x += ads;
+			zoom.y += ads;
+			zoom.x = zoom.x > 0.1f ? zoom.x : 0.1f;
+			zoom.y = zoom.y > 0.1f ? zoom.y : 0.1f;
+
+			offset.x += abs(ads) * 20;
+			offset.y += abs(ads) * 20;
+		}
+
+
+		ImVec2 nsize = ImVec2((float)realSize.x * zoom.x, (float)realSize.y * zoom.y);
+		displaySize = nsize;
+
+		ImGui::SetScrollX(offset.x);
+		ImGui::SetScrollY(offset.y);
+
+		ImGui::End();
+	}
+};
+
+
 class GuiDrawImage : public GuiImage
 {
 	ImVec2 zoom = ImVec2(1, 1);
@@ -134,7 +224,7 @@ public:
 		return static_cast<float>(y) / (height / displaySize.y);
 	}
 
-	void drawImage(const char* name, ImVec2 pos, ImVec2 size, bool zoomable = false)
+	void drawImage(const char* name, ImVec2 pos, ImVec2 size)
 	{
 		auto window_flags = ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoScrollbar;
 
@@ -142,7 +232,7 @@ public:
 		if (ImGui::BeginChild(name, size, false, window_flags))
 		{
 			winPos = pos;
-			drawTexture(pos, size, zoomable);
+			drawTexture(pos, size);
 		}
 		ImGui::EndChild();
 	}
@@ -155,9 +245,9 @@ public:
 
 		//ImGui::Image(image_data, ImVec2((float)width, (float)height), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
 		// Handle zoom events
-		offset.x = ImGui::GetScrollX();
-		offset.y = ImGui::GetScrollY();
-		if (ImGui::IsWindowHovered() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+		//offset.x = ImGui::GetScrollX();
+		//offset.y = ImGui::GetScrollY();
+		/*if (ImGui::IsWindowHovered() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
 		{
 			offset.x -= ImGui::GetIO().MouseDelta.x;
 			offset.y -= ImGui::GetIO().MouseDelta.y;
@@ -172,7 +262,7 @@ public:
 
 			offset.x += abs(ads) * 20;
 			offset.y += abs(ads) * 20;
-		}
+		}*/
 		//ImVec2 pmin = ImGui::GetCursorScreenPos();
 		//ImVec2 pmax(ImGui::GetCursorScreenPos().x + width * zoom.x, ImGui::GetCursorScreenPos().y + height * zoom.y);
 		//ImVec2 uvMin(offset.x / width, offset.y / height);
@@ -184,16 +274,16 @@ public:
 		//ImVec2 uv1 = ImVec2((float)(offset.x + size.x) / width, (float)(offset.y + size.y) / height);
 		//ImGui::Image((void*)(intptr_t)textureId, size, uv0, uv1);
 
-		ImVec2 nsize = ImVec2((float)realSize.x * zoom.x, (float)realSize.y * zoom.y);
-		displaySize = nsize;
-		ImGui::Image((void*)(intptr_t)getTextureId(), nsize);
+		//ImVec2 nsize = ImVec2((float)realSize.x * zoom.x, (float)realSize.y * zoom.y);
+		//displaySize = nsize;
+		//ImGui::Image((void*)(intptr_t)getTextureId(), nsize);
 
-		ImGui::SetScrollX(offset.x);
-		ImGui::SetScrollY(offset.y);
+		//ImGui::SetScrollX(offset.x);
+		//ImGui::SetScrollY(offset.y);
 	}
 
 private:
-	void drawTexture(ImVec2 pos, ImVec2 size, bool zoomable)
+	void drawTexture(ImVec2 pos, ImVec2 size)
 	{
 		auto textId = getTextureId();
 		if (textId == 0)
@@ -222,20 +312,7 @@ private:
 		localDisplayPos.x = (size.x - newWid) / 2;
 		localDisplayPos.y = (size.y - newHei) / 2;
 		ImGui::SetCursorPos(localDisplayPos);
-
-		if (zoomable)
-		{
-			clicked = false;
-			if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
-			{
-				clickedPos = ImGui::GetIO().MousePos - pos - localDisplayPos + offset;
-				clicked = true;
-			}
-
-			checkZoom(ImVec2(newWid, newHei));
-		}
-		else
-			ImGui::Image((void*)(intptr_t)textId, ImVec2(newWid, newHei));
+		ImGui::Image((void*)(intptr_t)textId, ImVec2(newWid, newHei));
 	}
 };
 

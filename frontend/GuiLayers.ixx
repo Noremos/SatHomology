@@ -324,7 +324,7 @@ public:
 	{
 		ImVec2 prevOff = main.offset;
 		ImVec2 prevwWin = main.winPos;
-		main.drawImage(data->name.c_str(), pos, size, true);
+		main.drawImage(data->name.c_str(), pos, size);
 		if (main.clicked)
 		{
 			auto p = main.clickedPos;

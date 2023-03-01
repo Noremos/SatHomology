@@ -264,6 +264,7 @@ namespace MyApp
 
 	struct ImagesValues
 	{
+		GuiResizableContainer imgMain;
 		HeimapOverlap heimap;
 		TilemapOverlap tilemap;
 
@@ -652,7 +653,7 @@ namespace MyApp
 
 		ImGui::SetNextWindowPos(pos);
 		ImGui::SetNextWindowSize(drawSize);
-		ImGui::SetNextWindowViewport(viewport->ID);
+		//ImGui::SetNextWindowViewport(viewport->ID);
 
 		drawSize.x -= 10;
 		drawSize.y -= 20;
@@ -663,14 +664,15 @@ namespace MyApp
 			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoDocking;
 			window_flags |= ImGuiWindowFlags_HorizontalScrollbar;
 
-		if (ImGui::Begin("ImagePreview", NULL, window_flags))
+		if (centerVals.imgMain.Begin("ImagePreview"))
 		{
-			layersVals.draw(pos, drawSize);
+			ImVec2 rsize = centerVals.imgMain.displaySize;
+			layersVals.draw(pos, rsize);
 
-			centerVals.heimap.draw(pos, drawSize);
-			centerVals.tilemap.draw(pos, drawSize);
+			centerVals.heimap.draw(pos, rsize);
+			centerVals.tilemap.draw(pos, rsize);
 		}
-		ImGui::End();
+		centerVals.imgMain.end(pos, drawSize);
 
 
 		pos.x += drawSize.x;
@@ -679,7 +681,7 @@ namespace MyApp
 
 		// ImGui::SetNextWindowPos(pos);
 		// ImGui::SetNextWindowSize(drawSize);
-		ImGui::SetNextWindowViewport(viewport->ID);
+		//ImGui::SetNextWindowViewport(viewport->ID);
 
 		window_flags = 0;//ImGuiWindowFlags_NoTitleBar;// | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_HorizontalScrollbar;
 		if (ImGui::BeginViewportSideBar("Sidebar", NULL, ImGuiDir_Right, 200, window_flags))
@@ -1167,62 +1169,12 @@ namespace MyApp
 
 		bool opt_fullscreen = true;
 		bool opt_padding = false;
-		ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None | ImGuiDockNodeFlags_AutoHideTabBar;
-
-		window_flags = 0;
 
 		ImGui::GetStyle().Colors[ImGuiCol_TitleBgActive] = ImVec4(0.3f, 0.3f, 0.3f, 1.0f);
 		ImGui::GetStyle().Colors[ImGuiCol_TitleBg] = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
 
 
 		drawLayout();
-
-		//ImGui::DockSpace(ImGui::GetID("MyDockspace"), ImVec2(0, 0),
-		//    ImGuiDockNodeFlags_NoDockingInCentralNode);
-
-		// Display the image in imgui
-		window_flags = 0;
-		window_flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
-
-		ImGuiWindowClass window_class;
-		window_class.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
-		//ImGui::SetNextWindowClass(&window_class);
-		//window_flags |= ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-		//window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-
-
-		//ImGui::SetNextWindowClass(&window_class);
-
-
-		/*
-		ImGui::DockBuilderRemoveNode(dockspace_id); // clear any previous layout
-		ImGui::DockBuilderAddNode(dockspace_id, dockspace_flags | ImGuiDockNodeFlags_DockSpace);
-		ImGui::DockBuilderSetNodeSize(dockspace_id, viewport->Size);
-		//ImGuiID dock_id_prop = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Left, 0.20f, NULL, &dock_main_id);
-		ImGuiID dock_id_up = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Up, 0.10f, NULL, &dock_main_id);
-		ImGuiID dock_id_down = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Down, 0.20f, NULL, &dock_main_id);
-
-		//ImGuiID dock_id_left = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Left, 0.50f, NULL, &dock_main_id);
-		//ImGuiID dock_id_right = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Right, 0.50f, NULL, &dock_main_id);
-		//ImGuiID dock_id_left = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Left, 0.10f, NULL, &dock_main_id);
-		ImGui::DockBuilderDockWindow("Top Menu", dock_id_up);
-		ImGui::DockBuilderDockWindow("Down Menu", dock_id_down);
-		//ImGui::DockBuilderDockWindow("Photo 1", dock_id_left);
-		//ImGui::DockBuilderDockWindow("Photo 2", dock_id_right);
-		ImGui::DockBuilderFinish(dockspace_id);
-
-		//ImGui::DockBuilderRemoveNode(imgId); // clear any previous layout
-		//ImGui::DockBuilderAddNode(imgId, dockspace_flags | ImGuiDockNodeFlags_DockSpace);
-		//ImGui::DockBuilderSetNodeSize(dockspace_id, viewport->Size);
-
-		//ImGui::DockBuilderDockWindow("Properties", dock_id_prop);
-		//ImGui::DockBuilderDockWindow("Mesh", dock_id_prop);
-		//ImGui::DockBuilderDockWindow("Extra", dock_id_prop);
-
-		*/
-
-		//ImGui::DockBuilderDockWindow("Photo 1", 0);
-
 
 		ImGui::ShowDemoWindow();
 	}

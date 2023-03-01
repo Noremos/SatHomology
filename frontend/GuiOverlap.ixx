@@ -94,7 +94,7 @@ public:
 		if (!enable)
 			return;
 
-		heimap.drawImage("Heimap", pos, size, true);
+		heimap.drawImage("Heimap", pos, size);
 	}
 };
 
