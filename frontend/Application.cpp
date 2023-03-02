@@ -467,6 +467,7 @@ namespace MyApp
 					{
 						tbVals.enableProcessBtn = true;
 						auto* layer = layersVals.addMainLayer<RasterGuiLayer>();
+						layersVals.loadLayers();
 						//layer->data = backend.getMain();
 						centerVals.heimap.init(layer->getData()->mat);
 						centerVals.tilemap.init(&layer->main, backend.getTileSize());

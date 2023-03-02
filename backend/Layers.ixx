@@ -1,14 +1,15 @@
 module;
 #include <memory>
-#include "../bind/common.h"
 #include <algorithm>
 #include <list>
-#include <memory>
+
+#include "../bind/common.h"
 
 export module LayersCore;
 
 import IOCore;
 import BarcodeModule;
+import Platform;
 
 struct SimpleLine;
 
@@ -69,6 +70,19 @@ public:
 		return id;
 	}
 
+	virtual void readJson(const BackJson& json, const BackDirStr& metaFolder)
+	{
+		 id = json["id"].get<int>();
+		// name = json["name"].get<BackString>();
+		// iconId = json["iconId"].get<int>();
+	}
+
+	virtual void writeJson(BackJson& json, const BackDirStr& metaFolder, int& counter)
+	{
+		// json["id"] = id;
+		// json["name"] = name;
+		// json["iconId"] = iconId;
+	}
 	//IGuiLayer* toGuiLayer();
 };
 
@@ -222,6 +236,23 @@ public:
 	{
 		return { std::min(p.x, mat.width() - 1), std::min(p.y, mat.height() - 1) };
 	}
+
+	virtual void readJson(const BackJson& json, const BackDirStr& metaFolder)
+	{
+		ILayer::readJson(json, metaFolder);
+		// int counter = json["matId"].get<int>();
+		// BackPathStr fulp = metaFolder / intToStr(counter) / ".png";
+		// mat = imread(fulp);
+	}
+
+	virtual void writeJson(BackJson& json, const BackDirStr& metaFolder, int& counter)
+	{
+		ILayer::writeJson(json, metaFolder, counter);
+		++counter;
+		BackPathStr fulp = metaFolder / intToStr(counter) / ".png";
+		imwrite(fulp, mat);
+		// json["matId"] = counter;
+	}
 };
 
 export class PrimetiveLayer : public ILayer
@@ -235,6 +266,20 @@ export class RasterLineLayer : public RasterLayer
 public:
 	std::vector<std::shared_ptr<SimpleLine>> clickResponser;
 
+	virtual void readJson(const BackJson& json, const BackDirStr& metaFolder)
+	{
+		RasterLayer::readJson(json, metaFolder);
+	}
+
+	virtual void writeJson(BackJson& json, const BackDirStr& metaFolder, int& counter)
+	{
+		RasterLayer::writeJson(json, metaFolder, counter);
+
+		for (int i=0;i < clickResponser.size(); i++)
+		{
+			// id, id in bar
+		}
+	}
 
 	void init(const BackImage& src)
 	{

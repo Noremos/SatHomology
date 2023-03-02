@@ -205,6 +205,14 @@ public:
 	}
 
 
+	void loadLayers()
+	{
+		// for(auto coreLay : proj->layers)
+		// {
+		// 	addLayer<
+		// }
+	}
+
 	void draw(const ImVec2 pos, const ImVec2 size)
 	{
 		uint i = 0;

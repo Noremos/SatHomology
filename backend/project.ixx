@@ -185,7 +185,8 @@ export enum class BackPath
 	geojson,
 	binbar,
 	classifier,
-	classfiles
+	classfiles,
+	metadata
 	//classImages,
 };
 
@@ -201,6 +202,13 @@ int getCon(int total, int part)
 {
 	return total / part + (total % part == 0 ? 0 : 1);
 }
+
+class UserdefIO
+{
+public:
+	virtual void writeData(BackJson& json) const = 0;
+	virtual void readData(const BackJson& json) = 0;
+};
 
 
 union SettVariant
@@ -225,8 +233,7 @@ private:
 		sv_double,
 		sv_str,
 		sv_path
-	};
-	SettVariantType type;
+	} type;
 
 public:
 	SettingValue(const BackString& name, int& val)
@@ -311,6 +318,9 @@ class SettingsIO
 {
 	std::vector<SettingValue> settings;
 public:
+	std::function<void(BackJson& json)> extraWrite;
+	std::function<void(const BackJson& json)> extraRead;
+
 
 	SettingsIO(std::initializer_list<SettingValue> l) : settings(l)
 	{ }
@@ -321,6 +331,9 @@ public:
 		{
 			set.writeData(json);
 		}
+
+		if (extraWrite)
+			extraWrite(json);
 	}
 	void read(const BackJson& json)
 	{
@@ -328,8 +341,12 @@ public:
 		{
 			set.readData(json);
 		}
+
+		if (extraRead)
+			extraRead(json);
 	}
 };
+
 
 const char* const jsn_displayFacto = "step";
 const char* const jsn_imgMinVal = "imgMinVal";
@@ -358,6 +375,30 @@ class Project
 		{jsn_tileOffset, this->tileOffset}
 	};
 
+	void extraRead(const BackJson& json)
+	{
+		JsonArray arr = json.at("layers");
+		if (arr.size() > 0)
+		{
+			JsonObject obj = json.at(0);
+			main.readJson(obj, getPath(BackPath::classfiles));
+		}
+
+	}
+
+	void extraWrite(BackJson& json)
+	{
+		int counter = 0;
+		JsonObject arr;
+		arr = arr.array();
+		if (arr.size() > 0)
+		{
+			JsonObject obj;
+			main.writeJson(obj, getPath(BackPath::classfiles), counter);
+			arr.push_back(obj);
+		}
+		json["layers"] = arr;
+	}
 public:
 	//	Q_PROPERTY(SeachingSettings* searchSetts READ getSerchSetts)
 	//	Q_PROPERTY(SeachingSettings searchSetts MEMBER searchSetts)
@@ -366,7 +407,8 @@ public:
 	Project()
 	{
 		projectPath = "D:\\Programs\\Barcode\\_bar\\_p2\\";
-
+		settings.extraRead = [this](const BackJson& json) {extraRead(json);};
+		settings.extraWrite = [this](BackJson& json) {extraWrite(json);};;
 		// mkDirIfNotExists(u_classCache);
 	}
 
@@ -567,6 +609,8 @@ public:
 			return u_classCache / "ClassFiles";
 			//case BackPath::classImages:
 			//	return projectPath / "classImages";
+		case BackPath::metadata:
+			return u_classCache / "Metadata";
 		default:
 			throw;
 		}
@@ -845,6 +889,8 @@ bool Project::saveProject()
 		std::cerr << "Couldn't open save file.";
 		return false;
 	}
+
+	mkDirIfNotExists(getPath(BackPath::metadata));
 
 	JsonObject gameObject;
 	write(gameObject);
