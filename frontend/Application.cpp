@@ -468,7 +468,7 @@ namespace MyApp
 						tbVals.enableProcessBtn = true;
 						auto* layer = layersVals.addMainLayer<RasterGuiLayer>();
 						//layer->data = backend.getMain();
-						centerVals.heimap.init(layer->data->mat);
+						centerVals.heimap.init(layer->getData()->mat);
 						centerVals.tilemap.init(&layer->main, backend.getTileSize());
 						classerVals.loadClassImages();
 						unsetPoints();
@@ -668,6 +668,8 @@ namespace MyApp
 		{
 			ImVec2 rsize = centerVals.imgMain.displaySize;
 			layersVals.draw(pos, rsize);
+			if (centerVals.imgMain.clicked)
+				layersVals.onClick(centerVals.imgMain.clickedPos);
 
 			centerVals.heimap.draw(pos, rsize);
 			centerVals.tilemap.draw(pos, rsize);

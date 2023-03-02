@@ -135,10 +135,9 @@ public:
 			return;
 
 		ImVec2 wpos = ImGui::GetCurrentWindow()->Pos;
-		clicked = false;
 		const bool hovered = ImGui::IsWindowHovered() || ImGui::IsItemHovered();
 
-		bool clicked = false;
+		clicked = false;
 		bool drgged = false;
 		bool wheeled = false;
 		if (hovered)
@@ -150,7 +149,6 @@ public:
 		if (clicked)
 		{
 			clickedPos = ImGui::GetIO().MousePos - wpos + offset;
-			clicked = true;
 		}
 
 		offset.x = ImGui::GetScrollX();
@@ -208,20 +206,20 @@ public:
 
 	int getRealX(int x)
 	{
-		return static_cast<float>(x) * (width / displaySize.x);
+		return static_cast<float>(x - localDisplayPos.x) * (width / displaySize.x);
 	}
 	int getRealY(int y)
 	{
-		return static_cast<float>(y) * (height / displaySize.y);
+		return static_cast<float>(y - localDisplayPos.y) * (height / displaySize.y);
 	}
 
 	int toDisplayX(int x)
 	{
-		return static_cast<float>(x) / (width / displaySize.x);
+		return static_cast<float>(x) * (displaySize.x / width) + localDisplayPos.x;
 	}
 	int toDisplayY(int y)
 	{
-		return static_cast<float>(y) / (height / displaySize.y);
+		return static_cast<float>(y) * (displaySize.y / height)  + localDisplayPos.y;
 	}
 
 	void drawImage(const char* name, ImVec2 pos, ImVec2 size)
@@ -235,51 +233,6 @@ public:
 			drawTexture(pos, size);
 		}
 		ImGui::EndChild();
-	}
-
-	void checkZoom(ImVec2 realSize)
-	{
-		if (getTextureId() == 0)
-			return;
-		//void show_zoomable_image(unsigned char* image_data, int width, int height, int channels) {
-
-		//ImGui::Image(image_data, ImVec2((float)width, (float)height), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
-		// Handle zoom events
-		//offset.x = ImGui::GetScrollX();
-		//offset.y = ImGui::GetScrollY();
-		/*if (ImGui::IsWindowHovered() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
-		{
-			offset.x -= ImGui::GetIO().MouseDelta.x;
-			offset.y -= ImGui::GetIO().MouseDelta.y;
-		}
-		if (ImGui::IsWindowHovered() && ImGui::GetIO().MouseWheel != 0)
-		{
-			float ads = ImGui::GetIO().MouseWheel * 0.1f;
-			zoom.x += ads;
-			zoom.y += ads;
-			zoom.x = zoom.x > 0.1f ? zoom.x : 0.1f;
-			zoom.y = zoom.y > 0.1f ? zoom.y : 0.1f;
-
-			offset.x += abs(ads) * 20;
-			offset.y += abs(ads) * 20;
-		}*/
-		//ImVec2 pmin = ImGui::GetCursorScreenPos();
-		//ImVec2 pmax(ImGui::GetCursorScreenPos().x + width * zoom.x, ImGui::GetCursorScreenPos().y + height * zoom.y);
-		//ImVec2 uvMin(offset.x / width, offset.y / height);
-		//ImVec2 uvMax((offset.x + width * zoom.x) / width, (offset.y + height * zoom.y) / height);
-		//ImGui::GetWindowDrawList()->AddImage((void*)(intptr_t)textureId, pmin, pmax, uvMin, uvMax);
-
-		//ImVec2 size = ImVec2((float)width * zoom.x, (float)height * zoom.y);
-		//ImVec2 uv0 = ImVec2((float)offset.x / width, (float)offset.y / height);
-		//ImVec2 uv1 = ImVec2((float)(offset.x + size.x) / width, (float)(offset.y + size.y) / height);
-		//ImGui::Image((void*)(intptr_t)textureId, size, uv0, uv1);
-
-		//ImVec2 nsize = ImVec2((float)realSize.x * zoom.x, (float)realSize.y * zoom.y);
-		//displaySize = nsize;
-		//ImGui::Image((void*)(intptr_t)getTextureId(), nsize);
-
-		//ImGui::SetScrollX(offset.x);
-		//ImGui::SetScrollY(offset.y);
 	}
 
 private:
@@ -416,7 +369,7 @@ public:
 	//}
 
 
-	void draw(const char* name, ImVec2 prevWin, ImVec2 scrollOff, ImVec2 winSize)
+	void draw(ImVec2 pos, ImVec2 scrollOff, ImVec2 winSize)
 	{
 		if (points == nullptr)
 			return;
@@ -448,24 +401,33 @@ public:
 		//}
 		// ptoj->getVector();
 
-		ImDrawList* list = ImGui::FindWindowByName(name)->DrawList;
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings;
+		window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
+
+		ImGui::SetCursorPos(pos);
+		if (!ImGui::BeginChild("DrawClick", winSize, false, window_flags))
+		{
+			ImGui::EndChild();
+			return;
+		}
+
+		auto* win = ImGui::GetCurrentWindow();
+		ImDrawList* list = win->DrawList;
 
 		ImColor bigColor(128, 0, 255);
 		ImColor midColor(220, 200, 0);
 
-		float zoom = par->getZoom();
-		ApplicationVec2 offset = prevWin + par->localDisplayPos;
-		ApplicationVec2 csreenStar = prevWin + ImVec2(3 * zoom + 5, 3 * zoom + 5);
-		ApplicationVec2 csreenEnd = prevWin + winSize - ImVec2(3 * zoom + 10, 3 * zoom + 10);
-		const bc::barvector& pointsi = *points;
+		ApplicationVec2 offset = win->Pos + pos +  par->localDisplayPos;
+		ApplicationVec2 csreenStar = offset;
+		ApplicationVec2 csreenEnd = offset + par->displaySize;
+		float pixelSize = MAX(1, par->width / par->displaySize.x);
 
-		float pixelSize = MAX(1,winSize.x / par->width);
+		const bc::barvector& pointsi = *points;
 		for (const auto& p : pointsi)
 		{
 			// TL is a Begin()
 			ItemVec2 pi(par->toDisplayX(p.getX()), par->toDisplayY(p.getY()));
-			pi -= scrollOff; // Admit the scrollers
-			pi += offset; // TL coords from app
+			pi += win->Pos; // TL coords from app
 
 			if (pi.x < csreenStar.x || pi.y < csreenStar.y)
 				continue;
@@ -474,8 +436,10 @@ public:
 
 			// Center pixel for big images
 			pi += ImVec2(pixelSize / 2, pixelSize / 2);
-			list->AddCircleFilled(pi, 3 * pixelSize, bigColor);
-			list->AddCircleFilled(pi, 2 * pixelSize, midColor);
+			list->AddCircleFilled(pi, 1.5 * pixelSize, bigColor);
+			list->AddCircleFilled(pi, 1 * pixelSize, midColor);
 		}
+
+		ImGui::EndChild();
 	}
 };

@@ -60,7 +60,7 @@ protected:
 		}
 		else if (chnls == 4)
 		{
-			type = BarType::BYTE8_4;
+			type = BarType::BYTE8_3;
 			TSize = 4;
 		}
 		else
@@ -325,18 +325,13 @@ public:
 		else
 		{
 			uchar *off = data + (y * _wid + x) * TSize;
-			if (val.type == BarType::BYTE8_3)
-			{
-				off[0] = val.data.b3[0];
-				off[1] = val.data.b3[1];
-				off[2] = val.data.b3[2];
-			}
-			else
-			{
-				off[0] = val.data.b1;
-				off[1] = val.data.b1;
-				off[2] = val.data.b1;
-			}
+
+			off[0] = val.data.b3[0];
+			off[1] = val.data.b3[1];
+			off[2] = val.data.b3[2];
+
+			if (TSize == 4)
+				off[3] = 255;
 		}
 		cachedMin.isCached = false;
 		cachedMax.isCached = false;

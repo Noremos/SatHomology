@@ -416,6 +416,14 @@ public:
 		return d;
 	}
 
+	template<class LDATA>
+	LDATA* addLayerData(int keepId)
+	{
+		LDATA* d = layers.add<LDATA>();
+		d->id = keepId;
+		return d;
+	}
+
 	RasterLineLayer main;
 
 	// void setCurrentSubImage(int imgIndex, int displayWid)
@@ -675,17 +683,17 @@ public:
 		{
 			if (*destLayerId == -1)
 			{
-				*destLayerId = layers.size();
 				layer = addLayerData<RasterLineLayer>();
+				*destLayerId = layer->id;
 			}
 			else
 			{
-				layer = new RasterLineLayer();
+				layer = addLayerData<RasterLineLayer>(*destLayerId);
 				layers.set(*destLayerId, layer);
 			}
 
 			int id = getFirstNormIndex();
-			layer->init(*images[id]);
+			layer->init(images[id]->width(), images[id]->height());
 		}
 
 		for (uint i = 0; i < rhei; i += tileSize)
@@ -735,9 +743,11 @@ public:
 		}
 		else
 		{
-			layer = new RasterLineLayer();
+			layer = addLayerData<RasterLineLayer>(destLayerId);
 			layers.set(destLayerId, layer);
 		}
+		int id = getFirstNormIndex();
+		layer->init(images[id]->width(), images[id]->height());
 
 		// Cacher
 		BarClasser* classifier;
@@ -764,7 +774,7 @@ public:
 			classifier->classBarcodeFromCache(*layer, prov);
 		}
 
-		return outputLayer;
+		return layer;
 	}
 
 

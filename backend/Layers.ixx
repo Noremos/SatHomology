@@ -328,8 +328,8 @@ public:
 	{
 		TileProvider p(tileIndex);
 		p.factor = displayFactor;
-		p.offset.x = (tileIndex / tilesInRow) * tileSize;
-		p.offset.y = (tileIndex % tilesInRow) * tileSize;
+		p.offset.x = (tileIndex % tilesInRow) * tileSize;
+		p.offset.y = (tileIndex / tilesInRow) * tileSize;
 		return p;
 	}
 

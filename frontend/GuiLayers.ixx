@@ -17,17 +17,28 @@ export class GuiLayer
 {
 protected:
 	BackString strId;
+	int copiedId = -1; // We need to cpy Id to avoid cases when core was destroid
 public:
+	bool visible = true;
+
 	virtual void draw(LayersVals& context, ImVec2 pos, ImVec2 size) = 0;
 	virtual const char* getName() = 0;
 	virtual GuiImage* getIcon() = 0;
 
 	virtual void toGuiData() = 0;
 
-	virtual int getSysId() = 0;
+	virtual int getSysId()
+	{
+		return copiedId;
+	}
 	virtual const char* getStrId()
 	{
 		return strId.c_str();
+	}
+
+	virtual void onClick(ImVec2 pos)
+	{
+
 	}
 };
 
@@ -35,21 +46,24 @@ public:
 export template<class T>
 class GuiLayerData : public GuiLayer
 {
-public:
+protected:
 	T* data;
+public:
 	GuiLayerData()
 	{
 		data = proj->addLayerData<T>();
+		copiedId = data->id;
 	}
 
 	GuiLayerData(T* fromCore)
 	{
 		data = fromCore;
+		copiedId = data->id;
 	}
 
-	virtual int getSysId()
+	T* getData()
 	{
-		return data->id;
+		return data;
 	}
 
 	virtual GuiImage* getIcon()
@@ -86,6 +100,9 @@ public:
 
 	virtual void draw(LayersVals&, ImVec2 pos, ImVec2 size)
 	{
+		if (!visible)
+			return;
+
 		main.drawImage(data->name.c_str(), pos, size);
 	}
 
@@ -138,10 +155,7 @@ public:
 		layers.clear();
 		proj->layers.clear();
 		T* val = layers.add<T>(&proj->main);
-		val->setName("Main");
-		val->toGuiData();
-
-		curLayerId = val->data->id;
+		settup(val, "Main");
 		temporalyId = -1;
 		return val;
 	}
@@ -150,8 +164,7 @@ public:
 	T* addLayer(const BackString& name)
 	{
 		auto t = layers.add<T>();
-		curLayerId = temporalyId = t->data->id;
-		t->setName(name);
+		settup(t, name);
 		return t;
 	}
 
@@ -162,9 +175,7 @@ public:
 			return nullptr;
 
 		auto t = layers.add<TGui>(core);
-		curLayerId = temporalyId = t->data->id;
-		t->setName(name);
-		t->toGuiData();
+		settup(t, name);
 		return t;
 	}
 
@@ -177,7 +188,7 @@ public:
 		auto ptr = new TGui(core);
 		if (layers.set(core->id, ptr))
 		{
-			ptr->setName(name);
+			settup(ptr, name);
 			return nullptr;
 		}
 		delete ptr;
@@ -185,13 +196,17 @@ public:
 		return addLayer<TGui, TData>(name, core);
 	}
 
+	template<typename TGui>
+	void settup(TGui* layer, const BackString& name)
+	{
+		curLayerId = temporalyId = layer->getSysId();
+		layer->setName(name);
+		layer->toGuiData();
+	}
+
+
 	void draw(const ImVec2 pos, const ImVec2 size)
 	{
-		const ImGuiViewport* viewport = ImGui::GetMainViewport();
-		//size.x -= leftProps;
-		//size.x /= 2;
-
-
 		uint i = 0;
 		for (auto& lay : layers)
 		{
@@ -210,6 +225,10 @@ public:
 		//ImGui::SetNextWindowViewport(viewport->ID);
 	}
 
+	void onClick(ImVec2 click)
+	{
+		layers.at(curLayerId)->onClick(click);
+	}
 
 	void drawLayersWindow()
 	{
@@ -221,7 +240,7 @@ public:
 
 
 		ImDrawList* drawList = ImGui::GetWindowDrawList();
-		float wid = ImGui::GetWindowWidth();
+		auto winsize = ImGui::GetWindowSize();
 		ImVec2 pos = ImGui::GetWindowPos();
 
 		auto& pngs = layers;
@@ -250,25 +269,55 @@ public:
 		//	}
 		//	ImGui::EndChild();
 		//}
+		winsize.y -= 50;
 
-		if (ImGui::BeginListBox("##LayersList"))
+		bool temporaly = false;
+		int displayRadioId = temporalyId;
+		if (layers.size() > 0 && temporalyId == -1)
+			displayRadioId = (*layers.begin())->getSysId();
+
+		if (ImGui::BeginListBox("##LayersList", winsize))
 		{
 			uint j = 0;
 			for (auto& lay : layers)
 			{
-				ImGui::PushID(j);
 
 				//if (lay->getSysId()s == temporalyId)
 				//{
 				//	ImFont* italicFont = ImGui::GetIO().Fonts->Fonts[1];  // Assuming the second font in the ImFontAtlas is italic
 				//	ImGui::PushFont(italicFont);
 				//}
+				ImGui::PushID(j);
 
 				auto& icon = *lay->getIcon();
 				auto pos = ImGui::GetCursorPos();
+
+				// ImGui::BeginDisabled(j == 0);
+				bool curRadio = (displayRadioId == lay->getSysId());
+				temporaly = ImGui::RadioButton("Work", curRadio);//, curRadio);
+				// ImGui::EndDisabled();
+
+				ImGui::SameLine();
+				ImGui::Checkbox("##visible", &lay->visible);
+				ImGui::SameLine();
 				ImGui::Image((void*)(intptr_t)icon.getTextureId(), ImVec2(icon.width, icon.height));
 				ImGui::SameLine();
-				ImGui::Selectable(lay->getName(), false, 0, ImVec2(wid, 30));
+				bool seled = ImGui::Selectable(lay->getName(), lay->getSysId() == curLayerId, 0, ImVec2(winsize.x - 50, 30));
+
+				if (seled)
+				{
+					curLayerId = lay->getSysId();
+				}
+				if (temporaly)
+				{
+					if (j == 0)
+						temporalyId = -1;
+					else
+						temporalyId = lay->getSysId();
+
+					displayRadioId = lay->getSysId();
+					temporaly = false;
+				}
 
 				//if (j == temporalyId)
 				//{
@@ -320,27 +369,33 @@ public:
 		icon.setImage(data->mat, 32, 32, true);
 	}
 
+	ImVec2 drawSize;
 	virtual void draw(LayersVals& context, ImVec2 pos, ImVec2 size)
 	{
+		if (!visible)
+			return;
+
+		drawSize = context.drawSize;
+		main.drawImage(data->name.c_str(), pos, size);
+
 		ImVec2 prevOff = main.offset;
 		ImVec2 prevwWin = main.winPos;
-		main.drawImage(data->name.c_str(), pos, size);
-		if (main.clicked)
-		{
-			auto p = main.clickedPos;
+		clickHandler.draw(pos, pos, size);
+		drawPropertisWindow();
+	}
 
-			auto points = click(p.x, p.y);
+	virtual void onClick(ImVec2 pos)
+	{
+		// if (clicked)
+		{
+			auto points = click(pos.x, pos.y);
 			setPoints(points);
 		}
-		debug = intToStr(ImGui::GetIO().MousePos.x) + ":" + intToStr(ImGui::GetIO().MousePos.y);
-		clickHandler.draw("Processed", prevwWin, prevOff, context.drawSize);
-		drawPropertisWindow();
 	}
 
 
 	void setPoints(const bc::barvector* points)
 	{
-
 		if (points == nullptr)
 		{
 			clickHandler.points = points;
@@ -348,14 +403,6 @@ public:
 		}
 
 		clickHandler.points = points;
-
-		//if (backend.getAlg() == 0)
-		//{
-		//	getCountourSimple(*points, reservPoints);
-		//	clickHandler.points = &reservPoints;
-		//}
-		//else
-		//	clickHandler.points = points;
 	}
 
 
@@ -384,18 +431,6 @@ public:
 
 			selecedLine = line;
 			return &selecedLine->matr;
-			/*std::cout << line->matr.size() * 100.f / mainMat.length() << std::endl;
-			MatrImg temp;
-			temp.assignCopyOf(resultMart);
-			auto &fullmatr = line->matr;
-
-			for (int i = 0, total = fullmatr.size(); i < total; ++i)
-			{
-				auto p = bc::barvalue::getStatPoint(fullmatr[i].index);
-				temp.set(p.x, p.y, Barscalar(255, 191, 0));
-			}
-
-			processedImage->setImage(temp);*/
 		}
 
 		return nullptr;
@@ -421,7 +456,7 @@ public:
 			return;
 		}
 
-		if (!ImGui::Begin("��������"))
+		if (!ImGui::Begin("Propertis"))
 		{
 			ImGui::End();
 			return;
