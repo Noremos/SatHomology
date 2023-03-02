@@ -380,7 +380,7 @@ public:
 
 		ImVec2 prevOff = main.offset;
 		ImVec2 prevwWin = main.winPos;
-		clickHandler.draw(pos, pos, size);
+		clickHandler.draw(pos, size);
 		drawPropertisWindow();
 	}
 

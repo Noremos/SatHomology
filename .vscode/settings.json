@@ -11,6 +11,8 @@
         "regex": "cpp",
         "utility": "cpp",
         "valarray": "cpp",
-        "dense_hash_map": "cpp"
+        "dense_hash_map": "cpp",
+        "*.tcc": "cpp",
+        "list": "cpp"
     }
 }

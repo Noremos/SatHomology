@@ -369,7 +369,7 @@ public:
 	//}
 
 
-	void draw(ImVec2 pos, ImVec2 scrollOff, ImVec2 winSize)
+	void draw(ImVec2 pos, ImVec2 winSize)
 	{
 		if (points == nullptr)
 			return;
@@ -436,8 +436,8 @@ public:
 
 			// Center pixel for big images
 			pi += ImVec2(pixelSize / 2, pixelSize / 2);
-			list->AddCircleFilled(pi, 1.5 * pixelSize, bigColor);
-			list->AddCircleFilled(pi, 1 * pixelSize, midColor);
+			list->AddCircleFilled(pi, 3 * pixelSize, bigColor);
+			list->AddCircleFilled(pi, 2 * pixelSize, midColor);
 		}
 
 		ImGui::EndChild();
