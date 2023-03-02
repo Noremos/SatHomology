@@ -227,7 +227,11 @@ public:
 
 	void onClick(ImVec2 click)
 	{
-		layers.at(curLayerId)->onClick(click);
+		if (curLayerId == -1)
+			return;
+		auto layer = layers.at(curLayerId);
+		if (layer)
+			layer->onClick(click);
 	}
 
 	void drawLayersWindow()
@@ -276,6 +280,13 @@ public:
 		if (layers.size() > 0 && temporalyId == -1)
 			displayRadioId = (*layers.begin())->getSysId();
 
+		int selHei = 40;
+		ImVec2 iconSize(40, selHei / 2);
+
+
+		bool catchNext = false;
+		int toMove[2]{ -1, -1 };
+		int prevId = -1;
 		if (ImGui::BeginListBox("##LayersList", winsize))
 		{
 			uint j = 0;
@@ -289,20 +300,50 @@ public:
 				//}
 				ImGui::PushID(j);
 
-				auto& icon = *lay->getIcon();
-				auto pos = ImGui::GetCursorPos();
+				auto curID = lay->getSysId();
+				if (catchNext)
+				{
+					toMove[1] = curID;
+					catchNext = false;
+				}
 
-				// ImGui::BeginDisabled(j == 0);
+				auto& icon = *lay->getIcon();
+
 				bool curRadio = (displayRadioId == lay->getSysId());
 				temporaly = ImGui::RadioButton("Work", curRadio);//, curRadio);
-				// ImGui::EndDisabled();
 
 				ImGui::SameLine();
 				ImGui::Checkbox("##visible", &lay->visible);
+
 				ImGui::SameLine();
-				ImGui::Image((void*)(intptr_t)icon.getTextureId(), ImVec2(icon.width, icon.height));
+				ImGui::Image((void*)(intptr_t)icon.getTextureId(), ImVec2(selHei, selHei));
 				ImGui::SameLine();
-				bool seled = ImGui::Selectable(lay->getName(), lay->getSysId() == curLayerId, 0, ImVec2(winsize.x - 50, 30));
+
+				ImGui::BeginDisabled(j == 0 || j == 1);
+				auto posBef = ImGui::GetCursorPos();
+				if (ImGui::Button(ICON_FA_ANGLE_UP "", iconSize))
+				{
+					toMove[0] = prevId;
+					toMove[1] = curID;
+				}
+
+				if (j==1)
+					ImGui::EndDisabled();
+
+				ImGui::SetCursorPos({posBef.x, posBef.y + iconSize.y});
+				if (ImGui::Button(ICON_FA_ANGLE_DOWN "", iconSize))
+				{
+					toMove[0] = curID;
+					catchNext = true;
+				}
+				if (j != 1)
+					ImGui::EndDisabled();
+
+				ImGui::SetCursorPos({posBef.x + iconSize.x, posBef.y});
+
+
+				bool seled = ImGui::Selectable(lay->getName(), curID == curLayerId, 0, ImVec2(winsize.x - 50, selHei));
+				prevId = curID;
 
 				if (seled)
 				{
@@ -323,14 +364,7 @@ public:
 				//{
 				//	ImGui::PopFont();
 				//}
-
-				//ImGui::Text(lay.name.c_str());
-				//ImVec2 pos(50, 50);
-				float size = 100.0f;
 				ImVec4 color(1.0f, 0.0f, 0.0f, 1.0f); // RGBA color (red in this case)
-
-				// Draw a filled rectangle with the specified color
-				//drawList->AddRectFilled(pos, ImVec2(pos.x + wid, pos.y + lay.height), ImGui::GetColorU32(color));
 				ImGui::PopID();
 				++j;
 			}
@@ -340,6 +374,11 @@ public:
 		//ImGui::EndGroup();
 
 		ImGui::End();
+		if (toMove[0] != -1 && toMove[1] != -1)
+		{
+			proj->layers.move(toMove[0], toMove[1]);
+			layers.move(toMove[0], toMove[1]);
+		}
 	}
 };
 
@@ -485,7 +524,7 @@ public:
 		}
 		else
 		{
-			ImGui::Text("��������� �����");
+			ImGui::Text("The root has been reached");
 		}
 
 		ImGui::End();

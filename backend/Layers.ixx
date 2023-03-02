@@ -162,14 +162,14 @@ public:
 		bool foundFirst = false;
 		for (auto it = layers.begin(); it != layers.end(); it++)
 		{
-			if (it->getSysId() == oldId)
+			if ((*it)->getSysId() == oldId)
 			{
 				t1 = it;
 				if (foundFirst)
 					break;
 				foundFirst = true;
 			}
-			else if (it->getSysId() == newId)
+			else if ((*it)->getSysId() == newId)
 			{
 				t2 = it;
 				if (foundFirst)
@@ -177,10 +177,14 @@ public:
 				foundFirst = true;
 			}
 		}
-		//auto* ptr = t1.get().release();
-		//layers.remove(t1);
-		//layers.insert(t2, std::unique_ptr(ptr));
-		std::swap(t1, t2);
+
+		if (t1 != layers.end() && t2 != layers.end())
+		{
+			// auto ptr = std::move(*t1);
+			// layers.remove(t1);
+			// layers.insert(t2, std::move(ptr));
+			std::swap(*t1, *t2);
+		}
 	}
 
 	void clear()

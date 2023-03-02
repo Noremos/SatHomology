@@ -913,6 +913,7 @@ namespace MyApp
 
 	void debugWindow()
 	{
+		return;
 		if (!ImGui::Begin("debug"))
 		{
 			ImGui::End();

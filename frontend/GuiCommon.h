@@ -4,6 +4,8 @@
 #include "../Bind/Common.h"
 #include <algorithm>
 
+#include "../side/IconsFontAwesome5.h"
+
 import MatrModule;
 import BarcodeModule;
 
@@ -105,7 +107,7 @@ public:
                 int y_floor = static_cast<int>(y * y_ratio);
                 int x_ceil = (std::min)(static_cast<int>((x + 1) * x_ratio - 1), img.width() - 1);
                 int y_ceil = (std::min)(static_cast<int>((y + 1) * y_ratio - 1), img.height() - 1);
-                
+
                 Barscalar p1s = img.get(x_floor, y_floor);
                 Barscalar p2s = img.get(x_ceil, y_floor);
                 Barscalar p3s = img.get(x_floor, y_ceil);
@@ -116,7 +118,7 @@ public:
                     int a = static_cast<int>((float)p1 * 0.25 + p2 * 0.25 + p3 * 0.25 + p4 * 0.25);
                     return static_cast<uchar>(MAX(MIN(a, 255), 0));
                 };
-                
+
                 Barscalar p_interp;
                 if (img.channels() == 1)
                 {
@@ -124,7 +126,7 @@ public:
                 }
                 else
                 {
-                    p_interp = { 
+                    p_interp = {
                         ewf(p1s[0], p2s[0], p3s[0], p4s[0]),
                         ewf(p1s[1], p2s[1], p3s[1], p4s[1]),
                         ewf(p1s[2], p2s[2], p3s[2], p4s[2]),

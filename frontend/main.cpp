@@ -23,6 +23,8 @@
 #pragma comment(lib, "legacy_stdio_definitions")
 #endif
 
+#include "../side/IconsFontAwesome5.h"
+
 static void glfw_error_callback(int error, const char* description)
 {
 	fprintf(stderr, "Glfw Error %d: %s\n", error, description);
@@ -87,12 +89,12 @@ int main(int, char**)
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;	   // Enable Keyboard Controls
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;	  // Enable Gamepad Controls
-	
-	
+
+
 	//io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;		   // Enable Docking
 	//io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;		 // Enable Multi-Viewport / Platform Windows
-	
-	
+
+
 	//io.ConfigViewportsNoAutoMerge = true;
 	//io.ConfigViewportsNoTaskBarIcon = true;
 
@@ -144,6 +146,21 @@ int main(int, char**)
 
 	//setlocale(LC_ALL, "rus");
 	setlocale(LC_ALL, "ru_ru.utf-8");
+
+	float baseFontSize = 20.0f; // 13.0f is the size of the default font. Change to the font size you use.
+	float iconFontSize = baseFontSize * 2.0f / 3.0f; // FontAwesome fonts need to have their sizes reduced by 2.0f/3.0f in order to align correctly
+
+	// merge in icons from Font Awesome
+	static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_16_FA, 0 };
+	ImFontConfig icons_config;
+	icons_config.MergeMode = true;
+	icons_config.PixelSnapH = true;
+	icons_config.GlyphMinAdvanceX = iconFontSize;
+	io.Fonts->AddFontFromFileTTF( FONT_ICON_FILE_NAME_FAS, iconFontSize, &icons_config, icons_ranges );
+	// use FONT_ICON_FILE_NAME_FAR if you want regular instead of solid
+
+	// in an imgui window somewhere...
+	// outputs a paint brush icon and 'Paint' as a string.
 	//setlocale(LC_CTYPE, "rus"); // ����� ������� ��������� ������
 
 

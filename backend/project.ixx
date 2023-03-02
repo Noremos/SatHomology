@@ -367,8 +367,7 @@ public:
 	{
 		projectPath = "D:\\Programs\\Barcode\\_bar\\_p2\\";
 
-		u_classCache = getDicumnetPath() / "GeoBar";
-		mkDirIfNotExists(u_classCache);
+		// mkDirIfNotExists(u_classCache);
 	}
 
 	~Project()
@@ -565,7 +564,7 @@ public:
 		case BackPath::classifier:
 			return projectPath / "class.json";
 		case BackPath::classfiles:
-			return u_classCache;
+			return u_classCache / "ClassFiles";
 			//case BackPath::classImages:
 			//	return projectPath / "classImages";
 		default:
@@ -688,7 +687,9 @@ public:
 			}
 			else
 			{
-				layer = addLayerData<RasterLineLayer>(*destLayerId);
+				// Replace, dont add!
+				layer = new RasterLineLayer();
+				layer->id = *destLayerId;
 				layers.set(*destLayerId, layer);
 			}
 
@@ -743,7 +744,9 @@ public:
 		}
 		else
 		{
-			layer = addLayerData<RasterLineLayer>(destLayerId);
+			// Replace, dont add!
+			layer = new RasterLineLayer();
+			layer->id = destLayerId;
 			layers.set(destLayerId, layer);
 		}
 		int id = getFirstNormIndex();
@@ -848,6 +851,7 @@ bool Project::saveProject()
 	saveFile << gameObject.dump();
 	saveFile.close();
 
+	mkDirIfNotExists(getPath(BackPath::classfiles));
 	mkDirIfNotExists(getPath(BackPath::tiles));
 	//BarClassifierCache ccb;
 	//ccb.saveCategories(classer.categs);
