@@ -9,7 +9,6 @@ module;
 #include "../side/flat_hash_map/unordered_map.hpp"
 
 #include "../frontend/GuiCommon.h"
-#include "../frontend/GuiWidgets.h"
 
 export module ForntnedModule;
 
@@ -21,6 +20,7 @@ import IOCore;
 import BarcodeModule;
 import LayersCore;
 import ClassifiersCore;
+import GuiWidgets;
 
 // Todo.
 // 2 режима
@@ -233,7 +233,7 @@ private:
 	}
 
 
-	RasterLineLayer* getMain()
+	RasterLayer* getMain()
 	{
 		return &proj->main;
 	}

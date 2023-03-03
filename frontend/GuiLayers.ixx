@@ -1,13 +1,12 @@
 module;
-#include "GuiWidgets.h"
-
+#include "GuiCommon.h"
 
 export module LayersGui;
 
 import LayersCore;
 import ProjectModule;
 import BarcodeModule;
-
+import GuiWidgets;
 
 class LayersVals;
 
@@ -95,7 +94,7 @@ public:
 	RasterGuiLayer() : GuiLayerData()
 	{ }
 
-	RasterGuiLayer(RasterLineLayer* fromCore) : GuiLayerData(fromCore)
+	RasterGuiLayer(RasterLayer* fromCore) : GuiLayerData(fromCore)
 	{ }
 
 	virtual void draw(LayersVals&, ImVec2 pos, ImVec2 size)
@@ -389,8 +388,6 @@ public:
 		}
 	}
 };
-
-
 
 export class RasterLineGuiLayer : public GuiLayerData<RasterLineLayer>
 {

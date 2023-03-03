@@ -1,16 +1,19 @@
-#pragma once
-#define IMGUI_DEFINE_MATH_OPERATORS
+module;
+
+#include "GuiCommon.h"
 
 #include "imgui.h"
 #include <imgui_internal.h>
-#include "GuiCommon.h"
+
 #include <algorithm>
 
-using ApplicationVec2 = ImVec2;
-using WindowVec2 = ImVec2; // The top-left is a begin window
-using ItemVec2 = ImVec2; // The top-left is a Item (image) coords
+export module GuiWidgets;
 
-template<class T>
+export using ApplicationVec2 = ImVec2;
+export using WindowVec2 = ImVec2; // The top-left is a begin window
+export using ItemVec2 = ImVec2; // The top-left is a Item (image) coords
+
+export template<class T>
 struct SelectableKeyValues
 {
 	int currentIndex = 0;
@@ -89,13 +92,13 @@ private:
 };
 
 
-class GuiDrawInfo
+export class GuiDrawInfo
 {
 	ImVec2 pos;
 	ImVec2 size;
 };
 
-class GuiResizableContainer
+export class GuiResizableContainer
 {
 	ImVec2 zoom = ImVec2(1, 1);
 public:
@@ -183,7 +186,7 @@ public:
 };
 
 
-class GuiDrawImage : public GuiImage
+export class GuiDrawImage : public GuiImage
 {
 	ImVec2 zoom = ImVec2(1, 1);
 public:
@@ -270,7 +273,7 @@ private:
 };
 
 
-class GuiTilePreview
+export class GuiTilePreview
 {
 	int getAddnl(int main, int minor)
 	{
@@ -347,7 +350,7 @@ public:
 };
 
 
-class GuiDrawCloudPointClick : public GuiImage
+export class GuiDrawCloudPointClick : public GuiImage
 {
 	//bool dropPoints = false;
 public:

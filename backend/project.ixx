@@ -469,7 +469,7 @@ public:
 		return d;
 	}
 
-	RasterLineLayer main;
+	RasterLayer main;
 
 	// void setCurrentSubImage(int imgIndex, int displayWid)
 	void setCurrentSubImage(int imgIndex)
@@ -487,7 +487,7 @@ public:
 			u_displayFactor = 1.0f;
 		}
 
-		main.init(*images[imgIndex]);
+		main.mat = *images[imgIndex];
 		main.name = "Main";
 	}
 

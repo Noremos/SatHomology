@@ -1,12 +1,12 @@
 // https://github.com/ocornut/imgui/wiki/Image-Loading-and-Displaying-Examples
 #include "Application.h"
+#include "GuiCommon.h"
 
 #include <cmath>
 #include <initializer_list>
 #include <memory>
 #include <future>
 
-#include "GuiWidgets.h"
 
 #include "../side/sol3/sol.hpp"
 //
@@ -19,6 +19,8 @@ import LayersGui;
 import BarcodeModule;
 import ClassifiersCore;
 import GuiOverlap;
+import GuiClassifierModule;
+import GuiWidgets;
 
 //import Lua;
 
@@ -289,55 +291,13 @@ namespace MyApp
 	void loaderFile(int classId, const BackPathStr& path);
 
 
-	struct ClassiferVals
-	{
-		SelectableKeyValues<int> classesLB;
-
-		struct ClassTextures
-		{
-			int id;
-			std::vector<GuiImage> imgs;
-			ClassTextures(int i) : id(i)
-			{ }
-		};
-
-
-		GuiDrawImage iconImage;
-		std::vector<ClassTextures> classImages;
-		int itemCurrent = 0;
-
-		int getClassImagesSize()
-		{
-			return classImages.size();
-		}
-		ClassTextures& getClassImagesData()
-		{
-			return classImages[classesLB.currentValue()];
-		}
-
-		ImVec2 getPngSize()
-		{
-			return ImVec2(100, 100);
-		}
-
-		void loadClassImages()
-		{
-			std::function<void(int, const BackString&)> casFS = loaderCategors;
-			std::function<void(int, const BackPathStr&)> casif = loaderFile;
-
-			/*BarClassifierCache bcc;
-			bcc.loadCategories(casFS);
-			classesLB.endAdding();
-			bcc.loadImgs(casif, classesLB.getValuesIterator(), classesLB.getSize());*/
-		}
-	};
-	ClassiferVals classerVals;
+	GuiClassifer classerVals;
 
 
 	void loaderCategors(int classId, const BackString& name)
 	{
 		classerVals.classesLB.add(name, classId);
-		classerVals.classImages.push_back(ClassiferVals::ClassTextures(classId));
+		classerVals.classImages.push_back(GuiClassifer::ClassTextures(classId));
 	}
 
 	void loaderFile(int classId, const BackPathStr& path)
@@ -808,110 +768,6 @@ namespace MyApp
 	}
 
 
-	//void drawProcessSettings()
-	//{
-	//}
-
-
-	void drawClassifierMenu()
-	{
-		if (!bottomVals.showClassifier)
-			return;
-
-		if (ImGui::Begin("Classifier"))
-		{
-			classerVals.classesLB.drawListBox("Классы");
-			//ImGui::ListBox("My List Box", &item_current, items, IM_ARRAYSIZE(items), 4);
-
-
-			if (ImGui::Button("Add selected"))
-			{
-				BackImage icon;
-				int selectedClass = classerVals.classesLB.currentValue();
-				if (backend.addSelectedToClassData(selectedClass, &icon))
-				{
-					GuiImage img;
-					img.setImage(icon);
-					classerVals.classImages[selectedClass].imgs.push_back(img);
-				}
-				//backend.undoAddClass();
-			}
-			ImGui::SameLine();
-
-
-			if (ImGui::Button("Drop"))
-			{
-				// Open a file dialog to select a folder
-				backend.exportResult(getSavePath({ "*.png" }));
-			}
-
-			ImGui::SameLine();
-
-			if (ImGui::Button("Load from image"))
-			{
-				ImGui::OpenPopup("LoadImg");
-				//backend.undoAddClass();
-			}
-
-			if (ImGui::BeginPopupModal("LoadImg", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-			{
-				if (ImGui::Button("Load iamge"))
-				{
-				}
-
-				//ImGui::SetNextWindowPos(pos);
-				//ImGui::SetNextWindowSize(size);
-				//prview.drawImage("Processed");
-				//ImGui::Separator();
-
-				ImGui::Separator();
-				auto id = ImGui::FindWindowByName("ProcSetts")->ID;
-				tbVals.tilePrview.draw(id, tbVals.getTileSize(), tbVals.getOffsetSize(), tbVals.getImageSize());
-				//if (ImGui::IsItemHovered())
-				//	ImGui::SetTooltip("I am a tooltip over a popup");
-
-				//static int unused_i = 0;
-				//ImGui::Combo("Combo", &unused_i, "Delete\0Delete harder\0");
-
-				ImGui::Separator();
-				if (ImGui::Button("OK", ImVec2(120, 0)))
-				{
-					ImGui::CloseCurrentPopup();
-					backend.getTileSize() = tbVals.getTileSize();
-					backend.getOffsetSize() = tbVals.getOffsetSize();
-					//layersVals.getMainImg().tileSize = tbVals.getTileSize();
-				}
-
-				ImGui::SetItemDefaultFocus();
-				ImGui::SameLine();
-				if (ImGui::Button("Cancel", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
-				ImGui::EndPopup();
-			}
-
-			ImGui::BeginGroup();
-
-			auto& pngs = classerVals.getClassImagesData().imgs;
-
-			//int curItem = 0;
-			//auto imgLoader = [](void* data, int idx, const char** out_text) {
-			//		auto& pngs = *static_cast<std::vector<GuiImage>*>(data);
-			//		*out_text = pngs[idx].name.c_str();
-			//		return true;
-			//	};
-			//ImGui::ListBox("Images", &curItem, imgLoader, &pngs, pngs.size());
-
-			for (size_t j = 0; j < pngs.size(); j++)
-			{
-				ImGui::PushID(j);
-				ImGui::Image(pngs[j].getTexturePtr(), ImVec2(pngs[j].width, pngs[j].height));
-				ImGui::PopID();
-			}
-			ImGui::EndGroup();
-
-		}
-		ImGui::End();
-	}
-
 	void debugWindow()
 	{
 		return;
@@ -1099,7 +955,7 @@ namespace MyApp
 		drawBottomBar();
 
 
-		drawClassifierMenu();
+		//drawClassifierMenu();
 
 		// Subs
 		layersVals.drawLayersWindow();

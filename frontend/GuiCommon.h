@@ -2,6 +2,10 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 #include "../Bind/Common.h"
+
+#include "imgui.h"
+#include <imgui_internal.h>
+
 #include <algorithm>
 
 #include "../side/IconsFontAwesome5.h"

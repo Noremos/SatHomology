@@ -1,10 +1,11 @@
 module;
-#include "GuiWidgets.h"
+#include "GuiCommon.h"
 
 export module GuiOverlap;
 
 import IOCore;
 import LayersCore;
+import GuiWidgets;
 
 struct vec3
 {

@@ -183,7 +183,7 @@
     <ClInclude Include="Bind\Common.h">
       <Filter>Backend\Bind</Filter>
     </ClInclude>
-    <ClInclude Include="frontend\GuiWidgets.h">
+    <ClInclude Include="frontend\GuiWidgets.ixx">
       <Filter>GUI\WindowWidgets</Filter>
     </ClInclude>
     <ClInclude Include="Bind\json.h">

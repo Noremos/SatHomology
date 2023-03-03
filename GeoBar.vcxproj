@@ -195,10 +195,12 @@
     <ClCompile Include="Bind\Side.ixx" />
     <ClCompile Include="frontend\Application.cpp" />
     <ClCompile Include="frontend\frontend.ixx" />
+    <ClCompile Include="frontend\GuiClassifier.ixx" />
     <ClCompile Include="frontend\GuiCommon.cpp" />
     <ClCompile Include="frontend\GuiCommon.h" />
     <ClCompile Include="frontend\GuiOverlap.ixx" />
     <ClCompile Include="frontend\GuiLayers.ixx" />
+    <ClCompile Include="frontend\GuiWidgets.ixx" />
     <ClCompile Include="frontend\main.cpp" />
     <ClCompile Include="frontend\Object3d.ixx" />
     <ClCompile Include="frontend\Viewer3d.ixx" />
@@ -218,7 +220,6 @@
     <ClInclude Include="Bind\Common.h" />
     <ClInclude Include="frontend\Application.h" />
     <ClInclude Include="frontend\FrontTypes.h" />
-    <ClInclude Include="frontend\GuiWidgets.h" />
     <ClInclude Include="side\IconsFontAwesome5.h" />
     <ClInclude Include="side\PortFileDialog.h" />
     <ClInclude Include="side\sol3\sol.hpp" />
