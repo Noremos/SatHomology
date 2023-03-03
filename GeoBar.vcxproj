@@ -189,6 +189,8 @@
     <ClCompile Include="backend\GeoProcessor.ixx" />
     <ClCompile Include="backend\project.ixx" />
     <ClCompile Include="backend\SimpleImgReader.ixx" />
+    <ClCompile Include="backend\BackTypes.ixx" />
+    <ClCompile Include="backend\TrainData.ixx" />
     <ClCompile Include="Bind\CoreIO.ixx" />
     <ClCompile Include="Bind\Framework.ixx" />
     <ClCompile Include="Bind\Json.ixx" />

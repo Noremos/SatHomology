@@ -945,6 +945,22 @@ namespace MyApp
 		//ImGui::End();
 	}
 
+	void ToolSetDraw()
+	{
+		if (!ImGui::Begin("tools"))
+		{
+			ImGui::End();
+		}
+
+		if (ImGui::Button("Activation"))
+		{
+			//backend.
+		}
+
+
+		ImGui::End();
+	}
+
 	// Layout
 	void drawLayout()
 	{

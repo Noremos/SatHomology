@@ -18,6 +18,7 @@ module;
 export module Obejct3DModule;
 import ImgReader;
 import IOCore;
+import BackTypes;
 
 
 typedef unsigned char uchar;
@@ -129,116 +130,6 @@ public:
 		close();
 	}
 };
-
-
-
-template<class T>
-struct staticArray
-{
-private:
-	T* m_buffer = nullptr;
-	uint m_size = 0;
-
-
-public:
-	staticArray() {}
-	staticArray(const staticArray& other) /*: s(other.s)*/
-	{
-		allocate(other.m_size);
-		std::copy(other.m_buffer, other.m_buffer + other.m_size, m_buffer);
-	}
-	/*std::cout << "move failed!\n";*/
-	staticArray(staticArray&& other) /*: s(std::move(o.s))*/
-	{
-		m_buffer = std::exchange(other.m_buffer, nullptr); // leave other in valid state
-		m_size = std::exchange(other.m_size, 0);
-	}
-
-	T* data()
-	{
-		return m_buffer;
-	}
-
-	T* extract()
-	{
-		T* temp = std::exchange(m_buffer, nullptr);
-		m_size = 0;
-
-		return temp;
-	}
-
-	void allocate(uint nsize)
-	{
-		//		assert(size != 0);
-
-		release();
-		this->m_size = nsize;
-		m_buffer = new T[nsize];
-	}
-
-	uint size() { return m_size; }
-
-	void setData(T* newData, size_t size)
-	{
-		release();
-		m_size = size;
-		m_buffer = newData;
-	}
-
-	void setToZero()
-	{
-		memset(m_buffer, 0, m_size * sizeof(T));
-	}
-
-	T& operator[](std::size_t idx)
-	{
-		assert(idx < m_size);
-		return m_buffer[idx];
-	}
-
-	// copy assignment
-	staticArray& operator=(const staticArray& other)
-	{
-		// Guard self assignment
-		if (this == &other)
-			return *this;
-
-		allocate(other.m_size);
-
-		std::copy(other.m_buffer, other.m_buffer + other.m_size, m_buffer);
-		return *this;
-	}
-
-	// move assignment
-	staticArray& operator=(staticArray&& other) noexcept
-	{
-		// Guard self assignment
-		if (this == &other)
-			return *this; // delete[]/size=0 would also be ok
-
-		m_buffer = std::exchange(other.m_buffer, nullptr); // leave other in valid state
-		m_size = std::exchange(other.m_size, 0);
-		return *this;
-	}
-
-	void release()
-	{
-		if (m_buffer)
-		{
-			delete[] m_buffer;
-			m_buffer = nullptr;
-		}
-		m_size = 0;
-	}
-
-	~staticArray()
-	{
-		release();
-	}
-};
-
-using vbuffer = staticArray<uchar>;
-
 
 class Face3d
 {
@@ -353,8 +244,8 @@ class Obj3d
 	BackString name;
 	rowptr data[2];
 #ifdef USE_ROW
-	staticArray<objoff> currNullRow;
-	staticArray<objoff> prevNullRow;
+	StaticArray<objoff> currNullRow;
+	StaticArray<objoff> prevNullRow;
 	//	objoff* nullRow[2];
 	objoff getIndex(int x, int y, int /*realH*/)
 	{

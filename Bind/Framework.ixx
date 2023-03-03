@@ -9,14 +9,18 @@ module;
 export module Platform;
 import SideBind;
 import IOCore;
+import BackTypes;
 
 export
 {
 	BackImage imread(const BackString& path);
 	BackImage imread(const BackPathStr& path);
+	BackImage imreadFromMemory(const vbuffer& data);
 
 	void imwrite(const BackString& path, const BackImage& mat);
 	void imwrite(const BackPathStr& path, const BackImage& mat);
+	vbuffer imwriteToMemory(const BackImage& mat);
+
 	BackPathStr getSavePath(std::initializer_list<std::string> exts);
 	BackPathStr getDicumnetPath();
 
@@ -56,7 +60,7 @@ BackImage imread(const BackString& path)
 		image_data = fixedData;
 		chls = req;
 	}
-	return BackImage(width, height, chls, image_data, false, true);;
+	return BackImage(width, height, chls, image_data, false, true);
 }
 
 BackImage imread(const BackPathStr& path)
@@ -72,6 +76,43 @@ void imwrite(const BackString& path, const BackImage& mat)
 void imwrite(const BackPathStr& path, const BackImage& mat)
 {
 	imwrite(path.string(), mat);
+}
+
+
+BackImage imreadFromMemory(const vbuffer& data)
+{
+	int width, height, chls;
+	unsigned char* image_data = stbi_load_from_memory(data.data(), data.size(), & width, &height, &chls, 0);
+	if (image_data == NULL)
+		return BackImage(0, 0, 0, NULL, false, false);
+
+	if (chls == 4)
+	{
+		const int req = 3;
+		unsigned int length = width * height;
+		unsigned char* fixedData = new uchar[length * req];
+		//memcpy(fixedData, image_data, length * req);
+		for (size_t i = 0, destinationIndex = 0; i < length * chls; i += chls, destinationIndex += req)
+		{
+			fixedData[destinationIndex + 0] = image_data[i + 0];
+			fixedData[destinationIndex + 1] = image_data[i + 1];
+			fixedData[destinationIndex + 2] = image_data[i + 2];
+		}
+		delete[] image_data;
+		image_data = fixedData;
+		chls = req;
+	}
+	return BackImage(width, height, chls, image_data, false, true);
+}
+
+vbuffer imwriteToMemory(const BackImage& mat)
+{
+	int outLen = 0;
+	vbuffer buff;
+	auto data =  stbi_write_png_to_mem(mat.getData(), 0, mat.width(), mat.height(), mat.channels(), &outLen);
+	assert(outLen != 0);
+	buff.setData(data, outLen);
+	return buff;
 }
 
 BackPathStr openImageOrProject()
