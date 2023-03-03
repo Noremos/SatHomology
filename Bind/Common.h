@@ -2,8 +2,6 @@
 #include <filesystem>
 #include <fstream>
 
-#include "../side/json.hpp"
-
 #include "../side/emhash/hash_table5.hpp"
 #define MMMAP emhash5::HashMap
 
@@ -15,10 +13,6 @@
 #ifndef MAX
 #define MAX(a,b) ((a)>(b)?(a):(b))
 #endif
-
-using BackJson = nlohmann::json;
-using JsonObject = BackJson;
-using JsonArray = BackJson;
 
 using BackString = std::string;
 using BackDirStr = std::filesystem::path;

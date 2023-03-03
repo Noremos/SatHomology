@@ -70,38 +70,6 @@ export struct TileIterator
 	}
 };
 
-
-export BackJson jsonFromFile(const BackPathStr& path)
-{
-	BackString temp;
-
-	BackFileReader file;
-	file.open(path);
-	if (!file.is_open())
-	{
-		std::cerr << "Couldn't open a file.";
-		return BackJson();
-	}
-	file >> temp;
-	file.close();
-
-	return BackJson::parse(temp);
-}
-export void jsonToFile(const BackJson& json, const BackPathStr& path)
-{
-	BackString temp;
-
-	BackFileWriter file;
-	file.open(path, std::ios::trunc);
-	if (!file.is_open())
-	{
-		std::cerr << "Couldn't open a file.";
-		return;
-	}
-	file << json.dump();
-	file.close();
-}
-
 export int strToInt(const BackString& string, bool& ready)
 {
 	char* endptr;

@@ -1,6 +1,7 @@
 module;
-#include <memory>
 #include <algorithm>
+#include <iostream>
+#include <memory>
 #include <list>
 
 #include "../bind/common.h"
@@ -10,6 +11,7 @@ export module LayersCore;
 import IOCore;
 import BarcodeModule;
 import Platform;
+import JsonCore;
 
 struct SimpleLine;
 
@@ -72,7 +74,7 @@ public:
 
 	virtual void readJson(const BackJson& json, const BackDirStr& metaFolder)
 	{
-		 id = json["id"].get<int>();
+		 id = json["id"].asInt();
 		// name = json["name"].get<BackString>();
 		// iconId = json["iconId"].get<int>();
 	}

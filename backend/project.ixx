@@ -6,6 +6,9 @@ module;
 
 #include "../Bind/Common.h"
 
+
+export module ProjectModule;
+
 import CacheFilesModule;
 import Platform;
 
@@ -17,8 +20,8 @@ import LayersCore;
 import ClassifiersCore;
 import BarcodeModule;
 import GeoprocessorModule;
+import JsonCore;
 
-export module ProjectModule;
 
 
 namespace bc
@@ -286,7 +289,7 @@ public:
 			json[name] = *data.s;
 			break;
 		case sv_path:
-			json[name] = *data.p;
+			json[name] = data.p->string();
 			break;
 		}
 	}
@@ -296,19 +299,19 @@ public:
 		switch (type)
 		{
 		case sv_int:
-			*data.i = json[name].get<int>();
+			*data.i = json[name].asInt();
 			break;
 		case sv_float:
-			*data.f = json[name].get<double>();
+			*data.f = json[name].asDouble();
 			break;
 		case sv_double:
-			*data.d = json[name].get<double>();
+			*data.d = json[name].asDouble();
 			break;
 		case sv_str:
-			*data.s = json[name].get<BackString>();
+			*data.s = json[name].asString();
 			break;
 		case sv_path:
-			*data.p = json[name].get<BackString>();
+			*data.p = json[name].asString();
 			break;
 		}
 	}
@@ -377,26 +380,29 @@ class Project
 
 	void extraRead(const BackJson& json)
 	{
-		JsonArray arr = json.at("layers");
-		if (arr.size() > 0)
-		{
-			JsonObject obj = json.at(0);
-			main.readJson(obj, getPath(BackPath::classfiles));
-		}
-
+		JsonArray arr = json["layers"];
+		//if (arr.size() > 0)
+		//{
+		//	JsonObject obj = json[0];
+		//	main.readJson(obj, getPath(BackPath::classfiles));
+		//}
 	}
 
 	void extraWrite(BackJson& json)
 	{
 		int counter = 0;
 		JsonObject arr;
-		arr = arr.array();
-		if (arr.size() > 0)
-		{
-			JsonObject obj;
-			main.writeJson(obj, getPath(BackPath::classfiles), counter);
-			arr.push_back(obj);
-		}
+		//if (main.mat.length() > 3)
+		//{
+		//	JsonObject obj;
+		//	main.writeJson(obj, getPath(BackPath::classfiles), counter);
+		//	arr.append(obj);
+		//}
+
+		//for (lay : layers)
+		//{
+
+		//}
 		json["layers"] = arr;
 	}
 public:
@@ -428,8 +434,6 @@ public:
 	int modelHei;
 
 	ReadType imgType;
-
-	bool saveProject();
 
 	BackPathStr u_imgPath;
 	BackDirStr u_classCache;
@@ -657,6 +661,25 @@ public:
 		return true;
 	}
 
+	bool saveProject()
+	{
+		if (!reader)
+			return false;
+
+		mkDirIfNotExists(getPath(BackPath::metadata));
+
+		JsonObject gameObject;
+		write(gameObject);
+		jsonToFile(gameObject, getPath(BackPath::project));
+
+		mkDirIfNotExists(getPath(BackPath::classfiles));
+		mkDirIfNotExists(getPath(BackPath::tiles));
+		//BarClassifierCache ccb;
+		//ccb.saveCategories(classer.categs);
+		return true;
+	}
+
+
 	float getImgMaxVal() const;
 
 	float getImgMinVal() const;
@@ -879,31 +902,6 @@ using std::vector;
 Project* Project::proj = nullptr;
 using namespace bc;
 
-bool Project::saveProject()
-{
-	std::ofstream saveFile(getPath(BackPath::project), std::ios::trunc);
-	//BackJson data = BackJson::parse(f);
-
-	if (!saveFile.is_open())
-	{
-		std::cerr << "Couldn't open save file.";
-		return false;
-	}
-
-	mkDirIfNotExists(getPath(BackPath::metadata));
-
-	JsonObject gameObject;
-	write(gameObject);
-	saveFile << gameObject.dump();
-	saveFile.close();
-
-	mkDirIfNotExists(getPath(BackPath::classfiles));
-	mkDirIfNotExists(getPath(BackPath::tiles));
-	//BarClassifierCache ccb;
-	//ccb.saveCategories(classer.categs);
-	return true;
-}
-
 void Project::closeImages()
 {
 	for (int i = 0; i < images.size(); ++i)
@@ -1100,14 +1098,14 @@ void Project::readGeojson()
 	}
 	BackJson object = jsonFromFile(getPath(BackPath::geojson));
 
-	BackJson features = object["features"].array();
+	BackJson features = object["features"];// .array();
 
 	TiffReader* treader = dynamic_cast<TiffReader*>(reader);
 	//	openReader();
 	//	Size2 size = imgsrch.getTileSize();
 	for (size_t i = 0; i < features.size(); i++)
 	{
-		auto arrcoors = features.at(i)["geometry"].object()["coordinates"].array();
+		//auto arrcoors = features.at(i)["geometry"].object()["coordinates"].array();
 
 		// Send in format x, y, T
 		//QVector3D coord(arrcoors[0].toDouble(), arrcoors[1].toDouble(), 0);

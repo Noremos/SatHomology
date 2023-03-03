@@ -19,6 +19,7 @@ import CacheFilesModule;
 import LayersCore;
 import BarcodeModule;
 import GeoprocessorModule;
+import JsonCore;
 
 
 export struct BarCategories
@@ -128,7 +129,7 @@ public:
 private:
 	Barscalar asScalar(const BackJson& arr)
 	{
-		return Barscalar(arr.at(0).get<double>(), arr.at(1).get<double>(), arr.at(2).get<double>());
+		return Barscalar(arr[0].asDouble(), arr[1].asDouble(), arr[2].asDouble());
 	}
 };
 
@@ -274,7 +275,7 @@ public:
 
 	BarClasser(const FilterInfo* filter = nullptr) :
 		filter(filter)
-	{ 
+	{
 		if (colors.size() == 0)
 		{
 			srand(300);
@@ -652,10 +653,10 @@ public:
 		BackJson loadDoc = jsonFromFile("");// Project::getPathSt(BackPath::classifier));
 
 		JsonArray list = loadDoc["categories"];
-		for (size_t i = 0; i < list.size(); i++)
+		for (auto item : list)
 		{
-			JsonObject catId = list.at(i);
-			callback(catId["id"], catId["name"].get<std::string>());
+			const BackJson& catId = item;
+			callback(catId["id"].asInt(), catId["name"].asString());
 		}
 	}
 
@@ -729,7 +730,7 @@ public:
 			JsonObject catId;
 			catId["id"] = barclas.value[i];
 			catId["name"] = barclas.name[i];
-			arr.push_back(catId);
+			arr.append(catId);
 		}
 
 		BackJson loadDoc;

@@ -139,6 +139,9 @@
     <ClCompile Include="frontend\GuiOverlap.ixx">
       <Filter>GUI\WindowWidgets</Filter>
     </ClCompile>
+    <ClCompile Include="Bind\Json.ixx">
+      <Filter>Backend\Bind</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\imgui\imgui_internal.h">
@@ -182,6 +185,9 @@
     </ClInclude>
     <ClInclude Include="frontend\GuiWidgets.h">
       <Filter>GUI\WindowWidgets</Filter>
+    </ClInclude>
+    <ClInclude Include="Bind\json.h">
+      <Filter>Backend\Bind</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
