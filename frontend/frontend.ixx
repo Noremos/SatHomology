@@ -148,6 +148,15 @@ public:
 	}
 
 
+	RasterLayer* exeFilter(int algNum, int& layerId)
+	{
+		if (!isImageLoaded())
+			return nullptr;
+
+		return proj->exeFilter(algNum, layerId);
+	}
+
+
 	void loadImageOrProject(const BackPathStr& path);
 	bool addSelectedToClassData(int classIndex, BackImage* icon = nullptr);
 	void restoreSource();

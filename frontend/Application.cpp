@@ -947,7 +947,7 @@ namespace MyApp
 
 	void ToolSetDraw()
 	{
-		if (!ImGui::Begin("tools"))
+		if (!ImGui::Begin("Tools"))
 		{
 			ImGui::End();
 		}
@@ -955,6 +955,8 @@ namespace MyApp
 		if (ImGui::Button("Activation"))
 		{
 			//backend.
+			auto* layerData = backend.exeFilter(0, layersVals.temporalyId);
+			layersVals.setLayer<RasterGuiLayer, RasterLayer>("barcode", layerData);
 		}
 
 
@@ -971,6 +973,7 @@ namespace MyApp
 		drawBottomBar();
 
 
+		ToolSetDraw();
 		//drawClassifierMenu();
 
 		// Subs

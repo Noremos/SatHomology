@@ -11,20 +11,32 @@ struct StaticArray
 private:
 	T* m_buffer = nullptr;
 	size_t m_size = 0;
-
+	bool drop = true;
 
 public:
 	StaticArray() {}
 	StaticArray(const StaticArray& other) /*: s(other.s)*/
 	{
 		allocate(other.m_size);
-		std::copy(other.m_buffer, other.m_buffer + other.m_size, m_buffer);
+		drop = other.drop;
+
+		if (drop)
+		{
+			allocate(other.m_size);
+			std::copy(other.m_buffer, other.m_buffer + other.m_size, m_buffer);
+		}
+		else
+		{
+			m_buffer = other.m_buffer;
+			m_size = other.m_size;
+		}
 	}
 	/*std::cout << "move failed!\n";*/
 	StaticArray(StaticArray&& other) /*: s(std::move(o.s))*/
 	{
 		m_buffer = std::exchange(other.m_buffer, nullptr); // leave other in valid state
 		m_size = std::exchange(other.m_size, 0);
+		drop = std::exchange(other.drop, false);
 	}
 
 	T* data() const
@@ -38,6 +50,7 @@ public:
 	{
 		T* temp = std::exchange(m_buffer, nullptr);
 		m_size = 0;
+		drop = false;
 
 		return temp;
 	}
@@ -49,13 +62,20 @@ public:
 		release();
 		this->m_size = nsize;
 		m_buffer = new T[nsize];
+		drop = true;
 	}
 
-	void setData(T* newData, size_t size)
+	void setData(T* newData, size_t size, bool dropData = true)
 	{
 		release();
 		m_size = size;
 		m_buffer = newData;
+		drop = dropData;
+	}
+	void copyDataFrom(const T* newData, size_t size)
+	{
+		allocate(size);
+		std::copy(newData, newData + size, m_buffer);
 	}
 
 	void setToZero()
@@ -75,10 +95,18 @@ public:
 		// Guard self assignment
 		if (this == &other)
 			return *this;
+		drop = other.drop;
 
-		allocate(other.m_size);
-
-		std::copy(other.m_buffer, other.m_buffer + other.m_size, m_buffer);
+		if (drop)
+		{
+			allocate(other.m_size);
+			std::copy(other.m_buffer, other.m_buffer + other.m_size, m_buffer);
+		}
+		else
+		{
+			m_buffer = other.m_buffer;
+			m_size = other.m_size;
+		}
 		return *this;
 	}
 
@@ -91,17 +119,19 @@ public:
 
 		m_buffer = std::exchange(other.m_buffer, nullptr); // leave other in valid state
 		m_size = std::exchange(other.m_size, 0);
+		drop = std::exchange(other.drop, false);
 		return *this;
 	}
 
 	void release()
 	{
-		if (m_buffer)
+		if (m_buffer && drop)
 		{
 			delete[] m_buffer;
-			m_buffer = nullptr;
 		}
+		m_buffer = nullptr;
 		m_size = 0;
+		drop = false;
 	}
 
 	~StaticArray()
@@ -192,4 +222,3 @@ export using vbuffer = StaticArray<unsigned char>;
 //		close();
 //	}
 //};
-

@@ -1,6 +1,8 @@
 ﻿module;
 
 #include <vector>
+#include <iostream>
+
 #include "../Bind/Common.h"
 #include "../side/sqlite/sqlite3.h"
 
@@ -30,7 +32,7 @@ public:
 
 class BarClassCategor : public IBarClassCategor
 {
-public: 
+public:
 };
 
 class IBarCategories
@@ -141,7 +143,7 @@ class ClassDataCacher
 			fprintf(stderr, "Ошибка открытия/создания БД: %s\n", sqlite3_errmsg(db));
 		else
 		{
-			const char* SQL = "CREATE TABLE IF NOT EXISTS ClassData(id, bbf, png)";
+			const char* SQL = "CREATE TABLE IF NOT EXISTS CLASS_DATA(class_id, bbf, icon)";
 			// INSERT INTO FOO VALUES(1,2,3); INSERT INTO FOO SELECT * FROM FOO;";
 
 			if (sqlite3_exec(db, SQL, 0, 0, &err))
@@ -152,31 +154,149 @@ class ClassDataCacher
 		}
 	}
 
-	//void load(const BackPathStr& pathp, std::function<void(int classId, const BackPathStr& path)> callback)
-	void load(int id, const vbuffer& bbfFile, BackImage** preview)
+	using TrainCallback = std::function<void(int classId, vbuffer bbfFile, BackImage preview, size_t localId)>;
+
+	enum LoadField : unsigned char
 	{
-		/*BackDirStr dirl = pathp / (BackPathStr)intToStr(categ.id);
-		if (!pathExists(dirl))
-			return;
+		LF_BINFILE = 1,
+		LF_ICON = 2,
+		LF_ALL = 255
+	};
 
+	void loadAll(TrainCallback callback, int classId = -1, LoadField filter = LF_ALL)
+	{
+		sqlite3_stmt* stmt = prepareSelect(filter, classId);
 
-		for (auto const& entry : std::filesystem::directory_iterator(dirl))
+		while (sqlite3_step(stmt) == SQLITE_ROW)
 		{
-			if (!entry.is_regular_file())
-			{
-				continue;
-			}
+			vbuffer bff;
+			BackImage img(1,1,1);
+			size_t locId;
+			int classId;
 
-			BackPathStr filename = entry.path().string();
-			auto ext = entry.path().extension();
-			if (ext == ".jpg")
-			{
-				callback(categ, filename);
-			}
-		}*/
+			loadEnd(stmt, filter, classId, bff, img, locId);
+			callback(classId, bff, img, locId);
+		}
+
+		sqlite3_finalize(stmt);
 	}
 
-	void save(const vbuffer& bbfFile, BackImage* preview)
+private:
+	BackString prepareSelectBase(LoadField filter = LF_ALL)
+	{
+		BackString statement = "SELECT ";
+
+		if (filter == LF_ALL)
+		{
+			statement += " * ";
+		}
+		else
+		{
+			bool added = true;
+			statement += " class_id, ";
+			if (filter & LF_BINFILE)
+			{
+				if (added)
+					statement += ", ";
+
+				statement += "bbf";
+				added = true;
+			}
+			if (filter & LF_ICON)
+			{
+				if (added)
+					statement += ", ";
+				statement += "icon";
+			}
+		}
+		statement += " FROM CLASS_DATA";
+		return statement;
+	}
+
+	sqlite3_stmt* prepareSelect(LoadField filter = LF_ALL, int classId = -1)
+	{
+		BackString statement = prepareSelectBase(filter);
+
+		if (classId != -1)
+		{
+			statement += " WHERE rowid = ?";
+		}
+		else
+			statement += ";";
+
+		sqlite3_stmt* stmt;
+		auto rc = sqlite3_prepare_v2(db, statement.c_str(), -1, &stmt, nullptr);
+
+		if (rc != SQLITE_OK)
+		{
+			std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+			return nullptr;
+		}
+
+		if (classId != -1)
+			sqlite3_bind_int64(stmt, 1, classId); // bind the rowid value to the first placeholder
+
+		return stmt;
+	}
+
+	sqlite3_stmt* prepareSelectSingle(LoadField filter = LF_ALL, size_t localId = -1)
+	{
+		BackString statement = prepareSelectBase(filter);
+
+		if (localId != -1)
+		{
+			statement += " WHERE rowid = ?";
+		}
+		else
+			statement += ";";
+
+
+		sqlite3_stmt* stmt;
+		auto rc = sqlite3_prepare_v2(db, statement.c_str(), -1, &stmt, nullptr);
+
+		if (rc != SQLITE_OK)
+		{
+			std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+			return nullptr;
+		}
+
+		if (localId != -1)
+			sqlite3_bind_int64(stmt, 1, localId); // bind the rowid value to the first placeholder
+
+		return stmt;
+	}
+
+	void loadEnd(sqlite3_stmt* stmt, LoadField filter, int& classId, vbuffer& bbfFile, BackImage& preview, size_t& locId)
+	{
+		classId = sqlite3_column_int(stmt, 0);
+		int counter;
+		locId = sqlite3_column_int64(stmt, 0); // rowid
+		int counterId = 1;
+
+		bbfFile.release();
+		preview = BackImage(1,1,1);
+		if (filter & LF_BINFILE)
+		{
+			const void* file = sqlite3_column_blob(stmt, counterId );
+			int binfileSize = sqlite3_column_bytes(stmt, counterId );
+			bbfFile.copyDataFrom(reinterpret_cast<const uchar*>(file), binfileSize);
+
+			++counterId;
+		}
+		if (filter & LF_ICON)
+		{
+			StaticArray<const uchar> imgBuff;
+
+			const void* imgData = sqlite3_column_blob(stmt, counterId);
+			int imgSize = sqlite3_column_bytes(stmt, counterId);
+
+			preview = imreadFromMemory(reinterpret_cast<const uchar*>(imgData), imgSize);
+			++counterId;
+		}
+	}
+
+public:
+	int save(int classId, const vbuffer& bbfFile, BackImage* preview)
 	{
 		const char* SQL = "CREATE TABLE IF NOT EXISTS ClassData(id, bbf, png)";
 // INSERT INTO FOO VALUES(1,2,3); INSERT INTO FOO SELECT * FROM FOO;";
@@ -207,6 +327,9 @@ class ClassDataCacher
 
 		const char* result = sqlite3_errmsg(db);
 		rc = sqlite3_step(stmt);
+		size_t locId = sqlite3_last_insert_rowid(db);
+
+		return locId;
 	}
 
 	void close()

@@ -887,6 +887,108 @@ public:
 	BarcodeHolder threasholdLines(bc::Baritem* item);
 	void addClassData(int classIndex, BarcodeHolder* points, BackImage* destIcon = nullptr);
 	int addClassType(const BackString& name);
+
+	RasterLayer* exeFilter(int algNum, int& destLayerId)
+	{
+		if (u_displayFactor < 1.0)
+			throw std::exception();
+
+		RasterLayer* layer = nullptr;
+		if (destLayerId == -1)
+		{
+			layer = addLayerData<RasterLayer>();
+			destLayerId = layer->id;
+		}
+		else
+		{
+			// Replace, dont add!
+			layer = new RasterLayer();
+			layer->id = destLayerId;
+			layers.set(destLayerId, layer);
+		}
+		int id = getFirstNormIndex();
+		layer->mat = *images[id];
+
+		BackImage src = layer->mat;
+
+		uint hist[256];//256
+		uint offs[256];//256
+		std::fill_n(hist, 256, 0);
+		std::fill_n(offs, 256, 0);
+		for (size_t i = 0; i < src.length(); i++)
+		{
+			auto p = (int)src.getLiner(i);
+			++hist[p];//����� vector, �� ��
+		}
+
+		for (size_t i = 1; i < 256; ++i)
+		{
+			hist[i] += hist[i - 1];
+			offs[i] = hist[i - 1];
+		}
+
+		std::unique_ptr<uint> ods;
+		uint* data = new uint[src.length()];//256
+		ods.reset(data);
+
+		for (size_t i = 0; i < src.length(); i++)
+		{
+			uchar p = src.getLiner(i).getAvgUchar();
+			data[offs[p]++] = i;
+		}
+
+		//std::reverse(data, data + src.length());
+
+		std::vector<char> setted;
+		setted.resize(src.length());
+		std::fill(setted.begin(), setted.end(), 0);
+
+		BackImage& imgout = layer->mat;
+
+		//.width(), src.hei(), src.channels());
+		//imgout.fill(0);
+
+		const char poss[9][2] = { { -1,0 },{ -1,-1 },{ 0,-1 },{ 1,-1 },{ 1,0 },{ 1,1 },{ 0,1 },{ -1,1 },{ -1,0 } };
+		for (size_t i = 0; i < src.length(); i++)
+		{
+			auto dat = data[src.length() - i - 1];
+			auto p = bc::barvalue::getStatPoint(dat, src.width());
+			if (setted[i] == 10)
+			{
+				continue;
+			}
+
+			Barscalar val = imgout.getLiner(dat);
+
+			for (int i = 0; i < 8; ++i)
+			{
+				bc::point IcurPoint(p + poss[i]);
+
+				if (IcurPoint.x < 0 || IcurPoint.x >= src.width() || IcurPoint.y < 0 || IcurPoint.y >= src.height())
+					continue;
+
+				auto re = IcurPoint.getLiner(src.wid());
+
+				//if (setted[re] == 10)
+				//{
+				//	continue;
+				//}
+
+				Barscalar valNext = imgout.get(IcurPoint.x, IcurPoint.y);
+				if (valNext.absDiff(val) < 15)
+					imgout.set(IcurPoint.x, IcurPoint.y, val);
+				else
+				{
+					setted[re] = 10;
+					//imgout.set(IcurPoint.x, IcurPoint.y, 0);
+				}
+			}
+		}
+
+		return layer;
+	}
+
+
 private:
 	void write(BackJson& json) const;
 	void writeImages();

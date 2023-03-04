@@ -15,7 +15,7 @@ export
 {
 	BackImage imread(const BackString& path);
 	BackImage imread(const BackPathStr& path);
-	BackImage imreadFromMemory(const vbuffer& data);
+	BackImage imreadFromMemory(const uchar* data, size_t size);
 
 	void imwrite(const BackString& path, const BackImage& mat);
 	void imwrite(const BackPathStr& path, const BackImage& mat);
@@ -79,10 +79,10 @@ void imwrite(const BackPathStr& path, const BackImage& mat)
 }
 
 
-BackImage imreadFromMemory(const vbuffer& data)
+BackImage imreadFromMemory(const uchar* data, size_t size)
 {
 	int width, height, chls;
-	unsigned char* image_data = stbi_load_from_memory(data.data(), data.size(), & width, &height, &chls, 0);
+	unsigned char* image_data = stbi_load_from_memory(data, size, & width, &height, &chls, 0);
 	if (image_data == NULL)
 		return BackImage(0, 0, 0, NULL, false, false);
 
@@ -109,7 +109,7 @@ vbuffer imwriteToMemory(const BackImage& mat)
 {
 	int outLen = 0;
 	vbuffer buff;
-	auto data =  stbi_write_png_to_mem(mat.getData(), 0, mat.width(), mat.height(), mat.channels(), &outLen);
+	auto data = stbi_write_png_to_mem(mat.getData(), 0, mat.width(), mat.height(), mat.channels(), &outLen);
 	assert(outLen != 0);
 	buff.setData(data, outLen);
 	return buff;
