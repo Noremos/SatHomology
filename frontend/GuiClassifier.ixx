@@ -7,110 +7,139 @@ import ProjectModule;
 import IOCore;
 import Platform;
 import GuiWidgets;
+import TrainIO;
 
 Project* proj = Project::getProject();
 
+
 export struct GuiClassifer
 {
-	SelectableKeyValues<int> classesLB;
-
-	struct ClassTextures
+	struct GuiClass
 	{
-		int id;
-		std::vector<GuiImage> imgs;
-		ClassTextures(int i) : id(i)
-		{ }
+		int classId;
+		int vecId;
 	};
 
-	GuiDrawImage iconImage;
-	std::vector<ClassTextures> classImages;
-	int itemCurrent = 0;
-	bool show = false;
+	struct TrainPiecePreview
+	{
+		size_t dbLocalId;
+		GuiImage img;
+		TrainPiecePreview() : dbLocalId(-1)
+		{ }
 
-	int getClassImagesSize()
+		TrainPiecePreview(const BackImage& inimg, size_t locId) : dbLocalId(locId)
+		{
+			img.setImage(inimg, true);
+		}
+	};
+	struct ClassPreview
 	{
-		return classImages.size();
-	}
-	ClassTextures& getClassImagesData()
+		std::vector<TrainPiecePreview> imgs;
+	};
+
+	SelectableKeyValues<GuiClass> classesLB;
+	std::vector<ClassPreview> classImages;
+	bool show = false;
+	CachedObjectId selceted;
+
+	struct SelPair
 	{
-		return classImages[classesLB.currentValue()];
+		size_t dbId = -1;
+		int vecId = -1;
+	};
+
+	SelPair selectedPrevied;
+	char buffer[200];
+
+	GuiClassifer()
+	{
+		memset(buffer, 0, 200);
 	}
+
+
+	//int getClassImagesSize()
+	//{
+	//	return classImages.size();
+	//}
+	//ClassTextures& getClassImagesData()
+	//{
+	//	return classImages[classesLB.currentValue().vecId];
+	//}
 
 	ImVec2 getPngSize()
 	{
 		return ImVec2(32, 32);
 	}
 
-	void loaderCategors(int classId, const BackString& name)
+	void init()
 	{
-		classesLB.add(name, classId);
-		classImages.push_back(ClassTextures(classId));
-	}
+		classesLB.clear();
 
-	void loaderFile(int classId, const BackPathStr& path)
-	{
-		BackImage a = imread(path);
-		if (a.wid() == 0)
-			throw;
-		int wid = a.wid();
-		int hei = a.hei();
-		auto sa = getPngSize();
-		ResizeImage(wid, hei, sa.x, sa.y);
-		a.resize(wid, hei);
+		ClassDataIO io;
+		io.open(proj->getMetaPath(barclassificator::className()));
 
-		GuiImage img;
-		img.setImage(a);
-		classImages[classId].imgs.push_back(std::move(img));
-	}
+		for (auto &&c : proj->classCategs.categs)
+		{
+			classesLB.add(c.name, {c.id, (int)classImages.size()});
+			loadClassImages(io, c.id);
+		}
 
-	void loadClassImages()
-	{
-		//std::function<void(int, const BackString&)> casFS = loaderCategors;
-		//std::function<void(int, const BackPathStr&)> casif = loaderFile;
-
-		/*BarClassifierCache bcc;
-		bcc.loadCategories(casFS);
 		classesLB.endAdding();
-		bcc.loadImgs(casif, classesLB.getValuesIterator(), classesLB.getSize());*/
 	}
 
+	void loadClassImages(ClassDataIO& io, int classId)
+	{
+		ClassPreview prev;
+		ClassDataIO::TrainCallback cla = [&prev](int, vbuffer, BackImage preview, size_t dbLocalId)
+		{
+			prev.imgs.push_back(TrainPiecePreview(preview, dbLocalId));
+		};
+
+		io.loadAll(cla, classId, ClassDataIO::LF_ICON);
+		classImages.push_back(prev);
+	}
 
 	void drawClassifierWindow()
 	{
-		if (!show)
-			return;
-
-		if (!ImGui::Begin("Classifier"))
+		if (!ImGui::Begin("Classifier", &show))
 		{
 			ImGui::End();
 			return;
 		}
+		ImGui::InputText("Name", buffer, 200);
 
-		classesLB.drawListBox("������");
-		//ImGui::ListBox("My List Box", &item_current, items, IM_ARRAYSIZE(items), 4);
-
-
-		if (ImGui::Button("Add selected"))
+		if (ImGui::Button("Add"))
 		{
-			BackImage icon;
-			int selectedClass = classesLB.currentValue();
-			//if (backend.addSelectedToClassData(selectedClass, &icon))
-			//{
-			//	GuiImage img;
-			//	img.setImage(icon);
-			//	classImages[selectedClass].imgs.push_back(img);
-			//}
-			//backend.undoAddClass();
+			BackString st(buffer);
+			int classId = proj->addClassType(st);
+			classesLB.add(st, {classId, (int)classImages.size()});
+			classesLB.endAdding();
+
+			classImages.push_back(ClassPreview());
+		}
+		const bool hasClasses = classesLB.getSize() != 0;
+		ImGui::BeginDisabled(!hasClasses);
+
+		ImGui::SameLine();
+		if (ImGui::Button("Edit"))
+		{
+			BackString st(buffer);
+			int selectedClass = classesLB.currentValue().classId;
+			classesLB.updateName(classesLB.currentIndex, st);
+			proj->changeClassName(selectedClass, st);
 		}
 
 		ImGui::SameLine();
 		if (ImGui::Button("Drop"))
 		{
-			// Open a file dialog to select a folder
-			//backend.exportResult(getSavePath({ "*.png" }));
+			auto selectedClass = classesLB.currentValue();
+			proj->removeClassType(selectedClass.classId);
+			classImages.erase(classImages.begin() + selectedPrevied.vecId);
 		}
+		ImGui::EndDisabled();
 
-		ImGui::SameLine();
+		classesLB.drawListBox("Категории");
+
 		if (ImGui::Button("Load from image"))
 		{
 			ImGui::OpenPopup("LoadImg");
@@ -129,7 +158,7 @@ export struct GuiClassifer
 			//ImGui::Separator();
 
 			ImGui::Separator();
-			auto id = ImGui::FindWindowByName("ProcSetts")->ID;
+			//auto id = ImGui::FindWindowByName("ProcSetts")->ID;
 			//tbVals.tilePrview.draw(id, tbVals.getTileSize(), tbVals.getOffsetSize(), tbVals.getImageSize());
 			//if (ImGui::IsItemHovered())
 			//	ImGui::SetTooltip("I am a tooltip over a popup");
@@ -149,44 +178,58 @@ export struct GuiClassifer
 			ImGui::EndPopup();
 		}
 
-		ImGui::BeginGroup();
-
-		int selHei = getPngSize().y;
-		//auto& pngs = getClassImagesData().imgs;
-		if (ImGui::BeginListBox("##LayersList"))
+		if (hasClasses)
 		{
-			uint j = 0;
-			//for (auto& lay : layers)
+			ImGui::SameLine();
+			if (ImGui::Button("Add"))
 			{
-
-				ImGui::PushID(j);
-
-				//auto& icon = *lay->getIcon();
-
-
-				auto posBef = ImGui::GetCursorPos();
-
-				//ImGui::SetCursorPos({ posBef.x, posBef.y + iconSize.y });
-				//if (ImGui::Button(ICON_FA_TRASH "", iconSize))
-				//{
-
-				//}
-
-				//ImGui::SetCursorPos({ posBef.x + iconSize.x, posBef.y });
-
-				//ImGui::SameLine();
-				//ImGui::Image((void*)(intptr_t)icon.getTextureId(), getPngSize());
-
-				//ImGui::SameLine();
-				//bool seled = ImGui::Selectable(lay->getName(), curID == curLayerId, 0, ImVec2(winsize.x - 50, selHei));
-				//prevId = curID;
-
-				//ImGui::PopID();
-				++j;
+				BackImage icon;
+				auto selectedClass = classesLB.currentValue();
+				size_t dbLocalId = proj->addTrainData(selectedClass.classId, selceted, &icon);
+				classImages[selectedClass.vecId].imgs.push_back(TrainPiecePreview(icon, dbLocalId));
 			}
+
+			ImGui::SameLine();
+			if (ImGui::Button("Drop"))
+			{
+				auto selectedClass = classesLB.currentValue();
+				proj->removeTrainData(selectedClass.classId, selectedPrevied.dbId);
+				auto& b = classImages[selectedClass.vecId].imgs;
+				b.erase(b.begin() + selectedPrevied.vecId);
+			}
+
+			ImGui::SameLine();
+			ImGui::BeginGroup();
+
+			int selHei = getPngSize().y;
+			auto selSize = getPngSize() * 1.3;
+			int off = selSize.x - getPngSize().y / 2;
+			//auto& pngs = getClassImagesData().imgs;
+			if (ImGui::BeginListBox("##LayersList"))
+			{
+				int j = 0;
+				int selectedClass = classesLB.currentValue().vecId;
+				ClassPreview& prev = classImages[selectedClass];
+				for (auto& icon : prev.imgs)
+				{
+					ImGui::PushID(j);
+					auto posBef = ImGui::GetCursorPos();
+					bool seled = ImGui::Selectable("", icon.dbLocalId == selectedPrevied.dbId, 0, getPngSize() * 1.3);
+					if (seled)
+						selectedPrevied = {icon.dbLocalId, j};
+					auto posAfter = ImGui::GetCursorPos();
+					ImGui::SetCursorPos(posBef + ImVec2(off, off));
+					ImGui::Image(icon.img.getTexturePtr(), getPngSize());
+
+					ImGui::SetCursorPos(posAfter);
+
+					ImGui::PopID();
+					++j;
+				}
+				ImGui::EndListBox();
+			}
+			ImGui::EndGroup();
 		}
-		ImGui::EndListBox();
-		ImGui::EndGroup();
 		ImGui::End();
 	}
 };

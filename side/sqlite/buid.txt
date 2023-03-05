@@ -1,0 +1,19 @@
+lib /DEF:sqlite3.def /OUT:sqlite3.lib /MACHINE:x64
+
+https://gist.github.com/zeljic/d8b542788b225b1bcb5fce169ee28c55
+
+Download source from source (https://www.sqlite.org/download.html)
+
+For example: source https://www.sqlite.org/2022/sqlite-amalgamation-3390300.zip
+
+Download binary from binary
+
+For example: binary https://www.sqlite.org/2022/sqlite-dll-win64-x64-3390300.zip
+
+Extract both archives to the same directory
+
+Open Developer Command Prompt for VS 2017 by typing Developer Command in Windows Search
+
+Go to directory where you've extracted source code and binary files (via opened cmd)
+
+Run lib /DEF:sqlite3.def /OUT:sqlite3.lib /MACHINE:x64

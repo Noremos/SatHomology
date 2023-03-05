@@ -26,11 +26,23 @@ public:
 		if (!state->open(str.string()))
 			throw;
 	}
+
 	void openWrite(const BackPathStr& str)
 	{
 		state.reset(new StateBinFile::BinStateWriter());
 		if (!state->open(str.string()))
 			throw;
+	}
+
+
+	void openRead(std::istringstream& str)
+	{
+		state.reset(new StateBinFile::BinStateReader(str));
+	}
+
+	void openWrite(std::ostringstream& str)
+	{
+		state.reset(new StateBinFile::BinStateWriter(str));
 	}
 
 	TItem* load(int& index)
@@ -55,6 +67,11 @@ public:
 	bool canRead() const
 	{
 		return !state->ended();
+	}
+
+	void close()
+	{
+		state.reset(nullptr);
 	}
 
 private:

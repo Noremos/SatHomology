@@ -394,7 +394,7 @@ export class RasterLineGuiLayer : public GuiLayerData<RasterLineLayer>
 public:
 	GuiDrawImage main;
 	BackString debug;
-	SimpleLine* selecedLine = nullptr;
+	SimpleLine** selectedLine = nullptr;
 	GuiDrawCloudPointClick clickHandler;
 
 	RasterLineGuiLayer() : GuiLayerData()
@@ -413,17 +413,13 @@ public:
 		icon.setImage(data->mat, 32, 32, true);
 	}
 
-	ImVec2 drawSize;
 	virtual void draw(LayersVals& context, ImVec2 pos, ImVec2 size)
 	{
 		if (!visible)
 			return;
 
-		drawSize = context.drawSize;
 		main.drawImage(data->name.c_str(), pos, size);
 
-		ImVec2 prevOff = main.offset;
-		ImVec2 prevwWin = main.winPos;
 		clickHandler.draw(pos, size);
 		drawPropertisWindow();
 	}
@@ -470,11 +466,11 @@ public:
 		SimpleLine* line = data->clickResponser[y * main.width + x].get();
 		if (line)
 		{
-			if (selecedLine == line && line->parent)
+			if (*selectedLine == line && line->parent)
 				line = line->parent.get();
 
-			selecedLine = line;
-			return &selecedLine->matr;
+			*selectedLine = line;
+			return &(*selectedLine)->matr;
 		}
 
 		return nullptr;
@@ -489,12 +485,12 @@ public:
 
 	SimpleLine* moveToParenr()
 	{
-		return selecedLine = selecedLine->parent.get();
+		return *selectedLine = (*selectedLine)->parent.get();
 	}
 
 	void drawPropertisWindow()
 	{
-		SimpleLine* line = selecedLine;
+		SimpleLine* line = *selectedLine;
 		if (!line)
 		{
 			return;

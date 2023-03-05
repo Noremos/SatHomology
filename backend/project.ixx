@@ -21,6 +21,7 @@ import ClassifiersCore;
 import BarcodeModule;
 import GeoprocessorModule;
 import JsonCore;
+import TrainIO;
 
 
 
@@ -425,6 +426,9 @@ public:
 	}
 public:
 
+	BarCategories classCategs;
+	barclassificator classifier;
+
 	int curLayerIndex;
 	//ILayer* curLayer;
 	LayersList<ILayer> layers;
@@ -495,6 +499,10 @@ public:
 	{
 		//int displayWid = images[curImgInd]->width();
 		setCurrentSubImage(curImgInd);
+
+		classCategs = BarCategories::loadCategories(getPath(BackPath::classifier));
+		classifier.loadClasses(classCategs, proj->getMetaPath(barclassificator::className()));
+		//classifier.categs
 	}
 
 	void closeReader()
@@ -621,6 +629,12 @@ public:
 	}
 //
 
+
+	BackPathStr getMetaPath(const BackString& item) const
+	{
+		return getPath(BackPath::metadata) / item;
+	}
+//
 	void loadImage(const BackPathStr& path, int step)
 	{
 		closeReader();
@@ -885,8 +899,47 @@ public:
 	}
 
 	BarcodeHolder threasholdLines(bc::Baritem* item);
-	void addClassData(int classIndex, BarcodeHolder* points, BackImage* destIcon = nullptr);
-	int addClassType(const BackString& name);
+
+	int addClassType(const BackString& name)
+	{
+		int id = classCategs.addValue(name);
+		classifier.addClass(id);
+		return id;
+	}
+
+	void changeClassName(int classId, const BackString& name)
+	{
+		classCategs.changeName(classId, name);
+	}
+
+	void removeClassType(int classId)
+	{
+		classCategs.remove(classId);
+		classifier.removeClass(classId);
+	}
+
+
+	size_t addTrainData(int classId, CachedObjectId srcItemId, BackImage* destIcon)
+	{
+		GeoBarRasterCache cached;
+		cached.openRead(getPath(BackPath::binbar));
+		std::unique_ptr<bc::Baritem> r(cached.loadSpecific(srcItemId.tileId));
+
+		auto line = r->barlines[srcItemId.vecId];
+		if (destIcon != nullptr)
+		{
+			auto rect = bc::getBarRect(line->matr);
+			DataRect r = reader->getRect(rect.x, rect.y, rect.width, rect.height);
+			*destIcon = BackImage(r.wid, r.hei, r.data.samples, r.data.ptr.b);
+		}
+
+		return classifier.addData(classId, line, destIcon);
+	}
+
+	void removeTrainData(int classId, int localId)
+	{
+		classifier.removeData(classId, localId);
+	}
 
 	RasterLayer* exeFilter(int algNum, int& destLayerId)
 	{
@@ -987,7 +1040,6 @@ public:
 
 		return layer;
 	}
-
 
 private:
 	void write(BackJson& json) const;
@@ -1262,29 +1314,6 @@ void Project::exportResult(int imgNumber, const BackImage& resultMart)
 {
 	imwrite(getPath(BackPath::root) / "result.png", resultMart);
 	saveAllJsons(geojson, imgNumber, getPath(BackPath::geojson));
-}
-
-void Project::addClassData(int classIndex, BarcodeHolder* points, BackImage* destIcon)
-{
-	auto rect = bc::getBarRect(points->matrix);
-	BackImage rt(rect.width, rect.height, 3);
-	DataRect r = reader->getRect(rect.x, rect.y, rect.width, rect.height);
-	BackImage imgReprp;
-	if (destIcon == nullptr)
-		destIcon = &imgReprp;
-
-	*destIcon = BackImage(r.wid, r.hei, r.data.samples, r.data.ptr.b);
-
-	//BarClassifierCache saver;
-	//saver.save(points, classIndex, destIcon);
-	//classer.addData(classIndex, points->lines, false);
-}
-
-int Project::addClassType(const BackString& name)
-{
-	//classer.classes.push_back(Barcontainer());
-	//return classer.categs.addValue(name);
-	return 0;
 }
 
 

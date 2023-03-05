@@ -94,6 +94,7 @@ namespace MyApp
 	}
 
 	GuiBackend backend;
+	GuiClassifer classerVals;
 
 	bool useAsync = false;// true;
 	// Structs
@@ -166,6 +167,7 @@ namespace MyApp
 	};
 	WindowsValues commonValus;
 	LayersVals layersVals;// (backend);
+	SimpleLine* selectedLine = nullptr;
 
 	struct TopbarValues
 	{
@@ -246,7 +248,8 @@ namespace MyApp
 				int layerId = -1;
 				RasterLineLayer* layerData = backend.createBarcode(properties, filterInfo.filterInfo, &layerId);
 				assert(layerData);
-				layersVals.setLayer<RasterLineGuiLayer, RasterLineLayer>("barcode", layerData);
+				auto t = layersVals.setLayer<RasterLineGuiLayer, RasterLineLayer>("barcode", layerData);
+				t->selectedLine = &selectedLine;
 			}
 		}
 
@@ -279,42 +282,12 @@ namespace MyApp
 	{
 		int classId = 0;
 		std::string valeExtra = "barclass;";
-		bool showClassifier = false;
 		BackString debug;
 		bool drawPics = true;
 		bool showUpdaePopup = false;
 		GuiFilter filtere;
 	};
 	BottomBar bottomVals;
-
-	void loaderCategors(int classId, const BackString& name);
-	void loaderFile(int classId, const BackPathStr& path);
-
-
-	GuiClassifer classerVals;
-
-
-	void loaderCategors(int classId, const BackString& name)
-	{
-		classerVals.classesLB.add(name, classId);
-		classerVals.classImages.push_back(GuiClassifer::ClassTextures(classId));
-	}
-
-	void loaderFile(int classId, const BackPathStr& path)
-	{
-		BackImage a = imread(path);
-		if (a.wid() == 0)
-			throw;
-		int wid = a.wid();
-		int hei = a.hei();
-		auto sa = classerVals.getPngSize();
-		ResizeImage(wid, hei, sa.x, sa.y);
-		a.resize(wid, hei);
-
-		GuiImage img;
-		img.setImage(a);
-		classerVals.classImages[classId].imgs.push_back(std::move(img));
-	}
 
 	// -------------------
 
@@ -431,7 +404,7 @@ namespace MyApp
 						//layer->data = backend.getMain();
 						centerVals.heimap.init(layer->getData()->mat);
 						centerVals.tilemap.init(&layer->main, backend.getTileSize());
-						classerVals.loadClassImages();
+						classerVals.init();
 						unsetPoints();
 					}
 				}
@@ -630,7 +603,13 @@ namespace MyApp
 			ImVec2 rsize = centerVals.imgMain.displaySize;
 			layersVals.draw(pos, rsize);
 			if (centerVals.imgMain.clicked)
+			{
 				layersVals.onClick(centerVals.imgMain.clickedPos);
+				if (selectedLine)
+				{
+					classerVals.selceted = {selectedLine->id, selectedLine->barlineIndex};
+				}
+			}
 
 			centerVals.heimap.draw(pos, rsize);
 			centerVals.tilemap.draw(pos, rsize);
@@ -702,7 +681,8 @@ namespace MyApp
 					bottomVals.showUpdaePopup = false;
 					ImGui::CloseCurrentPopup();
 					auto* layerData = backend.processMain(bottomVals.valeExtra, bottomVals.filtere.filterInfo, layersVals.temporalyId);
-					layersVals.setLayer<RasterLineGuiLayer, RasterLineLayer>("barcode", layerData);
+					auto t = layersVals.setLayer<RasterLineGuiLayer, RasterLineLayer>("barcode", layerData);
+					t->selectedLine = &selectedLine;
 
 					//commonValus.onAir = true;
 					//commonValus.future = std::async(&GuiBackend::processMain, std::ref(backend),
@@ -754,7 +734,7 @@ namespace MyApp
 			ImGui::SameLine(0, 30);
 			if (ImGui::Button("Классификатор"))
 			{
-				bottomVals.showClassifier = true;
+				classerVals.show = true;
 			}
 
 			ImGui::SameLine(0, 30);
@@ -974,6 +954,7 @@ namespace MyApp
 
 
 		ToolSetDraw();
+		classerVals.drawClassifierWindow();
 		//drawClassifierMenu();
 
 		// Subs

@@ -42,12 +42,25 @@ struct SelectableKeyValues
 		++size;
 	}
 
+	void updateName(int index, const BackString& name)
+	{
+		holder[index] = name;
+		items[index] = holder[index].c_str();
+	}
+
 	void endAdding()
 	{
 		for (size_t i = 0; i < holder.size(); i++)
 		{
 			items.push_back(holder[i].c_str());
 		}
+	}
+
+	void clear()
+	{
+		size = 0;
+		holder.clear();
+		values.clear();
 	}
 
 	const char** getItems()
@@ -188,10 +201,8 @@ public:
 
 export class GuiDrawImage : public GuiImage
 {
-	ImVec2 zoom = ImVec2(1, 1);
 public:
 	WindowVec2 localDisplayPos;
-	ApplicationVec2 winPos;
 	ImVec2 displaySize;
 	virtual ~GuiDrawImage()
 	{ }
@@ -199,13 +210,6 @@ public:
 	GuiImage& operator=(const GuiImage& other) noexcept = delete;
 	GuiImage& operator=(GuiImage&& other) noexcept = delete;
 
-	float getZoom()
-	{
-		return zoom.x;
-	}
-	WindowVec2 offset = ImVec2(0, 0);
-	ItemVec2 clickedPos = ImVec2(0, 0);
-	bool clicked = false;
 
 	int getRealX(int x)
 	{
@@ -232,7 +236,6 @@ public:
 		ImGui::SetCursorPos(pos);
 		if (ImGui::BeginChild(name, size, false, window_flags))
 		{
-			winPos = pos;
 			drawTexture(pos, size);
 		}
 		ImGui::EndChild();

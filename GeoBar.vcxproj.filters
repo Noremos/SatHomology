@@ -103,12 +103,6 @@
     <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\ImageReader.ixx">
       <Filter>Barcode\modules</Filter>
     </ClCompile>
-    <ClCompile Include="backend\GeoProcessor.ixx">
-      <Filter>Barcode\modules</Filter>
-    </ClCompile>
-    <ClCompile Include="Bind\Framework.ixx">
-      <Filter>Barcode\modules</Filter>
-    </ClCompile>
     <ClCompile Include="frontend\GuiCommon.cpp">
       <Filter>GUI</Filter>
     </ClCompile>
@@ -141,6 +135,24 @@
     </ClCompile>
     <ClCompile Include="Bind\Json.ixx">
       <Filter>Backend\Bind</Filter>
+    </ClCompile>
+    <ClCompile Include="frontend\GuiClassifier.ixx">
+      <Filter>GUI\WindowWidgets</Filter>
+    </ClCompile>
+    <ClCompile Include="frontend\GuiWidgets.ixx">
+      <Filter>GUI\WindowWidgets</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\BackTypes.ixx">
+      <Filter>Backend</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\TrainData.ixx">
+      <Filter>Backend</Filter>
+    </ClCompile>
+    <ClCompile Include="Bind\Framework.ixx">
+      <Filter>Backend\Bind</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\GeoProcessor.ixx">
+      <Filter>Backend</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -183,16 +195,16 @@
     <ClInclude Include="Bind\Common.h">
       <Filter>Backend\Bind</Filter>
     </ClInclude>
-    <ClInclude Include="frontend\GuiWidgets.ixx">
-      <Filter>GUI\WindowWidgets</Filter>
-    </ClInclude>
-    <ClInclude Include="Bind\json.h">
-      <Filter>Backend\Bind</Filter>
+    <ClInclude Include="side\sqlite\sqlite3.h">
+      <Filter>Side</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\imgui\misc\debuggers\imgui.natvis">
       <Filter>Файлы ресурсов</Filter>
+    </None>
+    <None Include="libs\sqlite3.def">
+      <Filter>Side</Filter>
     </None>
   </ItemGroup>
 </Project>

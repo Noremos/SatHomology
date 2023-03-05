@@ -6,14 +6,16 @@
 #include "../Bind/Common.h"
 #include "../side/sqlite/sqlite3.h"
 
+
 export module TrainIO;
+
 import BarcodeModule;
 import JsonCore;
 import IOCore;
 import BarholdersModule;
 import BackTypes;
 import Platform;
-
+import CacheFilesModule;
 
 //enum ClassCategType
 //{
@@ -29,8 +31,13 @@ public:
 	//virtual BackJson save() = 0;
 };
 
+export struct CachedObjectId
+{
+	int tileId;
+	int vecId;
+};
 
-class BarClassCategor : public IBarClassCategor
+export class BarClassCategor : public IBarClassCategor
 {
 public:
 };
@@ -54,6 +61,30 @@ public:
 
 		categs.push_back({ id, nname });
 		return id;
+	}
+
+	void changeName(int id, const BackString& nname)
+	{
+		for (auto& c : categs)
+		{
+			if (c.id == id)
+			{
+				c.name = nname;
+				break;
+			}
+		}
+	}
+
+	void remove(int id)
+	{
+		for (size_t i = 0; i < categs.size(); i++)
+		{
+			if (categs[i].id == id)
+			{
+				categs.erase(categs.begin() + i);
+				break;
+			}
+		}
 	}
 
 	size_t size()
@@ -113,16 +144,17 @@ public:
 	}
 };
 
-class ClassData
-{
-	int categId;
-	BarcodeHolder curBar;
-};
+// class ClassData
+// {
+// 	int categId;
+// 	BarcodeHolder curBar;
+// };
 
-class ClassDataCacher
+export class ClassDataIO
 {
 	sqlite3* db = nullptr;
 
+public:
 	void openRead(const BackPathStr& dbpath)
 	{
 		open(dbpath);
@@ -175,7 +207,7 @@ class ClassDataCacher
 			int classId;
 
 			loadEnd(stmt, filter, classId, bff, img, locId);
-			callback(classId, bff, img, locId);
+			callback(classId, std::move(bff), std::move(img), locId);
 		}
 
 		sqlite3_finalize(stmt);
@@ -298,31 +330,23 @@ private:
 public:
 	int save(int classId, const vbuffer& bbfFile, BackImage* preview)
 	{
-		const char* SQL = "CREATE TABLE IF NOT EXISTS ClassData(id, bbf, png)";
-// INSERT INTO FOO VALUES(1,2,3); INSERT INTO FOO SELECT * FROM FOO;";
-		char* err = 0;
-
-		if (sqlite3_exec(db, SQL, 0, 0, &err))
-		{
-			fprintf(stderr, "Ошибка SQL: %sn", err);
-			sqlite3_free(err);
-		}
-
 		sqlite3_stmt* stmt = NULL;
 
 		const char* statement = "INSERT INTO CLASS_DATA VALUES (?, ?, ?);";
 
 		auto rc = sqlite3_prepare_v2(db, statement, 0, &stmt, NULL);
 
-		rc = sqlite3_bind_blob(stmt, 1, bbfFile.data(), bbfFile.size(), SQLITE_TRANSIENT);
+		rc = sqlite3_bind_int(stmt, 1, classId); // bind the rowid value to the first placeholder
+
+		rc = sqlite3_bind_blob(stmt, 2, bbfFile.data(), bbfFile.size(), SQLITE_TRANSIENT);
 
 		if (preview)
 		{
 			vbuffer imgPrev = imwriteToMemory(*preview);
-			rc = sqlite3_bind_blob(stmt, 2, imgPrev.data(), imgPrev.size(), SQLITE_TRANSIENT);
+			rc = sqlite3_bind_blob(stmt, 3, imgPrev.data(), imgPrev.size(), SQLITE_TRANSIENT);
 		}
 		else
-			rc = sqlite3_bind_null(stmt, 2);
+			rc = sqlite3_bind_null(stmt, 3);
 
 
 		const char* result = sqlite3_errmsg(db);
@@ -337,127 +361,191 @@ public:
 		sqlite3_close(db);
 	}
 
-	~ClassDataCacher()
+	~ClassDataIO()
 	{
 		close();
 	}
+
+	void remove(int localId)
+	{
+		sqlite3_stmt* stmt = NULL;
+		const char* statement = "DELETE FROM CLASS_DATA WHERE ROWID = ?;";
+
+		auto rc = sqlite3_prepare_v2(db, statement, 0, &stmt, NULL);
+		rc = sqlite3_bind_int64(stmt, 1, localId); // bind the rowid value to the first placeholder
+		const char* result = sqlite3_errmsg(db);
+		rc = sqlite3_step(stmt);
+	}
 };
+
+// class ByteStream : public std::ostream {
+
+// public:
+// 	ByteStream() : std::ostream()
+// 	{}
+
+// 	// Overload operator<< for std::byte
+// 	ByteStream& operator<<(std::byte b) {
+// 		*static_cast<std::ostream*>(this) << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(b);
+// 		return *this;
+// 	}
+// };
 
 export class barclassificator
 {
 public:
-	BarCategories categs;
-	std::vector <bc::Barcontainer> classes;
-
-
-	//void loadClasses(const BackDirStr& path, barclassificator& barclas)
-	//{
-	//	barclas.udpdateClasses();
-	//	auto& crgs = barclas.categs.value;
-
-	//	for (auto categ : crgs)
-	//	{
-	//		BackDirStr dirl = path / intToStr(categ);
-	//		if (!pathExists(dirl))
-	//			continue;
-
-	//		for (auto const& entry : std::filesystem::directory_iterator(dirl))
-	//		{
-	//			if (!entry.is_regular_file())
-	//			{
-	//				continue;
-	//			}
-
-	//			auto ext = entry.path().extension();
-	//			if (ext == ".bbf")
-	//			{
-	//				BackPathStr filename = entry.path();
-	//				GeoBarCloudCache reader;
-	//				reader.openRead(filename.string());
-	//				int ind = 0;
-	//				std::unique_ptr<BarcodeHolder> prt(reader.load(ind));
-	//				//barclas.addData(categ, prt->lines, true);
-	//			}
-	//			else if (ext == ".jpg")
-	//			{
-
-	//			}
-	//		}
-	//	}
-	//}
-
-
-	void addData(int classInd, bc::barlinevector& cont, const bool move = true)
+	struct ClassData
 	{
-		bc::Baritem* item = new bc::Baritem();
-		if (move)
+		int classId;
+		bc::Barcontainer container;
+		MMMAP<size_t, int> cacheIndex;
+	};
+	std::vector<ClassData> classes;
+	BackPathStr dbPath;
+
+	static BackString className()
+	{
+		return "CLASSIC";
+	}
+
+	void loadClasses(const BarCategories& categs, const BackPathStr& path)
+	{
+		dbPath = path;
+		classes.clear();
+		for (auto categ : categs.categs)
 		{
-			item->barlines = std::move(cont);
+			addClass(categ.id);
 		}
-		else
+	}
+
+	ClassData& getClass(int id)
+	{
+		for (int i = 0; i < classes.size(); i++)
 		{
-			// Copy
-			for (size_t j = 0; j < cont.size(); j++)
+			if (classes[i].classId == id)
 			{
-				item->barlines.push_back(cont[j]->clone());
+				return classes[i];
 			}
 		}
 
-		item->relen();
-		classes[classInd].addItem(item);
+		throw;
 	}
 
-	void addData(int classInd, bc::Baritem* item)
+	void addClass(int id)
 	{
-		item->relen();
-		classes[classInd].addItem(item);
+		ClassData nd;
+		nd.classId = id;
+		classes.push_back(nd);
 	}
 
-
-	void udpdateClasses()
+	void removeClass(int id)
 	{
-		for (size_t i = classes.size(); i < categs.size(); i++)
+		for (int i = 0; i < classes.size(); i++)
 		{
-			classes.push_back(bc::Barcontainer());
+			if (classes[i].classId == id)
+			{
+				classes.erase(classes.begin() + i);
+				break;
+			}
 		}
 	}
 
-	void removeLast(int classInd)
+	size_t addData(int classInd, bc::barline* raw, BackImage* icon)
 	{
-		classes[classInd].remoeLast();
+		bc::Baritem* item = new bc::Baritem();
+		raw->getChilredAsList(item->barlines, true, false, false);
+		item->relen();
+
+		auto classHolder = getClass(classInd);
+
+		std::ostringstream st;
+		GeoBarRasterCache cached;
+		cached.openWrite(st);
+		cached.save(item, 0);
+		cached.close();
+
+		ClassDataIO io;
+		io.openWrite(dbPath);
+		vbuffer temp;
+		temp.setData(reinterpret_cast<uchar*>(st.str().data()), st.str().length());
+		size_t id = io.save(classInd, temp, icon);
+
+		classHolder.cacheIndex.insert(std::make_pair(id, classHolder.container.count()));
+		classHolder.container.addItem(item);
+
+		return id;
+	}
+
+	// void addData(int classInd, bc::barlinevector& cont, const bool move = true)
+	// {
+	// 	auto classHolder = getClass(classInd);
+	// 	bc::Baritem* item = new bc::Baritem();
+	// 	if (move)
+	// 	{
+	// 		item->barlines = std::move(cont);
+	// 	}
+	// 	else
+	// 	{
+	// 		// Copy
+	// 		for (size_t j = 0; j < cont.size(); j++)
+	// 		{
+	// 			item->barlines.push_back(cont[j]->clone());
+	// 		}
+	// 	}
+
+	// 	item->relen();
+	// 	classHolder.container.addItem(item);
+	// }
+
+	// void addData(int classInd, bc::Baritem* item)
+	// {
+	// 	auto classHolder = getClass(classInd);
+	// 	item->relen();
+	// 	classHolder.container.addItem(item);
+	// }
+
+	void removeData(int classId, size_t id)
+	{
+		auto classHolder = getClass(classId);
+		auto it = classHolder.cacheIndex.find(id);
+		if (it != classHolder.cacheIndex.end())
+		{
+			delete classHolder.container.exractItem(it->second);
+			classHolder.cacheIndex.erase(it);
+			ClassDataIO io;
+			io.openWrite(dbPath);
+			io.remove(id);
+		}
 	}
 
 	////	int getType(bc::barlinevector &bar0lines)
-	//int getType(const BarcodeHolder* bar0)
-	//{
-	//	auto cp = bc::CompireStrategy::CommonToLen;
-	//	float res = 0;
+	int getType(bc::barline* raw)
+	{
+		bc::Baritem newOne;
+		raw->getChilredAsList(newOne.barlines, true, false, false);
+		newOne.relen();
 
-	//	//		bc::Baritem *bar0 = new bc::Baritem();
-	//	//		bar0->barlines = bar0lines;
-	//	bc::Baritem newOne;
-	//	bar0->cloneLines(newOne.barlines);
-	//	//		newOne.shdowCopy = true;
-	//	newOne.relen();
+		auto cp = bc::CompireStrategy::CommonToLen;
+		float res = 0;
 
-	//	int maxInd = -1;
-	//	float maxP = res;
-	//	for (size_t i = 0; i < classes.size(); i++)
-	//	{
-	//		float ps = classes[i].compireBest(&newOne, cp);
-	//		if (ps > maxP)
-	//		{
-	//			maxP = ps;
-	//			maxInd = i;
-	//		}
-	//	}
+		int maxInd = -1;
+		float maxP = res;
+		for (size_t i = 0; i < classes.size(); i++)
+		{
+			float ps = classes[i].container.compireBest(&newOne, cp);
+			if (ps > maxP)
+			{
+				maxP = ps;
+				maxInd = i;
+			}
+		}
 
-	//	//		bar0.barlines.clear();
-	//	//		delete bar0;
+		//		bar0.barlines.clear();
+		//		delete bar0;
 
-	//	assert(maxP <= 1.0);
-	//	return maxP > 0.5 ? maxInd : -1;
-	//}
+		assert(maxP <= 1.0);
+		return maxP > 0.5 ? maxInd : -1;
+	}
 
 
 	~barclassificator()
