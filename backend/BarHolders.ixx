@@ -11,16 +11,6 @@ namespace bc
 }
 
 
-export class IClassItem
-{
-public:
-	virtual bc::barlinevector& getLines() = 0;
-	virtual bc::barvector& getMatrix() = 0;
-	virtual int getDeath() = 0;
-
-	virtual void read() = 0;
-	virtual void write() = 0;
-};
 
 export class BarcodeHolder
 {

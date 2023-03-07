@@ -35,6 +35,12 @@
     <Filter Include="GUI\WindowWidgets">
       <UniqueIdentifier>{a9993416-ea44-4b29-b242-09d275d590c2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Backend\Interfaces">
+      <UniqueIdentifier>{d451a9f2-ba30-496b-8a09-4039903ed226}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Backend\Impl">
+      <UniqueIdentifier>{8b38a57b-8748-4c48-a38a-8a7dcb5a2b8d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\imgui\imgui.cpp">
@@ -71,15 +77,6 @@
       <Filter>Backend</Filter>
     </ClCompile>
     <ClCompile Include="backend\SimpleImgReader.ixx">
-      <Filter>Backend</Filter>
-    </ClCompile>
-    <ClCompile Include="backend\Classifiers.ixx">
-      <Filter>Backend</Filter>
-    </ClCompile>
-    <ClCompile Include="backend\BarHolders.ixx">
-      <Filter>Backend</Filter>
-    </ClCompile>
-    <ClCompile Include="backend\Layers.ixx">
       <Filter>Backend</Filter>
     </ClCompile>
     <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\Barcode.ixx">
@@ -153,6 +150,24 @@
     </ClCompile>
     <ClCompile Include="backend\GeoProcessor.ixx">
       <Filter>Backend</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\Classifer\ClassInterface.ixx">
+      <Filter>Backend\Interfaces</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\Layers\layerInterface.ixx">
+      <Filter>Backend\Interfaces</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\Classifiers.ixx">
+      <Filter>Backend\Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\Classifer\ClassicBarClassifer.ixx">
+      <Filter>Backend\Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\BarHolders.ixx">
+      <Filter>Backend\Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\Layers\layers.ixx">
+      <Filter>Backend\Impl</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

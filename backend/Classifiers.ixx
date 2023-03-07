@@ -20,56 +20,9 @@ import LayersCore;
 import BarcodeModule;
 import GeoprocessorModule;
 import JsonCore;
-
-
-export struct FilterInfo
-{
-	struct FRange
-	{
-		int first;
-		int second;
-
-		//template<class T>
-		//bool inRange(const T& val) const
-		//{
-		//	return val >= first && val <= second;
-		//}
-
-		bool inRange(int val) const
-		{
-			return val >= first && val <= second;
-		}
-
-		bool inRange(const Barscalar& val) const
-		{
-			return val >= first && val <= second;
-		}
-
-		bool notInRange(int val) const
-		{
-			return val < first || val > second;
-		}
-
-		bool notInRange(const Barscalar& val) const
-		{
-			return val < first && val > second;
-		}
-	};
-
-	FRange start{ 0,255 };
-	FRange len{ 0,255 };
-	FRange matrSizeProc{ 0,100 };
-	FRange depth{ 0,1000 };
-	int imgLen = 0;
-
-	bool needSkip(bc::barline* line) const
-	{
-		return start.notInRange(line->start) ||
-			len.notInRange(line->len()) ||
-			matrSizeProc.notInRange(line->matr.size() * 100 / imgLen) ||
-			depth.notInRange(line->getDeath());
-	}
-};
+import ClassifierInterface;
+import RasterLayers;
+import RasterLayers;
 
 export class BarClasser
 {
@@ -215,8 +168,8 @@ private:
 		for (size_t i = 0; i < vec.size(); ++i)
 		{
 			auto* curLine = vec.at(i);
-			if (filter->needSkip(curLine))
-				continue;
+			//if (filter->needSkip(curLine))
+			//	continue;
 
 			const auto& matr = curLine->matr;
 
@@ -323,8 +276,8 @@ private:
 		{
 			auto* curLine = vec.at(i);
 
-			if (filter->needSkip(curLine->lines[0]))
-				continue;
+			//if (filter->needSkip(curLine->lines[0]))
+			//	continue;
 
 			const auto& matr = curLine->matrix;
 
@@ -435,10 +388,10 @@ private:
 
 		for (size_t var = 0; var < item->barlines.size(); ++var)
 		{
-			if (filter && filter->needSkip(item->barlines[var]))
-			{
-				continue;
-			}
+			//if (filter && filter->needSkip(item->barlines[var]))
+			//{
+			//	continue;
+			//}
 
 			auto& m = item->barlines[var]->matr[0];
 			bc::point rp(m.getX() + offset.x, m.getY() + offset.y);
@@ -448,5 +401,3 @@ private:
 		return createSplitCloudBarcode(cloud);
 	}
 };
-
-

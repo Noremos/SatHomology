@@ -185,8 +185,12 @@
     <ClCompile Include="..\imgui\backends\imgui_impl_opengl3.cpp" />
     <ClCompile Include="backend\BarHolders.ixx" />
     <ClCompile Include="backend\CacheFiles.ixx" />
+    <ClCompile Include="backend\Classifer\ClassicBarClassifer.ixx" />
+    <ClCompile Include="backend\Classifer\ClassInterface.ixx" />
     <ClCompile Include="backend\Classifiers.ixx" />
     <ClCompile Include="backend\GeoProcessor.ixx" />
+    <ClCompile Include="backend\Layers\layerInterface.ixx" />
+    <ClCompile Include="backend\Layers\layers.ixx" />
     <ClCompile Include="backend\project.ixx" />
     <ClCompile Include="backend\SimpleImgReader.ixx" />
     <ClCompile Include="backend\BackTypes.ixx" />
@@ -230,9 +234,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\imgui\misc\debuggers\imgui.natvis" />
-    <ClCompile Include="backend\Layers.ixx">
-      <FileType>Document</FileType>
-    </ClCompile>
     <None Include="libs\sqlite3.def" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

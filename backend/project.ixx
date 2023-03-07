@@ -22,6 +22,8 @@ import BarcodeModule;
 import GeoprocessorModule;
 import JsonCore;
 import TrainIO;
+import RasterLayers;
+import Classifiers;
 
 
 
@@ -507,7 +509,7 @@ public:
 		setCurrentSubImage(curImgInd);
 
 		classCategs = BarCategories::loadCategories(getPath(BackPath::classifier));
-		classifier.loadClasses(classCategs, proj->getMetaPath(barclassificator::className()));
+		classifier.loadClasses(classCategs, proj->getMetaPath(classifier.className()));
 		//classifier.categs
 	}
 
@@ -842,28 +844,28 @@ public:
 		layer->init(images[id]->width(), images[id]->height());
 
 		// Cacher
-		BarClasser* classifier;
+		BarClasser* classifiere;
 		RasterBarClasser _rsClass;// (this, &filter);
 		CloudBarClasser _clClass;// (this, &filter);
 
 		if (u_algorithm == 0)
 		{
-			classifier = &_rsClass;
+			classifiere = &_rsClass;
 		}
 		else
 		{
-			classifier = &_clClass;
+			classifiere = &_clClass;
 		}
 
-		classifier->setFilter(&filter);
-		classifier->openRead(getPath(BackPath::binbar));
+		classifiere->setFilter(&filter);
+		classifiere->openRead(getPath(BackPath::binbar));
 
 		LayerProvider prov(u_displayFactor);
 		prov.init(tileSize, reader->width());
 
-		while (classifier->canRead())
+		while (classifiere->canRead())
 		{
-			classifier->classBarcodeFromCache(*layer, prov);
+			classifiere->classBarcodeFromCache(*layer, prov);
 		}
 
 		return layer;

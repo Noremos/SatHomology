@@ -19,6 +19,8 @@ import Platform;
 import IOCore;
 import BarcodeModule;
 import LayersCore;
+import RasterLayers;
+
 import ClassifiersCore;
 import GuiWidgets;
 
