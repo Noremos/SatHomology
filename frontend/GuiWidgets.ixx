@@ -42,6 +42,19 @@ struct SelectableKeyValues
 		++size;
 	}
 
+	void remove(int id)
+	{
+		holder.erase(holder.begin() + id);
+		values.erase(values.begin() + id);
+		--size;
+		endAdding();
+
+		if (id <= currentIndex)
+		{
+			--currentIndex;
+		}
+	}
+
 	void updateName(int index, const BackString& name)
 	{
 		holder[index] = name;
@@ -50,6 +63,7 @@ struct SelectableKeyValues
 
 	void endAdding()
 	{
+		items.clear();
 		for (size_t i = 0; i < holder.size(); i++)
 		{
 			items.push_back(holder[i].c_str());
@@ -73,18 +87,29 @@ struct SelectableKeyValues
 		return values[currentIndex];
 	}
 
+	const BackString& currentName()
+	{
+		return holder[currentIndex];
+	}
+
 	void drawCombobox(const char* name, int width = 200)
 	{
+		int oldId = currentIndex;
 		const char** items = getItems();
 		ImGui::SetNextItemWidth(width);
 		ImGui::Combo(name, &currentIndex, items, size); //IM_ARRAYSIZE(items)
+
+		hasChange = oldId != currentIndex;
 	}
 
 	void drawListBox(const char* name, int width = 200)
 	{
+		int oldId = currentIndex;
 		const char** items = getItems();
 		ImGui::SetNextItemWidth(width);
 		ImGui::ListBox(name, &currentIndex, items, size); //IM_ARRAYSIZE(items)
+
+		hasChange = oldId != currentIndex;
 	}
 
 	T* getValuesIterator()
@@ -97,11 +122,17 @@ struct SelectableKeyValues
 		return size;
 	}
 
+	bool hasChanged()
+	{
+		return hasChange;
+	}
+
 private:
 	std::vector<const char*> items;
 	std::vector<T> values;
 	std::vector<BackString> holder;
 	int size;
+	bool hasChange;
 };
 
 
@@ -151,15 +182,15 @@ public:
 			return;
 
 		ImVec2 wpos = ImGui::GetCurrentWindow()->Pos;
-		const bool hovered = ImGui::IsWindowHovered() || ImGui::IsItemHovered();
+		const bool hovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows);
 
 		clicked = false;
 		bool drgged = false;
 		bool wheeled = false;
 		if (hovered)
 		{
-			drgged = ImGui::IsMouseDragging(ImGuiMouseButton_Right);
-			clicked = ImGui::IsMouseClicked(ImGuiMouseButton_Left);
+			drgged = ImGui::IsMouseDragging(ImGuiMouseButton_Left);
+			clicked = ImGui::IsMouseClicked(ImGuiMouseButton_Right);
 			wheeled = ImGui::GetIO().MouseWheel != 0;
 		}
 		if (clicked)
@@ -231,7 +262,7 @@ public:
 
 	void drawImage(const char* name, ImVec2 pos, ImVec2 size)
 	{
-		auto window_flags = ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoScrollbar;
+		auto window_flags = ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoMove;
 
 		ImGui::SetCursorPos(pos);
 		if (ImGui::BeginChild(name, size, false, window_flags))

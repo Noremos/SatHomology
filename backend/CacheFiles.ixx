@@ -90,7 +90,7 @@ private:
 		state->beginItem();
 
 		index = state->pInt(index); // Index
-		state->pType(rsitem->getType()); // BarType
+		rsitem->setType((BarType)state->pType(rsitem->getType())); // BarType
 		size_t linesCount = state->pArray(vec.size());
 
 		// Parent read/write stuff
@@ -192,7 +192,7 @@ private:
 		state->beginItem();
 
 		state->pInt(index); // Index
-		state->pType(rsitem->getType()); // BarType
+		rsitem->setType((BarType)state->pType(rsitem->getType())); // BarType
 
 		uint realIndex = 0;
 		bc::barlinevector& vec = rsitem->barlines;

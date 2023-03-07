@@ -33,8 +33,12 @@ public:
 
 export struct CachedObjectId
 {
-	int tileId;
-	int vecId;
+	int tileId = -1;
+	int vecId = -1;
+	bool hasData() const
+	{
+		return vecId != -1;
+	}
 };
 
 export class BarClassCategor : public IBarClassCategor
@@ -50,7 +54,7 @@ class IBarCategories
 
 export class BarCategories
 {
-	int counter;
+	int counter = 0;
 
 public:
 	std::vector<BarClassCategor> categs;
@@ -124,10 +128,8 @@ public:
 		return categ;
 	}
 
-	void saveCategories()
+	void saveCategories(const BackPathStr& path)
 	{
-		BackPathStr path = "";// Project::getProject()->getPath(BackPath::classifier);
-
 		JsonArray arr;
 		for (size_t i = 0; i < categs.size(); i++)
 		{
@@ -225,7 +227,7 @@ private:
 		else
 		{
 			bool added = true;
-			statement += " class_id, ";
+			statement += " class_id ";
 			if (filter & LF_BINFILE)
 			{
 				if (added)
@@ -238,7 +240,9 @@ private:
 			{
 				if (added)
 					statement += ", ";
+
 				statement += "icon";
+				added = true;
 			}
 		}
 		statement += " FROM CLASS_DATA";
@@ -251,7 +255,7 @@ private:
 
 		if (classId != -1)
 		{
-			statement += " WHERE rowid = ?";
+			statement += " WHERE class_id = ?";
 		}
 		else
 			statement += ";";
@@ -284,7 +288,7 @@ private:
 
 
 		sqlite3_stmt* stmt;
-		auto rc = sqlite3_prepare_v2(db, statement.c_str(), -1, &stmt, nullptr);
+		auto rc = sqlite3_prepare_v2(db, statement.c_str(), statement.length(), &stmt, nullptr);
 
 		if (rc != SQLITE_OK)
 		{
@@ -328,17 +332,30 @@ private:
 	}
 
 public:
-	int save(int classId, const vbuffer& bbfFile, BackImage* preview)
+	size_t save(int classId, const vbuffer& bbfFile, BackImage* preview)
 	{
 		sqlite3_stmt* stmt = NULL;
 
-		const char* statement = "INSERT INTO CLASS_DATA VALUES (?, ?, ?);";
+		BackString statement = "INSERT INTO CLASS_DATA VALUES (?, ?, ?);";
 
-		auto rc = sqlite3_prepare_v2(db, statement, 0, &stmt, NULL);
+		auto rc = sqlite3_prepare_v2(db, statement.c_str(), statement.length(), &stmt, NULL);
+
+		if (rc != SQLITE_OK)
+		{
+			std::cerr << "Failed to prepare statement: " << sqlite3_errstr(rc) << sqlite3_errmsg(db) << std::endl;
+		}
 
 		rc = sqlite3_bind_int(stmt, 1, classId); // bind the rowid value to the first placeholder
+		if (rc != SQLITE_OK)
+		{
+			std::cerr << "Failed to prepare statement: " << sqlite3_errstr(rc) << sqlite3_errmsg(db) << std::endl;
+		}
 
 		rc = sqlite3_bind_blob(stmt, 2, bbfFile.data(), bbfFile.size(), SQLITE_TRANSIENT);
+		if (rc != SQLITE_OK)
+		{
+			std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+		}
 
 		if (preview)
 		{
@@ -348,9 +365,17 @@ public:
 		else
 			rc = sqlite3_bind_null(stmt, 3);
 
+		if (rc != SQLITE_OK)
+		{
+			std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+		}
 
-		const char* result = sqlite3_errmsg(db);
 		rc = sqlite3_step(stmt);
+		if (rc != SQLITE_DONE)
+		{
+			std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+		}
+
 		size_t locId = sqlite3_last_insert_rowid(db);
 
 		return locId;
@@ -372,9 +397,22 @@ public:
 		const char* statement = "DELETE FROM CLASS_DATA WHERE ROWID = ?;";
 
 		auto rc = sqlite3_prepare_v2(db, statement, 0, &stmt, NULL);
+		if (rc != SQLITE_OK)
+		{
+			std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+		}
+
 		rc = sqlite3_bind_int64(stmt, 1, localId); // bind the rowid value to the first placeholder
-		const char* result = sqlite3_errmsg(db);
+		if (rc != SQLITE_OK)
+		{
+			std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+		}
+
 		rc = sqlite3_step(stmt);
+		if (rc != SQLITE_OK)
+		{
+			std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+		}
 	}
 };
 
@@ -450,12 +488,18 @@ public:
 		}
 	}
 
-	size_t addData(int classInd, bc::barline* raw, BackImage* icon)
+	size_t addData(int classInd, bc::barline* raw, BackImage* icon, bool extractLine = false)
 	{
 		bc::Baritem* item = new bc::Baritem();
-		raw->getChilredAsList(item->barlines, true, false, false);
-		item->relen();
+		if (extractLine)
+			raw->extractChilred(item->barlines, true, false);
+		else
+			raw->getChilredAsList(item->barlines, true, true, false);
 
+		item->relen();
+		item->setType();
+
+		assert(classes.size() !=0);
 		auto classHolder = getClass(classInd);
 
 		std::ostringstream st;
@@ -467,7 +511,7 @@ public:
 		ClassDataIO io;
 		io.openWrite(dbPath);
 		vbuffer temp;
-		temp.setData(reinterpret_cast<uchar*>(st.str().data()), st.str().length());
+		temp.setData(reinterpret_cast<uchar*>(st.str().data()), st.str().length(), false);
 		size_t id = io.save(classInd, temp, icon);
 
 		classHolder.cacheIndex.insert(std::make_pair(id, classHolder.container.count()));

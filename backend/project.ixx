@@ -413,7 +413,8 @@ public:
 
 	Project()
 	{
-		projectPath = "D:\\Programs\\Barcode\\_bar\\_p2\\";
+		projectPath = "";
+		// "D:\\Programs\\Barcode\\_bar\\_p2\\";
 		settings.extraRead = [this](const BackJson& json) {extraRead(json);};
 		settings.extraWrite = [this](BackJson& json) {extraWrite(json);};;
 		// mkDirIfNotExists(u_classCache);
@@ -421,6 +422,11 @@ public:
 
 	~Project()
 	{
+		if (projectPath.has_filename())
+		{
+			saveProject();
+		}
+
 		closeReader();
 		closeImages();
 	}
@@ -622,7 +628,7 @@ public:
 			//case BackPath::classImages:
 			//	return projectPath / "classImages";
 		case BackPath::metadata:
-			return u_classCache / "Metadata";
+			return projectPath / "Metadata";
 		default:
 			throw;
 		}
@@ -668,8 +674,10 @@ public:
 		modelHei = reader->height() / u_displayFactor;
 		readImages();
 
+		classCategs = BarCategories::loadCategories(getPath(BackPath::classifier));
+
 		//BarClassifierCache bcc;
-		//classer.categs = bcc.loadCategories();
+		// classer.categs = bcc.loadCategories();
 		//classer.udpdateClasses();
 		//bcc.loadClasses(getPath(BackPath::classfiles), classer);
 		return true;
@@ -688,8 +696,8 @@ public:
 
 		mkDirIfNotExists(getPath(BackPath::classfiles));
 		mkDirIfNotExists(getPath(BackPath::tiles));
-		//BarClassifierCache ccb;
-		//ccb.saveCategories(classer.categs);
+
+		classCategs.saveCategories(getPath(BackPath::classifier));
 		return true;
 	}
 
@@ -923,16 +931,18 @@ public:
 	{
 		GeoBarRasterCache cached;
 		cached.openRead(getPath(BackPath::binbar));
-		std::unique_ptr<bc::Baritem> r(cached.loadSpecific(srcItemId.tileId));
+		std::unique_ptr<bc::Baritem> rb(cached.loadSpecific(srcItemId.tileId));
 
-		auto line = r->barlines[srcItemId.vecId];
+		auto line = rb->barlines[srcItemId.vecId];
 		if (destIcon != nullptr)
 		{
 			auto rect = bc::getBarRect(line->matr);
 			DataRect r = reader->getRect(rect.x, rect.y, rect.width, rect.height);
 			*destIcon = BackImage(r.wid, r.hei, r.data.samples, r.data.ptr.b);
 		}
+		//rb->barlines[srcItemId.vecId] = nullptr;
 
+		assert(proj->classCategs.size() !=0);
 		return classifier.addData(classId, line, destIcon);
 	}
 
