@@ -52,7 +52,7 @@ public:
 
 	virtual void saveLoadState(JsonObjectIOState* state, const BackDirStr&)
 	{
-		state->scInt("id",id);
+		state->scInt("id", id);
 		state->scStr("name", name);
 		int size = 3;
 

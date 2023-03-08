@@ -40,10 +40,12 @@ public:
 	float displayFactor;
 	bc::point layerOffset;
 
-	LayerProvider(float _displayFactor = 0) :
-		tilesInRow(0), tileSize(0),
+	LayerProvider(float _displayFactor, int tileSize, int width) :
+		tilesInRow(0), tileSize(tileSize),
 		layerOffset(0,0), displayFactor(_displayFactor)
-	{ }
+	{
+		this->tilesInRow = getCon(width, tileSize);
+	}
 
 	int getCon(int total, int part)
 	{
@@ -52,6 +54,12 @@ public:
 
 	void init(int tileSize, int width)
 	{
+		this->tileSize = tileSize;
+		this->tilesInRow = getCon(width, tileSize);
+	}
+	void init(float display, int tileSize, int width)
+	{
+		this->displayFactor = display;
 		this->tileSize = tileSize;
 		this->tilesInRow = getCon(width, tileSize);
 	}
@@ -104,7 +112,7 @@ public:
 export class ILayer : public IJsonIO
 {
 public:
-	ILayer()
+	ILayer(float displayFactor, int tileSize, int width) : prov(displayFactor, tileSize, width)
 	{ }
 
 	int id = -1;

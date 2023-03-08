@@ -327,6 +327,7 @@ public:
 	LDATA* addLayerData()
 	{
 		LDATA* d = layers.add<LDATA>();
+		d->prov.init(u_displayFactor, tileSize, reader->width());
 		d->id = layerCounter++;
 		return d;
 	}
@@ -335,8 +336,19 @@ public:
 	LDATA* addLayerData(int keepId)
 	{
 		LDATA* d = layers.add<LDATA>();
+		d->prov.init(u_displayFactor, tileSize, reader->width());
 		d->id = keepId;
 		return d;
+	}
+	
+	template<class LDATA>
+	LDATA* changeLayerData(int id)
+	{
+		// Replace, dont add!
+		LDATA* layer = new LDATA(u_displayFactor, reader->width(), tileSize);
+		layer->id = id;
+		layers.set(id, layer);
+		return layer;
 	}
 
 	RasterLayer main;
@@ -618,8 +630,7 @@ public:
 		uint rhei = reader->height();
 		TileIterator stW(0, tileSize, tileOffset, rwid);
 		TileIterator stH(0, tileSize, tileOffset, rhei);
-		LayerProvider prov(u_displayFactor);
-		prov.init(tileSize, reader->width());
+		LayerProvider prov(u_displayFactor, tileSize, reader->width());
 
 		RasterLineLayer* layer = nullptr;
 		if (destLayerId)
@@ -632,9 +643,7 @@ public:
 			else
 			{
 				// Replace, dont add!
-				layer = new RasterLineLayer();
-				layer->id = *destLayerId;
-				layers.set(*destLayerId, layer);
+				layer = changeLayerData<RasterLineLayer>(*destLayerId);
 			}
 
 			int id = getFirstNormIndex();
@@ -702,18 +711,15 @@ public:
 		filter.imgLen = (tileSize + tileOffset) * (tileSize + tileOffset);
 
 		RasterLineLayer* layer = nullptr;
-		RasterLineLayer* outputLayer = nullptr;
 		if (destLayerId == -1)
 		{
-			outputLayer = layer = addLayerData<RasterLineLayer>();
+			layer = addLayerData<RasterLineLayer>();
 			destLayerId = layer->id;
 		}
 		else
 		{
 			// Replace, dont add!
-			layer = new RasterLineLayer();
-			layer->id = destLayerId;
-			layers.set(destLayerId, layer);
+			layer = changeLayerData<RasterLineLayer>(destLayerId);
 		}
 		int id = getFirstNormIndex();
 		layer->init(images[id]->width(), images[id]->height());
@@ -842,9 +848,7 @@ public:
 		else
 		{
 			// Replace, dont add!
-			layer = new RasterLayer();
-			layer->id = destLayerId;
-			layers.set(destLayerId, layer);
+			layer = changeLayerData<RasterLayer>(destLayerId);
 		}
 		int id = getFirstNormIndex();
 		layer->mat = *images[id];

@@ -26,6 +26,9 @@ export class RasterLayer : public ILayer
 public:
 	BackImage mat;
 
+	RasterLayer(float displayFactor = 1, int tileSize = 0, int width = 0) : ILayer(displayFactor, tileSize, width)
+	{ }
+
 	bc::point minmax(const bc::point& p) const
 	{
 		return { std::min(p.x, mat.width() - 1), std::min(p.y, mat.height() - 1) };
@@ -109,7 +112,7 @@ export class RasterLineLayer : public RasterLayer
 public:
 	static std::vector<Barscalar> colors;
 
-	RasterLineLayer() : RasterLayer()
+	RasterLineLayer(float displayFactor = 1, int tileSize = 0, int width = 0) : RasterLayer(displayFactor, tileSize, width)
 	{
 		if (colors.size() == 0)
 		{
