@@ -86,7 +86,7 @@ export struct GuiClassifer
 		classesLB.clear();
 
 		ClassDataIO io;
-		io.open(proj->getMetaPath(barclassificator::className()));
+		io.open(proj->getMetaPath(proj->classifier.name()));
 
 		for (auto &&c : proj->classCategs.categs)
 		{

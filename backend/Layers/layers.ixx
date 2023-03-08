@@ -218,7 +218,7 @@ public:
 		auto tileProv = prov.tileByIndex(tileIndex);
 		MMMAP<size_t, std::shared_ptr<SimpleLine>> parentne;
 
-		const auto& vec = items.lines;
+		const auto& vec = items.items;
 		for (size_t i = 0; i < vec.size(); ++i)
 		{
 			const IClassItem* curLine = vec.at(i);
@@ -235,7 +235,7 @@ public:
 
 			std::unordered_set<uint> vals;
 			std::shared_ptr<SimpleLine> sl;
-			auto curIdKey = (size_t)curLine;
+			auto curIdKey = curLine->getId();
 			auto p = parentne.find(curIdKey);
 			if (p != parentne.end())
 			{
@@ -248,7 +248,7 @@ public:
 				parentne.insert(std::make_pair(curIdKey, sl));
 			}
 
-			curIdKey = (size_t)curLine->parent();
+			curIdKey = curLine->getParentId();
 			p = parentne.find(curIdKey);
 			if (p != parentne.end())
 			{

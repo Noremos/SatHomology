@@ -367,7 +367,7 @@ public:
 		setCurrentSubImage(curImgInd);
 
 		classCategs = BarCategories::loadCategories(getPath(BackPath::classifier));
-		classifier.loadClasses(classCategs, proj->getMetaPath(classifier.className()));
+		classifier.loadClasses(classCategs, proj->getMetaPath(classifier.name()));
 		//classifier.categs
 	}
 
@@ -595,26 +595,6 @@ public:
 
 		// -------
 
-		 //Cacher
-		BarClasser* barcodeHelper;
-		RasterBarClasser _rsbarcodeHelper;
-
-		CloudBarClasser _clBarcodeHelper;
-
-		if (propertices.alg == 0)
-		{
-			barcodeHelper = &_rsbarcodeHelper;
-		}
-		else
-		{
-			_clBarcodeHelper.useHoles = propertices.alg1UseHoles;
-			_clBarcodeHelper.ignoreHeight = propertices.alg1IgnoreHeight;
-			barcodeHelper = &_clBarcodeHelper;
-		}
-		barcodeHelper->doCache(true);
-		barcodeHelper->setFilter(info);
-		barcodeHelper->prepare(getPath(BackPath::binbar));
-
 		const uint fullTile = tileSize + tileOffset;
 		info->imgLen = fullTile * fullTile;
 
@@ -645,6 +625,22 @@ public:
 			layer->init(images[id]->width(), images[id]->height());
 		}
 
+		//Cacher
+		ItemHolderCache cacher;
+		cacher.openWrite(getPath(BackPath::binbar));
+
+		IdGrater parentne;
+		uint tileIndex = 0;
+		int inde = 0;
+		IClassItemHolder::ItemCallback cacheClass;
+		if (layer)
+			cacheClass = [this, inde, &parentne, layer, tileIndex, &info](IClassItem* item)
+		{
+			visualizeRasterLine(inde, parentne, *layer, item, tileIndex, info);
+		};
+		else
+			cacheClass = [](IClassItem*){};
+
 		for (uint i = 0; i < rhei; i += tileSize)
 		{
 			uint ihei;
@@ -661,10 +657,15 @@ public:
 
 				bc::point offset(stW.pos(), stH.pos());
 				DataRect rect = reader->getRect(offset.x, offset.y, iwid, ihei);
-				uint k = getTileIndexByOffset(offset.x, offset.y);
+				tileIndex = getTileIndexByOffset(offset.x, offset.y);
 
 				DataRectBarWrapper warp(rect);
-				barcodeHelper->create(k, &warp, constr, prov, layer);
+				// Switch with function;
+				BaritemHolder creator;
+				inde = 0;
+				creator.create(&warp, constr, cacheClass);
+				cacher.save(&creator, tileIndex);
+
 				stW.accum();
 			}
 			stH.accum();
@@ -675,6 +676,9 @@ public:
 
 		return layer;
 	}
+
+
+	using IdGrater = MMMAP<size_t, std::shared_ptr<SimpleLine>>;
 
 	RasterLineLayer* readPrcoessBarcode(int& destLayerId, FilterInfo& filter)
 	{
@@ -701,93 +705,85 @@ public:
 		layer->init(images[id]->width(), images[id]->height());
 
 		// Cacher
-		BarClasser* classifiere;
-		RasterBarClasser _rsClass;// (this, &filter);
-		CloudBarClasser _clClass;// (this, &filter);
+		ItemHolderCache cacher;
+		cacher.openRead(getPath(BackPath::binbar));
 
-		if (u_algorithm == 0)
+		int tileIndex = 0;
+		while (cacher.canRead())
 		{
-			classifiere = &_rsClass;
-		}
-		else
-		{
-			classifiere = &_clClass;
-		}
-
-		classifiere->setFilter(&filter);
-		classifiere->openRead(getPath(BackPath::binbar));
-
-		LayerProvider prov(u_displayFactor);
-		prov.init(tileSize, reader->width());
-
-		while (classifiere->canRead())
-		{
-			classifiere->classBarcodeFromCache(*layer, prov);
+			BaritemHolder holder;
+			cacher.load(tileIndex, &holder);
+			visuilizeRasterLines(*layer, holder, tileIndex, &filter);
 		}
 
 		return layer;
 	}
 
-	void visuilizeRasterLine(RasterLineLayer& layer, const ClassItemHolder& items, int tileIndex, const FilterInfo* filter)
+	void visuilizeRasterLines(RasterLineLayer& layer, const IClassItemHolder& items, int tileIndex, const FilterInfo* filter)
 	{
-		MMMAP<size_t, std::shared_ptr<SimpleLine>> parentne;
+		IdGrater parentne;
 
-		const auto& vec = items.lines;
+		const auto& vec = items.getItems();
 		for (size_t i = 0; i < vec.size(); ++i)
 		{
 			const IClassItem* curLine = vec.at(i);
-			if (!curLine->passFilter(*filter))
-				continue;
-
-			const auto& matr = curLine->getMatrix();
-
-			if (matr.size() == 0)
-				continue;
-
-			int classType = 0;// classifier.predict(curLine);
-			auto c = classCategs.get(classType);
-			if (!c.show)
-				continue;
-
-			Barscalar pointCol(255, 0, 0);
-			pointCol = RasterLineLayer::colors[rand() % RasterLineLayer::colors.size()];
-
-			std::unordered_set<uint> vals;
-			std::shared_ptr<SimpleLine> sl;
-			auto curIdKey = (size_t)curLine;
-			auto p = parentne.find(curIdKey);
-			if (p != parentne.end())
-			{
-				sl = p->second;
-				sl->barlineIndex = (int)i;
-			}
-			else
-			{
-				sl = std::make_shared<SimpleLine>(tileIndex, i);
-				parentne.insert(std::make_pair(curIdKey, sl));
-			}
-
-			curIdKey = (size_t)curLine->parent();
-			p = parentne.find(curIdKey);
-			if (p != parentne.end())
-			{
-				sl->parent = p->second;
-			}
-			else
-			{
-				sl->parent = std::make_shared<SimpleLine>(tileIndex, -1);
-				parentne.insert(std::make_pair(curIdKey, sl->parent));
-				//sl->parent->matr = curLine->parent->matr;
-			}
-
-			int depth = curLine->getDeath();
-			sl->depth = depth;
-			sl->start = curLine->start();
-			sl->end = curLine->end();
-			sl->matrSrcSize = (int)matr.size();
-
-			layer.addLine(sl, matr, pointCol, tileIndex);
+			visualizeRasterLine(i, parentne, layer, curLine, tileIndex, filter);
 		}
+	}
+
+	void visualizeRasterLine(int i, IdGrater& parentne, RasterLineLayer& layer, const IClassItem* curLine, int tileIndex, const FilterInfo* filter)
+	{
+		if (filter && !curLine->passFilter(*filter))
+			return;
+
+		const auto& matr = curLine->getMatrix();
+
+		if (matr.size() == 0)
+			return;
+
+		int classType = classifier.predict(curLine);
+		auto c = classCategs.get(classType);
+		if (!c.show)
+			return;
+
+		Barscalar pointCol(255, 0, 0);
+		pointCol = RasterLineLayer::colors[rand() % RasterLineLayer::colors.size()];
+
+		std::unordered_set<uint> vals;
+		std::shared_ptr<SimpleLine> sl;
+		auto curIdKey = (size_t)curLine;
+		auto p = parentne.find(curIdKey);
+		if (p != parentne.end())
+		{
+			sl = p->second;
+			sl->barlineIndex = (int)i;
+		}
+		else
+		{
+			sl = std::make_shared<SimpleLine>(tileIndex, i);
+			parentne.insert(std::make_pair(curIdKey, sl));
+		}
+
+		curIdKey = curLine->getParentId();
+		p = parentne.find(curIdKey);
+		if (p != parentne.end())
+		{
+			sl->parent = p->second;
+		}
+		else
+		{
+			sl->parent = std::make_shared<SimpleLine>(tileIndex, -1);
+			parentne.insert(std::make_pair(curIdKey, sl->parent));
+			//sl->parent->matr = curLine->parent->matr;
+		}
+
+		int depth = curLine->getDeath();
+		sl->depth = depth;
+		sl->start = curLine->start();
+		sl->end = curLine->end();
+		sl->matrSrcSize = (int)matr.size();
+
+		layer.addLine(sl, matr, pointCol, tileIndex);
 	}
 
 	void getOffsertByTileIndex(uint tileIndex, uint& offX, uint& offY)
@@ -846,17 +842,17 @@ public:
 		classifier.removeClass(classId);
 	}
 
-
 	size_t addTrainData(int classId, CachedObjectId srcItemId, BackImage* destIcon)
 	{
-		GeoBarRasterCache cached;
+		ItemHolderCache cached;
 		cached.openRead(getPath(BackPath::binbar));
-		std::unique_ptr<bc::Baritem> rb(cached.loadSpecific(srcItemId.tileId));
+		BaritemHolder item;
+		cached.loadSpecific(srcItemId.tileId, &item);
 
-		auto line = rb->barlines[srcItemId.vecId];
+		auto line = item.getItems()[srcItemId.vecId];
 		if (destIcon != nullptr)
 		{
-			auto rect = bc::getBarRect(line->matr);
+			auto rect = bc::getBarRect(line->getMatrix());
 			DataRect r = reader->getRect(rect.x, rect.y, rect.width, rect.height);
 			*destIcon = BackImage(r.wid, r.hei, r.data.samples, r.data.ptr.b);
 		}

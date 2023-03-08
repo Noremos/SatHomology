@@ -1,8 +1,14 @@
 module;
 #include <vector>
+#include <memory>
+
+#include "../Bind/Common.h"
+
 
 export module BarholdersModule;
+
 import BarcodeModule;
+import ClassifierInterface;
 
 namespace bc
 {
@@ -10,6 +16,20 @@ namespace bc
 	using barvector = std::vector<bc::barvalue>;
 }
 
+export class ClassItemHolder
+{
+public:
+	std::vector<IClassItem*> items;
+
+	~ClassItemHolder()
+	{
+		for (size_t var = 0; var < items.size(); ++var)
+		{
+			delete items[var];
+		}
+		items.clear();
+	}
+};
 
 
 export class BarcodeHolder

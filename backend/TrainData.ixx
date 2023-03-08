@@ -11,12 +11,9 @@ export module TrainIO;
 
 import BarcodeModule;
 import IOCore;
-import BarholdersModule;
 import BackTypes;
-import Platform;
-import CacheFilesModule;
 import MetadataIOCore;
-import JsonCore;
+import Platform;
 
 //enum ClassCategType
 //{
@@ -489,11 +486,11 @@ public:
 		}
 	}
 
-	void save(BarcodeHolder* curBar, int classIndex, BackImage* img)
-	{
-		BackPathStr path = "";// Project::getProject()->getPath(BackPath::classfiles);
-		BackDirStr doorPat = path / intToStr(classIndex);
-		mkDirIfNotExists(doorPat);
+	//void save(IClassItem* curBar, int classIndex, BackImage* img)
+	//{
+	//	BackPathStr path = "";// Project::getProject()->getPath(BackPath::classfiles);
+	//	BackDirStr doorPat = path / intToStr(classIndex);
+	//	mkDirIfNotExists(doorPat);
 
 	//	std::mt19937 generator(std::random_device{}());
 	//	std::uniform_int_distribution<int> distribution(1, 1000);
@@ -513,5 +510,5 @@ public:
 	//		doorPat = doorPat.replace_extension("jpg");
 	//		imwrite(doorPat, *img);
 	//	}
-	}
+	//}
 };
