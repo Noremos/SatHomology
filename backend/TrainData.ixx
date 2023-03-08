@@ -55,7 +55,7 @@ public:
 		state->scInt("id",id);
 		state->scStr("name", name);
 		int size = 3;
-	
+
 		JsonArrayIOState* arr = state->arrayBegin("color", size);
 		arr->scUchar(0, color.r);
 		arr->scUchar(1, color.g);
@@ -84,17 +84,17 @@ public:
 		return id;
 	}
 
-	BarClassCategor& get(int id)
+	BarClassCategor* get(int id)
 	{
 		for (auto& c : categs)
 		{
 			if (c.id == id)
 			{
-				return c;
+				return &c;
 			}
 		}
 
-		throw;
+		return nullptr;
 	}
 
 	void changeName(int id, const BackString& nname)

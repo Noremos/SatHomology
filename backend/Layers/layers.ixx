@@ -102,6 +102,8 @@ export struct SimpleLine
 	}
 };
 
+export using IdGrater = MMMAP<size_t, std::shared_ptr<SimpleLine>>;
+
 export class RasterLineLayer : public RasterLayer
 {
 public:
@@ -186,7 +188,8 @@ public:
 		}
 	}
 
-	void addLine(std::shared_ptr<SimpleLine> line, const bc::barvector& matr, Barscalar color, int tileIndex)
+	using ColorGrater = std::function<Barscalar(const IClassItem* item, bool& bad)>;
+	void addSimpleLine(std::shared_ptr<SimpleLine> line, const bc::barvector& matr, Barscalar color, int tileIndex)
 	{
 		auto tileProv = prov.tileByIndex(tileIndex);
 
@@ -213,61 +216,72 @@ public:
 		getCountourSimple(temp, line->matr);
 	}
 
-	void classBarcodeInner(const ClassItemHolder& items, int tileIndex, const FilterInfo* filter)
+	void addLine(int i, IdGrater& parentne, const IClassItem* curLine, int tileIndex, const FilterInfo* filter, ColorGrater grater)
+	{
+		const auto& matr = curLine->getMatrix();
+		if (matr.size() == 0)
+			return;
+
+		if (filter && !curLine->passFilter(*filter))
+			return;
+
+		Barscalar pointCol(255, 0, 0);
+		if (grater)
+		{
+			bool show = true;
+			pointCol = grater(curLine, show);
+			if (!show)
+				return;
+		}
+		else
+			pointCol = RasterLineLayer::colors[rand() % RasterLineLayer::colors.size()];
+
+		std::unordered_set<uint> vals;
+		std::shared_ptr<SimpleLine> sl;
+		auto curIdKey = (size_t)curLine;
+		auto p = parentne.find(curIdKey);
+		if (p != parentne.end())
+		{
+			sl = p->second;
+			sl->barlineIndex = (int)i;
+		}
+		else
+		{
+			sl = std::make_shared<SimpleLine>(tileIndex, i);
+			parentne.insert(std::make_pair(curIdKey, sl));
+		}
+
+		curIdKey = curLine->getParentId();
+		p = parentne.find(curIdKey);
+		if (p != parentne.end())
+		{
+			sl->parent = p->second;
+		}
+		else
+		{
+			sl->parent = std::make_shared<SimpleLine>(tileIndex, -1);
+			parentne.insert(std::make_pair(curIdKey, sl->parent));
+			//sl->parent->matr = curLine->parent->matr;
+		}
+
+		int depth = curLine->getDeath();
+		sl->depth = depth;
+		sl->start = curLine->start();
+		sl->end = curLine->end();
+		sl->matrSrcSize = (int)matr.size();
+
+		addSimpleLine(sl, matr, pointCol, tileIndex);
+	}
+
+	void addHolder(const IClassItemHolder& items, int tileIndex, const FilterInfo* filter, ColorGrater grater)
 	{
 		auto tileProv = prov.tileByIndex(tileIndex);
-		MMMAP<size_t, std::shared_ptr<SimpleLine>> parentne;
+		IdGrater parentne;
 
-		const auto& vec = items.items;
+		const auto& vec = items.getItems();
 		for (size_t i = 0; i < vec.size(); ++i)
 		{
-			const IClassItem* curLine = vec.at(i);
-			if (!curLine->passFilter(*filter))
-				continue;
-
-			const auto& matr = curLine->getMatrix();
-
-			if (matr.size() == 0)
-				continue;
-
-			Barscalar pointCol(255, 0, 0);
-			pointCol = colors[rand() % colors.size()];
-
-			std::unordered_set<uint> vals;
-			std::shared_ptr<SimpleLine> sl;
-			auto curIdKey = curLine->getId();
-			auto p = parentne.find(curIdKey);
-			if (p != parentne.end())
-			{
-				sl = p->second;
-				sl->barlineIndex = (int)i;
-			}
-			else
-			{
-				sl = std::make_shared<SimpleLine>(tileIndex, i);
-				parentne.insert(std::make_pair(curIdKey, sl));
-			}
-
-			curIdKey = curLine->getParentId();
-			p = parentne.find(curIdKey);
-			if (p != parentne.end())
-			{
-				sl->parent = p->second;
-			}
-			else
-			{
-				sl->parent = std::make_shared<SimpleLine>(tileIndex, -1);
-				parentne.insert(std::make_pair(curIdKey, sl->parent));
-				//sl->parent->matr = curLine->parent->matr;
-			}
-
-			int depth = curLine->getDeath();
-			sl->depth = depth;
-			sl->start = curLine->start();
-			sl->end = curLine->end();
-			sl->matrSrcSize = (int)matr.size();
-
-			addLine(sl, matr, pointCol, tileIndex);
+			addLine(i, parentne, vec.at(i), tileIndex, filter, grater);
 		}
 	}
 };

@@ -576,6 +576,22 @@ public:
 
 	void readImages();
 
+	Barscalar predict(const IClassItem* item, bool& skip)
+	{
+		int classType = classifier.predict(item);
+		auto c = classCategs.get(classType);
+
+		if (!c)
+		{
+			skip = false;
+			return Barscalar(0,0,0);
+		}
+
+		skip = !c->show;
+		auto& col = c->color;
+		return Barscalar(col.r, col.g, col.b);
+	}
+
 	RasterLineLayer* createCacheBarcode(const BarcodeProperies& propertices, int imgIndex, FilterInfo* info = nullptr, int* destLayerId = nullptr)
 	{
 		if (block) return nullptr;
@@ -636,7 +652,8 @@ public:
 		if (layer)
 			cacheClass = [this, inde, &parentne, layer, tileIndex, &info](IClassItem* item)
 		{
-			visualizeRasterLine(inde, parentne, *layer, item, tileIndex, info);
+			auto askf = [this](const IClassItem* item, bool& skip){return predict(item, skip);};
+			layer->addLine(inde, parentne, item, tileIndex, info, askf);
 		};
 		else
 			cacheClass = [](IClassItem*){};
@@ -677,9 +694,6 @@ public:
 		return layer;
 	}
 
-
-	using IdGrater = MMMAP<size_t, std::shared_ptr<SimpleLine>>;
-
 	RasterLineLayer* readPrcoessBarcode(int& destLayerId, FilterInfo& filter)
 	{
 		if (u_displayFactor < 1.0)
@@ -708,82 +722,17 @@ public:
 		ItemHolderCache cacher;
 		cacher.openRead(getPath(BackPath::binbar));
 
+		auto askf = [this](const IClassItem* item, bool& skip){return predict(item, skip);};
+
 		int tileIndex = 0;
 		while (cacher.canRead())
 		{
 			BaritemHolder holder;
 			cacher.load(tileIndex, &holder);
-			visuilizeRasterLines(*layer, holder, tileIndex, &filter);
+			layer->addHolder(holder, tileIndex, &filter, askf);
 		}
 
 		return layer;
-	}
-
-	void visuilizeRasterLines(RasterLineLayer& layer, const IClassItemHolder& items, int tileIndex, const FilterInfo* filter)
-	{
-		IdGrater parentne;
-
-		const auto& vec = items.getItems();
-		for (size_t i = 0; i < vec.size(); ++i)
-		{
-			const IClassItem* curLine = vec.at(i);
-			visualizeRasterLine(i, parentne, layer, curLine, tileIndex, filter);
-		}
-	}
-
-	void visualizeRasterLine(int i, IdGrater& parentne, RasterLineLayer& layer, const IClassItem* curLine, int tileIndex, const FilterInfo* filter)
-	{
-		if (filter && !curLine->passFilter(*filter))
-			return;
-
-		const auto& matr = curLine->getMatrix();
-
-		if (matr.size() == 0)
-			return;
-
-		int classType = classifier.predict(curLine);
-		auto c = classCategs.get(classType);
-		if (!c.show)
-			return;
-
-		Barscalar pointCol(255, 0, 0);
-		pointCol = RasterLineLayer::colors[rand() % RasterLineLayer::colors.size()];
-
-		std::unordered_set<uint> vals;
-		std::shared_ptr<SimpleLine> sl;
-		auto curIdKey = (size_t)curLine;
-		auto p = parentne.find(curIdKey);
-		if (p != parentne.end())
-		{
-			sl = p->second;
-			sl->barlineIndex = (int)i;
-		}
-		else
-		{
-			sl = std::make_shared<SimpleLine>(tileIndex, i);
-			parentne.insert(std::make_pair(curIdKey, sl));
-		}
-
-		curIdKey = curLine->getParentId();
-		p = parentne.find(curIdKey);
-		if (p != parentne.end())
-		{
-			sl->parent = p->second;
-		}
-		else
-		{
-			sl->parent = std::make_shared<SimpleLine>(tileIndex, -1);
-			parentne.insert(std::make_pair(curIdKey, sl->parent));
-			//sl->parent->matr = curLine->parent->matr;
-		}
-
-		int depth = curLine->getDeath();
-		sl->depth = depth;
-		sl->start = curLine->start();
-		sl->end = curLine->end();
-		sl->matrSrcSize = (int)matr.size();
-
-		layer.addLine(sl, matr, pointCol, tileIndex);
 	}
 
 	void getOffsertByTileIndex(uint tileIndex, uint& offX, uint& offY)
@@ -822,7 +771,19 @@ public:
 		return -1;
 	}
 
-	BarcodeHolder threasholdLines(bc::Baritem* item);
+	// BarcodeHolder threasholdLines(bc::Baritem* item)
+	// {
+	// 	BarcodeHolder vec;
+	// 	for (size_t i = 0; i < item->barlines.size(); ++i)
+	// 	{
+	// 		if (item->barlines[i]->len() < 10)
+	// 		{
+	// 			vec.lines.push_back(item->barlines[i]->clone());
+	// 		}
+	// 	}
+	// 	return vec;
+	// }
+
 
 	int addClassType(const BackString& name)
 	{
@@ -1013,18 +974,7 @@ float Project::getImgMaxVal() const
 //}
 
 
-BarcodeHolder Project::threasholdLines(bc::Baritem* item)
-{
-	BarcodeHolder vec;
-	for (size_t i = 0; i < item->barlines.size(); ++i)
-	{
-		if (item->barlines[i]->len() < 10)
-		{
-			vec.lines.push_back(item->barlines[i]->clone());
-		}
-	}
-	return vec;
-}
+
 
 void Project::read(const BackJson& json)
 {
