@@ -1,5 +1,6 @@
 #pragma once
 #include <filesystem>
+//#include <random>
 #include <fstream>
 
 #include "../side/emhash/hash_table5.hpp"
@@ -21,6 +22,7 @@ using BackFileReader = std::ifstream;
 using BackFileWriter = std::ofstream;
 
 using uint = unsigned int;
+using uchar = unsigned char;
 
 //template<class T>
 //using BackVector = std::vector<T>;
@@ -33,5 +35,22 @@ struct BackSize
 	{
 		wid = _wid;
 		hei = _hei;
+	}
+};
+
+
+struct BackColor
+{
+	uchar r = 0;
+	uchar g = 0;
+	uchar b = 0;
+
+	static BackColor random()
+	{
+		BackColor rc;
+		rc.r = rand() % 255;
+		rc.g = rand() % 255;
+		rc.b = rand() % 255;
+		return rc;
 	}
 };

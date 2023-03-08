@@ -169,6 +169,9 @@
     <ClCompile Include="backend\Layers\layers.ixx">
       <Filter>Backend\Impl</Filter>
     </ClCompile>
+    <ClCompile Include="backend\MetadataIO.ixx">
+      <Filter>Backend</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\imgui\imgui_internal.h">

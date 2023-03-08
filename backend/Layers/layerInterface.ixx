@@ -11,6 +11,7 @@ import IOCore;
 import BarcodeModule;
 import Platform;
 import JsonCore;
+import MetadataIOCore;
 
 export struct TileProvider
 {
@@ -100,7 +101,7 @@ public:
 //	virtual void draw() = 0;
 //};
 
-export class ILayer
+export class ILayer : public IJsonIO
 {
 public:
 	ILayer()
@@ -117,19 +118,6 @@ public:
 		return id;
 	}
 
-	virtual void readJson(const BackJson& json, const BackDirStr& metaFolder)
-	{
-		 id = json["id"].asInt();
-		// name = json["name"].get<BackString>();
-		// iconId = json["iconId"].get<int>();
-	}
-
-	virtual void writeJson(BackJson& json, const BackDirStr& metaFolder, int& counter)
-	{
-		// json["id"] = id;
-		// json["name"] = name;
-		// json["iconId"] = iconId;
-	}
 	//IGuiLayer* toGuiLayer();
 };
 

@@ -18,6 +18,7 @@ import GeoprocessorModule;
 import JsonCore;
 
 import TrainIO;
+import MetadataIOCore;
 
 
 export struct FilterInfo
@@ -69,7 +70,7 @@ export struct FilterInfo
 	// }
 };
 
-export class IClassItem
+export class IClassItem //: public IBffIO
 {
 public:
 	virtual const bc::barlinevector& getLines() const = 0;
@@ -78,20 +79,6 @@ public:
 	virtual Barscalar start() const = 0;
 	virtual Barscalar end() const = 0;
 	virtual IClassItem* parent() const = 0;
-
-	virtual void read(StateBinFile::BinState* state) = 0;
-	void read(std::istream& stream)
-	{
-		StateBinFile::BinStateReader reader(stream);
-		read(&reader);
-	}
-
-	virtual void write(StateBinFile::BinState* state) = 0;
-	void write(std::ostream& stream)
-	{
-		StateBinFile::BinStateWriter writer(stream);
-		read(&writer);
-	}
 
 	virtual bool passFilter(const FilterInfo& filter) const = 0;
 };
@@ -148,7 +135,7 @@ public:
 		assert(state->isReading());
 
 		index = state->pInt(0);
-		t->read(state.get());
+		//t->read(state.get());
 		return t;
 	}
 
@@ -158,7 +145,7 @@ public:
 		dynamic_cast<StateBinFile::BinStateReader*>(state.get())->moveIndex(index);
 
 		index = state->pInt(0);
-		t->read(state.get());
+		//t->read(state.get());
 		return t;
 	}
 
@@ -166,7 +153,7 @@ public:
 	{
 		assert(!state->isReading());
 		index = state->pInt(index);
-		item->write(state.get());
+		//item->write(state.get());
 	}
 
 	bool canRead() const
@@ -197,7 +184,7 @@ public:
 	{
 		addDataInner(classInd, raw, extract);
 		std::ostringstream st;
-		raw->write(st);
+		//raw->write(st);
 
 		ClassDataIO io;
 		io.openWrite(dbPath);

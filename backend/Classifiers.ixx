@@ -229,7 +229,7 @@ private:
 				temp.push_back(bc::barvalue(cp, pm.value));
 
 				layer.mat.set(x, y, pointCol);
-				layer.setMatrPoint(x, y, curLine->getDeath(), sl);
+				layer.setMatrPoint(x, y, sl);
 			}
 
 			getCountourSimple(temp, sl->matr);
@@ -321,7 +321,7 @@ private:
 				//layer.mat.set(x, y, color);
 				//			outMask.set(x, y, 255);
 
-				layer.setMatrPoint(cp.x, cp.y, curLine->getDeath(), sl);
+				layer.setMatrPoint(cp.x, cp.y, sl);
 
 				layer.mat.set(cp.x, cp.y, pointCol);
 				if (cp.x - 1 >= 0)

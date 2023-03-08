@@ -24,6 +24,7 @@ import JsonCore;
 import TrainIO;
 import RasterLayers;
 import Classifiers;
+import MetadataIOCore;
 
 
 
@@ -209,149 +210,6 @@ int getCon(int total, int part)
 	return total / part + (total % part == 0 ? 0 : 1);
 }
 
-class UserdefIO
-{
-public:
-	virtual void writeData(BackJson& json) const = 0;
-	virtual void readData(const BackJson& json) = 0;
-};
-
-
-union SettVariant
-{
-	int* i;
-	float* f;
-	double* d;
-	BackString* s;
-	BackPathStr* p;
-};
-
-struct SettingValue
-{
-	SettVariant data;
-	BackString name;
-
-private:
-	enum SettVariantType
-	{
-		sv_int,
-		sv_float,
-		sv_double,
-		sv_str,
-		sv_path
-	} type;
-
-public:
-	SettingValue(const BackString& name, int& val)
-	{
-		this->name = name;
-		data.i = &val;
-		type = sv_int;
-	}
-
-	SettingValue(const BackString& name, float& val)
-	{
-		this->name = name;
-		data.f = &val;
-		type = sv_double;
-	}
-	SettingValue(const BackString& name, double& val)
-	{
-		this->name = name;
-		data.d = &val;
-		type = sv_double;
-	}
-
-	SettingValue(const BackString& name, BackString& val)
-	{
-		this->name = name;
-		data.s = &val;
-		type = sv_str;
-	}
-	SettingValue(const BackString& name, BackPathStr& val)
-	{
-		this->name = name;
-		data.p = &val;
-		type = sv_path;
-	}
-
-	void writeData(BackJson& json) const
-	{
-		switch (type)
-		{
-		case sv_int:
-			json[name] = *data.i;
-			break;
-		case sv_float:
-			json[name] = *data.f;
-			break;
-		case sv_double:
-			json[name] = *data.d;
-			break;
-		case sv_str:
-			json[name] = *data.s;
-			break;
-		case sv_path:
-			json[name] = data.p->string();
-			break;
-		}
-	}
-
-	void readData(const BackJson& json)
-	{
-		switch (type)
-		{
-		case sv_int:
-			*data.i = json[name].asInt();
-			break;
-		case sv_float:
-			*data.f = json[name].asDouble();
-			break;
-		case sv_double:
-			*data.d = json[name].asDouble();
-			break;
-		case sv_str:
-			*data.s = json[name].asString();
-			break;
-		case sv_path:
-			*data.p = json[name].asString();
-			break;
-		}
-	}
-};
-
-class SettingsIO
-{
-	std::vector<SettingValue> settings;
-public:
-	std::function<void(BackJson& json)> extraWrite;
-	std::function<void(const BackJson& json)> extraRead;
-
-
-	SettingsIO(std::initializer_list<SettingValue> l) : settings(l)
-	{ }
-
-	void write(BackJson& json) const
-	{
-		for (auto& set : settings)
-		{
-			set.writeData(json);
-		}
-
-		if (extraWrite)
-			extraWrite(json);
-	}
-	void read(const BackJson& json)
-	{
-		for (auto& set : settings)
-		{
-			set.readData(json);
-		}
-
-		if (extraRead)
-			extraRead(json);
-	}
-};
 
 
 const char* const jsn_displayFacto = "step";
@@ -432,8 +290,8 @@ public:
 		closeReader();
 		closeImages();
 	}
-public:
 
+public:
 	BarCategories classCategs;
 	barclassificator classifier;
 
@@ -636,7 +494,6 @@ public:
 		}
 	}
 //
-
 
 	BackPathStr getMetaPath(const BackString& item) const
 	{
@@ -871,6 +728,67 @@ public:
 		return layer;
 	}
 
+	void visuilizeRasterLine(RasterLineLayer& layer, const ClassItemHolder& items, int tileIndex, const FilterInfo* filter)
+	{
+		MMMAP<size_t, std::shared_ptr<SimpleLine>> parentne;
+
+		const auto& vec = items.lines;
+		for (size_t i = 0; i < vec.size(); ++i)
+		{
+			const IClassItem* curLine = vec.at(i);
+			if (!curLine->passFilter(*filter))
+				continue;
+
+			const auto& matr = curLine->getMatrix();
+
+			if (matr.size() == 0)
+				continue;
+
+			int classType = 0;// classifier.predict(curLine);
+			auto c = classCategs.get(classType);
+			if (!c.show)
+				continue;
+
+			Barscalar pointCol(255, 0, 0);
+			pointCol = RasterLineLayer::colors[rand() % RasterLineLayer::colors.size()];
+
+			std::unordered_set<uint> vals;
+			std::shared_ptr<SimpleLine> sl;
+			auto curIdKey = (size_t)curLine;
+			auto p = parentne.find(curIdKey);
+			if (p != parentne.end())
+			{
+				sl = p->second;
+				sl->barlineIndex = (int)i;
+			}
+			else
+			{
+				sl = std::make_shared<SimpleLine>(tileIndex, i);
+				parentne.insert(std::make_pair(curIdKey, sl));
+			}
+
+			curIdKey = (size_t)curLine->parent();
+			p = parentne.find(curIdKey);
+			if (p != parentne.end())
+			{
+				sl->parent = p->second;
+			}
+			else
+			{
+				sl->parent = std::make_shared<SimpleLine>(tileIndex, -1);
+				parentne.insert(std::make_pair(curIdKey, sl->parent));
+				//sl->parent->matr = curLine->parent->matr;
+			}
+
+			int depth = curLine->getDeath();
+			sl->depth = depth;
+			sl->start = curLine->start();
+			sl->end = curLine->end();
+			sl->matrSrcSize = (int)matr.size();
+
+			layer.addLine(sl, matr, pointCol, tileIndex);
+		}
+	}
 
 	void getOffsertByTileIndex(uint tileIndex, uint& offX, uint& offY)
 	{

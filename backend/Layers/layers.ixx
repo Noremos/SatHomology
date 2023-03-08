@@ -18,15 +18,12 @@ import GeoprocessorModule;
 import LayersCore;
 import JsonCore;
 import ClassifierInterface;
+import MetadataIOCore;
 
 
 export class RasterLayer : public ILayer
 {
 public:
-
-	RasterLayer() : ILayer()
-	{ }
-
 	BackImage mat;
 
 	bc::point minmax(const bc::point& p) const
@@ -34,20 +31,27 @@ public:
 		return { std::min(p.x, mat.width() - 1), std::min(p.y, mat.height() - 1) };
 	}
 
-	virtual void readJson(const BackJson& json, const BackDirStr& metaFolder)
+	virtual void saveLoadState(JsonObjectIOState* state, const BackDirStr& metaFolder)
 	{
-		ILayer::readJson(json, metaFolder);
+		//int id = -1;
+
+		//BackString name;
+		//int iconId = -1;
+		//LayerProvider prov;
+		////ILayer::writeJson(json, metaFolder, counter);
+		//++counter;
+		//BackPathStr fulp = metaFolder / intToStr(counter) / ".png";
+		//imwrite(fulp, mat);
+		// json["matId"] = counter;
+
+				//ILayer::readJson(json, metaFolder);
 		// int counter = json["matId"].get<int>();
 		// BackPathStr fulp = metaFolder / intToStr(counter) / ".png";
 		// mat = imread(fulp);
-	}
-
-	virtual void writeJson(BackJson& json, const BackDirStr& metaFolder, int& counter)
-	{
-		ILayer::writeJson(json, metaFolder, counter);
-		++counter;
-		BackPathStr fulp = metaFolder / intToStr(counter) / ".png";
-		imwrite(fulp, mat);
+				//ILayer::writeJson(json, metaFolder, counter);
+		//++counter;
+		//BackPathStr fulp = metaFolder / intToStr(counter) / ".png";
+		//imwrite(fulp, mat);
 		// json["matId"] = counter;
 	}
 };
@@ -120,20 +124,20 @@ public:
 	}
 	std::vector<std::shared_ptr<SimpleLine>> clickResponser;
 
-	virtual void readJson(const BackJson& json, const BackDirStr& metaFolder)
-	{
-		RasterLayer::readJson(json, metaFolder);
-	}
+	//virtual void readJson(const BackJson& json, const BackDirStr& metaFolder)
+	//{
+	//	RasterLayer::readJson(json, metaFolder);
+	//}
 
-	virtual void writeJson(BackJson& json, const BackDirStr& metaFolder, int& counter)
-	{
-		RasterLayer::writeJson(json, metaFolder, counter);
+	//virtual void writeJson(BackJson& json, const BackDirStr& metaFolder, int& counter)
+	//{
+	//	RasterLayer::writeJson(json, metaFolder, counter);
 
-		for (int i=0;i < clickResponser.size(); i++)
-		{
-			// id, id in bar
-		}
-	}
+	//	for (int i=0;i < clickResponser.size(); i++)
+	//	{
+	//		// id, id in bar
+	//	}
+	//}
 
 	void init(const BackImage& src)
 	{
@@ -154,7 +158,7 @@ public:
 		clickResponser.clear();
 	}
 
-	void setMatrPoint(int x, int y, int curLineDepth, std::shared_ptr<SimpleLine>& newLine)
+	void setMatrPoint(int x, int y, std::shared_ptr<SimpleLine>& newLine)
 	{
 		int indLocal = mat.getLineIndex(x, y);
 		SimpleLine* existLine = clickResponser[indLocal].get();
@@ -163,7 +167,7 @@ public:
 		{
 			clickResponser[indLocal] = newLine;
 		}
-		else if (existLine->getDeath() < curLineDepth)
+		else if (existLine->getDeath() < newLine->getDeath())
 		{
 			// main(depth) < child(depth)
 			//newLine->parent = existLine;
@@ -182,11 +186,35 @@ public:
 		}
 	}
 
+	void addLine(std::shared_ptr<SimpleLine> line, const bc::barvector& matr, Barscalar color, int tileIndex)
+	{
+		auto tileProv = prov.tileByIndex(tileIndex);
+
+		std::unordered_set<uint> vals;
+		bc::barvector temp;
+		for (const auto& pm : matr)
+		{
+			auto o = tileProv.toGlobal(pm.getX(), pm.getY());
+			int x = (std::min)(mat.wid() - 1, o.x);
+			int y = (std::min)(mat.hei() - 1, o.y);
+			uint index = bc::barvalue::getStatInd(x, y);
+			if (vals.find(index) != vals.end())
+				continue;
+
+			vals.insert(index);
+
+			bc::point cp = bc::barvalue::getStatPoint(index);
+			temp.push_back(bc::barvalue(cp, pm.value));
+
+			mat.set(x, y, color);
+			setMatrPoint(x, y, line);
+		}
+
+		getCountourSimple(temp, line->matr);
+	}
+
 	void classBarcodeInner(const ClassItemHolder& items, int tileIndex, const FilterInfo* filter)
 	{
-		bool showBad = true;
-		bool showWhite = true; //extra.indexOf("showw;") != -1;
-
 		auto tileProv = prov.tileByIndex(tileIndex);
 		MMMAP<size_t, std::shared_ptr<SimpleLine>> parentne;
 
@@ -239,26 +267,7 @@ public:
 			sl->end = curLine->end();
 			sl->matrSrcSize = (int)matr.size();
 
-			bc::barvector temp;
-			for (const auto& pm : matr)
-			{
-				auto o = tileProv.toGlobal(pm.getX(), pm.getY());
-				int x = (std::min)(mat.wid() - 1, o.x);
-				int y = (std::min)(mat.hei() - 1, o.y);
-				uint index = bc::barvalue::getStatInd(x, y);
-				if (vals.find(index) != vals.end())
-					continue;
-
-				vals.insert(index);
-
-				bc::point cp = bc::barvalue::getStatPoint(index);
-				temp.push_back(bc::barvalue(cp, pm.value));
-
-				mat.set(x, y, pointCol);
-				setMatrPoint(x, y, curLine->getDeath(), sl);
-			}
-
-			getCountourSimple(temp, sl->matr);
+			addLine(sl, matr, pointCol, tileIndex);
 		}
 	}
 };

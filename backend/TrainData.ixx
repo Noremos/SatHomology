@@ -10,26 +10,18 @@
 export module TrainIO;
 
 import BarcodeModule;
-import JsonCore;
 import IOCore;
 import BarholdersModule;
 import BackTypes;
 import Platform;
 import CacheFilesModule;
+import MetadataIOCore;
+import JsonCore;
 
 //enum ClassCategType
 //{
 //	CCT_base
 //};
-class IBarClassCategor
-{
-public:
-	int id;
-	BackString name;
-
-	//virtual void load(const BackJson& json) = 0;
-	//virtual BackJson save() = 0;
-};
 
 export struct CachedObjectId
 {
@@ -41,18 +33,46 @@ export struct CachedObjectId
 	}
 };
 
+class IBarClassCategor : public IJsonIO
+{
+public:
+	int id;
+	BackString name;
+	IBarClassCategor(int id = -1, const BackString& name = "") :
+		id(id), name(name)
+	{ }
+};
+
 export class BarClassCategor : public IBarClassCategor
 {
 public:
+	bool show = true;
+	BackColor color;
+
+	BarClassCategor(int id = 0, const BackString& name = "") : IBarClassCategor(id, name),
+		show(true), color(BackColor::random())
+	{ }
+
+	virtual void saveLoadState(JsonObjectIOState* state, const BackDirStr&)
+	{
+		state->scInt("id",id);
+		state->scStr("name", name);
+		int size = 3;
+	
+		JsonArrayIOState* arr = state->arrayBegin("color", size);
+		arr->scUchar(0, color.r);
+		arr->scUchar(1, color.g);
+		arr->scUchar(2, color.b);
+	}
 };
 
-class IBarCategories
-{
-	virtual int addValue(const BackString& nname) = 0;
+//class IBarCategories
+//{
+//	virtual int addValue(const BackString& nname) = 0;
+//
+//};
 
-};
-
-export class BarCategories
+export class BarCategories // : IBarCategories
 {
 	int counter = 0;
 
@@ -65,6 +85,19 @@ public:
 
 		categs.push_back({ id, nname });
 		return id;
+	}
+
+	BarClassCategor& get(int id)
+	{
+		for (auto& c : categs)
+		{
+			if (c.id == id)
+			{
+				return c;
+			}
+		}
+
+		throw;
 	}
 
 	void changeName(int id, const BackString& nname)
@@ -101,7 +134,7 @@ public:
 		BarCategories categ;
 		if (!pathExists(path))
 		{
-			categ.categs.push_back({ 0, "Bad" });
+			categ.categs.push_back({ 0, "Bad" , });
 			categ.categs.push_back({ 1, "Kurgan"});
 			categ.counter = 2;
 
@@ -116,26 +149,21 @@ public:
 		for (auto item : list)
 		{
 			const BackJson& catId = item;
-			categ.categs.push_back({ catId["id"].asInt(), catId["name"].asString() });
+			BarClassCategor bc;
+			bc.read(catId, path);
+			categ.categs.push_back(bc);
 		}
-
-		//auto loadColback = [&categ](int classId, const BackString& name)
-		//{
-		//	categ.value.push_back(classId);
-		//	categ.name.push_back(name);
-		//};
 
 		return categ;
 	}
 
 	void saveCategories(const BackPathStr& path)
 	{
-		JsonArray arr;
+		JsonArray arr(Json::ValueType::arrayValue);
 		for (size_t i = 0; i < categs.size(); i++)
 		{
 			JsonObject catId;
-			catId["id"] = categs[i].id;
-			catId["name"] = categs[i].name;
+			categs[i].write(catId, path);
 			arr.append(catId);
 		}
 
