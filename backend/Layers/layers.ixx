@@ -56,12 +56,12 @@ int getFid(int wid, int s)
 	return (wid + s - 1) / s;
 }
 
-BackImage* tiffToImg(ImageReader* reader, const BackPathStr& path, int fctor = 10, bool save = false)
+BackImage tiffToImg(ImageReader* reader, const BackPathStr& path, int fctor = 10, bool save = false)
 {
 	bool rgb = reader->getSamples() > 1;
 	int widf = getFid(reader->width(), fctor);
 	int heif = getFid(reader->height(), fctor);
-	MatrImg* outr = new MatrImg(widf, heif, 3);
+	BackImage outr(widf, heif, 3);
 
 	float NAN_VALUE = reader->getNullValue();
 	for (int h = 0, hr = 0; h < reader->height(); h += fctor, ++hr)
@@ -72,12 +72,12 @@ BackImage* tiffToImg(ImageReader* reader, const BackPathStr& path, int fctor = 1
 			float value = rp.getFloat(w);
 			if (value == NAN_VALUE)
 			{
-				outr->set(wr, hr, Barscalar(0, 0, 0));
+				outr.set(wr, hr, Barscalar(0, 0, 0));
 			}
 			else if (rgb)
 			{
 				auto r = rp.getValue(w);
-				outr->set(wr, hr, Barscalar(r.rgba.samples[0].s, r.rgba.samples[1].s, r.rgba.samples[2].s));
+				outr.set(wr, hr, Barscalar(r.rgba.samples[0].s, r.rgba.samples[1].s, r.rgba.samples[2].s));
 			}
 			else
 			{
@@ -86,13 +86,14 @@ BackImage* tiffToImg(ImageReader* reader, const BackPathStr& path, int fctor = 1
 				else if (value > 255)
 					value = 255;
 
-				outr->set(wr, hr, Barscalar(value, value, value));
+				outr.set(wr, hr, Barscalar(value, value, value));
 			}
 		}
 	}
 
 	if (save)
-		imwrite(path, *outr);
+		imwrite(path, outr);
+
 	return outr;
 }
 
@@ -102,8 +103,20 @@ export class RasterLayer : public IRasterLayer
 public:
 	BackImage mat;
 
-	RasterLayer(float displayFactor = 1, int tileSize = 0, int width = 0) : IRasterLayer(displayFactor, tileSize, width)
-	{ }
+	void init(const BackImage& src, int tileSize = DEF_TILE_SIZE)
+	{
+		mat.assignCopyOf(src);
+		prov.init(src.width(), src.width(), tileSize);
+	}
+
+	void init(IRasterLayer* layer)
+	{
+		int wid = layer->displayWidth();
+		int hei = layer->displayHeight();
+
+		mat.reinit(wid, hei, 4);
+		prov = layer->prov;
+	}
 
 	bc::point minmax(const bc::point& p) const
 	{
@@ -139,7 +152,7 @@ public:
 	{
 		return mat.width();
 	}
-	virtual int displayHeigth() const override
+	virtual int displayHeight() const override
 	{
 		return mat.height();
 	}
@@ -147,7 +160,7 @@ public:
 	{
 		return mat.width();
 	}
-	virtual int realHeigth() const override
+	virtual int realHeight() const override
 	{
 		return mat.height();
 	}
@@ -181,7 +194,7 @@ export struct SimpleLine
 {
 	int id, barlineIndex;
 	SimpleLine(int id = 0, int barlineIndex = 0) :
-	id(id), barlineIndex(barlineIndex), start(0), end(0), depth(0), matrSrcSize(0), parent(nullptr)
+	id(id), barlineIndex(barlineIndex), start(0), end(0), depth(0), matrSrcSize(0)
 	{}
 	//	ushort counter = 0;
 	Barscalar start, end;
@@ -206,7 +219,7 @@ export class RasterLineLayer : public RasterLayer
 public:
 	static std::vector<Barscalar> colors;
 
-	RasterLineLayer(float displayFactor = 1, int tileSize = 0, int width = 0) : RasterLayer(displayFactor, tileSize, width)
+	RasterLineLayer()
 	{
 		if (colors.size() == 0)
 		{
@@ -238,18 +251,23 @@ public:
 	//	}
 	//}
 
-	void init(const BackImage& src)
+	void init(const BackImage& src, int tileSize = DEF_TILE_SIZE)
 	{
 		clear();
 		mat.assignCopyOf(src);
 		clickResponser.resize(mat.length());
+		prov.init(src.width(), src.width(), tileSize);
 	}
 
-	void init(int wid, int hei)
+	void init(IRasterLayer* layer)
 	{
+		int wid = layer->displayWidth();
+		int hei = layer->displayHeight();
 		clear();
 		mat.reinit(wid, hei, 4);
 		clickResponser.resize(mat.length());
+
+		prov = layer->prov;
 	}
 
 	void clear()
@@ -286,7 +304,7 @@ public:
 	}
 
 	using ColorGrater = std::function<Barscalar(const IClassItem* item, bool& bad)>;
-	void addSimpleLine(std::shared_ptr<SimpleLine> line, const bc::barvector& matr, Barscalar color, int tileIndex)
+	void addSimpleLine(std::shared_ptr<SimpleLine>& line, const bc::barvector& matr, const Barscalar& color, int tileIndex)
 	{
 		auto tileProv = prov.tileByIndex(tileIndex);
 
@@ -313,25 +331,20 @@ public:
 		getCountourSimple(temp, line->matr);
 	}
 
-	void addLine(int i, IdGrater& parentne, const IClassItem* curLine, int tileIndex, const FilterInfo* filter, ColorGrater grater)
+	bool passLine(const IClassItem* item, const FilterInfo* filter) const
 	{
-		const auto& matr = curLine->getMatrix();
-		if (matr.size() == 0)
-			return;
+		if (item->getMatrixSize() == 0)
+			return false;
 
-		if (filter && !curLine->passFilter(*filter))
-			return;
+		if (filter && !item->passFilter(*filter))
+			return false;
 
-		Barscalar pointCol(255, 0, 0);
-		if (grater)
-		{
-			bool show = true;
-			pointCol = grater(curLine, show);
-			if (!show)
-				return;
-		}
-		else
-			pointCol = RasterLineLayer::colors[rand() % RasterLineLayer::colors.size()];
+		return true;
+	}
+
+	void addLine(IdGrater& parentne, int i, const IClassItem* curLine, int tileIndex)
+	{
+		Barscalar pointCol = RasterLineLayer::colors[rand() % RasterLineLayer::colors.size()];
 
 		std::unordered_set<uint> vals;
 		std::shared_ptr<SimpleLine> sl;
@@ -344,7 +357,7 @@ public:
 		}
 		else
 		{
-			sl = std::make_shared<SimpleLine>(tileIndex, i);
+			sl.reset(new SimpleLine(tileIndex, i));
 			parentne.insert(std::make_pair(curIdKey, sl));
 		}
 
@@ -356,11 +369,12 @@ public:
 		}
 		else
 		{
-			sl->parent = std::make_shared<SimpleLine>(tileIndex, -1);
+			sl->parent.reset(new SimpleLine(tileIndex, -1));
 			parentne.insert(std::make_pair(curIdKey, sl->parent));
 			//sl->parent->matr = curLine->parent->matr;
 		}
 
+		const auto& matr = curLine->getMatrix();
 		int depth = curLine->getDeath();
 		sl->depth = depth;
 		sl->start = curLine->start();
@@ -370,15 +384,18 @@ public:
 		addSimpleLine(sl, matr, pointCol, tileIndex);
 	}
 
-	void addHolder(const IClassItemHolder& items, int tileIndex, const FilterInfo* filter, ColorGrater grater)
+	void addHolder(const IClassItemHolder& items, int tileIndex, const FilterInfo* filter)
 	{
-		auto tileProv = prov.tileByIndex(tileIndex);
 		IdGrater parentne;
 
 		const auto& vec = items.getItems();
 		for (size_t i = 0; i < vec.size(); ++i)
 		{
-			addLine(i, parentne, vec.at(i), tileIndex, filter, grater);
+			auto curLine = vec.at(i);
+			if (!passLine(curLine, filter))
+				continue;
+
+			addLine(parentne, i, curLine, tileIndex);
 		}
 	}
 };
@@ -395,24 +412,30 @@ public:
 	BackPathStr imgPath;
 
 	// nnotSave
-	BackDirStr metaPath;
+	MetadataProvider* mprov;
 
 	int subImageIndex = 0;
-	std::vector<BackImage*> images;
+	std::vector<BackImage> images;
+	int subImgSize;
 
-	RasterFromDiskLayer(float displayFactor = 1, int tileSize = 0, int width = 0) : IRasterLayer(displayFactor, tileSize, width)
-	{ }
+	~RasterFromDiskLayer()
+	{
+		closeImages();
+	}
 
-	void open(const BackPathStr& path, const BackDirStr& metaPath)
+	void open(const BackPathStr& path, MetadataProvider& metaPath)
 	{
 		closeReader();
 
 		imgPath = path;
-		this->metaPath = metaPath;
+		this->mprov = &metaPath;
 
 		openReader();
 		if (!reader->ready)
 			return;
+
+		writeImages();
+		setSubImage(0);
 	}
 
 
@@ -423,18 +446,17 @@ public:
 
 	void setSubImage(int imgIndex)
 	{
-		int displayWid = images[imgIndex]->width();
+		int displayWid = images[imgIndex].width();
 		if (imgType == ReadType::Tiff)
 		{
 			dynamic_cast<TiffReader*>(reader)->setCurrentSubImage(imgIndex);
-			prov.displayFactor = (float)reader->width() / displayWid;
 			subImageIndex = imgIndex;
 		}
 		else
 		{
 			subImageIndex = 0;
-			prov.displayFactor = 1.0f;
 		}
+		prov.update(reader->width(), displayWid);
 	}
 
 	int getFirstSmallIndex(const int maxSize = 2000)
@@ -465,7 +487,7 @@ public:
 		std::vector<SubImgInf> info;
 		if (imgType != ReadType::Tiff)
 		{
-			//info.push_back({ realWidth(), realHeigth() });
+			//info.push_back({ realWidth(), realHeight() });
 			return info;
 		}
 
@@ -512,75 +534,65 @@ public:
 	}
 
 
-	void writeImages(MetadataProvider& mprov)
+	void writeImages()
 	{
 		if (!reader)
 			return;
 
+		closeImages();
 		images.clear();
 
-		BackDirStr tiles = mprov.getSubFolter("tiles");
+		BackDirStr tiles = mprov->getSubFolter(std::format("{}_layer", id));
+		tiles = tiles / "tiles";
+
 		if (imgType == ReadType::Tiff)
 		{
 			TiffReader* trear = dynamic_cast<TiffReader*>(reader);
-			int s = trear->getSubImageSize();
-			for (int i = 0; i < s; ++i)
+			subImgSize = trear->getSubImageSize();
+			for (int i = 0, k; i < subImgSize; ++i)
 			{
-				int factor = 1;
+				//int factor = 1;
 				trear->setCurrentSubImage(i);
-				if (reader->width() > 2000)
-				{
-					images.push_back(nullptr);
-				}
-				else
-					images.push_back(tiffToImg(reader, tiles / (intToStr(i) + ".png"), factor, true));
+				if (reader->width() <= 2000)
+					images.push_back(tiffToImg(reader, tiles / (intToStr(k++) + ".png"), 1.0, true));
 			}
 
 			if (images.size() == 0)
-				images.push_back(tiffToImg(reader, tiles / (intToStr(s) + ".png"), 10, true));
+			{
+				int factor = reader->width() / 2000;
+				images.push_back(tiffToImg(reader, tiles / (intToStr(0) + ".png"), factor, true));
+			}
+
+			trear->setCurrentSubImage(subImageIndex);
 		}
 		else
 		{
 			images.push_back(tiffToImg(reader, tiles / (intToStr(0) + ".png"), 1, true));
 		}
+
+		subImgSize = images.size();
 	}
 
 
-	void readImages(MetadataProvider& mprov)
+	void readImagesFromCache()
 	{
 		if (!reader)
 			return;
 
-		BackDirStr tiles = mprov.getSubFolter("tiles");
-		if (imgType == ReadType::Tiff)
+		BackDirStr tiles = mprov->getSubFolter(std::format("{}_layer", id));
+		tiles = tiles / "tiles";
+		for (int i = 0; i < subImgSize; ++i)
 		{
-			TiffReader* treader = dynamic_cast<TiffReader*>(reader);
-			int s = treader->getSubImageSize();
-			closeImages();
-			for (int i = 0; i < s; ++i)
-			{
-				treader->setCurrentSubImage(i);
-				if (reader->width() > 2000)
-				{
-					images.push_back(nullptr);
-				}
-				else
-					images.push_back(tiffToImg(reader, tiles / (intToStr(i) + ".png"), 1, false));
-			}
-
-			if (images.size() == 0)
-				images.push_back(tiffToImg(reader, tiles / (intToStr(s) + ".png"), 10, false));
+			int factor = 1;
+			images.push_back(imread(tiles / (intToStr(i) + ".png")));
 		}
-		else
-			images.push_back(tiffToImg(reader, tiles / (intToStr(0) + ".png"), 1, false));
 	}
 
 
 	void closeImages()
 	{
-		for (int i = 0; i < images.size(); ++i)
-			delete images[i];
-
+		//for (int i = 0; i < images.size(); ++i)
+		//	delete images[i];
 		images.clear();
 	}
 
@@ -614,7 +626,7 @@ public:
 	{
 		return reader->width() * prov.displayFactor;
 	}
-	virtual int displayHeigth() const override
+	virtual int displayHeight() const override
 	{
 		return reader->height() * prov.displayFactor;
 	}
@@ -622,7 +634,7 @@ public:
 	{
 		return reader->width();
 	}
-	virtual int realHeigth() const override
+	virtual int realHeight() const override
 	{
 		return reader->height();
 	}
@@ -633,10 +645,10 @@ public:
 	}
 	virtual BackImage getImage(const int max) const override
 	{
-		return *images[0];
+		return images[0];
 	}
 	virtual const BackImage* getCachedImage() const override
 	{
-		return images[0];
+		return &images[0];
 	}
 };

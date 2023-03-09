@@ -176,20 +176,12 @@ public:
 	barclassificator classifier;
 
 	int curLayerIndex;
-	//ILayer* curLayer;
 	LayersList<ILayer> layers;
 
 	bool block = false;
-	int modelWid;
-	int modelHei;
 
 	BackDirStr u_classCache;
-	BackPathStr u_geojsonPath;
-	int u_subImageIndex = 0;
 	int u_algorithm = 0;
-
-	int tileSize = 200;
-	int tileOffset = 50;
 
 	int layerCounter = 0;
 	template<class LDATA>
@@ -221,7 +213,7 @@ public:
 	}
 
 	template<class LDATA>
-	LDATA* addOrUpdate(InOutLayer& iol)
+	LDATA* addOrUpdateOut(InOutLayer& iol)
 	{
 		LDATA* layer;
 		if (iol.isOutEmpty())
@@ -235,14 +227,19 @@ public:
 			layer = changeLayerData<LDATA>(iol.out);
 		}
 
-		//int id = getFirstNormIndex();
-		//layer->init(images[id]->width(), images[id]->height());
-
 		return layer;
 	}
 
+	// template<class LDATA>
+	// LDATA* addOrUpdateOut(InOutLayer& iol)
+	// {
+	// 	LDATA* layer = addOrUpdateOut(iol);
+	// 	layer->init(getInRaster(iol));
+	// 	return layer;
+	// }
 
-	IRasterLayer* getRaster(int inId, int subImgIndex = -1)
+
+	IRasterLayer* getInRaster(int inId, int subImgIndex = -1)
 	{
 		ILayer* layer = layers.at(inId);
 		auto rlayer = dynamic_cast<IRasterLayer*>(layer);
@@ -251,9 +248,9 @@ public:
 		return rlayer;
 	}
 
-	IRasterLayer* getRaster(const InOutLayer& iol)
+	IRasterLayer* getInRaster(const InOutLayer& iol)
 	{
-		return getRaster(iol.in, iol.subImgIndex);
+		return getInRaster(iol.in, iol.subImgIndex);
 	}
 
 	//RasterLayer main;
@@ -272,7 +269,6 @@ public:
 
 	BackString status;
 public:
-
 	void setProjectPath(const BackPathStr& path)
 	{
 		std::filesystem::path dir = path;
@@ -312,7 +308,6 @@ private:
 	BackDirStr projectPath;
 
 public:
-
 	bool isTileCached(int ind)
 	{
 		BackPathStr path = getTilePath(ind);
@@ -357,13 +352,12 @@ public:
 			throw;
 		}
 	}
-//
 
 	BackPathStr getMetaPath(const BackString& item) const
 	{
 		return getPath(BackPath::metadata) / item;
 	}
-//
+
 	RasterFromDiskLayer* loadImage(const BackPathStr& path, int step)
 	{
 		prjCreate = true;
@@ -371,7 +365,7 @@ public:
 			//	this->u_imgMaxVal = reader->max;
 			//	this->u_displayFactor = step;
 		RasterFromDiskLayer* layer = addLayerData<RasterFromDiskLayer>();
-		layer->open(path, getPath(BackPath::metadata));
+		layer->open(path, metaprov);
 
 		saveProject();
 
@@ -386,20 +380,7 @@ public:
 		read(loadDoc);
 		prjCreate = true;
 
-		//	qDebug() << searchSetts.height.start;
-		//	qDebug() << searchSetts.heightMin();
-
-		//openReader();
-		//modelWid = reader->width() / u_displayFactor;
-		//modelHei = reader->height() / u_displayFactor;
-		//readImages();
-
 		classCategs = BarCategories::loadCategories(getPath(BackPath::classifier));
-
-		//BarClassifierCache bcc;
-		// classer.categs = bcc.loadCategories();
-		//classer.udpdateClasses();
-		//bcc.loadClasses(getPath(BackPath::classfiles), classer);
 		return true;
 	}
 
@@ -421,19 +402,10 @@ public:
 		return true;
 	}
 
-
-	float getImgMaxVal() const;
-
-	float getImgMinVal() const;
-//
-//
 	void readGeojson();
 	void readMyGeo(bool reinitY);
 
-
-//
 	void exportResult(int imgNumber, const BackImage& resultMart);
-
 
 	Barscalar predict(const IClassItem* item, bool& skip)
 	{
@@ -455,7 +427,6 @@ public:
 	{
 		if (block) return nullptr;
 
-
 		// Settup
 		bc::BarConstructor constr;
 		constr.createBinaryMasks = true;
@@ -466,23 +437,27 @@ public:
 		//	constr.setStep(stepSB);
 
 		// -------
+		IRasterLayer* inLayer = getInRaster(iol);
+		uint rwid = inLayer->realWidth();
+		uint rhei = inLayer->realHeight();
+
+		int tileSize = inLayer->prov.tileSize;
+		int tileOffset = inLayer->tileOffset;
 
 		const uint fullTile = tileSize + tileOffset;
 		info->imgLen = fullTile * fullTile;
-		IRasterLayer* rlayer = getRaster(iol);
-		uint rwid = rlayer->realWidth();
-		uint rhei = rlayer->realHeigth();
+
 		TileIterator stW(0, tileSize, tileOffset, rwid);
 		TileIterator stH(0, tileSize, tileOffset, rhei);
-		//LayerProvider prov(u_displayFactor, tileSize, reader->width());
 
 		RasterLineLayer* layer = nullptr;
 		if (!iol.skipOutput())
 		{
-			layer = addOrUpdate<RasterLineLayer>(iol);
+			layer = addOrUpdateOut<RasterLineLayer>(iol);
+			layer->init(getInRaster(iol));
 		}
 
-		//Cacher
+		// Cacher
 		ItemHolderCache cacher;
 		cacher.openWrite(getPath(BackPath::binbar));
 
@@ -491,11 +466,18 @@ public:
 		int inde = 0;
 		IClassItemHolder::ItemCallback cacheClass;
 		if (layer)
-			cacheClass = [this, inde, &parentne, layer, tileIndex, &info](IClassItem* item)
 		{
-			auto askf = [this](const IClassItem* item, bool& skip){return predict(item, skip);};
-			layer->addLine(inde, parentne, item, tileIndex, info, askf);
-		};
+			cacheClass = [this, &parentne, &inde, layer, tileIndex, info](IClassItem* item)
+			{
+				if (layer->passLine(item, info))
+				{
+					bool show = true;
+					auto pointCol = predict(item, show);
+					if (show || true)
+						layer->addLine(parentne, inde++, item, tileIndex);
+				}
+			};
+		}
 		else
 			cacheClass = [](IClassItem*){};
 
@@ -514,13 +496,11 @@ public:
 					break;
 
 				bc::point offset(stW.pos(), stH.pos());
-				BackImage rect = rlayer->getRect(offset.x, offset.y, iwid, ihei);
-				tileIndex = rlayer->prov.tileByOffset(offset.x, offset.y).index;
+				BackImage rect = inLayer->getRect(offset.x, offset.y, iwid, ihei);
+				tileIndex = inLayer->prov.tileByOffset(offset.x, offset.y).index;
 
-				//DataRectBarWrapper warp(rect);
-				// Switch with function;
 				BaritemHolder creator;
-				inde = 0;
+				inde = 0; // Keep this! See lyambda
 				creator.create(&rect, constr, cacheClass);
 				cacher.save(&creator, tileIndex);
 
@@ -535,30 +515,49 @@ public:
 		return layer;
 	}
 
-	RasterLineLayer* readPrcoessBarcode(InOutLayer& iol, FilterInfo& filter)
+	RasterLineLayer* processCachedBarcode(InOutLayer& iol, FilterInfo& filter)
 	{
 		//if (u_displayFactor < 1.0)
 		//	throw std::exception();
 
-		filter.imgLen = (tileSize + tileOffset) * (tileSize + tileOffset);
+		IRasterLayer* inLayer = getInRaster(iol);
+		int tileSize = inLayer->prov.tileSize;
+		int tileOffset = inLayer->tileOffset;
 
-		RasterLineLayer* layer = addOrUpdate<RasterLineLayer>(iol);
+		const uint fullTile = tileSize + tileOffset;
+		filter.imgLen = fullTile * fullTile;
+
+		// -------
+		RasterLineLayer* outLayer = addOrUpdateOut<RasterLineLayer>(iol);
+		outLayer->init(inLayer);
 
 		// Cacher
 		ItemHolderCache cacher;
 		cacher.openRead(getPath(BackPath::binbar));
-
-		auto askf = [this](const IClassItem* item, bool& skip){return predict(item, skip);};
 
 		int tileIndex = 0;
 		while (cacher.canRead())
 		{
 			BaritemHolder holder;
 			cacher.load(tileIndex, &holder);
-			layer->addHolder(holder, tileIndex, &filter, askf);
+
+			IdGrater parentne;
+
+			const auto& vec = holder.getItems();
+			for (size_t i = 0; i < vec.size(); ++i)
+			{
+				auto item = vec.at(i);
+				if (outLayer->passLine(item, &filter))
+				{
+					bool show = true;
+					auto pointCol = predict(item, show);
+					if (show || true)
+						outLayer->addLine(parentne, i, item, tileIndex);
+				}
+			}
 		}
 
-		return layer;
+		return outLayer;
 	}
 
 	//void getOffsertByTileIndex(uint tileIndex, uint& offX, uint& offY)
@@ -618,7 +617,7 @@ public:
 		if (destIcon != nullptr)
 		{
 			auto rect = bc::getBarRect(line->getMatrix());
-			*destIcon = getRaster(layerId)->getRect(rect.x, rect.y, rect.width, rect.height);
+			*destIcon = getInRaster(layerId)->getRect(rect.x, rect.y, rect.width, rect.height);
 		}
 		//rb->barlines[srcItemId.vecId] = nullptr;
 
@@ -636,8 +635,9 @@ public:
 		//if (u_displayFactor < 1.0)
 		//	throw std::exception();
 
-		IRasterLayer* input = getRaster(iol);
-		RasterLayer* layer = addOrUpdate<RasterLayer>(iol);
+		IRasterLayer* input = getInRaster(iol);
+		RasterLayer* layer = addOrUpdateOut<RasterLayer>(iol);
+		layer->init(input);
 
 		const BackImage src = *(input->getCachedImage());
 
@@ -674,6 +674,7 @@ public:
 		std::fill(setted.begin(), setted.end(), 0);
 
 		BackImage& imgout = layer->mat;
+		imgout = src;
 
 		//.width(), src.hei(), src.channels());
 		//imgout.fill(0);
@@ -690,9 +691,9 @@ public:
 
 			Barscalar val = imgout.getLiner(dat);
 
-			for (int i = 0; i < 8; ++i)
+			for (int u = 0; u < 8; ++u)
 			{
-				bc::point IcurPoint(p + poss[i]);
+				bc::point IcurPoint(p + poss[u]);
 
 				if (IcurPoint.x < 0 || IcurPoint.x >= src.width() || IcurPoint.y < 0 || IcurPoint.y >= src.height())
 					continue;

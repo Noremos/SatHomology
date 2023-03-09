@@ -13,6 +13,9 @@ import Platform;
 import JsonCore;
 import MetadataIOCore;
 
+export const int DEF_TILE_SIZE = 300;
+export const int DEF_TILE_OFFSET = 150;
+
 export struct TileProvider
 {
 public:
@@ -33,19 +36,17 @@ public:
 
 export class LayerProvider
 {
-//std::function calcOffset
 public:
-	//int tilesInRow;
-	int width;
-	int tileSize;
+	int width; // realWid
+	int tileSize = DEF_TILE_SIZE;
 	float displayFactor;
 	bc::point layerOffset;
 
-	LayerProvider(float _displayFactor, int tileSize, int width) :
-		width(width), tileSize(tileSize),
-		layerOffset(0,0), displayFactor(_displayFactor)
-	{
-	}
+	//LayerProvider(int realWid, int displayWid, int tileSize) :
+	//	width(width), tileSize(tileSize),
+	//	layerOffset(0,0), displayFactor(_displayFactor)
+	//{
+	//}
 
 	int getTilesInRow() const
 	{
@@ -57,17 +58,16 @@ public:
 		return total / part + (total % part == 0 ? 0 : 1);
 	}
 
-	void init(int tileSize, int width)
+	void init(int realWid, int displayWid, int tileSize)
 	{
+		update(realWid, displayWid);
 		this->tileSize = tileSize;
-		this->width = width;
-		//this->tilesInRow = getCon(width, tileSize);
 	}
-	void init(float display, int tileSize, int width)
+
+	void update(int realWid, int displayWid)
 	{
-		this->displayFactor = display;
-		this->tileSize = tileSize;
-		this->width = width;
+		this->displayFactor = realWid == displayWid ? 1.0f : static_cast<float>(realWid) / displayWid;
+		this->width = realWid;
 	}
 
 	TileProvider tileByIndex(uint tileIndex) const
@@ -153,15 +153,13 @@ export class IRasterLayer : public ILayer
 {
 public:
 	LayerProvider prov;
-	int tileOffset;
+	int tileOffset = DEF_TILE_OFFSET;
 
-	IRasterLayer(float displayFactor, int tileSize, int width) : prov(displayFactor, tileSize, width)
-	{ }
 
 	virtual int displayWidth() const = 0;
-	virtual int displayHeigth() const = 0;
+	virtual int displayHeight() const = 0;
 	virtual int realWidth() const = 0;
-	virtual int realHeigth() const = 0;
+	virtual int realHeight() const = 0;
 	virtual BackImage getRect(int stX, int stRow, int wid, int hei) = 0;
 
 	virtual BackImage getImage(const int max) const = 0;

@@ -132,7 +132,7 @@ export class RasterLineGuiLayer : public GuiLayerData<RasterLineLayer>
 public:
 	GuiDrawImage main;
 	BackString debug;
-	SimpleLine** selectedLine = nullptr;
+	SimpleLine* selectedLine = nullptr;
 	GuiDrawCloudPointClick clickHandler;
 
 	RasterLineGuiLayer() : GuiLayerData()
@@ -204,11 +204,11 @@ public:
 		SimpleLine* line = data->clickResponser[y * main.width + x].get();
 		if (line)
 		{
-			if (*selectedLine == line && line->parent)
+			if (selectedLine == line && line->parent)
 				line = line->parent.get();
 
-			*selectedLine = line;
-			return &(*selectedLine)->matr;
+			selectedLine = line;
+			return &(selectedLine->matr);
 		}
 
 		return nullptr;
@@ -223,12 +223,12 @@ public:
 
 	SimpleLine* moveToParenr()
 	{
-		return *selectedLine = (*selectedLine)->parent.get();
+		return selectedLine = selectedLine->parent.get();
 	}
 
 	void drawLineInfoWin()
 	{
-		SimpleLine* line = *selectedLine;
+		SimpleLine* line = selectedLine;
 		if (!line)
 		{
 			return;
@@ -383,6 +383,16 @@ public:
 		return iol.in < 0 ? nullptr : dynamic_cast<IRasterLayer*>(layers.at(iol.in)->getCore());
 	}
 
+	template<typename T>
+	T* getCastCurrentLayer()
+	{
+		GuiLayer* l = getCurrentLayer();
+		if (l)
+			return dynamic_cast<T*>(l);
+		else
+			return nullptr;
+	}
+
 	GuiLayer* getCurrentLayer()
 	{
 		return iol.in < 0 ? nullptr : layers.at(iol.in);
@@ -499,37 +509,9 @@ public:
 			return;
 		}
 
-
-		ImDrawList* drawList = ImGui::GetWindowDrawList();
-		auto winsize = ImGui::GetWindowSize();
 		ImVec2 pos = ImGui::GetWindowPos();
 
-		auto& pngs = layers;
-
-		//int curItem = 0;
-		//auto imgLoader = [](void* data, int idx, const char** out_text)
-		//{
-		//	auto& pngs = *static_cast<std::vector<Layer>*>(data);
-
-		//	auto& icon = pngs[idx].icon;
-
-		//	*out_text = pngs[idx].name.c_str();
-		//	ImGui::Image(icon.getTexturePtr(), ImVec2(icon.width, icon.height));
-		//	ImGui::SameLine();
-		//	return true;
-		//};
-
-		//ImGui::ListBox("Images", &selecnedLayer, imgkLoader, &pngs, pngs.size());
-
-
-		//{
-		//	if (curItem >= 0 && selectedImage < pngs.size())
-		//	{
-		//		ImVec2 siz(pngs[curItem].width, pngs[curItem].height)
-		//		ImGui::Image(pngs[curItem].getTexturePtr(), siz);
-		//	}
-		//	ImGui::EndChild();
-		//}
+		auto winsize = ImGui::GetWindowSize();
 		winsize.y -= 50;
 
 		bool temporaly = false;
@@ -537,19 +519,20 @@ public:
 		if (layers.size() > 0 && iol.out == -1)
 			displayRadioId = (*layers.begin())->getSysId();
 
-		int selHei = 40;
+		float selHei = 40;
 		ImVec2 iconSize(40, selHei / 2);
-
 
 		bool catchNext = false;
 		int toMove[2]{ -1, -1 };
 		int prevId = -1;
+
 		if (ImGui::BeginListBox("##LayersList", winsize))
 		{
 			uint j = 0;
 			for (auto& lay : layers)
 			{
-
+				bool fistLayer = j == 0;
+				bool lastLayer = j == layers.size() - 1;
 				//if (lay->getSysId()s == iol.out)
 				//{
 				//	ImFont* italicFont = ImGui::GetIO().Fonts->Fonts[1];  // Assuming the second font in the ImFontAtlas is italic
@@ -567,38 +550,34 @@ public:
 				auto& icon = *lay->getIcon();
 
 				bool curRadio = (displayRadioId == lay->getSysId());
-				temporaly = ImGui::RadioButton("Work", curRadio);//, curRadio);
+				temporaly = ImGui::RadioButton("##Work", curRadio);//, curRadio);
 
 				ImGui::SameLine();
 				ImGui::Checkbox("##visible", &lay->visible);
 
 				ImGui::SameLine();
 				ImGui::Image((void*)(intptr_t)icon.getTextureId(), ImVec2(selHei, selHei));
-				ImGui::SameLine();
 
-				ImGui::BeginDisabled(j == 0 || j == 1);
+				ImGui::SameLine();
 				auto posBef = ImGui::GetCursorPos();
+				ImGui::BeginDisabled(fistLayer);
 				if (ImGui::Button(ICON_FA_ANGLE_UP "", iconSize))
 				{
 					toMove[0] = prevId;
 					toMove[1] = curID;
 				}
-
-				if (j==1)
-					ImGui::EndDisabled();
+				ImGui::EndDisabled();
 
 				ImGui::SetCursorPos({posBef.x, posBef.y + iconSize.y});
+				ImGui::BeginDisabled(lastLayer);
 				if (ImGui::Button(ICON_FA_ANGLE_DOWN "", iconSize))
 				{
 					toMove[0] = curID;
 					catchNext = true;
 				}
-				if (j != 1)
-					ImGui::EndDisabled();
+				ImGui::EndDisabled();
 
 				ImGui::SetCursorPos({posBef.x + iconSize.x, posBef.y});
-
-
 				bool seled = ImGui::Selectable(lay->getName(), curID == iol.in, 0, ImVec2(winsize.x - 50, selHei));
 				prevId = curID;
 
@@ -621,7 +600,7 @@ public:
 				//{
 				//	ImGui::PopFont();
 				//}
-				ImVec4 color(1.0f, 0.0f, 0.0f, 1.0f); // RGBA color (red in this case)
+				// ImVec4 color(1.0f, 0.0f, 0.0f, 1.0f); // RGBA color (red in this case)
 				ImGui::PopID();
 				++j;
 			}

@@ -70,6 +70,7 @@ public:
 	virtual size_t getParentId() const = 0;
 	// virtual const bc::barlinevector& getLines() const = 0;
 	virtual const bc::barvector &getMatrix() const = 0;
+	virtual const size_t getMatrixSize() const = 0;
 	virtual int getDeath() const = 0;
 	virtual Barscalar start() const = 0;
 	virtual Barscalar end() const = 0;
@@ -89,7 +90,7 @@ public:
 
 	using ItemCallback = std::function<void(IClassItem *item)>;
 
-	virtual void create(bc::DatagridProvider *img, const bc::BarConstructor &constr, ItemCallback callback) = 0;
+	virtual void create(bc::DatagridProvider *img, const bc::BarConstructor &constr, const ItemCallback& callback) = 0;
 };
 
 export class ItemHolderCache

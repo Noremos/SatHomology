@@ -148,7 +148,7 @@ public:
 
 		comm.clear();
 		//proj->setReadyLaod(curImgInd);
-		return proj->readPrcoessBarcode(layer, filter);
+		return proj->processCachedBarcode(layer, filter);
 	}
 
 

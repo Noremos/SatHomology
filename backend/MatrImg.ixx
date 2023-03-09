@@ -324,7 +324,7 @@ public:
 		}
 		else
 		{
-			uchar *off = data + (y * _wid + x) * TSize;
+			uchar* off = data + (y * _wid + x) * TSize;
 
 			off[0] = val.data.b3[0];
 			off[1] = val.data.b3[1];
@@ -498,10 +498,12 @@ public:
 
 	MatrImg getRect(int stX, int stRow, int wid, int hei)
 	{
+		int destBytesSize = wid * TSize;
+
 		MatrImg r(wid, hei, _channels);
-		for (size_t y = stRow, dstY = 0; y < stRow + hei; y++, dstY++)
+		for (size_t y = 0; y < hei; y++)
 		{
-			memcpy(r.data + (wid * dstY), data + (_wid * y + stX), wid * TSize);
+			memcpy(r.data + (wid * y), data + (_wid * (y + stRow) + stX), destBytesSize);
 		}
 
 		return r;

@@ -59,12 +59,17 @@ public:
 		return line->matr;
 	}
 
+	virtual const size_t getMatrixSize() const
+	{
+		return line->matr.size();
+	}
+
 	virtual bool passFilter(const FilterInfo& filter) const
 	{
-		return filter.start.notInRange(line->start) ||
-			filter.len.notInRange(line->len()) ||
-			filter.matrSizeProc.notInRange(line->matr.size() * 100 / filter.imgLen) ||
-			filter.depth.notInRange(line->getDeath());
+		return filter.start.inRange(line->start) ||
+			filter.len.inRange(line->len()) ||
+			filter.matrSizeProc.inRange(line->matr.size() * 100 / filter.imgLen) ||
+			filter.depth.inRange(line->getDeath());
 	}
 
 	virtual void saveLoadState(StateBinFile::BinState* state) override
@@ -96,7 +101,7 @@ public:
 		items.clear();
 	}
 
-	void create(bc::DatagridProvider* img, const bc::BarConstructor& constr, ItemCallback callback)
+	void create(bc::DatagridProvider* img, const bc::BarConstructor& constr, const ItemCallback& callback)
 	{
 		bc::BarcodeCreator creator;
 		std::unique_ptr<bc::Barcontainer> ret(creator.createBarcode(img, constr));
@@ -356,7 +361,7 @@ public:
 	{
 		bc::barline* raw = static_cast<const BarlineClass*>(rawcl)->line;
 		bc::Baritem newOne;
-		raw->getChilredAsList(newOne.barlines, true, false, false);
+		raw->getChilredAsList(newOne.barlines, true, true, false);
 		newOne.relen();
 
 		auto cp = bc::CompireStrategy::CommonToLen;

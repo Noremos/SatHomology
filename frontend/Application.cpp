@@ -93,6 +93,13 @@ namespace MyApp
 		style.ScaleAllSizes(highDPIscaleFactor);
 	}
 
+	//template<class T>
+	//struct ValBinder
+	//{
+	//	T* from;
+	//	T* to;
+	//};
+
 	GuiBackend backend;
 	GuiClassifer classerVals;
 
@@ -167,7 +174,6 @@ namespace MyApp
 	};
 	WindowsValues commonValus;
 	LayersVals layersVals;// (backend);
-	SimpleLine* selectedLine = nullptr;
 
 	struct TopbarValues
 	{
@@ -229,8 +235,7 @@ namespace MyApp
 				grabSets();
 				RasterLineLayer* layerData = backend.createBarcode(layersVals.iol, properties, filterInfo.filterInfo);
 				assert(layerData);
-				auto t = layersVals.setLayer<RasterLineGuiLayer, RasterLineLayer>("barcode", layerData);
-				t->selectedLine = &selectedLine;
+				layersVals.setLayer<RasterLineGuiLayer, RasterLineLayer>("barcode", layerData);
 			}
 		}
 
@@ -584,9 +589,10 @@ namespace MyApp
 			if (centerVals.imgMain.clicked)
 			{
 				layersVals.onClick(centerVals.imgMain.clickedPos);
-				if (selectedLine)
+				RasterLineGuiLayer* lay = layersVals.getCastCurrentLayer< RasterLineGuiLayer>();
+				if (lay)
 				{
-					classerVals.selceted = {selectedLine->id, selectedLine->barlineIndex};
+					classerVals.selceted = { lay->selectedLine->id, lay->selectedLine->barlineIndex};
 				}
 			}
 
@@ -661,7 +667,6 @@ namespace MyApp
 					ImGui::CloseCurrentPopup();
 					auto* layerData = backend.processRaster(layersVals.iol, bottomVals.filtere.filterInfo);
 					RasterLineGuiLayer* t = layersVals.setLayer<RasterLineGuiLayer, RasterLineLayer>("barcode", layerData);
-					t->selectedLine = &selectedLine;
 
 					//commonValus.onAir = true;
 					//commonValus.future = std::async(&GuiBackend::processRaster, std::ref(backend),
