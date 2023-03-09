@@ -35,19 +35,24 @@ export class LayerProvider
 {
 //std::function calcOffset
 public:
-	int tilesInRow;
+	//int tilesInRow;
+	int width;
 	int tileSize;
 	float displayFactor;
 	bc::point layerOffset;
 
 	LayerProvider(float _displayFactor, int tileSize, int width) :
-		tilesInRow(0), tileSize(tileSize),
+		width(width), tileSize(tileSize),
 		layerOffset(0,0), displayFactor(_displayFactor)
 	{
-		this->tilesInRow = getCon(width, tileSize);
 	}
 
-	int getCon(int total, int part)
+	int getTilesInRow() const
+	{
+		return getCon(width, tileSize);
+	}
+
+	int getCon(int total, int part) const
 	{
 		return total / part + (total % part == 0 ? 0 : 1);
 	}
@@ -55,17 +60,19 @@ public:
 	void init(int tileSize, int width)
 	{
 		this->tileSize = tileSize;
-		this->tilesInRow = getCon(width, tileSize);
+		this->width = width;
+		//this->tilesInRow = getCon(width, tileSize);
 	}
 	void init(float display, int tileSize, int width)
 	{
 		this->displayFactor = display;
 		this->tileSize = tileSize;
-		this->tilesInRow = getCon(width, tileSize);
+		this->width = width;
 	}
 
 	TileProvider tileByIndex(uint tileIndex) const
 	{
+		int tilesInRow = getTilesInRow();
 		TileProvider p(tileIndex);
 		p.factor = displayFactor;
 		p.offset.x = (tileIndex % tilesInRow) * tileSize;
@@ -75,6 +82,8 @@ public:
 
 	TileProvider tileByOffset(uint offX, uint offY) const
 	{
+		int tilesInRow = getTilesInRow();
+
 		TileProvider p(offX, offY);
 		p.factor = displayFactor;
 		p.index = (offY / tileSize) * tilesInRow + offX / tileSize;
