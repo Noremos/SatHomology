@@ -103,24 +103,19 @@ public:
 export class TilemapOverlap : public IOverlapProcess
 {
 	GuiDrawImage* img;
-	int tileSize = 0;
+	const LayerProvider* lprov;
 
 public:
-
-	void init(GuiDrawImage* src, int tileSize)
+	void init(GuiDrawImage* src, const LayerProvider* prov)
 	{
 		img = src;
-		this->tileSize = tileSize;
-	}
-
-	void setTilesize(int tileSize)
-	{
-		this->tileSize = tileSize;
+		lprov = prov;
 	}
 
 	virtual void draw(ImVec2 pos, ImVec2 size)
 	{
-		if (tileSize == 0 || !enable)
+		const LayerProvider& prov = *lprov;
+		if (prov.tileSize == 0 || !enable)
 			return;
 
 		auto window_flags = ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoScrollbar;
@@ -136,7 +131,8 @@ public:
 		ImDrawList* list = ImGui::GetWindowDrawList();
 		ImVec2 cont = ImGui::GetCurrentWindow()->Pos + img->localDisplayPos;
 
-		ImVec2 drawTileSize(tileSize / img->scaleFactor, tileSize / img->scaleFactor);
+		float tfc = prov.tileSize / prov.displayFactor;
+		ImVec2 drawTileSize(tfc, tfc);
 
 		int newWid = img->displaySize.x;
 		int newHei = img->displaySize.y;

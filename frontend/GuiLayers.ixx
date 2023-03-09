@@ -7,6 +7,7 @@ import RasterLayers;
 import ProjectModule;
 import BarcodeModule;
 import GuiWidgets;
+import GuiOverlap;
 
 class LayersVals;
 
@@ -21,10 +22,18 @@ public:
 	bool visible = true;
 
 	virtual void draw(ImVec2 pos, ImVec2 size) = 0;
-	virtual const char* getName() = 0;
+	virtual void drawOverlap(ImVec2 pos, ImVec2 size) = 0;
+	virtual const char* getName() const = 0;
 	virtual GuiImage* getIcon() = 0;
 
 	virtual void toGuiData() = 0;
+
+	virtual ILayer* getCore() = 0;
+	virtual void drawProperty() = 0;
+	virtual void applyPropertyChanges() = 0;
+
+	virtual void onClick(ImVec2)
+	{ }
 
 	virtual int getSysId()
 	{
@@ -35,14 +44,8 @@ public:
 		return strId.c_str();
 	}
 
-	virtual void onClick(ImVec2)
-	{
-
-	}
-
-	virtual ILayer* getCore() = 0;
-	virtual void drawProperty() = 0;
-	virtual void applyPropertyChanges() = 0;
+	virtual ~GuiLayer()
+	{ }
 };
 
 
@@ -51,16 +54,15 @@ class GuiLayerData : public GuiLayer
 {
 protected:
 	T* data;
-public:
-	GuiLayerData()
-	{
-		data = proj->addLayerData<T>();
-		copiedId = data->id;
-	}
 
-	GuiLayerData(T* fromCore)
+public:
+	GuiLayerData(T* fromCore = nullptr)
 	{
-		data = fromCore;
+		if (fromCore == nullptr)
+			data = proj->addLayerData<T>();
+		else
+			data = fromCore;
+
 		copiedId = data->id;
 	}
 
@@ -69,7 +71,7 @@ public:
 		return data;
 	}
 
-	virtual ILayer* getCore()
+	ILayer* getCore()
 	{
 		return data;
 	}
@@ -79,11 +81,15 @@ public:
 		return &icon;
 	}
 
-	virtual const char* getName()
+	virtual const char* getName() const
 	{
 		return data->name.c_str();
 	}
 
+	const LayerProvider& getProvider() const
+	{
+		return data->prov;
+	}
 
 	void setName(const BackString& name)
 	{
@@ -92,55 +98,103 @@ public:
 	}
 
 	GuiImage icon;
+
+	virtual ~GuiLayerData()
+	{ }
 };
 
-export class RasterGuiLayer : public GuiLayerData<RasterLayer>
+
+export template<class T>
+class TiledRasterGuiLayer : public GuiLayerData<T>
 {
 public:
-	//bool showHighmap = false;
 	GuiDrawImage main;
 
-	RasterGuiLayer() : GuiLayerData()
+	TiledRasterGuiLayer(T* fromCore) : GuiLayerData<T>(fromCore)
 	{ }
 
-	RasterGuiLayer(RasterLayer* fromCore) : GuiLayerData(fromCore)
+	virtual ~TiledRasterGuiLayer()
 	{ }
 
 	virtual void draw(ImVec2 pos, ImVec2 size)
 	{
-		if (!visible)
+		if (!GuiLayer::visible)
 			return;
 
-		main.drawImage(data->name.c_str(), pos, size);
+		main.drawImage(GuiLayerData<T>::getName(), pos, size);
 	}
+
+	virtual void drawOverlap(ImVec2, ImVec2)
+	{ }
+
+	int newTileSize;
+	int newOffsetSize;
+	GuiTilePreview tilePrview;
+
+	inline int getTileSize() const
+	{
+		return GuiLayerData<T>::getProvider().tileSize;
+	}
+	inline int getOffsetSize() const
+	{
+		return GuiLayerData<T>::data->tileOffset;
+	}
+	inline int getImageMinSize() const
+	{
+		auto p = GuiLayerData<T>::getProvider();
+ 		return MIN(p.width, p.height);
+	}
+
+	inline ImVec2 getImageSize() const
+	{
+		auto p = GuiLayerData<T>::getProvider();
+		return ImVec2(p.width, p.height);
+	}
+
+	void drawProperty()
+	{
+		ImGui::Text("Tile size");
+		ImGui::SliderInt("##Tile size", &newTileSize, 1, getImageMinSize() / 10, "%d0");
+		if (newTileSize + newOffsetSize > getImageMinSize() / 10)
+			newOffsetSize = getImageMinSize() / 10 - newTileSize;
+
+		ImGui::Text("Tile offset size");
+		ImGui::SliderInt("##Offset size", &newOffsetSize, 0, getImageMinSize() / 10 - newTileSize, "%d0");
+
+		ImGui::Separator();
+		auto id = ImGui::FindWindowByName("ProcSetts")->ID;
+		tilePrview.draw(id, getTileSize(), getOffsetSize(), getImageSize());
+	}
+
+	void applyPropertyChanges()
+	{
+		GuiLayerData<T>::data->prov.tileSize = newTileSize * 10;
+		GuiLayerData<T>::data->tileOffset = newOffsetSize * 10;
+	}
+};
+
+
+export class RasterGuiLayer : public TiledRasterGuiLayer<RasterLayer>
+{
+public:
+	RasterGuiLayer(RasterLayer* fromCore = nullptr) : TiledRasterGuiLayer(fromCore)
+	{ }
 
 	virtual void toGuiData()
 	{
 		main.setImage(data->mat, false);
 		icon.setImage(data->mat, 32, 32, true);
 	}
-
-	virtual void drawProperty()
-	{ }
-
-	virtual void applyPropertyChanges()
-	{ }
 };
 
-export class RasterLineGuiLayer : public GuiLayerData<RasterLineLayer>
+export class RasterLineGuiLayer : public TiledRasterGuiLayer<RasterLineLayer>
 {
 public:
-	GuiDrawImage main;
 	BackString debug;
 	SimpleLine* selectedLine = nullptr;
 	GuiDrawCloudPointClick clickHandler;
 
-	RasterLineGuiLayer() : GuiLayerData()
-	{
-		clickHandler.par = &main;
-	}
-
-	RasterLineGuiLayer(RasterLineLayer* fromCore) : GuiLayerData(fromCore)
+	RasterLineGuiLayer(RasterLineLayer* fromCore = nullptr) : TiledRasterGuiLayer(fromCore)
 	{
 		clickHandler.par = &main;
 	}
@@ -153,10 +207,9 @@ public:
 
 	virtual void draw(ImVec2 pos, ImVec2 size)
 	{
+		TiledRasterGuiLayer::draw(pos, size);
 		if (!visible)
 			return;
-
-		main.drawImage(data->name.c_str(), pos, size);
 
 		clickHandler.draw(pos, size);
 		drawLineInfoWin();
@@ -268,37 +321,14 @@ public:
 
 		ImGui::End();
 	}
-
-	void drawProperty()
-	{
-	}
-
-	void applyPropertyChanges()
-	{
-	}
-
 private:
 };
 
-export class RasterFromDiskGuiLayer : public GuiLayerData<RasterFromDiskLayer>
+export class RasterFromDiskGuiLayer : public TiledRasterGuiLayer<RasterFromDiskLayer>
 {
 public:
-	//bool showHighmap = false;
-	GuiDrawImage main;
-
-	RasterFromDiskGuiLayer() : GuiLayerData()
+	RasterFromDiskGuiLayer(RasterFromDiskLayer* fromCore = nullptr) : TiledRasterGuiLayer(fromCore)
 	{ }
-
-	RasterFromDiskGuiLayer(RasterFromDiskLayer* fromCore) : GuiLayerData(fromCore)
-	{ }
-
-	virtual void draw(ImVec2 pos, ImVec2 size)
-	{
-		if (!visible)
-			return;
-
-		main.drawImage(data->name.c_str(), pos, size);
-	}
 
 	virtual void toGuiData()
 	{
@@ -312,49 +342,6 @@ public:
 	std::vector<SubImgInf> getSubImageInfos()
 	{
 		return data->getSubImageInfos();
-	}
-
-	inline int& getTileSize() const
-	{
-		return data->prov.tileSize;
-	}
-	inline int& getOffsetSize()
-	{
-		return data->tileOffset;
-	}
-	inline int getImageMinSize()
-	{
- 		return MIN(data->reader->width(), data->reader->height());
-	}
-
-	inline ImVec2 getImageSize()
-	{
-		return ImVec2(data->reader->width(), data->reader->height());
-	}
-
-	int newTileSize;
-	int newOffsetSize;
-	GuiTilePreview tilePrview;
-
-	void drawProperty()
-	{
-		ImGui::Text("Tile size");
-		ImGui::SliderInt("##Tile size", &newTileSize, 1, getImageMinSize() / 10, "%d0");
-		if (newTileSize + newOffsetSize > getImageMinSize() / 10)
-			newOffsetSize = getImageMinSize() / 10 - newTileSize;
-
-		ImGui::Text("Tile offset size");
-		ImGui::SliderInt("##Offset size", &newOffsetSize, 0, getImageMinSize() / 10 - newTileSize, "%d0");
-
-		ImGui::Separator();
-		auto id = ImGui::FindWindowByName("ProcSetts")->ID;
-		tilePrview.draw(id, getTileSize(), getOffsetSize(), getImageSize());
-	}
-
-	void applyPropertyChanges()
-	{
-		data->prov.tileSize = newTileSize * 10;
-		data->tileOffset = newOffsetSize * 10;
 	}
 };
 
@@ -490,6 +477,13 @@ public:
 		//ImGui::SetNextWindowPos(pos);
 		//ImGui::SetNextWindowSize(nextSize);
 		//ImGui::SetNextWindowViewport(viewport->ID);
+	}
+
+	void drawOverlap(const ImVec2 pos, const ImVec2 size)
+	{
+		auto t = getCurrentLayer();
+		if (t)
+			t->drawOverlap(pos, size);
 	}
 
 	void onClick(ImVec2 click)

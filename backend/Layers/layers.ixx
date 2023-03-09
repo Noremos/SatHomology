@@ -106,7 +106,7 @@ public:
 	void init(const BackImage& src, int tileSize = DEF_TILE_SIZE)
 	{
 		mat.assignCopyOf(src);
-		prov.init(src.width(), src.width(), tileSize);
+		prov.init(src.width(), src.height(), src.width(), tileSize);
 	}
 
 	void init(IRasterLayer* layer)
@@ -256,7 +256,7 @@ public:
 		clear();
 		mat.assignCopyOf(src);
 		clickResponser.resize(mat.length());
-		prov.init(src.width(), src.width(), tileSize);
+		prov.init(src.width(), src.height(), src.width(), tileSize);
 	}
 
 	void init(IRasterLayer* layer)
@@ -456,7 +456,7 @@ public:
 		{
 			subImageIndex = 0;
 		}
-		prov.update(reader->width(), displayWid);
+		prov.update(reader->width(), reader->height(), displayWid);
 	}
 
 	int getFirstSmallIndex(const int maxSize = 2000)

@@ -38,6 +38,7 @@ export class LayerProvider
 {
 public:
 	int width; // realWid
+	int height;
 	int tileSize = DEF_TILE_SIZE;
 	float displayFactor;
 	bc::point layerOffset;
@@ -58,16 +59,27 @@ public:
 		return total / part + (total % part == 0 ? 0 : 1);
 	}
 
-	void init(int realWid, int displayWid, int tileSize)
+	void init(int realWid, int realHeight, int displayWid, int tileSize)
 	{
-		update(realWid, displayWid);
+		update(realWid, realHeight, displayWid);
 		this->tileSize = tileSize;
 	}
 
-	void update(int realWid, int displayWid)
+	void update(int realWid, int realHei, int displayWid)
 	{
 		this->displayFactor = realWid == displayWid ? 1.0f : static_cast<float>(realWid) / displayWid;
 		this->width = realWid;
+		this->height = realHei;
+	}
+
+	float getDisplayWidth()
+	{
+		return static_cast<float>(width) / displayFactor;
+	}
+
+	float getDisplayHeight()
+	{
+		return static_cast<float>(height) / displayFactor;
 	}
 
 	TileProvider tileByIndex(uint tileIndex) const

@@ -589,7 +589,7 @@ namespace MyApp
 			if (centerVals.imgMain.clicked)
 			{
 				layersVals.onClick(centerVals.imgMain.clickedPos);
-				RasterLineGuiLayer* lay = layersVals.getCastCurrentLayer< RasterLineGuiLayer>();
+				RasterLineGuiLayer* lay = layersVals.getCastCurrentLayer<RasterLineGuiLayer>();
 				if (lay)
 				{
 					classerVals.selceted = { lay->selectedLine->id, lay->selectedLine->barlineIndex};
@@ -597,7 +597,13 @@ namespace MyApp
 			}
 
 			centerVals.heimap.draw(pos, rsize);
-			centerVals.tilemap.draw(pos, rsize);
+
+			TiledRasterGuiLayer<RasterFromDiskLayer>* tlay = layersVals.getCastCurrentLayer<TiledRasterGuiLayer<RasterFromDiskLayer>>();
+			if (tlay)
+			{
+				centerVals.tilemap.init(&tlay->main, &tlay->getProvider());
+				centerVals.tilemap.draw(pos, rsize);
+			}
 		}
 		centerVals.imgMain.end(pos, drawSize);
 
