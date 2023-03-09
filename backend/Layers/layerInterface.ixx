@@ -34,9 +34,9 @@ public:
 export class LayerProvider
 {
 //std::function calcOffset
+public:
 	int tilesInRow;
 	int tileSize;
-public:
 	float displayFactor;
 	bc::point layerOffset;
 
@@ -109,17 +109,26 @@ public:
 //	virtual void draw() = 0;
 //};
 
+int getCon(int total, int part)
+{
+	return total / part + (total % part == 0 ? 0 : 1);
+}
+
 export class ILayer : public IJsonIO
 {
-public:
-	ILayer(float displayFactor, int tileSize, int width) : prov(displayFactor, tileSize, width)
-	{ }
+protected:
+	enum class Type
+	{
+		Raster = 1,
+		Vector = 2,
+		Compinted = Raster | Vector
+	};
 
+public:
 	int id = -1;
 
 	BackString name;
 	int iconId = -1;
-	LayerProvider prov;
 
 	int getSysId()
 	{
@@ -127,6 +136,47 @@ public:
 	}
 
 	//IGuiLayer* toGuiLayer();
+};
+
+export using SubImgInf = BackSize;
+
+export class IRasterLayer : public ILayer
+{
+public:
+	LayerProvider prov;
+	int tileOffset;
+
+	IRasterLayer(float displayFactor, int tileSize, int width) : prov(displayFactor, tileSize, width)
+	{ }
+
+	virtual int displayWidth() const = 0;
+	virtual int displayHeigth() const = 0;
+	virtual int realWidth() const = 0;
+	virtual int realHeigth() const = 0;
+	virtual BackImage getRect(int stX, int stRow, int wid, int hei) = 0;
+
+	virtual BackImage getImage(const int max) const = 0;
+	virtual const BackImage* getCachedImage() const = 0;
+
+	Type getType()
+	{
+		return Type::Raster;
+	}
+
+	virtual void setSubImage(int imgIndex) = 0;
+	virtual int getSubImage() = 0;
+	virtual int getFirstSmallIndex(const int maxSize = 2000) = 0;
+	virtual std::vector<SubImgInf> getSubImageInfos() = 0;
+};
+
+
+export class IVectorLayer : public ILayer
+{
+public:
+	Type getType()
+	{
+		return Type::Vector;
+	}
 };
 
 

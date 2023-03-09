@@ -13,16 +13,13 @@ module;
 export module ForntnedModule;
 
 import ProjectModule;
-import ImgReader;
-import GeoprocessorModule;
 import Platform;
 import IOCore;
 import BarcodeModule;
-import LayersCore;
 import RasterLayers;
 
-import ClassifiersCore;
 import GuiWidgets;
+import ClassifierInterface;
 
 // Todo.
 // 2 режима
@@ -117,26 +114,31 @@ public:
 	};
 
 	// Gui
-	void createProject(const BackPathStr& path, const BackString& name, const BackPathStr& imgPath);
+	void createProject(const BackPathStr& path, const BackString& name, const BackPathStr& imgPath)
+	{
+		BackPathStr fullPath = path / name;
+		proj->setProjectPath(fullPath);
+		proj->loadImage(imgPath, 1);
+		endLoaded();
+		state = GuiState::ImageLoaded;
+	}
 
-	RasterLineLayer* createBarcode(const BarcodeProperies& propertices, FilterInfo& info, int* layerId = nullptr)
+	RasterLineLayer* createBarcode(InOutLayer& iol, const BarcodeProperies& propertices, FilterInfo& info)
 	{
 		if (!isImageLoaded())
 			return nullptr;
 
-		curSelected = nullptr;
-
 		comm.clear();
-		proj->setReadyLaod(curImgInd);
+		//proj->setReadyLaod(curImgInd);
 
-		auto* layer = proj->createCacheBarcode(propertices, curImgInd, &info, layerId);
+		auto* layer = proj->createCacheBarcode(iol, propertices, &info);
 
 		created = true;
 		return layer;
 	}
 
 
-	RasterLineLayer* processMain(BackString extra, FilterInfo& filter, int& layerId)
+	RasterLineLayer* processRaster(InOutLayer& layer, FilterInfo& filter)
 	{
 		if (!created)
 			return nullptr;
@@ -145,24 +147,57 @@ public:
 		ska::unordered_map<size_t, char> map;
 
 		comm.clear();
-		proj->setReadyLaod(curImgInd);
-		return proj->readPrcoessBarcode(layerId, filter);
+		//proj->setReadyLaod(curImgInd);
+		return proj->readPrcoessBarcode(layer, filter);
 	}
 
 
-	RasterLayer* exeFilter(int algNum, int& layerId)
+	RasterLayer* exeFilter(InOutLayer& layer, int algNum)
 	{
 		if (!isImageLoaded())
 			return nullptr;
 
-		return proj->exeFilter(algNum, layerId);
+		return proj->exeFilter(layer, algNum);
 	}
 
 
-	void loadImageOrProject(const BackPathStr& path);
+	RasterFromDiskLayer* loadImageOrProject(const BackPathStr& path)
+	{
+		RasterFromDiskLayer* layer = nullptr;
+		GuiState newState = state;
+		bool setProc = false;
+		if (path.extension() == ".qwr")
+		{
+			if (!proj->loadProject(path))
+				return layer;
+			//		return;
+			setProc = true;
+			newState = GuiState::BarcodeCreated;
+		}
+		else
+		{
+			proj->setProjectPath(path);
+			layer = proj->loadImage(path, 1);
+			newState = GuiState::ImageLoaded;
+		}
+
+		endLoaded();
+		if (setProc)
+		{
+			//processedImage->setImage(*proj->images[curDisplayImgInd], false);
+			created = true;
+		}
+		else
+		{
+			created = false;
+		}
+
+		state = newState;
+		return layer;
+	}
+
 	bool addSelectedToClassData(int classIndex, BackImage* icon = nullptr);
 	void restoreSource();
-	void undoAddClass();
 	void exportResult(BackDirStr path);
 
 	void save()
@@ -175,60 +210,14 @@ public:
 		return proj->u_algorithm;
 	}
 
-	inline int& getTileSize() const
-	{
-		return proj->tileSize;
-	}
-	inline int& getOffsetSize()
-	{
-		return proj->tileOffset;
-	}
-	inline int getImageMinSize()
-	{
- 		return MIN(proj->reader->width(), proj->reader->height());
-	}
-
-	inline BackSize getImageSize()
-	{
-		return BackSize(proj->reader->width(), proj->reader->height());
-	}
-
 	BackDirStr getClassImagesPath()
 	{
 		return proj->getPath(BackPath::classfiles);
 	}
 
-	SimpleLine* getSelectedComp()
-	{
-		return curSelected;
-	}
-
-	SimpleLine* moveToParenr()
-	{
-		return curSelected = curSelected->parent.get();
-	}
-
 	void showResultPics(bool show);
 
 	int addClassType(const BackString& name);
-
-	std::vector<SubImgInfo> getSumImageInfos()
-	{
-		std::vector<SubImgInfo> info;
-		if (proj->imgType != ReadType::Tiff)
-			return info;
-
-		TiffReader* treader = dynamic_cast<TiffReader*>(proj->reader);
-
-		info = treader->getSumImageInfos();
-		return info;
-	}
-
-	void setSubImage(int index)
-	{
-		curImgInd = index;
-		proj->setCurrentSubImage(index);
-	}
 
 private:
 	void resetSource();
@@ -236,32 +225,12 @@ private:
 
 	void endLoaded()
 	{
-		curDisplayImgInd = proj->getFirstNormIndex();
-		curImgInd = 0;
+		//curDisplayImgInd = proj->getFirstNormIndex();
+		//curImgInd = 0;
 
 		clear();
-		proj->setReadyLaod(curImgInd);
+		//proj->setReadyLaod(curImgInd);
 	}
-
-
-	RasterLayer* getMain()
-	{
-		return &proj->main;
-	}
-
-
-	//void setTempDir(const BackPathStr& path);
-
-	//inline bc::Baritem* getBaritem()
-	//{
-	//	return barcode ? barcode->getItem(0) : nullptr;
-	//}
-
-	//inline bc::Baritem* getSortedBaritem()
-	//{
-	//	return barcode ? barcode->getItem(1) : nullptr;
-	//}
-
 
 private:
 	// //////////////////////////////////////////////
@@ -277,25 +246,17 @@ private:
 
 	ComFinder comm;
 
-	Cound** resmap = nullptr;
-	std::vector<Cound*> veas;
 	void maskInit();
 
 	GuiState state = GuiState::Empty;
 
-	int curImgInd;
-	int curDisplayImgInd;
+	//int curImgInd;
+	//int curDisplayImgInd;
 
 	//std::unique_ptr<bc::Barcontainer> barcode = nullptr;
 	bool created = false;
 
 	bc::ColorType col;
-	//std::vector<Barscalar> colors;
-
-
-	//BackDirStr base_root;
-	//BackDirStr auto_root = base_root;
-	SimpleLine* curSelected = nullptr;
 	int lastIndex = 0;
 
 	static std::string openImageOrProject();
@@ -381,67 +342,24 @@ void GuiBackend::maskInit()
 
 void GuiBackend::clear()
 {
-	if (resmap != nullptr)
-	{
-		delete[] resmap;
-		resmap = nullptr;
-	}
-	for (int i = 0, total = veas.size(); i < total; ++i)
-	{
-		delete veas[i];
-	}
-	veas.clear();
+	//if (resmap != nullptr)
+	//{
+	//	delete[] resmap;
+	//	resmap = nullptr;
+	//}
+	//for (int i = 0, total = veas.size(); i < total; ++i)
+	//{
+	//	delete veas[i];
+	//}
+	//veas.clear();
 }
 
-void GuiBackend::createProject(const BackPathStr& path, const BackString& name, const BackPathStr& imgPath)
-{
-	curSelected = nullptr;
-	BackPathStr fullPath = path / name;
-	proj->setProjectPath(fullPath);
-	proj->loadImage(imgPath, 1);
-	endLoaded();
-	state = GuiState::ImageLoaded;
-}
+
 
 
 #define ppair(x,y,chr) (std::pair<bc::point,uchar>(bc::point(x,y), chr))
 
 
-
-void GuiBackend::loadImageOrProject(const BackPathStr& path)
-{
-	curSelected = nullptr;
-
-	GuiState newState = state;
-	bool setProc = false;
-	if (path.extension() == ".qwr")
-	{
-		if (!proj->loadProject(path))
-			return;
-		//		return;
-		setProc = true;
-		newState = GuiState::BarcodeCreated;
-	}
-	else
-	{
-		proj->setProjectPath(path);
-		proj->loadImage(path, 1);
-		newState = GuiState::ImageLoaded;
-	}
-
-	endLoaded();
-	if (setProc)
-	{
-		//processedImage->setImage(*proj->images[curDisplayImgInd], false);
-		created = true;
-	}
-	else
-	{
-		created = false;
-	}
-
-	state = newState;
-}
 
 ///////////////////////==============
 
@@ -610,30 +528,4 @@ void GuiBackend::showResultPics(bool show)
 int GuiBackend::addClassType(const BackString& name)
 {
 	return proj->addClassType(name);
-}
-
-bool GuiBackend::addSelectedToClassData(int classIndex, BackImage* icon)
-{
-	if (classIndex < 0 || classIndex >= 3)
-		return false;
-
-	if (!curSelected)
-		return false;
-
-	//GeoBarCloudHolderCache reader;
-	//reader.openRead();
-	//auto item = std::make_unique<BarcodesHolder>(reader.loadSpecific(curSelected->id));
-	//auto *curBarline = item->lines[curSelected->barlineIndex];
-
-	//proj->addClassData(classIndex, curBarline, icon);
-	//lastIndex = classIndex;
-}
-
-void GuiBackend::undoAddClass()
-{
-	if (lastIndex != -1)
-	{
-		//proj->classer.removeLast(lastIndex);
-		lastIndex = -1;
-	}
 }

@@ -197,26 +197,8 @@ namespace MyApp
 			{bc::ColorType::rgb, "Цветной"},
 		};
 
-		GuiTilePreview tilePrview;
 
 		bool enableProcessBtn = false;
-		int newTileSize = 20;
-		int newOffsetSize = 10;
-
-		int getTileSize()
-		{
-			return newTileSize * 10; //step
-		}
-		int getOffsetSize()
-		{
-			return newOffsetSize * 10; //step
-		}
-
-		ImVec2 getImageSize()
-		{
-			const auto p = backend.getImageSize();
-			return ImVec2(p.wid, p.hei);
-		}
 
 		GuiFilter filterInfo;
 		BarcodeProperies properties;
@@ -245,8 +227,7 @@ namespace MyApp
 			else
 			{
 				grabSets();
-				int layerId = -1;
-				RasterLineLayer* layerData = backend.createBarcode(properties, filterInfo.filterInfo, &layerId);
+				RasterLineLayer* layerData = backend.createBarcode(layersVals.iol, properties, filterInfo.filterInfo);
 				assert(layerData);
 				auto t = layersVals.setLayer<RasterLineGuiLayer, RasterLineLayer>("barcode", layerData);
 				t->selectedLine = &selectedLine;
@@ -395,15 +376,19 @@ namespace MyApp
 				BackPathStr path = openImageOrProject();
 				if (!path.empty())
 				{
-					backend.loadImageOrProject(path);
+					RasterFromDiskLayer* layer = backend.loadImageOrProject(path);
 					if (backend.isImageLoaded())
 					{
 						tbVals.enableProcessBtn = true;
-						auto* layer = layersVals.addMainLayer<RasterGuiLayer>();
-						layersVals.loadLayers();
+						if (layer)
+						{
+							 layersVals.addLayer<RasterFromDiskGuiLayer>("Loaded", layer);
+						}
+						else
+							layersVals.loadLayers();
 						//layer->data = backend.getMain();
-						centerVals.heimap.init(layer->getData()->mat);
-						centerVals.tilemap.init(&layer->main, backend.getTileSize());
+						// centerVals.heimap.init(layer->getData()->mat);
+						// centerVals.tilemap.init(&layer->main, backend.getTileSize());
 						classerVals.init();
 						unsetPoints();
 					}
@@ -422,26 +407,14 @@ namespace MyApp
 			ImGui::Checkbox("Переключить вид", &centerVals.heimap.enable);
 
 			ImGui::SameLine();
-			if (ImGui::Button("Настроки"))
+			if (ImGui::Button("Свойства слоя"))
 			{
-				tbVals.newTileSize = backend.getTileSize() / 10;
-				tbVals.newOffsetSize = backend.getOffsetSize() / 10;
 				ImGui::OpenPopup("ProcSetts");
 			}
 
 			if (ImGui::BeginPopupModal("ProcSetts", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 			{
-				ImGui::Text("Tile size");
-				ImGui::SliderInt("##Tile size", &tbVals.newTileSize, 1, backend.getImageMinSize() / 10, "%d0");
-				if (tbVals.newTileSize + tbVals.newOffsetSize > backend.getImageMinSize() / 10)
-					tbVals.newOffsetSize = backend.getImageMinSize() / 10 - tbVals.newTileSize;
-
-				ImGui::Text("Tile offset size");
-				ImGui::SliderInt("##Offset size", &tbVals.newOffsetSize, 0, backend.getImageMinSize() / 10 - tbVals.newTileSize, "%d0");
-
-				ImGui::Separator();
-				auto id = ImGui::FindWindowByName("ProcSetts")->ID;
-				tbVals.tilePrview.draw(id, tbVals.getTileSize(), tbVals.getOffsetSize(), tbVals.getImageSize());
+				layersVals.getCurrentLayer()->drawProperty();
 				//if (ImGui::IsItemHovered())
 				//	ImGui::SetTooltip("I am a tooltip over a popup");
 
@@ -452,9 +425,12 @@ namespace MyApp
 				if (ImGui::Button("OK", ImVec2(120, 0)))
 				{
 					ImGui::CloseCurrentPopup();
-					backend.getTileSize() = tbVals.getTileSize();
-					backend.getOffsetSize() = tbVals.getOffsetSize();
-					centerVals.tilemap.setTilesize(tbVals.getTileSize());
+					layersVals.getCurrentLayer()->applyPropertyChanges();
+
+					IRasterLayer* core = layersVals.getCurrentRasterCore();
+
+					// if (core)
+						// centerVals.tilemap.setTilesize(core.prov.tileSize);
 				}
 
 				ImGui::SetItemDefaultFocus();
@@ -470,13 +446,15 @@ namespace MyApp
 			ImGui::SameLine();
 			if (ImGui::Button("Построить баркод"))
 			{
-				auto subs = backend.getSumImageInfos();
+				IRasterLayer* core = layersVals.getCurrentRasterCore();
+
+				auto subs = core->getSubImageInfos();
 				if (subs.size() != 0)
 				{
 					for (size_t i = 0; i < subs.size(); i++)
 					{
-						SubImgInfo& sub = subs[i];
-						BackString s = intToStr(sub.width) + "x" + intToStr(sub.height);
+						SubImgInf& sub = subs[i];
+						BackString s = intToStr(sub.wid) + "x" + intToStr(sub.hei);
 						tbVals.imgSubImages.add(s, i);
 					}
 					tbVals.imgSubImages.endAdding();
@@ -516,7 +494,8 @@ namespace MyApp
 
 				if (ImGui::Button("Запустить"))
 				{
-					backend.setSubImage(tbVals.imgSubImages.currentIndex);
+					IRasterLayer* core = layersVals.getCurrentRasterCore();
+					core->setSubImage(tbVals.imgSubImages.currentIndex);
 
 					ImGui::CloseCurrentPopup();
 					tbVals.createBarcode();
@@ -680,12 +659,12 @@ namespace MyApp
 					unsetPoints();
 					bottomVals.showUpdaePopup = false;
 					ImGui::CloseCurrentPopup();
-					auto* layerData = backend.processMain(bottomVals.valeExtra, bottomVals.filtere.filterInfo, layersVals.temporalyId);
-					auto t = layersVals.setLayer<RasterLineGuiLayer, RasterLineLayer>("barcode", layerData);
+					auto* layerData = backend.processRaster(layersVals.iol, bottomVals.filtere.filterInfo);
+					RasterLineGuiLayer* t = layersVals.setLayer<RasterLineGuiLayer, RasterLineLayer>("barcode", layerData);
 					t->selectedLine = &selectedLine;
 
 					//commonValus.onAir = true;
-					//commonValus.future = std::async(&GuiBackend::processMain, std::ref(backend),
+					//commonValus.future = std::async(&GuiBackend::processRaster, std::ref(backend),
 				}
 				ImGui::SameLine();
 
@@ -713,7 +692,7 @@ namespace MyApp
 			ImGui::SameLine(0, 30);
 			if (ImGui::Button("Undo"))
 			{
-				backend.undoAddClass();
+				// backend.undoAddClass();
 			}
 
 			ImGui::SameLine();
@@ -935,7 +914,7 @@ namespace MyApp
 		if (ImGui::Button("Activation"))
 		{
 			//backend.
-			auto* layerData = backend.exeFilter(0, layersVals.temporalyId);
+			auto* layerData = backend.exeFilter(layersVals.iol, 0);
 			layersVals.setLayer<RasterGuiLayer, RasterLayer>("barcode", layerData);
 		}
 
@@ -976,6 +955,7 @@ namespace MyApp
 
 	void MyApp::Init()
 	{
+		classerVals.ioLayer = layersVals.getIoLayer();
 		centerVals.heimap.enable = false;
 		auto drawLine = [](const bc::point& p1, const bc::point& p2, bool finale)
 		{

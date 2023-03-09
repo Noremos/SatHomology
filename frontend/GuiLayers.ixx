@@ -3,7 +3,7 @@ module;
 
 export module LayersGui;
 
-import LayersCore;
+import RasterLayers;
 import ProjectModule;
 import BarcodeModule;
 import GuiWidgets;
@@ -20,7 +20,7 @@ protected:
 public:
 	bool visible = true;
 
-	virtual void draw(LayersVals& context, ImVec2 pos, ImVec2 size) = 0;
+	virtual void draw(ImVec2 pos, ImVec2 size) = 0;
 	virtual const char* getName() = 0;
 	virtual GuiImage* getIcon() = 0;
 
@@ -35,10 +35,14 @@ public:
 		return strId.c_str();
 	}
 
-	virtual void onClick(ImVec2 pos)
+	virtual void onClick(ImVec2)
 	{
 
 	}
+
+	virtual ILayer* getCore() = 0;
+	virtual void drawProperty() = 0;
+	virtual void applyPropertyChanges() = 0;
 };
 
 
@@ -61,6 +65,11 @@ public:
 	}
 
 	T* getData()
+	{
+		return data;
+	}
+
+	virtual ILayer* getCore()
 	{
 		return data;
 	}
@@ -97,7 +106,7 @@ public:
 	RasterGuiLayer(RasterLayer* fromCore) : GuiLayerData(fromCore)
 	{ }
 
-	virtual void draw(LayersVals&, ImVec2 pos, ImVec2 size)
+	virtual void draw(ImVec2 pos, ImVec2 size)
 	{
 		if (!visible)
 			return;
@@ -110,283 +119,12 @@ public:
 		main.setImage(data->mat, false);
 		icon.setImage(data->mat, 32, 32, true);
 	}
-};
 
-export class LayersVals
-{
-public:
-	int temporalyId = -1;
-	int curLayerId = -1;
+	virtual void drawProperty()
+	{ }
 
-	//GuiBackend& backend;
-	LayersList<GuiLayer> layers;
-
-	ImVec2 drawSize;
-
-
-	//LayersVals(GuiBackend& back) : backend(back)
-	//{ }
-
-	RasterGuiLayer* getMainImg()
-	{
-		return static_cast<RasterGuiLayer*>(layers.at(0));
-	}
-
-	GuiLayer* getCurrentLayer()
-	{
-		return curLayerId < 0 ? nullptr : layers.at(curLayerId);
-	}
-
-	GuiLayer* getTempLayer()
-	{
-		return temporalyId < 0 ? nullptr : layers.at(temporalyId);
-	}
-
-	void update()
-	{
-		if (temporalyId == -1)
-			return;
-	}
-
-	template<typename T>
-	T* addMainLayer()
-	{
-		layers.clear();
-		proj->layers.clear();
-		T* val = layers.add<T>(&proj->main);
-		settup(val, "Main");
-		temporalyId = -1;
-		return val;
-	}
-
-	template<typename T>
-	T* addLayer(const BackString& name)
-	{
-		auto t = layers.add<T>();
-		settup(t, name);
-		return t;
-	}
-
-	template<typename TGui, typename TData>
-	TGui* addLayer(const BackString& name, TData* core)
-	{
-		if (core == nullptr)
-			return nullptr;
-
-		auto t = layers.add<TGui>(core);
-		settup(t, name);
-		return t;
-	}
-
-	template<typename TGui, typename TData>
-	TGui* setLayer(const BackString& name, TData* core)
-	{
-		if (core == nullptr)
-			return nullptr;
-
-		auto ptr = new TGui(core);
-		if (layers.set(core->id, ptr))
-		{
-			settup(ptr, name);
-			return nullptr;
-		}
-		delete ptr;
-
-		return addLayer<TGui, TData>(name, core);
-	}
-
-	template<typename TGui>
-	void settup(TGui* layer, const BackString& name)
-	{
-		curLayerId = temporalyId = layer->getSysId();
-		layer->setName(name);
-		layer->toGuiData();
-	}
-
-
-	void loadLayers()
-	{
-		// for(auto coreLay : proj->layers)
-		// {
-		// 	addLayer<
-		// }
-	}
-
-	void draw(const ImVec2 pos, const ImVec2 size)
-	{
-		uint i = 0;
-		for (auto& lay : layers)
-		{
-			// ImGui::SetNextWindowPos(pos);
-			// ImGui::SetNextWindowSize(size);
-			// ImGui::SetNextWindowViewport(viewport->ID);
-			ImGui::PushID(i);
-			lay->draw(*this, pos, size);
-			ImGui::PopID();
-			++i;
-		}
-
-		//pos.x += drawSize.x;
-		//ImGui::SetNextWindowPos(pos);
-		//ImGui::SetNextWindowSize(nextSize);
-		//ImGui::SetNextWindowViewport(viewport->ID);
-	}
-
-	void onClick(ImVec2 click)
-	{
-		if (curLayerId == -1)
-			return;
-		auto layer = layers.at(curLayerId);
-		if (layer)
-			layer->onClick(click);
-	}
-
-	void drawLayersWindow()
-	{
-		if (!ImGui::Begin("Layers"))
-		{
-			ImGui::End();
-			return;
-		}
-
-
-		ImDrawList* drawList = ImGui::GetWindowDrawList();
-		auto winsize = ImGui::GetWindowSize();
-		ImVec2 pos = ImGui::GetWindowPos();
-
-		auto& pngs = layers;
-
-		//int curItem = 0;
-		//auto imgLoader = [](void* data, int idx, const char** out_text)
-		//{
-		//	auto& pngs = *static_cast<std::vector<Layer>*>(data);
-
-		//	auto& icon = pngs[idx].icon;
-
-		//	*out_text = pngs[idx].name.c_str();
-		//	ImGui::Image(icon.getTexturePtr(), ImVec2(icon.width, icon.height));
-		//	ImGui::SameLine();
-		//	return true;
-		//};
-
-		//ImGui::ListBox("Images", &selecnedLayer, imgkLoader, &pngs, pngs.size());
-
-
-		//{
-		//	if (curItem >= 0 && selectedImage < pngs.size())
-		//	{
-		//		ImVec2 siz(pngs[curItem].width, pngs[curItem].height)
-		//		ImGui::Image(pngs[curItem].getTexturePtr(), siz);
-		//	}
-		//	ImGui::EndChild();
-		//}
-		winsize.y -= 50;
-
-		bool temporaly = false;
-		int displayRadioId = temporalyId;
-		if (layers.size() > 0 && temporalyId == -1)
-			displayRadioId = (*layers.begin())->getSysId();
-
-		int selHei = 40;
-		ImVec2 iconSize(40, selHei / 2);
-
-
-		bool catchNext = false;
-		int toMove[2]{ -1, -1 };
-		int prevId = -1;
-		if (ImGui::BeginListBox("##LayersList", winsize))
-		{
-			uint j = 0;
-			for (auto& lay : layers)
-			{
-
-				//if (lay->getSysId()s == temporalyId)
-				//{
-				//	ImFont* italicFont = ImGui::GetIO().Fonts->Fonts[1];  // Assuming the second font in the ImFontAtlas is italic
-				//	ImGui::PushFont(italicFont);
-				//}
-				ImGui::PushID(j);
-
-				auto curID = lay->getSysId();
-				if (catchNext)
-				{
-					toMove[1] = curID;
-					catchNext = false;
-				}
-
-				auto& icon = *lay->getIcon();
-
-				bool curRadio = (displayRadioId == lay->getSysId());
-				temporaly = ImGui::RadioButton("Work", curRadio);//, curRadio);
-
-				ImGui::SameLine();
-				ImGui::Checkbox("##visible", &lay->visible);
-
-				ImGui::SameLine();
-				ImGui::Image((void*)(intptr_t)icon.getTextureId(), ImVec2(selHei, selHei));
-				ImGui::SameLine();
-
-				ImGui::BeginDisabled(j == 0 || j == 1);
-				auto posBef = ImGui::GetCursorPos();
-				if (ImGui::Button(ICON_FA_ANGLE_UP "", iconSize))
-				{
-					toMove[0] = prevId;
-					toMove[1] = curID;
-				}
-
-				if (j==1)
-					ImGui::EndDisabled();
-
-				ImGui::SetCursorPos({posBef.x, posBef.y + iconSize.y});
-				if (ImGui::Button(ICON_FA_ANGLE_DOWN "", iconSize))
-				{
-					toMove[0] = curID;
-					catchNext = true;
-				}
-				if (j != 1)
-					ImGui::EndDisabled();
-
-				ImGui::SetCursorPos({posBef.x + iconSize.x, posBef.y});
-
-
-				bool seled = ImGui::Selectable(lay->getName(), curID == curLayerId, 0, ImVec2(winsize.x - 50, selHei));
-				prevId = curID;
-
-				if (seled)
-				{
-					curLayerId = lay->getSysId();
-				}
-				if (temporaly)
-				{
-					if (j == 0)
-						temporalyId = -1;
-					else
-						temporalyId = lay->getSysId();
-
-					displayRadioId = lay->getSysId();
-					temporaly = false;
-				}
-
-				//if (j == temporalyId)
-				//{
-				//	ImGui::PopFont();
-				//}
-				ImVec4 color(1.0f, 0.0f, 0.0f, 1.0f); // RGBA color (red in this case)
-				ImGui::PopID();
-				++j;
-			}
-			ImGui::EndListBox();
-		}
-
-		//ImGui::EndGroup();
-
-		ImGui::End();
-		if (toMove[0] != -1 && toMove[1] != -1)
-		{
-			proj->layers.move(toMove[0], toMove[1]);
-			layers.move(toMove[0], toMove[1]);
-		}
-	}
+	virtual void applyPropertyChanges()
+	{ }
 };
 
 export class RasterLineGuiLayer : public GuiLayerData<RasterLineLayer>
@@ -413,7 +151,7 @@ public:
 		icon.setImage(data->mat, 32, 32, true);
 	}
 
-	virtual void draw(LayersVals& context, ImVec2 pos, ImVec2 size)
+	virtual void draw(ImVec2 pos, ImVec2 size)
 	{
 		if (!visible)
 			return;
@@ -421,7 +159,7 @@ public:
 		main.drawImage(data->name.c_str(), pos, size);
 
 		clickHandler.draw(pos, size);
-		drawPropertisWindow();
+		drawLineInfoWin();
 	}
 
 	virtual void onClick(ImVec2 pos)
@@ -488,7 +226,7 @@ public:
 		return *selectedLine = (*selectedLine)->parent.get();
 	}
 
-	void drawPropertisWindow()
+	void drawLineInfoWin()
 	{
 		SimpleLine* line = *selectedLine;
 		if (!line)
@@ -531,5 +269,372 @@ public:
 		ImGui::End();
 	}
 
+	void drawProperty()
+	{
+	}
+
+	void applyPropertyChanges()
+	{
+	}
+
 private:
+};
+
+export class RasterFromDiskGuiLayer : public GuiLayerData<RasterFromDiskLayer>
+{
+public:
+	//bool showHighmap = false;
+	GuiDrawImage main;
+
+	RasterFromDiskGuiLayer() : GuiLayerData()
+	{ }
+
+	RasterFromDiskGuiLayer(RasterFromDiskLayer* fromCore) : GuiLayerData(fromCore)
+	{ }
+
+	virtual void draw(ImVec2 pos, ImVec2 size)
+	{
+		if (!visible)
+			return;
+
+		main.drawImage(data->name.c_str(), pos, size);
+	}
+
+	virtual void toGuiData()
+	{
+		auto i = *data->getCachedImage();
+		main.setImage(i, false);
+		icon.setImage(i, 32, 32, true);
+		newTileSize = data->prov.tileSize;
+		newOffsetSize = data->tileOffset;
+	}
+
+	std::vector<SubImgInf> getSubImageInfos()
+	{
+		return data->getSubImageInfos();
+	}
+
+	inline int& getTileSize() const
+	{
+		return data->prov.tileSize;
+	}
+	inline int& getOffsetSize()
+	{
+		return data->tileOffset;
+	}
+	inline int getImageMinSize()
+	{
+ 		return MIN(data->reader->width(), data->reader->height());
+	}
+
+	inline ImVec2 getImageSize()
+	{
+		return ImVec2(data->reader->width(), data->reader->height());
+	}
+
+	int newTileSize;
+	int newOffsetSize;
+	GuiTilePreview tilePrview;
+
+	void drawProperty()
+	{
+		ImGui::Text("Tile size");
+		ImGui::SliderInt("##Tile size", &newTileSize, 1, getImageMinSize() / 10, "%d0");
+		if (newTileSize + newOffsetSize > getImageMinSize() / 10)
+			newOffsetSize = getImageMinSize() / 10 - newTileSize;
+
+		ImGui::Text("Tile offset size");
+		ImGui::SliderInt("##Offset size", &newOffsetSize, 0, getImageMinSize() / 10 - newTileSize, "%d0");
+
+		ImGui::Separator();
+		auto id = ImGui::FindWindowByName("ProcSetts")->ID;
+		tilePrview.draw(id, getTileSize(), getOffsetSize(), getImageSize());
+	}
+
+	void applyPropertyChanges()
+	{
+		data->prov.tileSize = newTileSize * 10;
+		data->tileOffset = newOffsetSize * 10;
+	}
+};
+
+
+export class LayersVals
+{
+public:
+	InOutLayer iol;
+
+	//GuiBackend& backend;
+	LayersList<GuiLayer> layers;
+
+	ImVec2 drawSize;
+
+
+	//LayersVals(GuiBackend& back) : backend(back)
+	//{ }
+
+	InOutLayer* getIoLayer()
+	{
+		return &iol;
+	}
+
+	IRasterLayer* getCurrentRasterCore()
+	{
+		return iol.in < 0 ? nullptr : dynamic_cast<IRasterLayer*>(layers.at(iol.in)->getCore());
+	}
+
+	GuiLayer* getCurrentLayer()
+	{
+		return iol.in < 0 ? nullptr : layers.at(iol.in);
+	}
+
+	GuiLayer* getTempLayer()
+	{
+		return iol.out < 0 ? nullptr : layers.at(iol.out);
+	}
+
+	void update()
+	{
+		if (iol.out == -1)
+			return;
+	}
+
+	RasterFromDiskGuiLayer* addImageFromDiskLayer()
+	{
+		layers.clear();
+		proj->layers.clear();
+		RasterFromDiskGuiLayer* val = layers.add<RasterFromDiskGuiLayer>();
+		settup(val, "From disk");
+		iol.out = -1;
+		return val;
+	}
+
+	template<typename T>
+	T* addLayer(const BackString& name)
+	{
+		auto t = layers.add<T>();
+		settup(t, name);
+		return t;
+	}
+
+	template<typename TGui, typename TData>
+	TGui* addLayer(const BackString& name, TData* core)
+	{
+		if (core == nullptr)
+			return nullptr;
+
+		auto t = layers.add<TGui>(core);
+		settup(t, name);
+		return t;
+	}
+
+	template<typename TGui, typename TData>
+	TGui* setLayer(const BackString& name, TData* core)
+	{
+		if (core == nullptr)
+			return nullptr;
+
+		auto ptr = new TGui(core);
+		if (layers.set(core->id, ptr))
+		{
+			settup(ptr, name);
+			return nullptr;
+		}
+		delete ptr;
+
+		return addLayer<TGui, TData>(name, core);
+	}
+
+	template<typename TGui>
+	void settup(TGui* layer, const BackString& name)
+	{
+		iol.in = iol.out = layer->getSysId();
+		layer->setName(name);
+		layer->toGuiData();
+	}
+
+
+	void loadLayers()
+	{
+		// for(auto coreLay : proj->layers)
+		// {
+		// 	addLayer<
+		// }
+	}
+
+	void draw(const ImVec2 pos, const ImVec2 size)
+	{
+		uint i = 0;
+		for (auto& lay : layers)
+		{
+			// ImGui::SetNextWindowPos(pos);
+			// ImGui::SetNextWindowSize(size);
+			// ImGui::SetNextWindowViewport(viewport->ID);
+			ImGui::PushID(i);
+			lay->draw(pos, size);
+			ImGui::PopID();
+			++i;
+		}
+
+		//pos.x += drawSize.x;
+		//ImGui::SetNextWindowPos(pos);
+		//ImGui::SetNextWindowSize(nextSize);
+		//ImGui::SetNextWindowViewport(viewport->ID);
+	}
+
+	void onClick(ImVec2 click)
+	{
+		if (iol.in == -1)
+			return;
+		auto layer = layers.at(iol.in);
+		if (layer)
+			layer->onClick(click);
+	}
+
+	void drawLayersWindow()
+	{
+		if (!ImGui::Begin("Layers"))
+		{
+			ImGui::End();
+			return;
+		}
+
+
+		ImDrawList* drawList = ImGui::GetWindowDrawList();
+		auto winsize = ImGui::GetWindowSize();
+		ImVec2 pos = ImGui::GetWindowPos();
+
+		auto& pngs = layers;
+
+		//int curItem = 0;
+		//auto imgLoader = [](void* data, int idx, const char** out_text)
+		//{
+		//	auto& pngs = *static_cast<std::vector<Layer>*>(data);
+
+		//	auto& icon = pngs[idx].icon;
+
+		//	*out_text = pngs[idx].name.c_str();
+		//	ImGui::Image(icon.getTexturePtr(), ImVec2(icon.width, icon.height));
+		//	ImGui::SameLine();
+		//	return true;
+		//};
+
+		//ImGui::ListBox("Images", &selecnedLayer, imgkLoader, &pngs, pngs.size());
+
+
+		//{
+		//	if (curItem >= 0 && selectedImage < pngs.size())
+		//	{
+		//		ImVec2 siz(pngs[curItem].width, pngs[curItem].height)
+		//		ImGui::Image(pngs[curItem].getTexturePtr(), siz);
+		//	}
+		//	ImGui::EndChild();
+		//}
+		winsize.y -= 50;
+
+		bool temporaly = false;
+		int displayRadioId = iol.out;
+		if (layers.size() > 0 && iol.out == -1)
+			displayRadioId = (*layers.begin())->getSysId();
+
+		int selHei = 40;
+		ImVec2 iconSize(40, selHei / 2);
+
+
+		bool catchNext = false;
+		int toMove[2]{ -1, -1 };
+		int prevId = -1;
+		if (ImGui::BeginListBox("##LayersList", winsize))
+		{
+			uint j = 0;
+			for (auto& lay : layers)
+			{
+
+				//if (lay->getSysId()s == iol.out)
+				//{
+				//	ImFont* italicFont = ImGui::GetIO().Fonts->Fonts[1];  // Assuming the second font in the ImFontAtlas is italic
+				//	ImGui::PushFont(italicFont);
+				//}
+				ImGui::PushID(j);
+
+				auto curID = lay->getSysId();
+				if (catchNext)
+				{
+					toMove[1] = curID;
+					catchNext = false;
+				}
+
+				auto& icon = *lay->getIcon();
+
+				bool curRadio = (displayRadioId == lay->getSysId());
+				temporaly = ImGui::RadioButton("Work", curRadio);//, curRadio);
+
+				ImGui::SameLine();
+				ImGui::Checkbox("##visible", &lay->visible);
+
+				ImGui::SameLine();
+				ImGui::Image((void*)(intptr_t)icon.getTextureId(), ImVec2(selHei, selHei));
+				ImGui::SameLine();
+
+				ImGui::BeginDisabled(j == 0 || j == 1);
+				auto posBef = ImGui::GetCursorPos();
+				if (ImGui::Button(ICON_FA_ANGLE_UP "", iconSize))
+				{
+					toMove[0] = prevId;
+					toMove[1] = curID;
+				}
+
+				if (j==1)
+					ImGui::EndDisabled();
+
+				ImGui::SetCursorPos({posBef.x, posBef.y + iconSize.y});
+				if (ImGui::Button(ICON_FA_ANGLE_DOWN "", iconSize))
+				{
+					toMove[0] = curID;
+					catchNext = true;
+				}
+				if (j != 1)
+					ImGui::EndDisabled();
+
+				ImGui::SetCursorPos({posBef.x + iconSize.x, posBef.y});
+
+
+				bool seled = ImGui::Selectable(lay->getName(), curID == iol.in, 0, ImVec2(winsize.x - 50, selHei));
+				prevId = curID;
+
+				if (seled)
+				{
+					iol.in = lay->getSysId();
+				}
+				if (temporaly)
+				{
+					if (j == 0)
+						iol.out = -1;
+					else
+						iol.out = lay->getSysId();
+
+					displayRadioId = lay->getSysId();
+					temporaly = false;
+				}
+
+				//if (j == iol.out)
+				//{
+				//	ImGui::PopFont();
+				//}
+				ImVec4 color(1.0f, 0.0f, 0.0f, 1.0f); // RGBA color (red in this case)
+				ImGui::PopID();
+				++j;
+			}
+			ImGui::EndListBox();
+		}
+
+		//ImGui::EndGroup();
+
+		ImGui::End();
+		if (toMove[0] != -1 && toMove[1] != -1)
+		{
+			proj->layers.move(toMove[0], toMove[1]);
+			layers.move(toMove[0], toMove[1]);
+		}
+	}
 };

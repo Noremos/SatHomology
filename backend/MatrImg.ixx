@@ -459,7 +459,7 @@ public:
 		this->diagReverce = inst.diagReverce;
 	}
 
-	void resize(int new_width, int new_height) 
+	void resize(int new_width, int new_height)
 	{
 		float x_ratio = (float)width() / new_width;
 		float y_ratio = (float)height() / new_height;
@@ -495,4 +495,15 @@ public:
 		_hei = new_height;
 	}
 
+
+	MatrImg getRect(int stX, int stRow, int wid, int hei)
+	{
+		MatrImg r(wid, hei, _channels);
+		for (size_t y = stRow, dstY = 0; y < stRow + hei; y++, dstY++)
+		{
+			memcpy(r.data + (wid * dstY), data + (_wid * y + stX), wid * TSize);
+		}
+
+		return r;
+	}
 };

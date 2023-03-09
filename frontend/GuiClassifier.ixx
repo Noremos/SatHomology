@@ -41,6 +41,7 @@ export struct GuiClassifer
 	std::vector<ClassPreview> classImages;
 	bool show = false;
 	CachedObjectId selceted;
+	InOutLayer* ioLayer;
 
 	struct SelPair
 	{
@@ -215,7 +216,7 @@ export struct GuiClassifer
 				BackImage icon;
 				auto selectedClass = classesLB.currentValue();
 				assert(proj->classCategs.size() !=0);
-				size_t dbLocalId = proj->addTrainData(selectedClass.classId, selceted, &icon);
+				size_t dbLocalId = proj->addTrainData(ioLayer->in, selectedClass.classId, selceted, &icon);
 				classImages[selectedClass.vecId].imgs.push_back(TrainPiecePreview(icon, dbLocalId));
 			}
 			ImGui::EndDisabled();
