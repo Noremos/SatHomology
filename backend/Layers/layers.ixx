@@ -20,7 +20,10 @@ import MetadataIOCore;
 import ImgReader;
 import SimpleImgReaderModule;
 
-
+const LFID VECTOR_LAYER_FID = ILayer::getCountId();
+const LFID RASTER_LAYER_FID =  ILayer::getCountId();
+const LFID RASTER_LINE_LAYER_FID = ILayer::getCountId();
+const LFID RASTER_DISK_LAYER_FID = ILayer::getCountId();
 
 export enum class ReadType
 {
@@ -48,6 +51,10 @@ export class PrimetiveLayer : public ILayer
 {
 public:
 	std::vector<DrawPrimetive> primetives;
+	virtual const LFID getFactoryId()
+	{
+		return VECTOR_LAYER_FID;
+	}
 };
 
 
@@ -102,6 +109,11 @@ export class RasterLayer : public IRasterLayer
 {
 public:
 	BackImage mat;
+
+	virtual const LFID getFactoryId()
+	{
+		return RASTER_LAYER_FID;
+	}
 
 	void init(const BackImage& src, int tileSize = DEF_TILE_SIZE)
 	{
@@ -218,6 +230,7 @@ export class RasterLineLayer : public RasterLayer
 {
 public:
 	static std::vector<Barscalar> colors;
+	std::vector<std::shared_ptr<SimpleLine>> clickResponser;
 
 	RasterLineLayer()
 	{
@@ -234,7 +247,11 @@ public:
 			colors.push_back(Barscalar(255, 255, 255));
 		}
 	}
-	std::vector<std::shared_ptr<SimpleLine>> clickResponser;
+
+	virtual const LFID getFactoryId()
+	{
+		return RASTER_LINE_LAYER_FID;
+	}
 
 	//virtual void readJson(const BackJson& json, const BackDirStr& metaFolder)
 	//{
@@ -423,6 +440,11 @@ public:
 		closeImages();
 	}
 
+	virtual const LFID getFactoryId()
+	{
+		return RASTER_DISK_LAYER_FID;
+	}
+
 	void open(const BackPathStr& path, MetadataProvider& metaPath)
 	{
 		closeReader();
@@ -583,7 +605,7 @@ public:
 		tiles = tiles / "tiles";
 		for (int i = 0; i < subImgSize; ++i)
 		{
-			int factor = 1;
+			// int factor = 1;
 			images.push_back(imread(tiles / (intToStr(i) + ".png")));
 		}
 	}

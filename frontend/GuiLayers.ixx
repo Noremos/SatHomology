@@ -13,7 +13,7 @@ class LayersVals;
 
 Project* proj = Project::getProject();
 
-export class GuiLayer
+export class IGuiLayer
 {
 protected:
 	BackString strId;
@@ -44,13 +44,54 @@ public:
 		return strId.c_str();
 	}
 
-	virtual ~GuiLayer()
+	virtual ~IGuiLayer()
 	{ }
 };
 
 
+export class LayerFactory
+{
+private:
+
+	template<class IF>
+	using FunctionCoreHolder = MMMAP<LFID, std::function<IF*()> >;
+
+	template<class IF>
+	using FunctionGuiHolder = MMMAP<LFID, std::function<IF*(ILayer* core)> >;
+
+	static FunctionCoreHolder<ILayer> coreLayersCreators;
+	static FunctionGuiHolder<IGuiLayer> guiLayersCreators;
+
+public:
+	static ILayer* CreateCoreLayer(int id)
+	{
+		auto it = coreLayersCreators.find(id);
+		if (it != coreLayersCreators.end())
+			return it->second();
+		else
+			return nullptr;
+	}
+
+	static IGuiLayer* CreateGuiLayer(int id, ILayer* core = nullptr)
+	{
+		auto it = guiLayersCreators.find(id);
+		if (it != guiLayersCreators.end())
+			return it->second(core);
+		else
+			return nullptr;
+	}
+
+	template <typename ICore, typename IGui>
+	static void RegisterFactory(int id)
+	{
+		coreLayersCreators[id] = []() { return new ICore(); };
+		guiLayersCreators[id] = [](ILayer* core) { return new IGui<ICore>(core); };
+	}
+};
+
+
 export template<class T>
-class GuiLayerData : public GuiLayer
+class GuiLayerData : public IGuiLayer
 {
 protected:
 	T* data;
@@ -124,7 +165,7 @@ public:
 
 	virtual void draw(ImVec2 pos, ImVec2 size)
 	{
-		if (!GuiLayer::visible)
+		if (!IGuiLayer::visible)
 			return;
 
 		main.drawImage(GuiLayerData<T>::getName(), pos, size);
@@ -361,7 +402,7 @@ public:
 	InOutLayer iol;
 
 	//GuiBackend& backend;
-	LayersList<GuiLayer> layers;
+	LayersList<IGuiLayer> layers;
 
 	ImVec2 drawSize;
 
@@ -382,19 +423,19 @@ public:
 	template<typename T>
 	T* getCastCurrentLayer()
 	{
-		GuiLayer* l = getCurrentLayer();
+		IGuiLayer* l = getCurrentLayer();
 		if (l)
 			return dynamic_cast<T*>(l);
 		else
 			return nullptr;
 	}
 
-	GuiLayer* getCurrentLayer()
+	IGuiLayer* getCurrentLayer()
 	{
 		return iol.in < 0 ? nullptr : layers.at(iol.in);
 	}
 
-	GuiLayer* getTempLayer()
+	IGuiLayer* getTempLayer()
 	{
 		return iol.out < 0 ? nullptr : layers.at(iol.out);
 	}

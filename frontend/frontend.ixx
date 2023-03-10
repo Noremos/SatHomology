@@ -123,7 +123,7 @@ public:
 		state = GuiState::ImageLoaded;
 	}
 
-	RasterLineLayer* createBarcode(InOutLayer& iol, const BarcodeProperies& propertices, FilterInfo& info)
+	RasterLineLayer* createBarcode(InOutLayer& iol, const BarcodeProperies& propertices, FilterInfo* info)
 	{
 		if (!isImageLoaded())
 			return nullptr;
@@ -131,14 +131,14 @@ public:
 		comm.clear();
 		//proj->setReadyLaod(curImgInd);
 
-		auto* layer = proj->createCacheBarcode(iol, propertices, &info);
+		auto* layer = proj->createCacheBarcode(iol, propertices, info);
 
 		created = true;
 		return layer;
 	}
 
 
-	RasterLineLayer* processRaster(InOutLayer& layer, FilterInfo& filter)
+	RasterLineLayer* processRaster(InOutLayer& layer, FilterInfo* filter)
 	{
 		if (!created)
 			return nullptr;

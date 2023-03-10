@@ -122,7 +122,12 @@ namespace MyApp
 		FilterInfo filterInfo;
 		char text[10000];
 
-		bool simple = true;
+		SelectableKeyValues<int> typeCB =
+		{
+			{0, "Без фильтра"},
+			{1, "Простой"},
+			{2, "Lua script"}
+		};
 
 		void _drawPair(const char* name1, const char* name2, FilterInfo::FRange& rng, int max = 256)
 		{
@@ -130,20 +135,33 @@ namespace MyApp
 			ImGui::SliderInt(name2, &rng.second, 0, max, "%d");
 		}
 
+		FilterInfo* getFilter()
+		{
+			if (typeCB.currentValue() == 0)
+				return nullptr;
+			else
+				return &filterInfo;
+		}
+
 		void draw()
 		{
-			ImGui::Checkbox("Simple", &simple);
-			if (simple)
+			typeCB.drawCombobox("Type");
+			switch (typeCB.currentValue())
 			{
+			case 0:
+				break;
+			case 1:
 				ImGui::Text("Пороги отсеивания");
 				_drawPair("MinStart", "MaxStart", filterInfo.start);
 				_drawPair("MinLen", "MaxLen", filterInfo.len);
 				_drawPair("MinMatrSize %", "MaxMatrSize %", filterInfo.matrSizeProc, 100);
 				_drawPair("MinDepth", "Max depth", filterInfo.depth);
-			}
-			else
-			{
+				break;
+			case 2:
 				ImGui::InputTextMultiline("Lue script", text, 1000, ImVec2(500, 300));
+				break;
+			default:
+				break;
 			}
 		}
 
@@ -233,7 +251,7 @@ namespace MyApp
 			else
 			{
 				grabSets();
-				RasterLineLayer* layerData = backend.createBarcode(layersVals.iol, properties, filterInfo.filterInfo);
+				RasterLineLayer* layerData = backend.createBarcode(layersVals.iol, properties, filterInfo.getFilter());
 				assert(layerData);
 				layersVals.setLayer<RasterLineGuiLayer, RasterLineLayer>("barcode", layerData);
 			}
@@ -671,7 +689,7 @@ namespace MyApp
 					unsetPoints();
 					bottomVals.showUpdaePopup = false;
 					ImGui::CloseCurrentPopup();
-					auto* layerData = backend.processRaster(layersVals.iol, bottomVals.filtere.filterInfo);
+					auto* layerData = backend.processRaster(layersVals.iol, bottomVals.filtere.getFilter());
 					RasterLineGuiLayer* t = layersVals.setLayer<RasterLineGuiLayer, RasterLineLayer>("barcode", layerData);
 
 					//commonValus.onAir = true;

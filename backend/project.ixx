@@ -515,7 +515,7 @@ public:
 		return layer;
 	}
 
-	RasterLineLayer* processCachedBarcode(InOutLayer& iol, FilterInfo& filter)
+	RasterLineLayer* processCachedBarcode(InOutLayer& iol, FilterInfo* filter)
 	{
 		//if (u_displayFactor < 1.0)
 		//	throw std::exception();
@@ -524,8 +524,11 @@ public:
 		int tileSize = inLayer->prov.tileSize;
 		int tileOffset = inLayer->tileOffset;
 
-		const uint fullTile = tileSize + tileOffset;
-		filter.imgLen = fullTile * fullTile;
+		if (filter)
+		{
+			const uint fullTile = tileSize + tileOffset;
+			filter->imgLen = fullTile * fullTile;
+		}
 
 		// -------
 		RasterLineLayer* outLayer = addOrUpdateOut<RasterLineLayer>(iol);
@@ -547,7 +550,7 @@ public:
 			for (size_t i = 0; i < vec.size(); ++i)
 			{
 				auto item = vec.at(i);
-				if (outLayer->passLine(item, &filter))
+				if (outLayer->passLine(item, filter))
 				{
 					bool show = true;
 					auto pointCol = predict(item, show);

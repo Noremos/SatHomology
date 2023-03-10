@@ -1,5 +1,6 @@
 module;
 #include <algorithm>
+#include <functional>
 #include <memory>
 #include <list>
 
@@ -135,6 +136,8 @@ int getCon(int total, int part)
 	return total / part + (total % part == 0 ? 0 : 1);
 }
 
+export using LFID = unsigned int;
+
 export class ILayer : public IJsonIO
 {
 protected:
@@ -146,6 +149,14 @@ protected:
 	};
 
 public:
+
+	static LFID counter;
+	static LFID getCountId()
+	{
+		return counter++;
+	}
+
+	virtual const LFID getFactoryId() = 0;
 	int id = -1;
 
 	BackString name;
@@ -158,6 +169,9 @@ public:
 
 	//IGuiLayer* toGuiLayer();
 };
+
+LFID ILayer::counter = 0;
+
 
 export using SubImgInf = BackSize;
 
