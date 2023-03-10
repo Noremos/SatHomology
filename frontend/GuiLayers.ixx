@@ -116,6 +116,12 @@ public:
 	virtual ~TiledRasterGuiLayer()
 	{ }
 
+	virtual void toGuiData()
+	{
+		newTileSize = getTileSize() / 10;
+		newOffsetSize = getOffsetSize() / 10;
+	}
+
 	virtual void draw(ImVec2 pos, ImVec2 size)
 	{
 		if (!GuiLayer::visible)
@@ -182,6 +188,8 @@ public:
 
 	virtual void toGuiData()
 	{
+		TiledRasterGuiLayer::toGuiData();
+
 		main.setImage(data->mat, false);
 		icon.setImage(data->mat, 32, 32, true);
 	}
@@ -201,6 +209,7 @@ public:
 
 	virtual void toGuiData()
 	{
+		TiledRasterGuiLayer::toGuiData();
 		main.setImage(data->mat, false);
 		icon.setImage(data->mat, 32, 32, true);
 	}
@@ -332,11 +341,11 @@ public:
 
 	virtual void toGuiData()
 	{
+		TiledRasterGuiLayer::toGuiData();
+
 		auto i = *data->getCachedImage();
 		main.setImage(i, false);
 		icon.setImage(i, 32, 32, true);
-		newTileSize = data->prov.tileSize;
-		newOffsetSize = data->tileOffset;
 	}
 
 	std::vector<SubImgInf> getSubImageInfos()
@@ -519,6 +528,7 @@ public:
 		bool catchNext = false;
 		int toMove[2]{ -1, -1 };
 		int prevId = -1;
+		int delId = -1;
 
 		if (ImGui::BeginListBox("##LayersList", winsize))
 		{
@@ -572,6 +582,12 @@ public:
 				ImGui::EndDisabled();
 
 				ImGui::SetCursorPos({posBef.x + iconSize.x, posBef.y});
+				if (ImGui::Button(ICON_FA_TRASH "", ImVec2(selHei, selHei)))
+				{
+					delId = curID;
+				}
+
+				ImGui::SameLine();
 				bool seled = ImGui::Selectable(lay->getName(), curID == iol.in, 0, ImVec2(winsize.x - 50, selHei));
 				prevId = curID;
 
@@ -599,6 +615,12 @@ public:
 				++j;
 			}
 			ImGui::EndListBox();
+		}
+
+		if (delId != -1)
+		{
+			layers.remove(delId);
+			proj->layers.remove(delId);
 		}
 
 		//ImGui::EndGroup();

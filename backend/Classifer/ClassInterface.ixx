@@ -86,12 +86,28 @@ public:
 export class IClassItemHolder : public IBffIO
 {
 public:
-	virtual const std::vector<IClassItem *> &getItems() const = 0;
+	virtual const std::vector<IClassItem*> &getItems() const = 0;
 
 	using ItemCallback = std::function<void(IClassItem *item)>;
 
 	virtual void create(bc::DatagridProvider *img, const bc::BarConstructor &constr, const ItemCallback& callback) = 0;
 };
+
+export template<typename T>
+class IDataClassItemHolder : public IClassItemHolder
+{
+protected:
+	std::vector<T*> items;
+public:
+	virtual const std::vector<IClassItem*> &getItems() const
+	{
+		return static_cast<const std::vector<T*>&>(items);
+	}
+
+	virtual ~IDataClassItemHolder()
+	{ }
+};
+
 
 export class ItemHolderCache
 {
@@ -167,7 +183,7 @@ export class IBarClassifier
 public:
 	BackPathStr dbPath;
 
-	virtual const BackString &name() const = 0;
+	virtual const BackString name() const = 0;
 
 	virtual void loadClasses(const BarCategories &categs, const BackPathStr &path) = 0;
 	virtual void addClass(int id) = 0;
@@ -184,11 +200,11 @@ public:
 		temp.setData(reinterpret_cast<uchar *>(st.str().data()), st.str().length(), false);
 		size_t id = io.save(classInd, temp, icon);
 
-		addDataInner(classInd, raw, id, extract);
+		addDataInnerT(classInd, raw, id, extract);
 		return id;
 	}
 
-	virtual void addDataInner(int classInd, IClassItem *raw, size_t dataId, bool extractLine = false) = 0;
+	virtual void addDataInnerT(int classInd, IClassItem *raw, size_t dataId, bool extractLine = false) = 0;
 
 	void removeData(int classId, size_t id)
 	{
@@ -207,6 +223,27 @@ public:
 	{
 	}
 };
+
+export template<typename T>
+class IDataBarClassifier : public IBarClassifier
+{
+public:
+	virtual int predictInner(const T* raw) = 0;
+	virtual int predict(const IClassItem *raw)
+	{
+		return predictInner(static_cast<const T*>(raw));
+	}
+
+	virtual void addDataInner(int classInd, T *raw, size_t dataId, bool extractLine = false) = 0;
+	virtual void addDataInnerT(int classInd, IClassItem* raw, size_t dataId, bool extractLine = false)
+	{
+		addDataInner(classInd, static_cast<T*>(raw), dataId, extractLine);
+	}
+
+	virtual ~IDataBarClassifier()
+	{ }
+};
+
 
 export class ClassFactory
 {

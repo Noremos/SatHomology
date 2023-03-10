@@ -131,11 +131,11 @@ public:
 		ImDrawList* list = ImGui::GetWindowDrawList();
 		ImVec2 cont = ImGui::GetCurrentWindow()->Pos + img->localDisplayPos;
 
-		float tfc = prov.tileSize / prov.displayFactor;
+		float tfc = prov.tileSize / img->scaleFactor;
 		ImVec2 drawTileSize(tfc, tfc);
 
-		int newWid = img->displaySize.x;
-		int newHei = img->displaySize.y;
+		float newWid = img->displaySize.x;
+		float newHei = img->displaySize.y;
 
 		ImVec2 tst(0, cont.y);
 		ImVec2 ted(0, cont.y + newHei);

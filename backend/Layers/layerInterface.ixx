@@ -222,6 +222,18 @@ public:
 		//return t->get();
 	}
 
+	void remove(uint id)
+	{
+		for (auto it = layers.begin(); it != layers.end(); it++)
+		{
+			if ((*it)->getSysId() == id)
+			{
+				layers.erase(it);
+				break;
+			}
+		}
+	}
+
 	auto begin()
 	{
 		return layers.begin();

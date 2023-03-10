@@ -467,7 +467,7 @@ public:
 		IClassItemHolder::ItemCallback cacheClass;
 		if (layer)
 		{
-			cacheClass = [this, &parentne, &inde, layer, tileIndex, info](IClassItem* item)
+			cacheClass = [this, &parentne, &inde, layer, &tileIndex, info](IClassItem* item)
 			{
 				if (layer->passLine(item, info))
 				{

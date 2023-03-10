@@ -66,9 +66,9 @@ public:
 
 	virtual bool passFilter(const FilterInfo& filter) const
 	{
-		return filter.start.inRange(line->start) ||
-			filter.len.inRange(line->len()) ||
-			filter.matrSizeProc.inRange(line->matr.size() * 100 / filter.imgLen) ||
+		return filter.start.inRange(line->start) &&
+			filter.len.inRange(line->len()) &&
+			filter.matrSizeProc.inRange(line->matr.size() * 100 / filter.imgLen) &&
 			filter.depth.inRange(line->getDeath());
 	}
 
@@ -80,18 +80,11 @@ public:
 };
 
 
-export class BaritemHolder : public IClassItemHolder
+export class BaritemHolder : public IDataClassItemHolder<IClassItem>
 {
 	std::shared_ptr<bc::Baritem> item;
-	std::vector<IClassItem*> items;
 
 public:
-
-	virtual const std::vector<IClassItem*>& getItems() const
-	{
-		return items;
-	}
-
 	~BaritemHolder()
 	{
 		for (size_t var = 0; var < items.size(); ++var)
@@ -237,7 +230,7 @@ public:
 };
 
 
-export class barclassificator : public IBarClassifier
+export class barclassificator : public IDataBarClassifier<BarlineClass>
 {
 public:
 	struct ClassData
@@ -249,7 +242,7 @@ public:
 	std::vector<ClassData> classes;
 	BackPathStr dbPath;
 
-	const BackString& name() const
+	const BackString name() const
 	{
 		return "CLASSIC";
 	}
@@ -296,15 +289,13 @@ public:
 		}
 	}
 
-	void addDataInner(int classInd, IClassItem* rawcl, size_t dataId, bool extractLine = false)
+	void addDataInner(int classInd, BarlineClass* raw, size_t dataId, bool extractLine = false)
 	{
-		bc::barline* raw = static_cast<const BarlineClass*>(rawcl)->line;
-
 		bc::Baritem* item = new bc::Baritem();
 		if (extractLine)
-			raw->extractChilred(item->barlines, true, false);
+			raw->line->extractChilred(item->barlines, true, false);
 		else
-			raw->getChilredAsList(item->barlines, true, true, false);
+			raw->line->getChilredAsList(item->barlines, true, true, false);
 
 		item->relen();
 		item->setType();
@@ -357,11 +348,10 @@ public:
 		return false;
 	}
 
-	int predict(const IClassItem* rawcl)
+	int predictInner(const BarlineClass* raw)
 	{
-		bc::barline* raw = static_cast<const BarlineClass*>(rawcl)->line;
 		bc::Baritem newOne;
-		raw->getChilredAsList(newOne.barlines, true, true, false);
+		raw->line->getChilredAsList(newOne.barlines, true, true, false);
 		newOne.relen();
 
 		auto cp = bc::CompireStrategy::CommonToLen;
