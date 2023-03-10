@@ -455,8 +455,8 @@ public:
 		ImColor midColor(220, 200, 0);
 
 		ApplicationVec2 offset = win->Pos + pos;
-		ApplicationVec2 csreenStar = offset;
-		ApplicationVec2 csreenEnd = offset + par->displaySize;
+		ApplicationVec2 csreenStar = offset + par->localDisplayPos;
+		ApplicationVec2 csreenEnd = offset + par->localDisplayPos + par->displaySize;
 		float pixelSize = MAX(1, par->displaySize.x / par->width);
 
 		const bc::barvector& pointsi = *points;

@@ -123,25 +123,25 @@ public:
 		state = GuiState::ImageLoaded;
 	}
 
-	RasterLineLayer* createBarcode(InOutLayer& iol, const BarcodeProperies& propertices, FilterInfo* info)
+	RetLayers createBarcode(InOutLayer& iol, const BarcodeProperies& propertices, FilterInfo* info)
 	{
 		if (!isImageLoaded())
-			return nullptr;
+			return RetLayers();
 
 		comm.clear();
 		//proj->setReadyLaod(curImgInd);
 
-		auto* layer = proj->createCacheBarcode(iol, propertices, info);
+		auto layers = proj->createCacheBarcode(iol, propertices, info);
 
 		created = true;
-		return layer;
+		return layers;
 	}
 
 
-	RasterLineLayer* processRaster(InOutLayer& layer, FilterInfo* filter)
+	RetLayers processRaster(InOutLayer& layer, FilterInfo* filter)
 	{
 		if (!created)
-			return nullptr;
+			return RetLayers();
 
 		//resultMart = mainMat;
 		ska::unordered_map<size_t, char> map;
@@ -152,10 +152,10 @@ public:
 	}
 
 
-	RasterLayer* exeFilter(InOutLayer& layer, int algNum)
+	RetLayers exeFilter(InOutLayer& layer, int algNum)
 	{
 		if (!isImageLoaded())
-			return nullptr;
+			return RetLayers();
 
 		return proj->exeFilter(layer, algNum);
 	}

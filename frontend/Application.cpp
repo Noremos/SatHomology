@@ -251,9 +251,8 @@ namespace MyApp
 			else
 			{
 				grabSets();
-				RasterLineLayer* layerData = backend.createBarcode(layersVals.iol, properties, filterInfo.getFilter());
-				assert(layerData);
-				layersVals.setLayer<RasterLineGuiLayer, RasterLineLayer>("barcode", layerData);
+				RetLayers layerData = backend.createBarcode(layersVals.iol, properties, filterInfo.getFilter());
+				layersVals.setLayers(layerData, "barcode");
 			}
 		}
 
@@ -608,7 +607,7 @@ namespace MyApp
 			{
 				layersVals.onClick(centerVals.imgMain.clickedPos);
 				RasterLineGuiLayer* lay = layersVals.getCastCurrentLayer<RasterLineGuiLayer>();
-				if (lay)
+				if (lay && lay->selectedLine)
 				{
 					classerVals.selceted = { lay->selectedLine->id, lay->selectedLine->barlineIndex};
 				}
@@ -689,8 +688,8 @@ namespace MyApp
 					unsetPoints();
 					bottomVals.showUpdaePopup = false;
 					ImGui::CloseCurrentPopup();
-					auto* layerData = backend.processRaster(layersVals.iol, bottomVals.filtere.getFilter());
-					RasterLineGuiLayer* t = layersVals.setLayer<RasterLineGuiLayer, RasterLineLayer>("barcode", layerData);
+					auto layerData = backend.processRaster(layersVals.iol, bottomVals.filtere.getFilter());
+					layersVals.setLayers(layerData, "barcode");
 
 					//commonValus.onAir = true;
 					//commonValus.future = std::async(&GuiBackend::processRaster, std::ref(backend),
@@ -943,8 +942,8 @@ namespace MyApp
 		if (ImGui::Button("Activation"))
 		{
 			//backend.
-			auto* layerData = backend.exeFilter(layersVals.iol, 0);
-			layersVals.setLayer<RasterGuiLayer, RasterLayer>("barcode", layerData);
+			auto layerData = backend.exeFilter(layersVals.iol, 0);
+			layersVals.setLayers(layerData, "barcode");
 		}
 
 
@@ -984,6 +983,10 @@ namespace MyApp
 
 	void MyApp::Init()
 	{
+		LayerFactory::RegisterFactory<RasterGuiLayer, RasterLayer>(RASTER_LAYER_FID);
+		LayerFactory::RegisterFactory<RasterLineGuiLayer, RasterLineLayer>(RASTER_LINE_LAYER_FID);
+		LayerFactory::RegisterFactory<RasterFromDiskGuiLayer, RasterFromDiskLayer>(RASTER_DISK_LAYER_FID);
+
 		classerVals.ioLayer = layersVals.getIoLayer();
 		centerVals.heimap.enable = false;
 		auto drawLine = [](const bc::point& p1, const bc::point& p2, bool finale)

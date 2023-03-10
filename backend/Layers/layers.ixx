@@ -20,10 +20,10 @@ import MetadataIOCore;
 import ImgReader;
 import SimpleImgReaderModule;
 
-const LFID VECTOR_LAYER_FID = ILayer::getCountId();
-const LFID RASTER_LAYER_FID =  ILayer::getCountId();
-const LFID RASTER_LINE_LAYER_FID = ILayer::getCountId();
-const LFID RASTER_DISK_LAYER_FID = ILayer::getCountId();
+export const LFID VECTOR_LAYER_FID = ILayer::getCountId();
+export const LFID RASTER_LAYER_FID =  ILayer::getCountId();
+export const LFID RASTER_LINE_LAYER_FID = ILayer::getCountId();
+export const LFID RASTER_DISK_LAYER_FID = ILayer::getCountId();
 
 export enum class ReadType
 {
@@ -51,7 +51,7 @@ export class PrimetiveLayer : public ILayer
 {
 public:
 	std::vector<DrawPrimetive> primetives;
-	virtual const LFID getFactoryId()
+	virtual const LFID getFactoryId() const
 	{
 		return VECTOR_LAYER_FID;
 	}
@@ -110,10 +110,33 @@ export class RasterLayer : public IRasterLayer
 public:
 	BackImage mat;
 
-	virtual const LFID getFactoryId()
+	virtual const LFID getFactoryId() const
 	{
 		return RASTER_LAYER_FID;
 	}
+
+	virtual void saveLoadState(JsonObjectIOState* state, MetadataProvider& metaFolder)
+	{
+		IRasterLayer::saveLoadState(state, metaFolder);
+
+		// int imgId = metaFolder.getUniqueId();
+		// state->scInt("mat_id", imgId);
+		const BackPathStr path = metaFolder.getSubFolder("mat.png");
+
+		if (state->isReading())
+		{
+			mat = imread(path);
+			// std::remove(path.string().c_str());
+		}
+		else
+			imwrite(path, mat);
+	}
+
+	//void release(MetadataProvider& mprov)
+	//{
+	//	const BackPathStr path = mprov.getPath(imgId, ".png");
+	//	std::remove(path.string().c_str());
+	//}
 
 	void init(const BackImage& src, int tileSize = DEF_TILE_SIZE)
 	{
@@ -135,29 +158,6 @@ public:
 		return { std::min(p.x, mat.width() - 1), std::min(p.y, mat.height() - 1) };
 	}
 
-	virtual void saveLoadState(JsonObjectIOState* state, const BackDirStr& metaFolder)
-	{
-		//int id = -1;
-
-		//BackString name;
-		//int iconId = -1;
-		//LayerProvider prov;
-		////ILayer::writeJson(json, metaFolder, counter);
-		//++counter;
-		//BackPathStr fulp = metaFolder / intToStr(counter) / ".png";
-		//imwrite(fulp, mat);
-		// json["matId"] = counter;
-
-				//ILayer::readJson(json, metaFolder);
-		// int counter = json["matId"].get<int>();
-		// BackPathStr fulp = metaFolder / intToStr(counter) / ".png";
-		// mat = imread(fulp);
-				//ILayer::writeJson(json, metaFolder, counter);
-		//++counter;
-		//BackPathStr fulp = metaFolder / intToStr(counter) / ".png";
-		//imwrite(fulp, mat);
-		// json["matId"] = counter;
-	}
 
 	// ������������ ����� IRasterLayer
 	virtual int displayWidth() const override
@@ -231,6 +231,7 @@ export class RasterLineLayer : public RasterLayer
 public:
 	static std::vector<Barscalar> colors;
 	std::vector<std::shared_ptr<SimpleLine>> clickResponser;
+	int cacheId = -1;
 
 	RasterLineLayer()
 	{
@@ -248,9 +249,30 @@ public:
 		}
 	}
 
-	virtual const LFID getFactoryId()
+	BackPathStr getCacheFilePath(MetadataProvider& metaFolder)
+	{
+		MetadataProvider m = metaFolder.getSubMeta(getMetaLayerName());
+		return m.getPath(cacheId, ".bff");
+	}
+
+	virtual void release(MetadataProvider& metaFolder)
+	{
+		// RasterLayer::release(metaFolder);
+		// if (cacheId != -1)
+		// {
+		// 	std::remove(getCacheFilePath(metaFolder).string().c_str()); // delete file
+		// }
+	}
+
+	virtual const LFID getFactoryId() const
 	{
 		return RASTER_LINE_LAYER_FID;
+	}
+
+	virtual void saveLoadState(JsonObjectIOState* state, MetadataProvider& metaFolder)
+	{
+		RasterLayer::saveLoadState(state, metaFolder);
+		state->scInt("cacheId", cacheId);
 	}
 
 	//virtual void readJson(const BackJson& json, const BackDirStr& metaFolder)
@@ -276,7 +298,7 @@ public:
 		prov.init(src.width(), src.height(), src.width(), tileSize);
 	}
 
-	void init(IRasterLayer* layer)
+	void init(IRasterLayer* layer, const MetadataProvider& metadata)
 	{
 		int wid = layer->displayWidth();
 		int hei = layer->displayHeight();
@@ -285,7 +307,10 @@ public:
 		mat.reinit(wid, hei, 4);
 		clickResponser.resize(mat.length());
 
+
 		prov = layer->prov;
+
+		mkDirIfNotExists(metadata.getSubFolder(getMetaLayerName()));
 	}
 
 	void clear()
@@ -429,8 +454,8 @@ public:
 	ReadType imgType;
 	BackPathStr imgPath;
 
-	// nnotSave
-	MetadataProvider* mprov;
+	// notSave
+	// MetadataProvider* mprov;
 
 	int subImageIndex = 0;
 	std::vector<BackImage> images;
@@ -441,9 +466,28 @@ public:
 		closeImages();
 	}
 
-	virtual const LFID getFactoryId()
+	virtual const LFID getFactoryId() const
 	{
 		return RASTER_DISK_LAYER_FID;
+	}
+
+	virtual void saveLoadState(JsonObjectIOState* state, MetadataProvider& metaFolder)
+	{
+		// this->mprov = &metaFolder;
+		IRasterLayer::saveLoadState(state, metaFolder);
+		state->scPath("imgPath", imgPath);
+		state->scInt("subImgSize", subImgSize);
+		state->scInt("subImageIndex", subImageIndex);
+		int iimgType = (int)imgType;
+		state->scInt("imgType", iimgType);
+		imgType = (ReadType)iimgType;
+
+		if (state->isReading())
+		{
+			openReader();
+			readImagesFromCache(metaFolder);
+			setSubImage(subImageIndex);
+		}
 	}
 
 	void open(const BackPathStr& path, MetadataProvider& metaPath)
@@ -451,13 +495,14 @@ public:
 		closeReader();
 
 		imgPath = path;
-		this->mprov = &metaPath;
+		// this->mprov = &metaPath;
 
 		openReader();
 		if (!reader->ready)
 			return;
 
-		writeImages();
+		MetadataProvider layerMeta(getLayerMeta(metaPath));
+		writeImages(layerMeta);
 		setSubImage(0);
 	}
 
@@ -556,8 +601,7 @@ public:
 			reader->open(imgPath.string());
 	}
 
-
-	void writeImages()
+	void writeImages(MetadataProvider& metaprov)
 	{
 		if (!reader)
 			return;
@@ -565,8 +609,10 @@ public:
 		closeImages();
 		images.clear();
 
-		BackDirStr tiles = mprov->getSubFolter(std::format("{}_layer", id));
-		tiles = tiles / "tiles";
+		metaprov.mkdir();
+
+		BackDirStr tiles = metaprov.getSubFolder("tiles");
+		mkDirIfNotExists(tiles);
 
 		if (imgType == ReadType::Tiff)
 		{
@@ -597,17 +643,17 @@ public:
 	}
 
 
-	void readImagesFromCache()
+	void readImagesFromCache(MetadataProvider& metap)
 	{
 		if (!reader)
 			return;
 
-		BackDirStr tiles = mprov->getSubFolter(std::format("{}_layer", id));
-		tiles = tiles / "tiles";
+		BackDirStr tiles = metap.getSubFolder("tiles");
 		for (int i = 0; i < subImgSize; ++i)
 		{
 			// int factor = 1;
-			images.push_back(imread(tiles / (intToStr(i) + ".png")));
+			BackPathStr stp = tiles / (intToStr(i) + ".png");
+			images.push_back(imread(stp));
 		}
 	}
 
@@ -617,31 +663,6 @@ public:
 		//for (int i = 0; i < images.size(); ++i)
 		//	delete images[i];
 		images.clear();
-	}
-
-
-	virtual void saveLoadState(JsonObjectIOState* state, const BackDirStr& metaFolder)
-	{
-		//int id = -1;
-
-		//BackString name;
-		//int iconId = -1;
-		//LayerProvider prov;
-		////ILayer::writeJson(json, metaFolder, counter);
-		//++counter;
-		//BackPathStr fulp = metaFolder / intToStr(counter) / ".png";
-		//imwrite(fulp, mat);
-		// json["matId"] = counter;
-
-				//ILayer::readJson(json, metaFolder);
-		// int counter = json["matId"].get<int>();
-		// BackPathStr fulp = metaFolder / intToStr(counter) / ".png";
-		// mat = imread(fulp);
-				//ILayer::writeJson(json, metaFolder, counter);
-		//++counter;
-		//BackPathStr fulp = metaFolder / intToStr(counter) / ".png";
-		//imwrite(fulp, mat);
-		// json["matId"] = counter;
 	}
 
 	// ������������ ����� IRasterLayer

@@ -24,6 +24,8 @@ public:
 	virtual void draw(ImVec2 pos, ImVec2 size) = 0;
 	virtual void drawOverlap(ImVec2 pos, ImVec2 size) = 0;
 	virtual const char* getName() const = 0;
+	virtual void setName(const BackString& name) = 0;
+
 	virtual GuiImage* getIcon() = 0;
 
 	virtual void toGuiData() = 0;
@@ -49,29 +51,12 @@ public:
 };
 
 
-export class LayerFactory
+export class LayerFactory : public CoreLayerFactory
 {
 private:
-
-	template<class IF>
-	using FunctionCoreHolder = MMMAP<LFID, std::function<IF*()> >;
-
-	template<class IF>
-	using FunctionGuiHolder = MMMAP<LFID, std::function<IF*(ILayer* core)> >;
-
-	static FunctionCoreHolder<ILayer> coreLayersCreators;
 	static FunctionGuiHolder<IGuiLayer> guiLayersCreators;
 
 public:
-	static ILayer* CreateCoreLayer(int id)
-	{
-		auto it = coreLayersCreators.find(id);
-		if (it != coreLayersCreators.end())
-			return it->second();
-		else
-			return nullptr;
-	}
-
 	static IGuiLayer* CreateGuiLayer(int id, ILayer* core = nullptr)
 	{
 		auto it = guiLayersCreators.find(id);
@@ -81,13 +66,25 @@ public:
 			return nullptr;
 	}
 
-	template <typename ICore, typename IGui>
+	static IGuiLayer* CreateGuiLayer(ILayer* core)
+	{
+		assert(core != nullptr);
+		auto it = guiLayersCreators.find(core->getFactoryId());
+		if (it != guiLayersCreators.end())
+			return it->second(core);
+		else
+			return nullptr;
+	}
+
+	template <typename IGui, typename ICore>
 	static void RegisterFactory(int id)
 	{
 		coreLayersCreators[id] = []() { return new ICore(); };
-		guiLayersCreators[id] = [](ILayer* core) { return new IGui<ICore>(core); };
+		guiLayersCreators[id] = [](ILayer* core) { return new IGui(static_cast<ICore*>(core)); };
 	}
 };
+
+CoreLayerFactory::FunctionGuiHolder<IGuiLayer> LayerFactory::guiLayersCreators;
 
 
 export template<class T>
@@ -236,6 +233,7 @@ public:
 	}
 };
 
+
 export class RasterLineGuiLayer : public TiledRasterGuiLayer<RasterLineLayer>
 {
 public:
@@ -374,6 +372,7 @@ public:
 private:
 };
 
+
 export class RasterFromDiskGuiLayer : public TiledRasterGuiLayer<RasterFromDiskLayer>
 {
 public:
@@ -394,6 +393,7 @@ public:
 		return data->getSubImageInfos();
 	}
 };
+
 
 
 export class LayersVals
@@ -492,21 +492,40 @@ public:
 		return addLayer<TGui, TData>(name, core);
 	}
 
-	template<typename TGui>
-	void settup(TGui* layer, const BackString& name)
+	void settup(IGuiLayer* layer, const BackString& name)
 	{
-		iol.in = iol.out = layer->getSysId();
+		if (iol.in == -1)
+		{
+			iol.in = iol.out = layer->getSysId();
+		}
+		else
+			iol.out = layer->getSysId();
+
 		layer->setName(name);
 		layer->toGuiData();
 	}
 
+	void setLayers(const RetLayers& rlayers, const BackString& name)
+	{
+		for (auto& lay : rlayers)
+		{
+			auto ptr = LayerFactory::CreateGuiLayer(lay.core);
+			if (!layers.set(lay.core->id, ptr))
+			{
+				layers.addMove(ptr);
+			}
+			settup(ptr, lay.getName(name));
+		}
+	}
 
 	void loadLayers()
 	{
-		// for(auto coreLay : proj->layers)
-		// {
-		// 	addLayer<
-		// }
+		for (auto& coreLay : proj->layers)
+		{
+			auto ptr = LayerFactory::CreateGuiLayer(coreLay.get());
+			layers.addMove(ptr);
+			settup(ptr, coreLay->name);
+		}
 	}
 
 	void draw(const ImVec2 pos, const ImVec2 size)
@@ -626,6 +645,7 @@ public:
 				if (ImGui::Button(ICON_FA_TRASH "", ImVec2(selHei, selHei)))
 				{
 					delId = curID;
+					lay->getCore()->release(proj->getMeta());
 				}
 
 				ImGui::SameLine();

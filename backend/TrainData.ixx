@@ -50,7 +50,7 @@ public:
 		show(true), color(BackColor::random())
 	{ }
 
-	virtual void saveLoadState(JsonObjectIOState* state, const BackDirStr&)
+	virtual void saveLoadState(JsonObjectIOState* state, MetadataProvider&)
 	{
 		state->scInt("id", id);
 		state->scStr("name", name);
@@ -141,14 +141,17 @@ public:
 		//barclassificator barclas;
 		BackJson loadDoc = jsonFromFile(path.string());// Project::getPathSt(BackPath::classifier));
 
+		int temp;
+		MetadataProvider d("", temp);
+
 		categ.counter = loadDoc["counter"].asInt();
 		JsonArray list = loadDoc["categories"];
 		for (auto item : list)
 		{
 			const BackJson& catId = item;
-			BarClassCategor bc;
-			bc.read(catId, path);
-			categ.categs.push_back(bc);
+			BarClassCategor bcc;
+			bcc.read(catId, d);
+			categ.categs.push_back(bcc);
 		}
 
 		return categ;
@@ -156,11 +159,14 @@ public:
 
 	void saveCategories(const BackPathStr& path)
 	{
+		int temp;
+		MetadataProvider d("", temp);
+
 		JsonArray arr(Json::ValueType::arrayValue);
 		for (size_t i = 0; i < categs.size(); i++)
 		{
 			JsonObject catId;
-			categs[i].write(catId, path);
+			categs[i].write(catId, d);
 			arr.append(catId);
 		}
 

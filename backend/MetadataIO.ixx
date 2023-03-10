@@ -7,6 +7,81 @@ export module MetadataIOCore;
 
 import JsonCore;
 import BarcodeModule;
+import IOCore;
+
+
+export class MetadataProvider
+{
+	BackDirStr path;
+	int& counter;
+
+public:
+	MetadataProvider(const BackDirStr& path, int& counter) :
+		path(path), counter(counter)
+	{ }
+
+	MetadataProvider(const MetadataProvider& meta) :
+		path(meta.path), counter(meta.counter)
+	{ }
+
+
+	void update(const MetadataProvider& mpv)
+	{
+		path = mpv.path;
+		counter = mpv.counter;
+	}
+
+	BackPathStr getUniquePath(int& id)
+	{
+		id = counter++;
+		return path / intToStr(id);
+	}
+
+	int getUniqueId()
+	{
+		return counter++;
+	}
+
+	BackPathStr getUniquePath(int& id, const BackString& ext)
+	{
+		id = counter++;
+		return path / (intToStr(id) + (ext[0] == '.' ? ext : ("." + ext)));
+	}
+
+	BackPathStr getPath(int id, const BackString& ext) const
+	{
+		return path / (intToStr(id) + (ext[0] == '.' ? ext : ("." + ext)));
+	}
+
+	BackDirStr getSubFolder(const BackString& name) const
+	{
+		return path / name;
+	}
+
+	BackDirStr getFile(const BackString& name) const
+	{
+		return path / name;
+	}
+
+	MetadataProvider getSubMeta(const BackString& folder) const
+	{
+		return MetadataProvider(path / folder, counter);
+	}
+
+	void mkdir()
+	{
+		mkDirIfNotExists(path);
+	}
+
+// 	MetadataProvider store(const BackImage& img)
+// 	{
+// 		BackPathStr bps = getUniquePath(".png");
+// 		MetadataProvider mp;
+// 		mp.path = path / folder;
+// 		return mp;
+// 	}
+};
+
 
 
 export class UserdefIO
@@ -371,6 +446,12 @@ public:
 		curObj = std::make_unique<JsonObjectIOStateWriter>(refjarr);
 		return curObj.get();
 	}
+
+	JsonObjectIOStateWriter* append()
+	{
+		curObj = std::make_unique<JsonObjectIOStateWriter>(json.append(BackJson()));
+		return curObj.get();
+	}
 };
 
 
@@ -412,19 +493,19 @@ JsonObjectIOState* JsonObjectIOStateWriter::objectBegin(const BackString& name)
 export class IJsonIO
 {
 public:
-	void read(const JsonObject& obj, const BackDirStr& metaFolder)
+	void read(const JsonObject& obj, MetadataProvider& metaFolder)
 	{
 		JsonObjectIOStateReader state(obj);
 		saveLoadState(&state, metaFolder);
 	}
 
-	void write(JsonObject& obj, const BackDirStr& metaFolder)
+	void write(JsonObject& obj, MetadataProvider& metaFolder)
 	{
 		JsonObjectIOStateWriter state(obj);
 		saveLoadState(&state, metaFolder);
 	}
 private:
-	virtual void saveLoadState(JsonObjectIOState* state, const BackDirStr& metaFolder) = 0;
+	virtual void saveLoadState(JsonObjectIOState* state, MetadataProvider& metaFolder) = 0;
 };
 
 

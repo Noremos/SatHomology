@@ -127,28 +127,3 @@ export bool endsWith(const BackString& string, const BackString endl)
 
 	return true;
 }
-
-
-export class MetadataProvider
-{
-	BackDirStr path;
-
-public:
-	int counter;
-	BackPathStr getUniquePath(int& id)
-	{
-		id = counter++;
-		return path / intToStr(id);
-	}
-
-	BackPathStr getUniquePath(int& id, const BackString& ext)
-	{
-		id = counter++;
-		return path / (intToStr(id) + (ext[0] == '.' ? ext : ("." + ext)));
-	}
-
-	BackDirStr getSubFolter(const BackString& name)
-	{
-		return path / name;
-	}
-};

@@ -149,28 +149,74 @@ protected:
 	};
 
 public:
-
 	static LFID counter;
 	static LFID getCountId()
 	{
 		return counter++;
 	}
 
-	virtual const LFID getFactoryId() = 0;
+	BackString getMetaLayerName()
+	{
+		return std::format("{}_layer", id);
+	}
+
+	MetadataProvider getLayerMeta(MetadataProvider& metaFolder)
+	{
+		BackString lname = getMetaLayerName();
+		return metaFolder.getSubMeta(lname);
+	}
+
+public:
 	int id = -1;
-
 	BackString name;
-	int iconId = -1;
+	virtual void saveLoadState(JsonObjectIOState* state, MetadataProvider& metaFolder)
+	{
+		state->scInt("coreId", id);
+		state->scStr("name", name);
+		metaFolder.update(getLayerMeta(metaFolder));
+	}
 
-	int getSysId()
+	virtual Type getType() const = 0;
+	virtual const LFID getFactoryId() const = 0;
+	virtual void release(MetadataProvider& metaFolder)
+	{
+		BackString lname = getMetaLayerName();
+		metaFolder.update(metaFolder.getSubMeta(lname));
+	}
+
+	int getSysId() const
 	{
 		return id;
 	}
-
-	//IGuiLayer* toGuiLayer();
 };
 
 LFID ILayer::counter = 0;
+
+
+export class CoreLayerFactory
+{
+protected:
+	template<class IF>
+	using FunctionCoreHolder = MMMAP<LFID, std::function<IF*()> >;
+
+	template<class IF>
+	using FunctionGuiHolder = MMMAP<LFID, std::function<IF*(ILayer* core)> >;
+
+	static FunctionCoreHolder<ILayer> coreLayersCreators;
+
+public:
+	static ILayer* CreateCoreLayer(int id)
+	{
+		auto it = coreLayersCreators.find(id);
+		if (it != coreLayersCreators.end())
+			return it->second();
+		else
+			return nullptr;
+	}
+};
+
+CoreLayerFactory::FunctionCoreHolder<ILayer> CoreLayerFactory::coreLayersCreators;
+
 
 
 export using SubImgInf = BackSize;
@@ -179,8 +225,25 @@ export class IRasterLayer : public ILayer
 {
 public:
 	LayerProvider prov;
-	int tileOffset = DEF_TILE_OFFSET;
+	int tileOffset;
 
+	Type getType() const
+	{
+		return Type::Raster;
+	}
+
+	virtual void saveLoadState(JsonObjectIOState* state, MetadataProvider& metaFolder)
+	{
+		ILayer::saveLoadState(state, metaFolder);
+		JsonObjectIOState* jobj = state->objectBegin("provider");
+
+		jobj->scInt("width", prov.width);
+		jobj->scInt("height", prov.height);
+		jobj->scInt("tileSize", prov.tileSize);
+		jobj->scFloat("displayFactor", prov.displayFactor);
+		jobj->scInt("layerOffsetX", prov.layerOffset.x);
+		jobj->scInt("layerOffsetY", prov.layerOffset.y);
+	}
 
 	virtual int displayWidth() const = 0;
 	virtual int displayHeight() const = 0;
@@ -191,10 +254,6 @@ public:
 	virtual BackImage getImage(const int max) const = 0;
 	virtual const BackImage* getCachedImage() const = 0;
 
-	Type getType()
-	{
-		return Type::Raster;
-	}
 
 	virtual void setSubImage(int imgIndex) = 0;
 	virtual int getSubImage() = 0;
@@ -206,9 +265,14 @@ public:
 export class IVectorLayer : public ILayer
 {
 public:
-	Type getType()
+	Type getType() const
 	{
 		return Type::Vector;
+	}
+
+	virtual void release()
+	{
+
 	}
 };
 
@@ -274,6 +338,13 @@ public:
 		auto tptr = t.get();
 		layers.push_back(std::move(t));
 		return tptr;
+	}
+
+
+	void addMove(T* value)
+	{
+		std::unique_ptr<T> ptr(value);
+		layers.push_back(std::move(ptr));
 	}
 
 	bool set(uint id, T* val)

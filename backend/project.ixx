@@ -61,6 +61,29 @@ export struct BarcodeProperies
 };
 
 
+struct LCoreItems
+{
+	ILayer* core;
+	BackString name;
+
+	LCoreItems(ILayer* core) : core(core)
+	{ }
+
+	LCoreItems(ILayer* core, const BackString name) :
+		core(core), name(name)
+	{ }
+
+	const BackString& getName(const BackString& def) const
+	{
+		if (name.length() == 0)
+			return def;
+		else
+			return name;
+	}
+};
+
+export using RetLayers = std::vector<LCoreItems>;
+
 enum MarkersShowState { found = 0, ather, barcodeNotPassed, circleNotPassed, boundyNotPassed, holmNotPassed, allExceptRed, all, none };
 
 export enum class BackPath
@@ -78,7 +101,8 @@ export enum class BackPath
 	binbar,
 	classifier,
 	classfiles,
-	metadata
+	metadata,
+	layers
 	//classImages,
 };
 
@@ -107,7 +131,7 @@ export class Project
 		//{jsn_displayFacto, u_displayFactor},
 		//{jsn_imgMaxVal, u_imgMaxVal},
 		//{jsn_imgMinVal, u_imgMinVal},
-		//{"metacounter", metaprov.counter},
+		{"metacounter", metaCounter},
 		//{jsn_imgPath, u_imgPath},
 		//{jsn_geojsonPath, this->u_geojsonPath},
 		//{jsn_classfiles, this->u_classCache},
@@ -117,34 +141,45 @@ export class Project
 		//{jsn_tileOffset, this->tileOffset}
 	};
 
-	MetadataProvider metaprov;
+	int metaCounter = 0;
+	std::unique_ptr<MetadataProvider> metaprov;
 
 	void extraRead(const BackJson& json)
 	{
-		JsonArray arr = json["layers"];
-		//if (arr.size() > 0)
-		//{
-		//	JsonObject obj = json[0];
-		//	main.readJson(obj, getPath(BackPath::classfiles));
-		//}
+		const JsonArray& arr = json["layers"];
+		// jsonToFile(arr, getPath(BackJson::layers));
+		JsonArrayIOStateReader reader(arr);
+
+		for (size_t i = 0; i < arr.size(); i++)
+		{
+			JsonObjectIOState* obj = reader.objectBegin(i);
+			int layId;
+			obj->scInt("layId", layId);
+			ILayer* lay = CoreLayerFactory::CreateCoreLayer(layId);
+
+			MetadataProvider sub = *metaprov;// Do not reffer!
+			lay->saveLoadState(obj, sub);
+			layers.addMove(lay);
+		}
 	}
 
 	void extraWrite(BackJson& json)
 	{
 		int counter = 0;
 		JsonObject arr;
-		//if (main.mat.length() > 3)
-		//{
-		//	JsonObject obj;
-		//	main.writeJson(obj, getPath(BackPath::classfiles), counter);
-		//	arr.append(obj);
-		//}
+		JsonArrayIOStateWriter writer(arr);
 
-		//for (lay : layers)
-		//{
+		for (auto& lay : layers)
+		{
+			JsonObjectIOState* obj = writer.append();
+			MetadataProvider sub = *metaprov;// Do not reffer!
+			int layId = lay->getFactoryId();
+			obj->scInt("layId", layId);
+			lay->saveLoadState(obj, sub);
+		}
 
-		//}
 		json["layers"] = arr;
+		// jsonToFile(arr, getPath(BackJson::layers));
 	}
 public:
 	//	Q_PROPERTY(SeachingSettings* searchSetts READ getSerchSetts)
@@ -156,7 +191,7 @@ public:
 		projectPath = "";
 		// "D:\\Programs\\Barcode\\_bar\\_p2\\";
 		settings.extraRead = [this](const BackJson& json) {extraRead(json);};
-		settings.extraWrite = [this](BackJson& json) {extraWrite(json);};;
+		settings.extraWrite = [this](BackJson& json) {extraWrite(json);};
 		// mkDirIfNotExists(u_classCache);
 	}
 
@@ -238,7 +273,6 @@ public:
 	// 	return layer;
 	// }
 
-
 	IRasterLayer* getInRaster(int inId, int subImgIndex = -1)
 	{
 		ILayer* layer = layers.at(inId);
@@ -253,6 +287,12 @@ public:
 		return getInRaster(iol.in, iol.subImgIndex);
 	}
 
+	template<class T>
+	T* getInTRaster(const InOutLayer& iol)
+	{
+		return dynamic_cast<T*>(getInRaster(iol.in, iol.subImgIndex));
+	}
+
 	//RasterLayer main;
 
 	void setReadyLaod(int curImgInd)
@@ -261,7 +301,7 @@ public:
 		//setSubImage(curImgInd);
 
 		classCategs = BarCategories::loadCategories(getPath(BackPath::classifier));
-		classifier.loadClasses(classCategs, proj->getMetaPath(classifier.name()));
+		classifier.loadClasses(classCategs, getMetaPath(classifier.name()));
 		//classifier.categs
 	}
 
@@ -274,6 +314,9 @@ public:
 		std::filesystem::path dir = path;
 		dir = std::filesystem::absolute(dir).parent_path();
 		projectPath = dir;
+
+		settupMeta();
+
 		/*		projectPath = (char*)dir.c_str();
 				projectPath.string
 				char last = projectPath[projectPath.filename().string().length() - 1];
@@ -348,14 +391,27 @@ public:
 			//	return projectPath / "classImages";
 		case BackPath::metadata:
 			return projectPath / "Metadata";
+		case BackPath::layers:
+			return getPath(BackPath::metadata) / "layers.json";
 		default:
 			throw;
 		}
 	}
 
+	MetadataProvider& getMeta()
+	{
+		return *metaprov.get();
+	}
+
 	BackPathStr getMetaPath(const BackString& item) const
 	{
 		return getPath(BackPath::metadata) / item;
+	}
+
+	void settupMeta()
+	{
+		mkDirIfNotExists(getPath(BackPath::metadata));
+		metaprov.reset(new MetadataProvider(getPath(BackPath::metadata), metaCounter));
 	}
 
 	RasterFromDiskLayer* loadImage(const BackPathStr& path, int step)
@@ -365,7 +421,7 @@ public:
 			//	this->u_imgMaxVal = reader->max;
 			//	this->u_displayFactor = step;
 		RasterFromDiskLayer* layer = addLayerData<RasterFromDiskLayer>();
-		layer->open(path, metaprov);
+		layer->open(path, getMeta());
 
 		saveProject();
 
@@ -389,14 +445,12 @@ public:
 		if (!prjCreate)
 			return false;
 
-		mkDirIfNotExists(getPath(BackPath::metadata));
-
 		JsonObject gameObject;
 		write(gameObject);
 		jsonToFile(gameObject, getPath(BackPath::project));
 
 		mkDirIfNotExists(getPath(BackPath::classfiles));
-		mkDirIfNotExists(getPath(BackPath::tiles));
+		// mkDirIfNotExists(getPath(BackPath::tiles));
 
 		classCategs.saveCategories(getPath(BackPath::classifier));
 		return true;
@@ -423,9 +477,10 @@ public:
 		return Barscalar(col.r, col.g, col.b);
 	}
 
-	RasterLineLayer* createCacheBarcode(InOutLayer& iol, const BarcodeProperies& propertices, FilterInfo* info = nullptr)
+	RetLayers createCacheBarcode(InOutLayer& iol, const BarcodeProperies& propertices, FilterInfo* info = nullptr)
 	{
-		if (block) return nullptr;
+		RetLayers ret;
+		if (block) return ret;
 
 		// Settup
 		bc::BarConstructor constr;
@@ -438,6 +493,7 @@ public:
 
 		// -------
 		IRasterLayer* inLayer = getInRaster(iol);
+
 		uint rwid = inLayer->realWidth();
 		uint rhei = inLayer->realHeight();
 
@@ -453,16 +509,16 @@ public:
 		TileIterator stW(0, tileSize, tileOffset, rwid);
 		TileIterator stH(0, tileSize, tileOffset, rhei);
 
-		RasterLineLayer* layer = nullptr;
-		if (!iol.skipOutput())
-		{
-			layer = addOrUpdateOut<RasterLineLayer>(iol);
-			layer->init(getInRaster(iol));
-		}
+		RasterLineLayer* layer = addOrUpdateOut<RasterLineLayer>(iol);
+		layer->init(getInRaster(iol), getMeta());
+		if (layer->cacheId == -1)
+			layer->cacheId = metaprov->getUniqueId();
+
+		ret.push_back(layer);
 
 		// Cacher
 		ItemHolderCache cacher;
-		cacher.openWrite(getPath(BackPath::binbar));
+		cacher.openWrite(layer->getCacheFilePath(getMeta()));
 
 		IdGrater parentne;
 		uint tileIndex = 0;
@@ -515,15 +571,18 @@ public:
 		u_algorithm = propertices.alg;
 		saveProject();
 
-		return layer;
+		return ret;
 	}
 
-	RasterLineLayer* processCachedBarcode(InOutLayer& iol, FilterInfo* filter)
+	RetLayers processCachedBarcode(InOutLayer& iol, FilterInfo* filter)
 	{
 		//if (u_displayFactor < 1.0)
 		//	throw std::exception();
 
-		IRasterLayer* inLayer = getInRaster(iol);
+		RasterLineLayer* inLayer = getInTRaster<RasterLineLayer>(iol);
+		if (!inLayer)
+			return RetLayers();
+
 		int tileSize = inLayer->prov.tileSize;
 		int tileOffset = inLayer->tileOffset;
 
@@ -534,12 +593,17 @@ public:
 		}
 
 		// -------
-		RasterLineLayer* outLayer = addOrUpdateOut<RasterLineLayer>(iol);
-		outLayer->init(inLayer);
+		RetLayers ret;
+		// RasterLineLayer* outLayer = addOrUpdateOut<RasterLineLayer>(iol);
+		// if (outLayer->cacheId == -1)
+		// 	outLayer->cacheId = metaprov->getUniqueId();
+		// ret.push_back(outLayer);
+		RasterLineLayer* outLayer = inLayer;
+		outLayer->init(inLayer, getMeta());
 
 		// Cacher
 		ItemHolderCache cacher;
-		cacher.openRead(getPath(BackPath::binbar));
+		cacher.openRead(inLayer->getCacheFilePath(getMeta()));
 
 		int tileIndex = 0;
 		while (cacher.canRead())
@@ -563,7 +627,7 @@ public:
 			}
 		}
 
-		return outLayer;
+		return ret;
 	}
 
 	//void getOffsertByTileIndex(uint tileIndex, uint& offX, uint& offY)
@@ -636,14 +700,17 @@ public:
 		classifier.removeData(classId, localId);
 	}
 
-	RasterLayer* exeFilter(InOutLayer& iol, int algNum)
+	RetLayers exeFilter(InOutLayer& iol, int algNum)
 	{
 		//if (u_displayFactor < 1.0)
 		//	throw std::exception();
+		RetLayers ret;
+		RasterLayer* layer = addOrUpdateOut<RasterLayer>(iol);
+		ret.push_back(layer);
 
 		IRasterLayer* input = getInRaster(iol);
-		RasterLayer* layer = addOrUpdateOut<RasterLayer>(iol);
 		layer->init(input);
+
 
 		const BackImage src = *(input->getCachedImage());
 
@@ -722,7 +789,7 @@ public:
 			}
 		}
 
-		return layer;
+		return ret;
 	}
 
 private:
