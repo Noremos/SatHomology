@@ -257,7 +257,7 @@ public:
 	}
 	int toDisplayY(int y)
 	{
-		return static_cast<float>(y) * (displaySize.y / height)  + localDisplayPos.y;
+		return static_cast<float>(y) * (displaySize.y / height) + localDisplayPos.y;
 	}
 
 	void drawImage(const char* name, ImVec2 pos, ImVec2 size)
@@ -454,17 +454,17 @@ public:
 		ImColor bigColor(128, 0, 255);
 		ImColor midColor(220, 200, 0);
 
-		ApplicationVec2 offset = win->Pos + pos +  par->localDisplayPos;
+		ApplicationVec2 offset = win->Pos + pos;
 		ApplicationVec2 csreenStar = offset;
 		ApplicationVec2 csreenEnd = offset + par->displaySize;
-		float pixelSize = MAX(1, par->width / par->displaySize.x);
+		float pixelSize = MAX(1, par->displaySize.x / par->width);
 
 		const bc::barvector& pointsi = *points;
 		for (const auto& p : pointsi)
 		{
 			// TL is a Begin()
 			ItemVec2 pi(par->toDisplayX(p.getX()), par->toDisplayY(p.getY()));
-			pi += win->Pos; // TL coords from app
+			pi += offset; // TL coords from app
 
 			if (pi.x < csreenStar.x || pi.y < csreenStar.y)
 				continue;
@@ -473,8 +473,8 @@ public:
 
 			// Center pixel for big images
 			pi += ImVec2(pixelSize / 2, pixelSize / 2);
-			list->AddCircleFilled(pi, 3 * pixelSize, bigColor);
-			list->AddCircleFilled(pi, 2 * pixelSize, midColor);
+			list->AddCircleFilled(pi, 1.5 * pixelSize, bigColor);
+			list->AddCircleFilled(pi, 0.8 * pixelSize, midColor);
 		}
 
 		ImGui::EndChild();

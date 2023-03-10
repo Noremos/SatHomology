@@ -280,6 +280,7 @@ public:
 	{
 		int wid = layer->displayWidth();
 		int hei = layer->displayHeight();
+
 		clear();
 		mat.reinit(wid, hei, 4);
 		clickResponser.resize(mat.length());
@@ -365,7 +366,7 @@ public:
 
 		std::unordered_set<uint> vals;
 		std::shared_ptr<SimpleLine> sl;
-		auto curIdKey = (size_t)curLine;
+		auto curIdKey = curLine->getId();
 		auto p = parentne.find(curIdKey);
 		if (p != parentne.end())
 		{

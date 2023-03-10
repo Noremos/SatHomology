@@ -444,8 +444,11 @@ public:
 		int tileSize = inLayer->prov.tileSize;
 		int tileOffset = inLayer->tileOffset;
 
-		const uint fullTile = tileSize + tileOffset;
-		info->imgLen = fullTile * fullTile;
+		if (info)
+		{
+			const uint fullTile = tileSize + tileOffset;
+			info->imgLen = fullTile * fullTile;
+		}
 
 		TileIterator stW(0, tileSize, tileOffset, rwid);
 		TileIterator stH(0, tileSize, tileOffset, rhei);
