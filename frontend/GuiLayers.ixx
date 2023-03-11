@@ -207,7 +207,7 @@ public:
 
 		ImGui::Separator();
 		auto id = ImGui::FindWindowByName("ProcSetts")->ID;
-		tilePrview.draw(id, getTileSize(), getOffsetSize(), getImageSize());
+		tilePrview.draw(id, newTileSize * 10, newOffsetSize * 10, getImageSize());
 	}
 
 	void applyPropertyChanges()

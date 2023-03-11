@@ -44,6 +44,7 @@ export class BarChart
 			//const float proc = 300.f / (metrStart + metrLen);
 			int st = metrStart / proc;// 300.f;
 			int ed = (metrStart + metrLen) / proc;// 300.f;
+			ed = MIN(ed, len);
 
 			for (int i = st; i <= ed; i++)
 			{
@@ -73,7 +74,7 @@ export class BarChart
 			{
 				if (stColr != oppas[i])
 				{
-					ImColor col(0.0f, 0.1f, 1.0f, stColr);
+					ImColor col(1.0f, 1.0f, 1.0f, stColr);
 
 					ImVec2 spos = pos;
 					spos.x += stSegment;
@@ -129,7 +130,7 @@ public:
 		const int lenC = counter++;
 		draws.push_back({ "len", count, 256 });
 		const int matrsizeC = counter++;
-		draws.push_back({ "mart size", count, 10000});
+		draws.push_back({ "mart size", count, 1000});
 
 
 		ClassDataIO::TrainCallback cla = [this, endC, matrsizeC, lenC](int, vbuffer& buf, BackImage, size_t dbLocalId)
