@@ -252,7 +252,7 @@ public:
 	BackPathStr getCacheFilePath(MetadataProvider& metaFolder)
 	{
 		MetadataProvider m = metaFolder.getSubMeta(getMetaLayerName());
-		return "cached.bff";
+		return m.getSubFolder("cached.bff");
 	}
 
 	virtual void release(MetadataProvider& metaFolder)
