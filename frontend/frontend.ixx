@@ -176,7 +176,9 @@ public:
 		}
 		else
 		{
-			proj->setProjectPath(path);
+			if (state == GuiState::Empty)
+				proj->setProjectPath(path);
+
 			layer = proj->loadImage(path, 1);
 			newState = GuiState::ImageLoaded;
 		}
