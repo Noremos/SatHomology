@@ -675,6 +675,7 @@ public:
 	{
 		int id = classCategs.addValue(name);
 		classifier.addClass(id);
+		saveProject();
 		return id;
 	}
 
