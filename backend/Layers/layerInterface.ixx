@@ -225,7 +225,7 @@ export class IRasterLayer : public ILayer
 {
 public:
 	LayerProvider prov;
-	int tileOffset;
+	int tileOffset = DEF_TILE_OFFSET;
 
 	Type getType() const
 	{
