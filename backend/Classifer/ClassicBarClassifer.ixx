@@ -24,10 +24,21 @@ export class BarlineClass : public IClassItem
 {
 public:
 	// int id;
-	bc::barline* line;
+	bc::barline* line = nullptr;
+	int depth = 0;
+	int matrSize = 0;
+	bc::barlinevector childer;
+
 	// IClassItem* parent;
 	BarlineClass(bc::barline* line = nullptr) : line(line)
-	{ }
+	{
+		if (line)
+		{
+			depth = line->getDeath();
+			matrSize = line->matr.size();
+			update();
+		}
+	}
 
 	virtual size_t getId() const
 	{
@@ -41,7 +52,7 @@ public:
 
 	virtual int getDeath() const override
 	{
-		return line->getDeath();
+		return depth;
 	}
 
 	virtual Barscalar start() const override
@@ -61,7 +72,12 @@ public:
 
 	virtual const size_t getMatrixSize() const
 	{
-		return line->matr.size();
+		return matrSize;
+	}
+
+	void update()
+	{
+		line->getChilredAsList(childer, true, true, false);
 	}
 
 	virtual bool passFilter(const FilterInfo& filter) const
@@ -74,8 +90,30 @@ public:
 
 	virtual void saveLoadState(StateBinFile::BinState* state) override
 	{
+		if (state->isReading())
+			line = new bc::barline();
+
+		state->beginItem();
+		state->pType(line->start.type); // Only set
+
 		line->start = state->pBarscalar(line->start);
 		line->m_end = state->pBarscalar(line->end());
+		matrSize = state->pInt(matrSize);
+		depth = state->pInt(depth);
+
+		int csize = childer.size();
+		csize = state->pInt(csize);
+		state->beginArray(childer, csize);
+		for (size_t i = 0; i < csize; i++)
+		{
+			if (state->isReading())
+				childer[i] = new bc::barline();
+
+			auto cline = new bc::barline();
+
+			cline->start = state->pBarscalar(cline->start);
+			cline->m_end = state->pBarscalar(cline->end());
+		}
 	}
 };
 
@@ -131,8 +169,6 @@ public:
 			item.reset(new bc::Baritem());
 
 		bc::barlinevector& vec = item->barlines;
-
-		state->beginItem();
 
 		// index = state->pInt(index); // Index
 		item->setType((BarType)state->pType(item->getType())); // BarType
@@ -247,14 +283,35 @@ public:
 		return "CLASSIC";
 	}
 
-	void loadClasses(const BarCategories& categs, const BackPathStr& path)
+	void loadData(const BarCategories& categs, const BackPathStr& path)
 	{
+		ClassDataIO io;
+		io.open(dbPath);
+
 		dbPath = path;
 		classes.clear();
 		for (auto categ : categs.categs)
 		{
 			addClass(categ.id);
+			loadClassData(io, categ.id);
 		}
+	}
+
+	void loadClassData(ClassDataIO& io, int classId)
+	{
+		ClassDataIO::TrainCallback cla = [this](int clId, vbuffer& buf, BackImage, size_t dbLocalId)
+		{
+			std::ostringstream oss;
+			oss.write(reinterpret_cast<const char*>(buf.data()), sizeof(buf.size()));
+
+			std::istringstream iss(oss.str());
+
+			BarlineClass raw;
+			raw.read(iss);
+			addDataInner(clId, &raw, dbLocalId);
+		};
+
+		io.loadAll(cla, classId, ClassDataIO::LF_ICON);
 	}
 
 	ClassData& getClass(int id)
@@ -292,10 +349,7 @@ public:
 	void addDataInner(int classInd, BarlineClass* raw, size_t dataId, bool extractLine = false)
 	{
 		bc::Baritem* item = new bc::Baritem();
-		if (extractLine)
-			raw->line->extractChilred(item->barlines, true, false);
-		else
-			raw->line->getChilredAsList(item->barlines, true, true, false);
+		item->barlines = std::move(raw->childer);
 
 		item->relen();
 		item->setType();

@@ -8,6 +8,7 @@ import IOCore;
 import Platform;
 import GuiWidgets;
 import TrainIO;
+import StatChart;
 
 Project* proj = Project::getProject();
 
@@ -39,6 +40,9 @@ export struct GuiClassifer
 
 	SelectableKeyValues<GuiClass> classesLB;
 	std::vector<ClassPreview> classImages;
+
+	BarChart graph;
+
 	bool show = false;
 	CachedObjectId selceted;
 	InOutLayer* ioLayer;
@@ -103,7 +107,7 @@ export struct GuiClassifer
 	void loadClassImages(ClassDataIO& io, int classId)
 	{
 		ClassPreview prev;
-		ClassDataIO::TrainCallback cla = [&prev](int, vbuffer, BackImage preview, size_t dbLocalId)
+		ClassDataIO::TrainCallback cla = [&prev](int, vbuffer&, BackImage preview, size_t dbLocalId)
 		{
 			prev.imgs.push_back(TrainPiecePreview(preview, dbLocalId));
 		};
@@ -114,6 +118,8 @@ export struct GuiClassifer
 
 	void drawClassifierWindow()
 	{
+		graph.draw();
+
 		if (!ImGui::Begin("Classifier", &show))
 		{
 			ImGui::End();
@@ -180,6 +186,7 @@ export struct GuiClassifer
 			if (ImGui::Button("Load iamge"))
 			{
 			}
+			ImGui::SameLine();
 
 			//ImGui::SetNextWindowPos(pos);
 			//ImGui::SetNextWindowSize(size);
@@ -209,6 +216,11 @@ export struct GuiClassifer
 
 		if (hasClasses)
 		{
+			if (ImGui::Button("Show graph"))
+			{
+				graph.init(proj->getMetaPath(proj->classifier.name()), classesLB.currentValue().classId);
+			}
+
 			ImGui::BeginDisabled(!selceted.hasData());
 			ImGui::SameLine();
 			if (ImGui::Button("Add selected"))

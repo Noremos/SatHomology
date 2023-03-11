@@ -98,7 +98,6 @@ export enum class BackPath
 	root,
 	markers,
 	geojson,
-	binbar,
 	classifier,
 	classfiles,
 	metadata,
@@ -287,12 +286,18 @@ public:
 		return getInRaster(iol.in, iol.subImgIndex);
 	}
 
+
+	template<class T>
+	T* getInTRaster(const int in)
+	{
+		return dynamic_cast<T*>(getInRaster(in, 0));
+	}
+
 	template<class T>
 	T* getInTRaster(const InOutLayer& iol)
 	{
 		return dynamic_cast<T*>(getInRaster(iol.in, iol.subImgIndex));
 	}
-
 	//RasterLayer main;
 
 	void setReadyLaod(int curImgInd)
@@ -301,7 +306,7 @@ public:
 		//setSubImage(curImgInd);
 
 		classCategs = BarCategories::loadCategories(getPath(BackPath::classifier));
-		classifier.loadClasses(classCategs, getMetaPath(classifier.name()));
+		classifier.loadData(classCategs, getMetaPath(classifier.name()));
 		//classifier.categs
 	}
 
@@ -381,8 +386,6 @@ public:
 		case BackPath::geojson:
 			//return u_geojsonPath;
 			return projectPath / "geojson.json";
-		case BackPath::binbar:
-			return projectPath / "barcode.bin";
 		case BackPath::classifier:
 			return projectPath / "class.json";
 		case BackPath::classfiles:
@@ -678,8 +681,12 @@ public:
 
 	size_t addTrainData(int layerId, int classId, CachedObjectId srcItemId, BackImage* destIcon)
 	{
+		auto inLayer = getInTRaster<RasterLineLayer>(layerId);
+		assert(inLayer);
+
 		ItemHolderCache cached;
-		cached.openRead(getPath(BackPath::binbar));
+		cached.openRead(inLayer->getCacheFilePath(getMeta()));
+
 		BaritemHolder item;
 		cached.loadSpecific(srcItemId.tileId, &item);
 
@@ -687,7 +694,7 @@ public:
 		if (destIcon != nullptr)
 		{
 			auto rect = bc::getBarRect(line->getMatrix());
-			*destIcon = getInRaster(layerId)->getRect(rect.x, rect.y, rect.width, rect.height);
+			*destIcon = inLayer->getRect(rect.x, rect.y, rect.width, rect.height);
 		}
 		//rb->barlines[srcItemId.vecId] = nullptr;
 

@@ -201,6 +201,7 @@
     <ClCompile Include="Bind\Json.ixx" />
     <ClCompile Include="Bind\Side.ixx" />
     <ClCompile Include="frontend\Application.cpp" />
+    <ClCompile Include="frontend\BarChart.ixx" />
     <ClCompile Include="frontend\frontend.ixx" />
     <ClCompile Include="frontend\GuiClassifier.ixx" />
     <ClCompile Include="frontend\GuiCommon.cpp" />

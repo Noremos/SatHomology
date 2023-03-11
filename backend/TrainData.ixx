@@ -219,7 +219,7 @@ public:
 		}
 	}
 
-	using TrainCallback = std::function<void(int classId, vbuffer bbfFile, BackImage preview, size_t localId)>;
+	using TrainCallback = std::function<void(int classId, vbuffer& bbfFile, BackImage preview, size_t localId)>;
 
 	enum LoadField : unsigned char
 	{
@@ -228,7 +228,7 @@ public:
 		LF_ALL = 255
 	};
 
-	void loadAll(TrainCallback callback, int classId = -1, LoadField filter = LF_ALL)
+	void loadAll(TrainCallback& callback, int classId = -1, LoadField filter = LF_ALL)
 	{
 		sqlite3_stmt* stmt = prepareSelect(filter, classId);
 
@@ -240,10 +240,28 @@ public:
 			int classId;
 
 			loadEnd(stmt, filter, classId, bff, img, locId);
-			callback(classId, std::move(bff), std::move(img), locId);
+			callback(classId, bff, std::move(img), locId);
 		}
 
 		sqlite3_finalize(stmt);
+	}
+
+
+	size_t getClassCount(int classId)
+	{
+		BackString sql = "SELECT COUNT(*) FROM CLASS_DATA WHERE class_id = ?";
+
+		sqlite3_stmt* stmt;
+		auto rc = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, nullptr);
+
+		if (rc != SQLITE_OK)
+		{
+			std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+			return -1;
+		}
+
+		if (classId != -1)
+			sqlite3_bind_int64(stmt, 1, classId); // bind the rowid value to the first placeholder
 	}
 
 private:
@@ -296,7 +314,7 @@ private:
 
 		if (rc != SQLITE_OK)
 		{
-			std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+			//std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
 			return nullptr;
 		}
 

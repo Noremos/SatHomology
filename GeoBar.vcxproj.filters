@@ -139,9 +139,6 @@
     <ClCompile Include="frontend\GuiWidgets.ixx">
       <Filter>GUI\WindowWidgets</Filter>
     </ClCompile>
-    <ClCompile Include="backend\BackTypes.ixx">
-      <Filter>Backend</Filter>
-    </ClCompile>
     <ClCompile Include="backend\TrainData.ixx">
       <Filter>Backend</Filter>
     </ClCompile>
@@ -171,6 +168,12 @@
     </ClCompile>
     <ClCompile Include="backend\MetadataIO.ixx">
       <Filter>Backend</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\BackTypes.ixx">
+      <Filter>Backend</Filter>
+    </ClCompile>
+    <ClCompile Include="frontend\BarChart.ixx">
+      <Filter>GUI\WindowWidgets</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

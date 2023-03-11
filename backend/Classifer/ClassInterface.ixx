@@ -153,6 +153,7 @@ public:
 		assert(state->isReading());
 		dynamic_cast<StateBinFile::BinStateReader *>(state.get())->moveIndex(index);
 
+		state->beginItem();
 		index = state->pInt(0);
 		t->read(state.get());
 		return t;
@@ -161,6 +162,8 @@ public:
 	void save(IClassItemHolder *item, int index)
 	{
 		assert(!state->isReading());
+
+		state->beginItem();
 		index = state->pInt(index);
 		item->write(state.get());
 	}
@@ -185,14 +188,14 @@ public:
 
 	virtual const BackString name() const = 0;
 
-	virtual void loadClasses(const BarCategories &categs, const BackPathStr &path) = 0;
+	virtual void loadData(const BarCategories &categs, const BackPathStr &path) = 0;
 	virtual void addClass(int id) = 0;
 	virtual void removeClass(int id) = 0;
 
 	size_t addData(int classInd, IClassItem *raw, BackImage *icon, bool extract = false)
 	{
 		std::ostringstream st;
-		// raw->write(st);
+		raw->write(st);
 
 		ClassDataIO io;
 		io.openWrite(dbPath);
