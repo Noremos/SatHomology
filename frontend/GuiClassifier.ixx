@@ -218,7 +218,7 @@ export struct GuiClassifer
 		{
 			if (ImGui::Button("Show graph"))
 			{
-				graph.init(proj->getMetaPath(proj->classifier.name()), classesLB.currentValue().classId);
+				graph.init(proj->classifier.dbPath, classesLB.currentValue().classId);
 			}
 
 			ImGui::BeginDisabled(!selceted.hasData());

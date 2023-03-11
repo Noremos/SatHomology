@@ -210,11 +210,6 @@ public:
 		return proj->u_algorithm;
 	}
 
-	BackDirStr getClassImagesPath()
-	{
-		return proj->getPath(BackPath::classfiles);
-	}
-
 	void showResultPics(bool show);
 
 	int addClassType(const BackString& name);

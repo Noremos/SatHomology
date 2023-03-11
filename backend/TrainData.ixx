@@ -225,6 +225,7 @@ public:
 	{
 		LF_BINFILE = 1,
 		LF_ICON = 2,
+		// LF_ROWID = 4,
 		LF_ALL = 255
 	};
 
@@ -237,7 +238,7 @@ public:
 			vbuffer bff;
 			BackImage img(1,1,1);
 			size_t locId;
-			int classId;
+			// int classIdo;
 
 			loadEnd(stmt, filter, classId, bff, img, locId);
 			callback(classId, bff, std::move(img), locId);
@@ -257,11 +258,32 @@ public:
 		if (rc != SQLITE_OK)
 		{
 			std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
-			return -1;
+			return 0;
 		}
 
 		if (classId != -1)
 			sqlite3_bind_int64(stmt, 1, classId); // bind the rowid value to the first placeholder
+
+		rc = sqlite3_step(stmt);
+		if (rc != SQLITE_ROW)
+		{
+			std::cerr << "Failed to execute statement: " << sqlite3_errmsg(db) << std::endl;
+			return 0;
+		}
+
+		size_t size = sqlite3_column_int64(stmt, 0);
+
+		rc = sqlite3_step(stmt);
+		if (rc != SQLITE_DONE)
+		{
+			std::cerr << "Failed to execute statement: " << sqlite3_errmsg(db) << std::endl;
+			return 0;
+		}
+
+		// Finalize statement
+		sqlite3_finalize(stmt);
+
+		return size;
 	}
 
 private:
@@ -269,31 +291,41 @@ private:
 	{
 		BackString statement = "SELECT ";
 
-		if (filter == LF_ALL)
-		{
-			statement += " * ";
-		}
-		else
-		{
-			bool added = true;
-			statement += " class_id ";
-			if (filter & LF_BINFILE)
-			{
-				if (added)
-					statement += ", ";
+		// if (filter == LF_ALL)
+		// {
+		// 	statement += " rowid, * ";
+		// }
+		// else
+		// {
+			// if (filter & LF_ROWID)
+			// {
+			// 	if (added)
+			// 		statement += ", ";
 
-				statement += "bbf";
-				added = true;
-			}
-			if (filter & LF_ICON)
-			{
-				if (added)
-					statement += ", ";
+			// 	statement += "rowid ";
+			// 	added = true;
+			// }
 
-				statement += "icon";
-				added = true;
-			}
+		bool added = true;
+		statement += "rowid, class_id ";
+
+		if (filter & LF_BINFILE)
+		{
+			if (added)
+				statement += ", ";
+
+			statement += "bbf";
+			added = true;
 		}
+		if (filter & LF_ICON)
+		{
+			if (added)
+				statement += ", ";
+
+			statement += "icon";
+			added = true;
+		}
+
 		statement += " FROM CLASS_DATA";
 		return statement;
 	}
@@ -353,17 +385,17 @@ private:
 
 	void loadEnd(sqlite3_stmt* stmt, LoadField filter, int& classId, vbuffer& bbfFile, BackImage& preview, size_t& locId)
 	{
-		classId = sqlite3_column_int(stmt, 0);
-		int counter;
-		locId = sqlite3_column_int64(stmt, 0); // rowid
-		int counterId = 1;
+		int counterId = 0;
+
+		locId = sqlite3_column_int64(stmt, counterId++); // rowid
+		classId = sqlite3_column_int(stmt, counterId++);
 
 		bbfFile.release();
 		preview = BackImage(1,1,1);
 		if (filter & LF_BINFILE)
 		{
-			const void* file = sqlite3_column_blob(stmt, counterId );
-			int binfileSize = sqlite3_column_bytes(stmt, counterId );
+			const void* file = sqlite3_column_blob(stmt, counterId);
+			int binfileSize = sqlite3_column_bytes(stmt, counterId);
 			bbfFile.copyDataFrom(reinterpret_cast<const uchar*>(file), binfileSize);
 
 			++counterId;
@@ -385,7 +417,7 @@ public:
 	{
 		sqlite3_stmt* stmt = NULL;
 
-		BackString statement = "INSERT INTO CLASS_DATA VALUES (?, ?, ?);";
+		BackString statement = "INSERT INTO CLASS_DATA(class_id, bbf, icon) VALUES (?, ?, ?);";
 
 		auto rc = sqlite3_prepare_v2(db, statement.c_str(), statement.length(), &stmt, NULL);
 
@@ -400,16 +432,17 @@ public:
 			std::cerr << "Failed to prepare statement: " << sqlite3_errstr(rc) << sqlite3_errmsg(db) << std::endl;
 		}
 
-		rc = sqlite3_bind_blob(stmt, 2, bbfFile.data(), bbfFile.size(), SQLITE_TRANSIENT);
+		rc = sqlite3_bind_blob(stmt, 2, bbfFile.data(), bbfFile.size(), SQLITE_STATIC);
 		if (rc != SQLITE_OK)
 		{
 			std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
 		}
 
+		vbuffer imgPrev;
 		if (preview)
 		{
-			vbuffer imgPrev = imwriteToMemory(*preview);
-			rc = sqlite3_bind_blob(stmt, 3, imgPrev.data(), imgPrev.size(), SQLITE_TRANSIENT);
+			imgPrev = imwriteToMemory(*preview);
+			rc = sqlite3_bind_blob(stmt, 3, imgPrev.data(), imgPrev.size(), SQLITE_STATIC);
 		}
 		else
 			rc = sqlite3_bind_null(stmt, 3);
@@ -422,10 +455,13 @@ public:
 		rc = sqlite3_step(stmt);
 		if (rc != SQLITE_DONE)
 		{
-			std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+			std::cerr << "Failed to execute statement: " << sqlite3_errmsg(db) << std::endl;
 		}
 
 		size_t locId = sqlite3_last_insert_rowid(db);
+
+		// Finalize statement
+		sqlite3_finalize(stmt);
 
 		return locId;
 	}
@@ -460,8 +496,11 @@ public:
 		rc = sqlite3_step(stmt);
 		if (rc != SQLITE_OK)
 		{
-			std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+			std::cerr << "Failed to execute statement: " << sqlite3_errmsg(db) << std::endl;
 		}
+
+		// Finalize statement
+		sqlite3_finalize(stmt);
 	}
 };
 

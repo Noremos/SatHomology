@@ -306,7 +306,9 @@ public:
 		//setSubImage(curImgInd);
 
 		classCategs = BarCategories::loadCategories(getPath(BackPath::classifier));
-		classifier.loadData(classCategs, getMetaPath(classifier.name()));
+
+		classifier.open(getMetaPath());
+		classifier.loadData(classCategs);
 		//classifier.categs
 	}
 
@@ -356,29 +358,29 @@ private:
 	BackDirStr projectPath;
 
 public:
-	bool isTileCached(int ind)
-	{
-		BackPathStr path = getTilePath(ind);
-		return pathExists(path);
-	}
+	// bool isTileCached(int ind)
+	// {
+	// 	BackPathStr path = getTilePath(ind);
+	// 	return pathExists(path);
+	// }
 
-	BackPathStr getTilePath(int ind)
-	{
-		return getPath(BackPath::tiles) / (intToStr(ind) + ".png");
-	}
+	// BackPathStr getTilePath(int ind)
+	// {
+	// 	return getPath(BackPath::tiles) / (intToStr(ind) + ".png");
+	// }
 
 	BackPathStr getPath(BackPath pathI) const
 	{
 		switch (pathI)
 		{
-		case BackPath::tiles:
-			return projectPath / "tiles/";
+		// case BackPath::tiles:
+		// 	return projectPath / "tiles/";
 		case BackPath::project:
 			return projectPath / "proj.qwr";
 		case BackPath::barlist:
-			return projectPath / "bds.json";
-		case BackPath::roilist:
-			return projectPath / "bds.lst";
+		// 	return projectPath / "bds.json";
+		// case BackPath::roilist:
+		// 	return projectPath / "bds.lst";
 		case BackPath::root:
 			return projectPath;
 		case BackPath::markers:
@@ -387,9 +389,9 @@ public:
 			//return u_geojsonPath;
 			return projectPath / "geojson.json";
 		case BackPath::classifier:
-			return projectPath / "class.json";
-		case BackPath::classfiles:
-			return u_classCache / "ClassFiles";
+			return getPath(BackPath::metadata) / "class.json";
+		// case BackPath::classfiles:
+		// 	return u_classCache / "ClassFiles";
 			//case BackPath::classImages:
 			//	return projectPath / "classImages";
 		case BackPath::metadata:
@@ -411,10 +413,16 @@ public:
 		return getPath(BackPath::metadata) / item;
 	}
 
+	BackPathStr getMetaPath() const
+	{
+		return getPath(BackPath::metadata);
+	}
+
 	void settupMeta()
 	{
 		mkDirIfNotExists(getPath(BackPath::metadata));
 		metaprov.reset(new MetadataProvider(getPath(BackPath::metadata), metaCounter));
+		classifier.open(getMetaPath());
 	}
 
 	RasterFromDiskLayer* loadImage(const BackPathStr& path, int step)
@@ -440,6 +448,8 @@ public:
 		prjCreate = true;
 
 		classCategs = BarCategories::loadCategories(getPath(BackPath::classifier));
+
+		classifier.loadData(classCategs);
 		return true;
 	}
 
@@ -452,7 +462,7 @@ public:
 		write(gameObject);
 		jsonToFile(gameObject, getPath(BackPath::project));
 
-		mkDirIfNotExists(getPath(BackPath::classfiles));
+		// mkDirIfNotExists(getPath(BackPath::classfiles));
 		// mkDirIfNotExists(getPath(BackPath::tiles));
 
 		classCategs.saveCategories(getPath(BackPath::classifier));

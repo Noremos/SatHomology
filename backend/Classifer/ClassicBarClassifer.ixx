@@ -276,19 +276,19 @@ public:
 		MMMAP<size_t, int> cacheIndex;
 	};
 	std::vector<ClassData> classes;
-	BackPathStr dbPath;
+	// BackPathStr dbPath;
 
 	const BackString name() const
 	{
 		return "CLASSIC";
 	}
 
-	void loadData(const BarCategories& categs, const BackPathStr& path)
+	void loadData(const BarCategories& categs)
 	{
 		ClassDataIO io;
 		io.open(dbPath);
 
-		dbPath = path;
+		// dbPath = path;
 		classes.clear();
 		for (auto categ : categs.categs)
 		{
@@ -301,17 +301,17 @@ public:
 	{
 		ClassDataIO::TrainCallback cla = [this](int clId, vbuffer& buf, BackImage, size_t dbLocalId)
 		{
-			std::ostringstream oss;
-			oss.write(reinterpret_cast<const char*>(buf.data()), sizeof(buf.size()));
-
-			std::istringstream iss(oss.str());
+			std::stringstream stream;
+			stream.write(reinterpret_cast<const char*>(buf.data()), buf.size());
+			stream.seekg(0, std::ios::beg);
+			// std::istringstream stream(buf.data(), buf.size());
 
 			BarlineClass raw;
-			raw.read(iss);
+			raw.read(stream); // Already Prepared
 			addDataInner(clId, &raw, dbLocalId);
 		};
 
-		io.loadAll(cla, classId, ClassDataIO::LF_ICON);
+		io.loadAll(cla, classId, ClassDataIO::LF_ALL);
 	}
 
 	ClassData& getClass(int id)
@@ -346,12 +346,19 @@ public:
 		}
 	}
 
+	void prepareBeforeAddInner(BarlineClass *raw)
+	{
+		bc::Baritem item;
+		item.barlines = std::move(raw->childer);
+		item.relen();
+		item.setType();
+		raw->childer = std::move(item.barlines);
+	}
+
 	void addDataInner(int classInd, BarlineClass* raw, size_t dataId, bool extractLine = false)
 	{
 		bc::Baritem* item = new bc::Baritem();
 		item->barlines = std::move(raw->childer);
-
-		item->relen();
 		item->setType();
 
 		assert(classes.size() !=0);

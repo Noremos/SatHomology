@@ -186,24 +186,34 @@ export class IBarClassifier
 public:
 	BackPathStr dbPath;
 
+	void open(const BackPathStr& metaPath)
+	{
+		this->dbPath = metaPath / name();
+	}
+
 	virtual const BackString name() const = 0;
 
-	virtual void loadData(const BarCategories &categs, const BackPathStr &path) = 0;
+	virtual void loadData(const BarCategories &categs) = 0;
 	virtual void addClass(int id) = 0;
 	virtual void removeClass(int id) = 0;
+	virtual void prepareBeforeAdd(IClassItem *raw) = 0;
 
 	size_t addData(int classInd, IClassItem *raw, BackImage *icon, bool extract = false)
 	{
+		prepareBeforeAdd(raw);
+
 		std::ostringstream st;
 		raw->write(st);
 
 		ClassDataIO io;
 		io.openWrite(dbPath);
 		vbuffer temp;
-		temp.setData(reinterpret_cast<uchar *>(st.str().data()), st.str().length(), false);
+		auto str = st.str();
+		char* data = str.data();
+		temp.setData((uchar*)data, str.length(), false);
 		size_t id = io.save(classInd, temp, icon);
-
 		addDataInnerT(classInd, raw, id, extract);
+
 		return id;
 	}
 
@@ -235,6 +245,12 @@ public:
 	virtual int predict(const IClassItem *raw)
 	{
 		return predictInner(static_cast<const T*>(raw));
+	}
+
+	virtual void prepareBeforeAddInner(T *raw) = 0;
+	virtual void prepareBeforeAdd(IClassItem *raw)
+	{
+		prepareBeforeAddInner(static_cast<T*>(raw));
 	}
 
 	virtual void addDataInner(int classInd, T *raw, size_t dataId, bool extractLine = false) = 0;
