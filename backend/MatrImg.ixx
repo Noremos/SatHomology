@@ -498,12 +498,15 @@ public:
 
 	MatrImg getRect(int stX, int stRow, int wid, int hei)
 	{
-		int destBytesSize = wid * TSize;
+		const int typeSize = TSize; // channels * scalar size
+		const int destBytesSize = wid * typeSize;
 
 		MatrImg r(wid, hei, _channels);
-		for (size_t y = 0; y < hei; y++)
+		for (int y = 0; y < hei; y++)
 		{
-			memcpy(r.data + (wid * y), data + (_wid * (y + stRow) + stX), destBytesSize);
+			const int srcRowOffset = ((y + stRow) * _wid + stX) * typeSize;
+			const int destRowOffset = y * wid * typeSize;
+			memcpy(r.data + destRowOffset, data + srcRowOffset, destBytesSize);
 		}
 
 		return r;
