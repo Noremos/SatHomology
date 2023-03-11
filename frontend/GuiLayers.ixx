@@ -104,6 +104,12 @@ public:
 		copiedId = data->id;
 	}
 
+	virtual void toGuiData()
+	{
+		copiedId = data->getSysId();
+	}
+
+
 	T* getData()
 	{
 		return data;
@@ -156,6 +162,8 @@ public:
 
 	virtual void toGuiData()
 	{
+		GuiLayerData<T>::toGuiData();
+
 		newTileSize = getTileSize() / 10;
 		newOffsetSize = getOffsetSize() / 10;
 	}
