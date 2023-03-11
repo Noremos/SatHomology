@@ -42,6 +42,7 @@ export struct GuiClassifer
 	std::vector<ClassPreview> classImages;
 
 	BarChart graph;
+	BarChart graphBarlines;
 
 	bool show = false;
 	CachedObjectId selceted;
@@ -119,6 +120,7 @@ export struct GuiClassifer
 	void drawClassifierWindow()
 	{
 		graph.draw();
+		graphBarlines.draw("Chart - barlines");
 
 		if (!ImGui::Begin("Classifier", &show))
 		{
@@ -219,6 +221,7 @@ export struct GuiClassifer
 			if (ImGui::Button("Show graph"))
 			{
 				graph.init(proj->classifier.dbPath, classesLB.currentValue().classId);
+				graphBarlines.initBarlines(proj->classifier.dbPath, classesLB.currentValue().classId);
 			}
 
 			ImGui::BeginDisabled(!selceted.hasData());

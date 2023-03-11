@@ -318,19 +318,21 @@ public:
 		clickResponser.clear();
 	}
 
-	void setMatrPoint(int x, int y, std::shared_ptr<SimpleLine>& newLine)
+	void setMatrPoint(int x, int y, std::shared_ptr<SimpleLine>& newLine, const Barscalar& color)
 	{
 		int indLocal = mat.getLineIndex(x, y);
 		SimpleLine* existLine = clickResponser[indLocal].get();
 
 		if (existLine == nullptr)
 		{
+			mat.set(x, y, color);
 			clickResponser[indLocal] = newLine;
 		}
 		else if (existLine->getDeath() < newLine->getDeath())
 		{
 			// main(depth) < child(depth)
 			//newLine->parent = existLine;
+			mat.set(x, y, color);
 			clickResponser[indLocal] = newLine;
 
 			int ylek = 2;
@@ -367,8 +369,7 @@ public:
 			bc::point cp = bc::barvalue::getStatPoint(index);
 			temp.push_back(bc::barvalue(cp, pm.value));
 
-			mat.set(x, y, color);
-			setMatrPoint(x, y, line);
+			setMatrPoint(x, y, line, color);
 		}
 
 		getCountourSimple(temp, line->matr);

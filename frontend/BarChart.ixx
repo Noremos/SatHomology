@@ -189,6 +189,40 @@ public:
 		//splitter.Merge(cached_draw_list.get()); // End layer
 	}
 
+	void initBarlines(const BackPathStr& dbPath, int classId)
+	{
+		clId = classId;
+		draws.clear();
+
+		ClassDataIO io;
+		io.open(dbPath);
+		int count = io.getClassCount(classId);
+
+		ClassDataIO::TrainCallback cla = [this, count](int, vbuffer& buf, BackImage, size_t dbLocalId)
+		{
+			std::ostringstream oss;
+			oss.write(reinterpret_cast<const char*>(buf.data()), buf.size());
+			std::istringstream iss(oss.str());
+			BarlineClass raw;
+			raw.read(iss);
+
+
+			int chldSize = raw.childer.size();
+			for (size_t i = draws.size(); i < chldSize; i++)
+			{
+				draws.push_back({ intToStr(i + 1).c_str(), count, 256});
+			}
+
+			for (size_t i = 0; i < chldSize; i++)
+			{
+				bc::barline* culine = raw.childer[i];
+				draws[i].set(culine->start.getAvgFloat(), culine->end().getAvgFloat());
+			}
+		};
+
+		io.loadAll(cla, classId, ClassDataIO::LF_BINFILE);
+	}
+
 
 	void drawPlei()
 	{
@@ -210,13 +244,13 @@ public:
 		}
 	}
 
-	virtual void draw()
+	virtual void draw(const char* name = "BarChart")
 	{
 		if (clId == -1)
 			return;
 
 		//auto window_flags = ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoScrollbar;
-		if (!ImGui::Begin("BarChart"))//, size, false, window_flags))
+		if (!ImGui::Begin(name))//, size, false, window_flags))
 		{
 			ImGui::End();
 			return;

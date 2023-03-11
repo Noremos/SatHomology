@@ -109,7 +109,7 @@ public:
 			if (state->isReading())
 				childer[i] = new bc::barline();
 
-			auto cline = new bc::barline();
+			auto cline = childer[i];
 
 			cline->start = state->pBarscalar(cline->start);
 			cline->m_end = state->pBarscalar(cline->end());
