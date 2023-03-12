@@ -20,6 +20,8 @@ import MetadataIOCore;
 import ImgReader;
 import SimpleImgReaderModule;
 
+using LayerMetaProvider = MetadataProvider;
+
 export const LFID VECTOR_LAYER_FID = ILayer::getCountId();
 export const LFID RASTER_LAYER_FID =  ILayer::getCountId();
 export const LFID RASTER_LINE_LAYER_FID = ILayer::getCountId();
@@ -119,9 +121,10 @@ public:
 	{
 		IRasterLayer::saveLoadState(state, metaFolder);
 
+		LayerMetaProvider layerMeta(getLayerMeta(metaprov));
 		// int imgId = metaFolder.getUniqueId();
 		// state->scInt("mat_id", imgId);
-		const BackPathStr path = metaFolder.getSubFolder("mat.png");
+		const BackPathStr path = layerMeta.getSubFolder("mat.png");
 
 		if (state->isReading())
 		{
@@ -616,13 +619,13 @@ public:
 			return;
 
 		MetadataProvider layerMeta(getLayerMeta(metaprov));
+		BackDirStr tiles = layerMeta.getSubFolder("tiles");
 
 		closeImages();
 		images.clear();
 
 		layerMeta.mkdir();
 
-		BackDirStr tiles = layerMeta.getSubFolder("tiles");
 		mkDirIfNotExists(tiles);
 
 		if (imgType == ReadType::Tiff)
@@ -658,6 +661,9 @@ public:
 	{
 		if (!reader)
 			return;
+
+		LayerMetaProvider layerMeta(getLayerMeta(metaprov));
+		BackDirStr tiles = layerMeta.getSubFolder("tiles");
 
 		BackDirStr tiles = metap.getSubFolder("tiles");
 		for (int i = 0; i < subImgSize; ++i)
