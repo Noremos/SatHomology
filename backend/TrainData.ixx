@@ -50,7 +50,7 @@ public:
 		show(true), color(BackColor::random())
 	{ }
 
-	virtual void saveLoadState(JsonObjectIOState* state, MetadataProvider)
+	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider&)
 	{
 		state->scInt("id", id);
 		state->scStr("name", name);

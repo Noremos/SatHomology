@@ -117,11 +117,11 @@ public:
 		return RASTER_LAYER_FID;
 	}
 
-	virtual void saveLoadState(JsonObjectIOState* state, MetadataProvider metaFolder)
+	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder)
 	{
 		IRasterLayer::saveLoadState(state, metaFolder);
 
-		LayerMetaProvider layerMeta(getLayerMeta(metaprov));
+		LayerMetaProvider layerMeta(getLayerMeta(metaFolder));
 		// int imgId = metaFolder.getUniqueId();
 		// state->scInt("mat_id", imgId);
 		const BackPathStr path = layerMeta.getSubFolder("mat.png");
@@ -141,10 +141,10 @@ public:
 	//	std::remove(path.string().c_str());
 	//}
 
-	void init(const BackImage& src, int tileSize = DEF_TILE_SIZE)
+	void init(const BackImage& src, int mtileSize = DEF_TILE_SIZE)
 	{
 		mat.assignCopyOf(src);
-		prov.init(src.width(), src.height(), src.width(), tileSize);
+		prov.init(src.width(), src.height(), src.width(), mtileSize);
 	}
 
 	void init(IRasterLayer* layer)
@@ -252,13 +252,13 @@ public:
 		}
 	}
 
-	BackPathStr getCacheFilePath(MetadataProvider metaFolder)
+	BackPathStr getCacheFilePath(const MetadataProvider& metaFolder)
 	{
 		MetadataProvider m = metaFolder.getSubMeta(getMetaLayerName());
 		return m.getSubFolder("cached.bff");
 	}
 
-	virtual void release(MetadataProvider metaFolder)
+	virtual void release(const MetadataProvider& metaFolder)
 	{
 		// RasterLayer::release(metaFolder);
 		// if (cacheId != -1)
@@ -272,7 +272,7 @@ public:
 		return RASTER_LINE_LAYER_FID;
 	}
 
-	virtual void saveLoadState(JsonObjectIOState* state, MetadataProvider metaFolder)
+	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder)
 	{
 		RasterLayer::saveLoadState(state, metaFolder);
 		state->scInt("cacheId", cacheId);
@@ -479,7 +479,7 @@ public:
 		return RASTER_DISK_LAYER_FID;
 	}
 
-	virtual void saveLoadState(JsonObjectIOState* state, MetadataProvider metaFolder)
+	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder)
 	{
 		// this->mprov = &metaFolder;
 		IRasterLayer::saveLoadState(state, metaFolder);
@@ -657,7 +657,7 @@ public:
 	}
 
 
-	void readImagesFromCache(MetadataProvider metap)
+	void readImagesFromCache(const MetadataProvider& metaprov)
 	{
 		if (!reader)
 			return;
@@ -665,7 +665,6 @@ public:
 		LayerMetaProvider layerMeta(getLayerMeta(metaprov));
 		BackDirStr tiles = layerMeta.getSubFolder("tiles");
 
-		BackDirStr tiles = metap.getSubFolder("tiles");
 		for (int i = 0; i < subImgSize; ++i)
 		{
 			// int factor = 1;

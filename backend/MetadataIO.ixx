@@ -493,19 +493,19 @@ JsonObjectIOState* JsonObjectIOStateWriter::objectBegin(const BackString& name)
 export class IJsonIO
 {
 public:
-	void read(const JsonObject& obj, MetadataProvider metaFolder)
+	void read(const JsonObject& obj, const MetadataProvider& metaFolder)
 	{
 		JsonObjectIOStateReader state(obj);
 		saveLoadState(&state, metaFolder);
 	}
 
-	void write(JsonObject& obj, MetadataProvider metaFolder)
+	void write(JsonObject& obj, const MetadataProvider& metaFolder)
 	{
 		JsonObjectIOStateWriter state(obj);
 		saveLoadState(&state, metaFolder);
 	}
 private:
-	virtual void saveLoadState(JsonObjectIOState* state, MetadataProvider metaFolder) = 0;
+	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder) = 0;
 };
 
 
