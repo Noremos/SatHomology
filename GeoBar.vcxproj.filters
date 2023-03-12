@@ -192,9 +192,6 @@
     <ClInclude Include="side\imgui\backends\imgui_impl_opengl3_loader.h">
       <Filter>imgui</Filter>
     </ClInclude>
-    <ClInclude Include="side\imgui\imconfig.h">
-      <Filter>imgui</Filter>
-    </ClInclude>
     <ClInclude Include="frontend\FrontTypes.h">
       <Filter>GUI</Filter>
     </ClInclude>
@@ -219,6 +216,7 @@
     <ClInclude Include="side\sqlite\sqlite3.h">
       <Filter>Side</Filter>
     </ClInclude>
+    <ClInclude Include="side\imconfig.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="side\imgui\misc\debuggers\imgui.natvis">
