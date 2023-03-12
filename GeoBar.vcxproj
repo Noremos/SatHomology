@@ -107,7 +107,7 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>side\Barcode\PrjBarlib\include;side\PrjBarlib\modules;side\imgui;side\imgui\backends;libs\glfw\include;side\lua\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>side\Barcode\PrjBarlib\include;side\PrjBarlib\modules;side\imgui;side\imgui\backends;libs\glfw\include;side\lua\src;side;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <EnableModules>true</EnableModules>

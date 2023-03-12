@@ -4,7 +4,7 @@
 #include <iostream>
 
 #include "../Bind/Common.h"
-#include "../side/sqlite/sqlite3.h"
+#include "sqlite/sqlite3.h"
 
 
 export module TrainIO;

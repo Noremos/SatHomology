@@ -3,8 +3,8 @@ module;
 #include "../Bind/Common.h"
 
 // Side
-#include "../side/PortFileDialog.h"
-#include "../side/sago/platform_folders.h"
+#include "PortFileDialog.h"
+#include "sago/platform_folders.h"
 
 export module Platform;
 import SideBind;
@@ -183,4 +183,3 @@ BackPathStr getDicumnetPath()
 {
 	return sago::getDocumentsFolder();
 }
-

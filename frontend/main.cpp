@@ -23,7 +23,7 @@
 #pragma comment(lib, "legacy_stdio_definitions")
 #endif
 
-#include "../side/IconsFontAwesome5.h"
+#include "IconsFontAwesome5.h"
 
 static void glfw_error_callback(int error, const char* description)
 {

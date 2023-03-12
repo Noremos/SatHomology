@@ -8,7 +8,7 @@
 #include <future>
 
 
-#include "../side/sol3/sol.hpp"
+#include "sol3/sol.hpp"
 //
 //#include <GLFW/glfw3.h>
 //#include "../libs/glew/include/GL/glew.h"

@@ -1,13 +1,13 @@
 //#include "../Bind/Common.h"
 //
-//#include "../side/glew/GL/glew.h"
+//#include "glew/GL/glew.h"
 //
-//#include "../side/glm/vec3.hpp" // glm::vec3
-//#include "../side/glm/vec4.hpp" // glm::vec4
-//#include "../side/glm/mat4x4.hpp" // glm::mat4
-//#include "../side/glm/ext/matrix_transform.hpp" // glm::translate, glm::rotate, glm::scale
-//#include "../side/glm/ext/matrix_clip_space.hpp" // glm::perspective
-//#include "../side/glm/ext/scalar_constants.hpp" // glm::pi
+//#include "glm/vec3.hpp" // glm::vec3
+//#include "glm/vec4.hpp" // glm::vec4
+//#include "glm/mat4x4.hpp" // glm::mat4
+//#include "glm/ext/matrix_transform.hpp" // glm::translate, glm::rotate, glm::scale
+//#include "glm/ext/matrix_clip_space.hpp" // glm::perspective
+//#include "glm/ext/scalar_constants.hpp" // glm::pi
 //#include <cmath>
 //#include "GuiCommon.h"
 //
@@ -425,7 +425,7 @@
 //private:
 //	GLuint m_buffer;
 //	GLint m_size = 0;
-//	bool dymanic = true; 
+//	bool dymanic = true;
 //};
 //
 //class QOpenGLShaderProgram {

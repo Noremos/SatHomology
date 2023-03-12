@@ -3,7 +3,7 @@
 import SideBind;
 
 #define GLEW_STATIC
-#include "../side/glew/GL/glew.h"
+#include "glew/GL/glew.h"
 
 
 void ResizeImage(int& width, int& height, int max_width, int max_height)

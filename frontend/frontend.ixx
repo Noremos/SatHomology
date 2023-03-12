@@ -4,9 +4,9 @@ module;
 #include <random>
 #include <memory>
 
-#include "../side/PortFileDialog.h"
-#include "../side/sago/platform_folders.h"
-#include "../side/flat_hash_map/unordered_map.hpp"
+#include "PortFileDialog.h"
+#include "sago/platform_folders.h"
+#include "flat_hash_map/unordered_map.hpp"
 
 #include "../frontend/GuiCommon.h"
 

@@ -5,7 +5,7 @@
 #ifdef _DEBUG #pragma comment(lib, "json/jsoncpp_debug.lib") #else #pragma comment(lib, "json/jsoncpp.lib")
 #endif
 
-#include "../side/jsoncpp/json.h"
+#include "jsoncpp/json.h"
 
  export module JsonCore;
 

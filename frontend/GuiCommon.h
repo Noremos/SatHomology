@@ -8,7 +8,7 @@
 
 #include <algorithm>
 
-#include "../side/IconsFontAwesome5.h"
+#include "IconsFontAwesome5.h"
 
 import MatrModule;
 import BarcodeModule;
