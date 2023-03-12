@@ -115,7 +115,7 @@ public:
 		return RASTER_LAYER_FID;
 	}
 
-	virtual void saveLoadState(JsonObjectIOState* state, MetadataProvider& metaFolder)
+	virtual void saveLoadState(JsonObjectIOState* state, MetadataProvider metaFolder)
 	{
 		IRasterLayer::saveLoadState(state, metaFolder);
 
@@ -132,7 +132,7 @@ public:
 			imwrite(path, mat);
 	}
 
-	//void release(MetadataProvider& mprov)
+	//void release(MetadataProvider mprov)
 	//{
 	//	const BackPathStr path = mprov.getPath(imgId, ".png");
 	//	std::remove(path.string().c_str());
@@ -249,13 +249,13 @@ public:
 		}
 	}
 
-	BackPathStr getCacheFilePath(MetadataProvider& metaFolder)
+	BackPathStr getCacheFilePath(MetadataProvider metaFolder)
 	{
 		MetadataProvider m = metaFolder.getSubMeta(getMetaLayerName());
 		return m.getSubFolder("cached.bff");
 	}
 
-	virtual void release(MetadataProvider& metaFolder)
+	virtual void release(MetadataProvider metaFolder)
 	{
 		// RasterLayer::release(metaFolder);
 		// if (cacheId != -1)
@@ -269,7 +269,7 @@ public:
 		return RASTER_LINE_LAYER_FID;
 	}
 
-	virtual void saveLoadState(JsonObjectIOState* state, MetadataProvider& metaFolder)
+	virtual void saveLoadState(JsonObjectIOState* state, MetadataProvider metaFolder)
 	{
 		RasterLayer::saveLoadState(state, metaFolder);
 		state->scInt("cacheId", cacheId);
@@ -327,6 +327,10 @@ public:
 		{
 			mat.set(x, y, color);
 			clickResponser[indLocal] = newLine;
+		}
+		else if (existLine == newLine.get()) // Might be due to clickResponser[indLocal2] = newLin
+		{
+			mat.set(x, y, color);
 		}
 		else if (existLine->getDeath() < newLine->getDeath())
 		{
@@ -472,10 +476,11 @@ public:
 		return RASTER_DISK_LAYER_FID;
 	}
 
-	virtual void saveLoadState(JsonObjectIOState* state, MetadataProvider& metaFolder)
+	virtual void saveLoadState(JsonObjectIOState* state, MetadataProvider metaFolder)
 	{
 		// this->mprov = &metaFolder;
 		IRasterLayer::saveLoadState(state, metaFolder);
+
 		state->scPath("imgPath", imgPath);
 		state->scInt("subImgSize", subImgSize);
 		state->scInt("subImageIndex", subImageIndex);
@@ -491,7 +496,7 @@ public:
 		}
 	}
 
-	void open(const BackPathStr& path, MetadataProvider& metaPath)
+	void open(const BackPathStr& path, MetadataProvider metaPath)
 	{
 		closeReader();
 
@@ -502,8 +507,7 @@ public:
 		if (!reader->ready)
 			return;
 
-		MetadataProvider layerMeta(getLayerMeta(metaPath));
-		writeImages(layerMeta);
+		writeImages(metaPath);
 		setSubImage(0);
 	}
 
@@ -526,6 +530,10 @@ public:
 			subImageIndex = 0;
 		}
 		prov.update(reader->width(), reader->height(), displayWid);
+		if (prov.tileSize + tileOffset > prov.width)
+		{
+			tileOffset = prov.width - prov.tileSize;
+		}
 	}
 
 	int getFirstSmallIndex(const int maxSize = 2000)
@@ -602,17 +610,19 @@ public:
 			reader->open(imgPath.string());
 	}
 
-	void writeImages(MetadataProvider& metaprov)
+	void writeImages(MetadataProvider metaprov)
 	{
 		if (!reader)
 			return;
 
+		MetadataProvider layerMeta(getLayerMeta(metaprov));
+
 		closeImages();
 		images.clear();
 
-		metaprov.mkdir();
+		layerMeta.mkdir();
 
-		BackDirStr tiles = metaprov.getSubFolder("tiles");
+		BackDirStr tiles = layerMeta.getSubFolder("tiles");
 		mkDirIfNotExists(tiles);
 
 		if (imgType == ReadType::Tiff)
@@ -644,7 +654,7 @@ public:
 	}
 
 
-	void readImagesFromCache(MetadataProvider& metap)
+	void readImagesFromCache(MetadataProvider metap)
 	{
 		if (!reader)
 			return;
