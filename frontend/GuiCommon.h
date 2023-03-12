@@ -100,8 +100,8 @@ public:
 		height = hei;
 		MatrImg newImg(wid, hei, img.channels());
 
-		const float x_ratio = static_cast<float>(img.width() - 1) / (wid - 1);
-		const float y_ratio = static_cast<float>(img.height() - 1) / (hei - 1);
+		const float x_ratio = static_cast<float>(img.width()) / (wid);
+		const float y_ratio = static_cast<float>(img.height()) / (hei);
 		for (int y = 0; y < hei; ++y)
 		{
 			for (int x = 0; x < wid; ++x)
