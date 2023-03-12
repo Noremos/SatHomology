@@ -457,7 +457,8 @@ public:
 		ApplicationVec2 offset = win->Pos + pos;
 		ApplicationVec2 csreenStar = offset + par->localDisplayPos;
 		ApplicationVec2 csreenEnd = offset + par->localDisplayPos + par->displaySize;
-		float pixelSize = MAX(1, par->displaySize.x / par->width);
+		float markerSize = 5;//MAX(1, par->displaySize.x / par->width);
+		float pixelSize = par->displaySize.x / par->width;
 
 		const bc::barvector& pointsi = *points;
 		for (const auto& p : pointsi)
@@ -473,8 +474,8 @@ public:
 
 			// Center pixel for big images
 			pi += ImVec2(pixelSize / 2, pixelSize / 2);
-			list->AddCircleFilled(pi, 1.5 * pixelSize, bigColor);
-			list->AddCircleFilled(pi, 0.8 * pixelSize, midColor);
+			list->AddCircleFilled(pi, 1.5 * markerSize, bigColor);
+			list->AddCircleFilled(pi, 0.8 * markerSize, midColor);
 		}
 
 		ImGui::EndChild();
