@@ -43,25 +43,25 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\imgui\imgui.cpp">
+    <ClCompile Include="side\imgui\imgui.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
-    <ClCompile Include="..\imgui\imgui_demo.cpp">
+    <ClCompile Include="side\imgui\imgui_demo.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
-    <ClCompile Include="..\imgui\imgui_draw.cpp">
+    <ClCompile Include="side\imgui\imgui_draw.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
-    <ClCompile Include="..\imgui\backends\imgui_impl_glfw.cpp">
+    <ClCompile Include="side\imgui\backends\imgui_impl_glfw.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
-    <ClCompile Include="..\imgui\backends\imgui_impl_opengl3.cpp">
+    <ClCompile Include="side\imgui\backends\imgui_impl_opengl3.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
-    <ClCompile Include="..\imgui\imgui_tables.cpp">
+    <ClCompile Include="side\imgui\imgui_tables.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
-    <ClCompile Include="..\imgui\imgui_widgets.cpp">
+    <ClCompile Include="side\imgui\imgui_widgets.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
     <ClCompile Include="backend\project.ixx">
@@ -79,13 +79,13 @@
     <ClCompile Include="backend\SimpleImgReader.ixx">
       <Filter>Backend</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\Barcode.ixx">
+    <ClCompile Include="side\Barcode\PrjBarlib\modules\Barcode.ixx">
       <Filter>Barcode\modules</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\Barline.ixx">
+    <ClCompile Include="side\Barcode\PrjBarlib\modules\Barline.ixx">
       <Filter>Barcode\modules</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\StateBinFiles.ixx">
+    <ClCompile Include="side\Barcode\PrjBarlib\modules\StateBinFiles.ixx">
       <Filter>Barcode\modules</Filter>
     </ClCompile>
     <ClCompile Include="backend\MatrImg.ixx">
@@ -94,10 +94,10 @@
     <ClCompile Include="frontend\frontend.ixx">
       <Filter>GUI\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\TiffReader.ixx">
+    <ClCompile Include="side\Barcode\PrjBarlib\modules\TiffReader.ixx">
       <Filter>Barcode\modules</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\ImageReader.ixx">
+    <ClCompile Include="side\Barcode\PrjBarlib\modules\ImageReader.ixx">
       <Filter>Barcode\modules</Filter>
     </ClCompile>
     <ClCompile Include="frontend\GuiCommon.cpp">
@@ -177,22 +177,22 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\imgui\imgui_internal.h">
+    <ClInclude Include="side\imgui\imgui_internal.h">
       <Filter>imgui</Filter>
     </ClInclude>
-    <ClInclude Include="..\imgui\imgui.h">
+    <ClInclude Include="side\imgui\imgui.h">
       <Filter>imgui</Filter>
     </ClInclude>
-    <ClInclude Include="..\imgui\backends\imgui_impl_glfw.h">
+    <ClInclude Include="side\imgui\backends\imgui_impl_glfw.h">
       <Filter>imgui</Filter>
     </ClInclude>
-    <ClInclude Include="..\imgui\backends\imgui_impl_opengl3.h">
+    <ClInclude Include="side\imgui\backends\imgui_impl_opengl3.h">
       <Filter>imgui</Filter>
     </ClInclude>
-    <ClInclude Include="..\imgui\backends\imgui_impl_opengl3_loader.h">
+    <ClInclude Include="side\imgui\backends\imgui_impl_opengl3_loader.h">
       <Filter>imgui</Filter>
     </ClInclude>
-    <ClInclude Include="..\imgui\imconfig.h">
+    <ClInclude Include="side\imgui\imconfig.h">
       <Filter>imgui</Filter>
     </ClInclude>
     <ClInclude Include="frontend\FrontTypes.h">
@@ -221,7 +221,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\imgui\misc\debuggers\imgui.natvis">
+    <None Include="side\imgui\misc\debuggers\imgui.natvis">
       <Filter>Файлы ресурсов</Filter>
     </None>
     <None Include="libs\sqlite3.def">

@@ -91,7 +91,7 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>D:\Programs\C++\Barcode\PrjBarlib\include;D:\Programs\C++\Barcode\PrjBarlib\modules;..\imgui;..\imgui\backends;libs\glfw\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>side\Barcode\PrjBarlib\include;side\PrjBarlib\modules;side\imgui;side\imgui\backends;libs\glfw\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
@@ -107,7 +107,7 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>D:\Programs\C++\Barcode\PrjBarlib\include;D:\Programs\C++\Barcode\PrjBarlib\modules;..\imgui;..\imgui\backends;libs\glfw\include;side\lua\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>side\Barcode\PrjBarlib\include;side\PrjBarlib\modules;side\imgui;side\imgui\backends;libs\glfw\include;side\lua\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <EnableModules>true</EnableModules>
@@ -131,7 +131,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>D:\Programs\C++\Barcode\PrjBarlib\include;D:\Programs\C++\Barcode\PrjBarlib\modules;..\imgui;..\imgui\backends;libs\glfw\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>side\Barcode\PrjBarlib\include;side\PrjBarlib\modules;side\imgui;side\imgui\backends;libs\glfw\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -153,7 +153,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>D:\Programs\C++\Barcode\PrjBarlib\include;D:\Programs\C++\Barcode\PrjBarlib\modules;..\imgui;..\imgui\backends;libs\glfw\include;side\lua\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>side\Barcode\PrjBarlib\include;side\PrjBarlib\modules;side\imgui;side\imgui\backends;libs\glfw\include;side\lua\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -171,18 +171,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\Barcode.ixx" />
-    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\Barline.ixx" />
-    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\ImageReader.ixx" />
-    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\StateBinFiles.ixx" />
-    <ClCompile Include="..\..\C++\Barcode\PrjBarlib\modules\TiffReader.ixx" />
-    <ClCompile Include="..\imgui\imgui.cpp" />
-    <ClCompile Include="..\imgui\imgui_demo.cpp" />
-    <ClCompile Include="..\imgui\imgui_draw.cpp" />
-    <ClCompile Include="..\imgui\imgui_tables.cpp" />
-    <ClCompile Include="..\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="..\imgui\backends\imgui_impl_glfw.cpp" />
-    <ClCompile Include="..\imgui\backends\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="side\Barcode\PrjBarlib\modules\Barcode.ixx" />
+    <ClCompile Include="side\Barcode\PrjBarlib\modules\Barline.ixx" />
+    <ClCompile Include="side\Barcode\PrjBarlib\modules\ImageReader.ixx" />
+    <ClCompile Include="side\Barcode\PrjBarlib\modules\StateBinFiles.ixx" />
+    <ClCompile Include="side\Barcode\PrjBarlib\modules\TiffReader.ixx" />
+    <ClCompile Include="side\imgui\imgui.cpp" />
+    <ClCompile Include="side\imgui\imgui_demo.cpp" />
+    <ClCompile Include="side\imgui\imgui_draw.cpp" />
+    <ClCompile Include="side\imgui\imgui_tables.cpp" />
+    <ClCompile Include="side\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="side\imgui\backends\imgui_impl_glfw.cpp" />
+    <ClCompile Include="side\imgui\backends\imgui_impl_opengl3.cpp" />
     <ClCompile Include="backend\BarHolders.ixx" />
     <ClCompile Include="backend\CacheFiles.ixx" />
     <ClCompile Include="backend\Classifer\ClassicBarClassifer.ixx" />
@@ -216,12 +216,12 @@
     <ClCompile Include="side\sago\platform_folders.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\imgui\imconfig.h" />
-    <ClInclude Include="..\imgui\imgui.h" />
-    <ClInclude Include="..\imgui\imgui_internal.h" />
-    <ClInclude Include="..\imgui\backends\imgui_impl_glfw.h" />
-    <ClInclude Include="..\imgui\backends\imgui_impl_opengl3.h" />
-    <ClInclude Include="..\imgui\backends\imgui_impl_opengl3_loader.h" />
+    <ClInclude Include="side\imconfig.h" />
+    <ClInclude Include="side\imgui\imgui.h" />
+    <ClInclude Include="side\imgui\imgui_internal.h" />
+    <ClInclude Include="side\imgui\backends\imgui_impl_glfw.h" />
+    <ClInclude Include="side\imgui\backends\imgui_impl_opengl3.h" />
+    <ClInclude Include="side\imgui\backends\imgui_impl_opengl3_loader.h" />
     <ClCompile Include="backend\MatrImg.ixx">
       <FileType>Document</FileType>
     </ClCompile>
@@ -235,7 +235,7 @@
     <ClInclude Include="side\stb_image.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\imgui\misc\debuggers\imgui.natvis" />
+    <None Include="side\imgui\misc\debuggers\imgui.natvis" />
     <None Include="libs\sqlite3.def" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

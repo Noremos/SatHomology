@@ -1,0 +1,6 @@
+[submodule "side/imgui"]
+	path = side/imgui
+	url = https://github.com/ocornut/imgui.git
+[submodule "side/Barcode"]
+	path = side/Barcode
+	url = git@github.com:Noremos/Barcode.git
