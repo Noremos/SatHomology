@@ -629,7 +629,7 @@ public:
 		{
 			TiffReader* trear = dynamic_cast<TiffReader*>(reader);
 			subImgSize = trear->getSubImageSize();
-			for (int i = 0, k; i < subImgSize; ++i)
+			for (int i = 0, k = 0; i < subImgSize; ++i)
 			{
 				//int factor = 1;
 				trear->setCurrentSubImage(i);
