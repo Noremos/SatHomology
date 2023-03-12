@@ -71,6 +71,8 @@ public:
 		this->displayFactor = realWid == displayWid ? 1.0f : static_cast<float>(realWid) / displayWid;
 		this->width = realWid;
 		this->height = realHei;
+		if (tileSize > width)
+			tileSize = width;
 	}
 
 	float getDisplayWidth()
