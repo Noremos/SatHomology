@@ -162,7 +162,7 @@ public:
 		return std::format("{}_layer", id);
 	}
 
-	MetadataProvider getLayerMeta(MetadataProvider& metaFolder)
+	MetadataProvider getLayerMeta(MetadataProvider metaFolder)
 	{
 		BackString lname = getMetaLayerName();
 		return metaFolder.getSubMeta(lname);
@@ -171,16 +171,15 @@ public:
 public:
 	int id = -1;
 	BackString name;
-	virtual void saveLoadState(JsonObjectIOState* state, MetadataProvider& metaFolder)
+	virtual void saveLoadState(JsonObjectIOState* state, MetadataProvider metaFolder)
 	{
 		state->scInt("coreId", id);
 		state->scStr("name", name);
-		metaFolder.update(getLayerMeta(metaFolder));
 	}
 
 	virtual Type getType() const = 0;
 	virtual const LFID getFactoryId() const = 0;
-	virtual void release(MetadataProvider& metaFolder)
+	virtual void release(MetadataProvider metaFolder)
 	{
 		BackString lname = getMetaLayerName();
 		metaFolder.update(metaFolder.getSubMeta(lname));
@@ -234,7 +233,7 @@ public:
 		return Type::Raster;
 	}
 
-	virtual void saveLoadState(JsonObjectIOState* state, MetadataProvider& metaFolder)
+	virtual void saveLoadState(JsonObjectIOState* state, MetadataProvider metaFolder)
 	{
 		ILayer::saveLoadState(state, metaFolder);
 		JsonObjectIOState* jobj = state->objectBegin("provider");
