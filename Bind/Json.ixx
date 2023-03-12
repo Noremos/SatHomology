@@ -2,7 +2,7 @@
  #include "Common.h"
  #include <iostream>
 
-#ifdef _DEBUG #pragma comment(lib, "json/jsoncpp_debug.lib") #else #pragma comment(lib, "json/jsoncpp.lib")
+#ifdef _DEBUG #pragma comment(lib, "libs/json/Debug/jsoncpp.lib") #else #pragma comment(lib, "libs/json/Release/jsoncpp.lib")
 #endif
 
 #include "jsoncpp/include/json/json.h"
