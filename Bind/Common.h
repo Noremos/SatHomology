@@ -1,4 +1,7 @@
-#pragma once
+#ifndef COMMON_H
+#define COMMON_H
+
+
 #include <filesystem>
 //#include <random>
 #include <fstream>
@@ -54,3 +57,5 @@ struct BackColor
 		return rc;
 	}
 };
+
+#endif // !COMMON_H

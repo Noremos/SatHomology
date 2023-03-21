@@ -1,11 +1,11 @@
 ﻿module;
 
-#include <vector>
-#include <iostream>
 
 #include "../Bind/Common.h"
 #include "sqlite/sqlite3.h"
 
+#include <vector>
+//#include <iostream>
 
 export module TrainIO;
 
@@ -257,7 +257,7 @@ public:
 
 		if (rc != SQLITE_OK)
 		{
-			std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+			//std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
 			return 0;
 		}
 
@@ -267,7 +267,7 @@ public:
 		rc = sqlite3_step(stmt);
 		if (rc != SQLITE_ROW)
 		{
-			std::cerr << "Failed to execute statement: " << sqlite3_errmsg(db) << std::endl;
+			//std::cerr << "Failed to execute statement: " << sqlite3_errmsg(db) << std::endl;
 			return 0;
 		}
 
@@ -276,7 +276,7 @@ public:
 		rc = sqlite3_step(stmt);
 		if (rc != SQLITE_DONE)
 		{
-			std::cerr << "Failed to execute statement: " << sqlite3_errmsg(db) << std::endl;
+			//std::cerr << "Failed to execute statement: " << sqlite3_errmsg(db) << std::endl;
 			return 0;
 		}
 
@@ -346,7 +346,7 @@ private:
 
 		if (rc != SQLITE_OK)
 		{
-			//std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+			////std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
 			return nullptr;
 		}
 
@@ -373,7 +373,7 @@ private:
 
 		if (rc != SQLITE_OK)
 		{
-			std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+			//std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
 			return nullptr;
 		}
 
@@ -423,19 +423,19 @@ public:
 
 		if (rc != SQLITE_OK)
 		{
-			std::cerr << "Failed to prepare statement: " << sqlite3_errstr(rc) << sqlite3_errmsg(db) << std::endl;
+			//std::cerr << "Failed to prepare statement: " << sqlite3_errstr(rc) << sqlite3_errmsg(db) << std::endl;
 		}
 
 		rc = sqlite3_bind_int(stmt, 1, classId); // bind the rowid value to the first placeholder
 		if (rc != SQLITE_OK)
 		{
-			std::cerr << "Failed to prepare statement: " << sqlite3_errstr(rc) << sqlite3_errmsg(db) << std::endl;
+			//std::cerr << "Failed to prepare statement: " << sqlite3_errstr(rc) << sqlite3_errmsg(db) << std::endl;
 		}
 
 		rc = sqlite3_bind_blob(stmt, 2, bbfFile.data(), bbfFile.size(), SQLITE_STATIC);
 		if (rc != SQLITE_OK)
 		{
-			std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+			//std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
 		}
 
 		vbuffer imgPrev;
@@ -449,13 +449,13 @@ public:
 
 		if (rc != SQLITE_OK)
 		{
-			std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+			//std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
 		}
 
 		rc = sqlite3_step(stmt);
 		if (rc != SQLITE_DONE)
 		{
-			std::cerr << "Failed to execute statement: " << sqlite3_errmsg(db) << std::endl;
+			//std::cerr << "Failed to execute statement: " << sqlite3_errmsg(db) << std::endl;
 		}
 
 		size_t locId = sqlite3_last_insert_rowid(db);
@@ -484,19 +484,19 @@ public:
 		auto rc = sqlite3_prepare_v2(db, statement, 0, &stmt, NULL);
 		if (rc != SQLITE_OK)
 		{
-			std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+			//std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
 		}
 
 		rc = sqlite3_bind_int64(stmt, 1, localId); // bind the rowid value to the first placeholder
 		if (rc != SQLITE_OK)
 		{
-			std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+			//std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
 		}
 
 		rc = sqlite3_step(stmt);
 		if (rc != SQLITE_OK)
 		{
-			std::cerr << "Failed to execute statement: " << sqlite3_errmsg(db) << std::endl;
+			//std::cerr << "Failed to execute statement: " << sqlite3_errmsg(db) << std::endl;
 		}
 
 		// Finalize statement

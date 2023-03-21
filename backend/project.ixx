@@ -2,7 +2,7 @@ module;
 
 #include <unordered_set>
 #include <random>
-#include <iostream>
+//#include <iostream>
 
 #include "../Bind/Common.h"
 
@@ -560,7 +560,7 @@ public:
 				break;
 
 			stW.reset(0);
-			std::cout << i << std::endl;
+			//std::cout << i << std::endl;
 			for (uint j = 0; j < rwid; j += tileSize)
 			{
 				uint iwid;
