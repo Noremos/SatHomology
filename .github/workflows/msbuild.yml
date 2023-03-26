@@ -37,6 +37,7 @@ jobs:
       uses: microsoft/setup-msbuild@v1.0.2
 
     - name: run-vcpkg
+      uses: lukka/run-vcpkg@v10.7
       with:
         runVcpkgInstall: true
 
