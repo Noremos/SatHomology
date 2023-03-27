@@ -24,6 +24,7 @@ import TrainIO;
 import RasterLayers;
 import Classifiers;
 import MetadataIOCore;
+import VectorLayers;
 
 
 
@@ -145,40 +146,68 @@ export class Project
 
 	void extraRead(const BackJson& json)
 	{
-		const JsonArray& arr = json["layers"];
-		// jsonToFile(arr, getPath(BackJson::layers));
-		JsonArrayIOStateReader reader(arr);
-
-		for (size_t i = 0; i < arr.size(); i++)
-		{
-			JsonObjectIOState* obj = reader.objectBegin(i);
-			int layId;
-			obj->scInt("layId", layId);
-			ILayer* lay = CoreLayerFactory::CreateCoreLayer(layId);
-
-			MetadataProvider sub = *metaprov;// Do not reffer!
-			lay->saveLoadState(obj, sub);
-			layers.addMove(lay);
-		}
+		JsonObjectIOStateReader reader(json);
+		extraReadWrite(&reader);
 	}
 
 	void extraWrite(BackJson& json)
 	{
-		int counter = 0;
-		JsonObject arr;
-		JsonArrayIOStateWriter writer(arr);
+		JsonObjectIOStateWriter writer(json);
+		extraReadWrite(&writer);
+	}
 
-		for (auto& lay : layers)
+	void extraReadWrite(JsonObjectIOState* state)
+	{
+		int size = layers.size();
+		JsonArrayIOState* arrst = state->arrayBegin("layers", size);
+		
+		for (int i = 0; i < size; i++)
 		{
-			JsonObjectIOState* obj = writer.append();
+			JsonObjectIOState* obj = arrst->objectBegin(i);
 			MetadataProvider sub = *metaprov;// Do not reffer!
-			int layId = lay->getFactoryId();
-			obj->scInt("layId", layId);
+
+			int layId;
+			ILayer* lay;
+			if (state->isReading())
+			{
+				obj->scInt("layId", layId);
+				lay = CoreLayerFactory::CreateCoreLayer(layId);
+				layers.addMove(lay);
+			}
+			else
+			{
+				lay = layers.at(i);
+				layId = layers.at(i)->getFactoryId();
+				obj->scInt("layId", layId);
+			}
+
 			lay->saveLoadState(obj, sub);
 		}
 
-		json["layers"] = arr;
-		// jsonToFile(arr, getPath(BackJson::layers));
+		size = classLayers.size();
+		arrst = state->arrayBegin("classBind", size);
+		auto cb = classLayers.begin();
+		for (int i = 0; i < size; i++)
+		{
+			JsonObjectIOState* obj = arrst->objectBegin(i);
+
+			int clId;
+			int layId;
+			if (!obj->isReading())
+			{
+				clId = cb->first;
+				layId = cb->second->id;
+				++cb;
+			}
+			obj->scInt("class_id", clId);
+			obj->scInt("layer_id", layId);
+
+			if (obj->isReading())
+			{
+				classLayers[clId] = static_cast<VectorLayer*>(layers.at(layId));
+			}
+
+		}
 	}
 public:
 	//	Q_PROPERTY(SeachingSettings* searchSetts READ getSerchSetts)
@@ -474,20 +503,10 @@ public:
 
 	void exportResult(int imgNumber, const BackImage& resultMart);
 
-	Barscalar predict(const IClassItem* item, bool& skip)
+	int predict(const IClassItem* item)
 	{
 		int classType = classifier.predict(item);
-		auto c = classCategs.get(classType);
-
-		if (!c)
-		{
-			skip = false;
-			return Barscalar(0,0,0);
-		}
-
-		skip = !c->show;
-		auto& col = c->color;
-		return Barscalar(col.r, col.g, col.b);
+		return classType;
 	}
 
 	RetLayers createCacheBarcode(InOutLayer& iol, const BarcodeProperies& propertices, FilterInfo* info = nullptr)
@@ -528,6 +547,10 @@ public:
 			layer->cacheId = metaprov->getUniqueId();
 
 		ret.push_back(layer);
+		for (auto& i : classLayers)
+		{
+			ret.push_back(i.second);
+		}
 
 		// Cacher
 		ItemHolderCache cacher;
@@ -537,21 +560,28 @@ public:
 		uint tileIndex = 0;
 		int inde = 0;
 		IClassItemHolder::ItemCallback cacheClass;
-		if (layer)
+
+		cacheClass = [this, &parentne, &inde, layer, &tileIndex, info](IClassItem* item)
 		{
-			cacheClass = [this, &parentne, &inde, layer, &tileIndex, info](IClassItem* item)
+			if (layer->passLine(item, info))
 			{
-				if (layer->passLine(item, info))
+				auto id = predict(item);
+				if (id != -1)
 				{
-					bool show = true;
-					auto pointCol = predict(item, show);
-					if (show || true)
-						layer->addLine(parentne, inde++, item, tileIndex);
+					VectorLayer* vl = classLayers.at(id);
+
+					bc::barvector temp;
+					getCountourSimple(item->getMatrix(), temp);
+
+					for (const auto& pm : temp)
+					{
+						vl->primetive.draws.push_back(BackPoint(pm.getX(), pm.getY()));
+					}
 				}
-			};
-		}
-		else
-			cacheClass = [](IClassItem*){};
+				else
+					layer->addLine(parentne, inde++, item, tileIndex);
+			}
+		};
 
 		for (uint i = 0; i < rhei; i += tileSize)
 		{
@@ -607,6 +637,9 @@ public:
 
 		// -------
 		RetLayers ret;
+		for (auto& i : classLayers)
+			ret.push_back(i.second);
+
 		// RasterLineLayer* outLayer = addOrUpdateOut<RasterLineLayer>(iol);
 		// if (outLayer->cacheId == -1)
 		// 	outLayer->cacheId = metaprov->getUniqueId();
@@ -632,9 +665,20 @@ public:
 				auto item = vec.at(i);
 				if (outLayer->passLine(item, filter))
 				{
-					bool show = true;
-					auto pointCol = predict(item, show);
-					if (show || true)
+					auto id = predict(item);
+					if (id != -1)
+					{
+						VectorLayer* vl = classLayers.at(id);
+
+						bc::barvector temp;
+						getCountourSimple(item->getMatrix(), temp);
+
+						for (const auto& pm : temp)
+						{
+							vl->primetive.draws.push_back(BackPoint(pm.getX(), pm.getY()));
+						}
+					}
+					else
 						outLayer->addLine(parentne, i, item, tileIndex);
 				}
 			}
@@ -670,11 +714,15 @@ public:
 	// 	return vec;
 	// }
 
-
+	MMMAP<int, VectorLayer*> classLayers;
 	int addClassType(const BackString& name)
 	{
 		int id = classCategs.addValue(name);
 		classifier.addClass(id);
+		auto* layer = addLayerData<VectorLayer>();
+		layer->name = "Class: " + name;
+		layer->color = BackColor::random();
+		classLayers[id] = layer;
 		saveProject();
 		return id;
 	}
@@ -688,6 +736,7 @@ public:
 	{
 		classCategs.remove(classId);
 		classifier.removeClass(classId);
+		classLayers.erase(classId);
 	}
 
 	size_t addTrainData(int layerId, int classId, CachedObjectId srcItemId, BackImage* destIcon)

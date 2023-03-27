@@ -171,6 +171,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="backend\Layers\VectorLayers.ixx" />
+    <ClCompile Include="frontend\GuiVectorLayer.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\Barcode.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\Barline.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\ImageReader.ixx" />

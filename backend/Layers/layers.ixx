@@ -22,10 +22,6 @@ import SimpleImgReaderModule;
 
 using LayerMetaProvider = MetadataProvider;
 
-export const LFID VECTOR_LAYER_FID = ILayer::getCountId();
-export const LFID RASTER_LAYER_FID =  ILayer::getCountId();
-export const LFID RASTER_LINE_LAYER_FID = ILayer::getCountId();
-export const LFID RASTER_DISK_LAYER_FID = ILayer::getCountId();
 
 export enum class ReadType
 {
@@ -33,31 +29,6 @@ export enum class ReadType
 	Simple
 };
 
-export class DrawPrimetive
-{
-public:
-
-	enum class Type
-	{
-		points,
-		polygon,
-		multipolygon
-	};
-
-	Type type;
-	Barscalar color;
-	std::vector<bc::point> draws;
-};
-
-export class PrimetiveLayer : public ILayer
-{
-public:
-	std::vector<DrawPrimetive> primetives;
-	virtual const LFID getFactoryId() const
-	{
-		return VECTOR_LAYER_FID;
-	}
-};
 
 
 int getFid(int wid, int s)
@@ -504,6 +475,7 @@ public:
 		closeReader();
 
 		imgPath = path;
+		name = imgPath.filename().string();
 		// this->mprov = &metaPath;
 
 		openReader();

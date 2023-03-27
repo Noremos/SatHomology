@@ -7,7 +7,6 @@ libs/glfw/lib-vc2015
 libs/glfw/lib-vc2017
 # libs/glfw/lib-vc2019
 # libs/glfw/lib-mingw-*
-Release/*
 imgui.ini
 # libs/lua
 # side/lua
@@ -17,3 +16,4 @@ Proga
 shaders
 side/glaze-1.0.0.zip
 Temp/*
+Release/GeoBar.*

@@ -5,9 +5,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="imgui">
-      <UniqueIdentifier>{ba81dd01-1cfe-4bbb-b8e0-e9b39aed6240}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Backend">
       <UniqueIdentifier>{64f7ec62-3276-4567-8873-8fcd9bf1ea82}</UniqueIdentifier>
     </Filter>
@@ -41,28 +38,31 @@
     <Filter Include="Backend\Impl">
       <UniqueIdentifier>{8b38a57b-8748-4c48-a38a-8a7dcb5a2b8d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GUI\imgui">
+      <UniqueIdentifier>{ba81dd01-1cfe-4bbb-b8e0-e9b39aed6240}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="side\imgui\imgui.cpp">
-      <Filter>imgui</Filter>
+      <Filter>GUI\imgui</Filter>
     </ClCompile>
     <ClCompile Include="side\imgui\imgui_demo.cpp">
-      <Filter>imgui</Filter>
+      <Filter>GUI\imgui</Filter>
     </ClCompile>
     <ClCompile Include="side\imgui\imgui_draw.cpp">
-      <Filter>imgui</Filter>
+      <Filter>GUI\imgui</Filter>
     </ClCompile>
     <ClCompile Include="side\imgui\backends\imgui_impl_glfw.cpp">
-      <Filter>imgui</Filter>
+      <Filter>GUI\imgui</Filter>
     </ClCompile>
     <ClCompile Include="side\imgui\backends\imgui_impl_opengl3.cpp">
-      <Filter>imgui</Filter>
+      <Filter>GUI\imgui</Filter>
     </ClCompile>
     <ClCompile Include="side\imgui\imgui_tables.cpp">
-      <Filter>imgui</Filter>
+      <Filter>GUI\imgui</Filter>
     </ClCompile>
     <ClCompile Include="side\imgui\imgui_widgets.cpp">
-      <Filter>imgui</Filter>
+      <Filter>GUI\imgui</Filter>
     </ClCompile>
     <ClCompile Include="backend\project.ixx">
       <Filter>Backend</Filter>
@@ -175,22 +175,28 @@
     <ClCompile Include="frontend\BarChart.ixx">
       <Filter>GUI\WindowWidgets</Filter>
     </ClCompile>
+    <ClCompile Include="backend\Layers\VectorLayers.ixx">
+      <Filter>Backend\Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="frontend\GuiVectorLayer.ixx">
+      <Filter>GUI\WindowWidgets</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="side\imgui\imgui_internal.h">
-      <Filter>imgui</Filter>
+      <Filter>GUI\imgui</Filter>
     </ClInclude>
     <ClInclude Include="side\imgui\imgui.h">
-      <Filter>imgui</Filter>
+      <Filter>GUI\imgui</Filter>
     </ClInclude>
     <ClInclude Include="side\imgui\backends\imgui_impl_glfw.h">
-      <Filter>imgui</Filter>
+      <Filter>GUI\imgui</Filter>
     </ClInclude>
     <ClInclude Include="side\imgui\backends\imgui_impl_opengl3.h">
-      <Filter>imgui</Filter>
+      <Filter>GUI\imgui</Filter>
     </ClInclude>
     <ClInclude Include="side\imgui\backends\imgui_impl_opengl3_loader.h">
-      <Filter>imgui</Filter>
+      <Filter>GUI\imgui</Filter>
     </ClInclude>
     <ClInclude Include="frontend\FrontTypes.h">
       <Filter>GUI</Filter>

@@ -20,6 +20,7 @@ import RasterLayers;
 
 import GuiWidgets;
 import ClassifierInterface;
+import VectorLayers;
 
 // Todo.
 // 2 режима
@@ -160,6 +161,11 @@ public:
 		return proj->exeFilter(layer, algNum);
 	}
 
+
+	VectorLayer* addVectorLayer()
+	{
+		return proj->addLayerData<VectorLayer>();
+	}
 
 	RasterFromDiskLayer* loadImageOrProject(const BackPathStr& path)
 	{

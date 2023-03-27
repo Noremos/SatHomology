@@ -457,7 +457,7 @@ public:
 		ApplicationVec2 offset = win->Pos + pos;
 		ApplicationVec2 csreenStar = offset + par->localDisplayPos;
 		ApplicationVec2 csreenEnd = offset + par->localDisplayPos + par->displaySize;
-		float markerSize = 5;//MAX(1, par->displaySize.x / par->width);
+		float markerSize = 2;//MAX(1, par->displaySize.x / par->width);
 		float pixelSize = par->displaySize.x / par->width;
 
 		const bc::barvector& pointsi = *points;

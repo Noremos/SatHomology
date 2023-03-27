@@ -9,6 +9,7 @@ import BarcodeModule;
 import GuiWidgets;
 import GuiOverlap;
 import IOCore;
+import VectorLayers;
 
 class LayersVals;
 
@@ -404,6 +405,115 @@ public:
 };
 
 
+// Vector layer
+
+export class VectorGuiLayer : public GuiLayerData<VectorLayer>
+{
+public:
+	GuiDrawImage main;
+	std::vector<ImVec2> points;
+	VectorGuiLayer(VectorLayer* fromCore) : GuiLayerData<VectorLayer>(fromCore)
+	{ }
+
+	virtual ~VectorGuiLayer()
+	{ }
+
+	virtual void toGuiData()
+	{
+		GuiLayerData<VectorLayer>::toGuiData();
+		for (auto& d : data->primetive.draws)
+		{
+			points.push_back(ImVec2(d.x, d.y));
+		}
+	}
+
+	virtual void draw(ImVec2 pos, ImVec2 size)
+	{
+		if (!IGuiLayer::visible)
+			return;
+
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
+
+		ImGui::SetCursorPos(pos);
+		if (!ImGui::BeginChild(data->name.c_str(), size, false, window_flags))
+		{
+			ImGui::EndChild();
+			return;
+		}
+
+		auto* win = ImGui::GetCurrentWindow();
+
+		ApplicationVec2 offset = win->Pos + pos;
+		ApplicationVec2 csreenStar = offset;
+		ApplicationVec2 csreenEnd = offset + size;
+
+		
+		switch (data->vecType)
+		{
+		case VectorLayer::VecType::points:
+			drawPoints(offset, csreenStar, csreenEnd);
+			break;
+			drawPolygon(offset, csreenStar, csreenEnd);
+			break;
+		default:
+			break;
+		}
+
+		ImGui::EndChild();
+	}
+
+
+	void drawPoints(ApplicationVec2 offset, ApplicationVec2 csreenStar, ApplicationVec2 csreenEnd)
+	{
+		ImDrawList* list = ImGui::GetWindowDrawList();
+
+		ImColor bigColor(128, 0, 255);
+		ImColor midColor(220, 200, 0);
+		float markerSize = 2;//MAX(1, par->displaySize.x / par->width);
+
+		for (const auto& p : points)
+		{
+			// TL is a Begin()
+			ItemVec2 pi = p;// (par->toDisplayX(p.getX()), par->toDisplayY(p.getY()));
+			pi += offset; // TL coords from app
+
+			if (pi.x < csreenStar.x || pi.y < csreenStar.y)
+				continue;
+			if (pi.x > csreenEnd.x || pi.y > csreenEnd.y)
+				continue;
+
+			// Center pixel for big images
+			list->AddCircleFilled(pi, 1.5 * markerSize, bigColor);
+			list->AddCircleFilled(pi, 0.8 * markerSize, midColor);
+		}
+	}
+
+
+	void drawPolygon(ApplicationVec2 offset, ApplicationVec2 csreenStar, ApplicationVec2 csreenEnd)
+	{
+		ImDrawList* list = ImGui::GetWindowDrawList();
+
+		ImColor bigColor(128, 0, 255);
+		ImColor midColor(220, 200, 0);
+		float markerSize = 2;//MAX(1, par->displaySize.x / par->width);
+
+		list->AddPolyline(points.data(), points.size(), bigColor, ImDrawFlags_Closed, 0);
+
+	}
+	virtual void drawOverlap(ImVec2, ImVec2)
+	{ }
+
+	void drawProperty()
+	{
+		ImGui::Text("Tile size");
+		
+	}
+
+	void applyPropertyChanges()
+	{
+
+	}
+};
 
 export class LayersVals
 {

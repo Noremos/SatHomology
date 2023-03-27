@@ -8,7 +8,7 @@
 #include <future>
 
 
-#include "sol3/sol.hpp"
+//#include "sol3/sol.hpp"
 //
 //#include <GLFW/glfw3.h>
 //#include "../libs/glew/include/GL/glew.h"
@@ -22,6 +22,7 @@ import GuiOverlap;
 import GuiClassifierModule;
 import GuiWidgets;
 import IOCore;
+import VectorLayers;
 
 //import Lua;
 
@@ -168,8 +169,8 @@ namespace MyApp
 
 		void runStrcit()
 		{
-			sol::state lua;
-			lua.script(text);
+			//sol::state lua;
+			//lua.script(text);
 			//assert(lua. <int>("beep").boop == 1);
 		}
 	};
@@ -405,7 +406,7 @@ namespace MyApp
 						tbVals.enableProcessBtn = true;
 						if (layer)
 						{
-							 layersVals.addLayer<RasterFromDiskGuiLayer>("Loaded", layer);
+							layersVals.addLayer<RasterFromDiskGuiLayer>("Loaded", layer);
 						}
 						else
 							layersVals.loadLayers();
@@ -938,6 +939,7 @@ namespace MyApp
 		if (!ImGui::Begin("Tools"))
 		{
 			ImGui::End();
+			return;
 		}
 
 		if (ImGui::Button("Activation"))
@@ -947,6 +949,20 @@ namespace MyApp
 			layersVals.setLayers(layerData, "barcode");
 		}
 
+		if (ImGui::Button("Add vector Layer"))
+		{
+			//backend.
+			VectorLayer* layerData = backend.addVectorLayer();
+			layersVals.addLayer<VectorGuiLayer, VectorLayer>("vector", layerData);
+		}
+
+		// Add ploygon;
+		// Add line
+		// Move point
+		// Move line
+		// Drop
+		// export
+		// import
 
 		ImGui::End();
 	}
@@ -987,6 +1003,8 @@ namespace MyApp
 		LayerFactory::RegisterFactory<RasterGuiLayer, RasterLayer>(RASTER_LAYER_FID);
 		LayerFactory::RegisterFactory<RasterLineGuiLayer, RasterLineLayer>(RASTER_LINE_LAYER_FID);
 		LayerFactory::RegisterFactory<RasterFromDiskGuiLayer, RasterFromDiskLayer>(RASTER_DISK_LAYER_FID);
+		LayerFactory::RegisterFactory<VectorGuiLayer, VectorLayer>(VECTOR_LAYER_FID);
+		//LayerFactory::RegisterFactory<VectorGuiLayer, VetorLayer>(VECTOR_LAYER_FID);
 
 		classerVals.ioLayer = layersVals.getIoLayer();
 		centerVals.heimap.enable = false;

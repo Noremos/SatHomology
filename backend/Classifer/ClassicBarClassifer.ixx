@@ -362,7 +362,7 @@ public:
 		item->setType();
 
 		assert(classes.size() !=0);
-		auto classHolder = getClass(classInd);
+		auto& classHolder = getClass(classInd);
 		classHolder.cacheIndex.insert(std::make_pair(dataId, classHolder.container.count()));
 		classHolder.container.addItem(item);
 	}

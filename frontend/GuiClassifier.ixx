@@ -238,7 +238,7 @@ export struct GuiClassifer
 
 			ImGui::BeginDisabled(!selectedPrevied.hasData());
 			ImGui::SameLine();
-			if (ImGui::Button("Drop"))
+			if (ImGui::Button("Drop data"))
 			{
 				auto selectedClass = classesLB.currentValue();
 				proj->removeTrainData(selectedClass.classId, selectedPrevied.dbId);
