@@ -10,6 +10,7 @@ import GuiWidgets;
 import GuiOverlap;
 import IOCore;
 import VectorLayers;
+import CSBind;
 
 class LayersVals;
 
@@ -22,11 +23,12 @@ protected:
 	int copiedId = -1; // We need to cpy Id to avoid cases when core was destroid
 public:
 	bool visible = true;
+	CoordSystem cs;
 
-	virtual void draw(ImVec2 pos, ImVec2 size) = 0;
+	virtual void draw(const DisplaySystem& ds) = 0;
 	virtual void drawOverlap(ImVec2 pos, ImVec2 size) = 0;
 	virtual const char* getName() const = 0;
-	virtual void setName(const BackString& name) = 0;
+	virtual void setName(const BackString& name, bool updateOnlyEmpty = false) = 0;
 
 	virtual GuiImage* getIcon() = 0;
 
@@ -36,7 +38,7 @@ public:
 	virtual void drawProperty() = 0;
 	virtual void applyPropertyChanges() = 0;
 
-	virtual void onClick(ImVec2)
+	virtual void onClick(BackPoint)
 	{ }
 
 	virtual int getSysId()
@@ -109,8 +111,8 @@ public:
 	virtual void toGuiData()
 	{
 		copiedId = data->getSysId();
+		strId = data->name + intToStr(copiedId);
 	}
-
 
 	T* getData()
 	{
@@ -137,8 +139,11 @@ public:
 		return data->prov;
 	}
 
-	void setName(const BackString& name)
+	void setName(const BackString& name, bool updateOnlyEmpty = false)
 	{
+		if (data->name.length() != 0 && updateOnlyEmpty)
+			return;
+
 		data->name = name;
 		strId = name + intToStr(data->id);
 	}
@@ -170,15 +175,19 @@ public:
 		newOffsetSize = getOffsetSize() / 10;
 	}
 
-	virtual void draw(ImVec2 pos, ImVec2 size)
+	virtual void draw(const DisplaySystem& ds)
 	{
 		if (!IGuiLayer::visible)
 			return;
 
-		main.drawImage(GuiLayerData<T>::getName(), pos, size);
+		auto start = ds.projItemLocalToDisplay(GuiLayerData<T>::getData()->cs, {0,0});
+		auto end = ds.getDisplayEndPos();
+		//ds.projItemGlobToLocal(data->cs, data->orign)
+
+		main.drawImage(GuiLayerData<T>::getName(), toIV(start), toIV(end - start));
 	}
 
-	virtual void drawOverlap(ImVec2, ImVec2)
+	virtual void drawOverlap(ImVec2 pos, ImVec2 size)
 	{ }
 
 	int newTileSize;
@@ -263,17 +272,17 @@ public:
 		icon.setImage(data->mat, 32, 32, true);
 	}
 
-	virtual void draw(ImVec2 pos, ImVec2 size)
+	virtual void draw(const DisplaySystem& ds)
 	{
-		TiledRasterGuiLayer::draw(pos, size);
+		TiledRasterGuiLayer::draw(ds);
 		if (!visible)
 			return;
 
-		clickHandler.draw(pos, size);
+		clickHandler.draw(ds);
 		drawLineInfoWin();
 	}
 
-	virtual void onClick(ImVec2 pos)
+	virtual void onClick(BackPoint pos)
 	{
 		// if (clicked)
 		{
@@ -427,33 +436,27 @@ public:
 		}
 	}
 
-	virtual void draw(ImVec2 pos, ImVec2 size)
+	virtual void draw(const DisplaySystem& ds)
 	{
-		if (!IGuiLayer::visible)
+		if (!IGuiLayer::visible || points.size() == 0)
 			return;
 
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
 
-		ImGui::SetCursorPos(pos);
-		if (!ImGui::BeginChild(data->name.c_str(), size, false, window_flags))
+		ImGui::SetCursorPos(ds.displayPos);
+		if (!ImGui::BeginChild(data->name.c_str(), ds.getDisplaySize(), false, window_flags))
 		{
 			ImGui::EndChild();
 			return;
 		}
 
-		auto* win = ImGui::GetCurrentWindow();
 
-		ApplicationVec2 offset = win->Pos + pos;
-		ApplicationVec2 csreenStar = offset;
-		ApplicationVec2 csreenEnd = offset + size;
-
-		
 		switch (data->vecType)
 		{
 		case VectorLayer::VecType::points:
-			drawPoints(offset, csreenStar, csreenEnd);
+			drawPoints(ds);
 			break;
-			drawPolygon(offset, csreenStar, csreenEnd);
+			//drawPolygon(ds);
 			break;
 		default:
 			break;
@@ -463,29 +466,39 @@ public:
 	}
 
 
-	void drawPoints(ApplicationVec2 offset, ApplicationVec2 csreenStar, ApplicationVec2 csreenEnd)
+	void drawPoints(const DisplaySystem& ds)
 	{
 		ImDrawList* list = ImGui::GetWindowDrawList();
 
-		ImColor bigColor(128, 0, 255);
-		ImColor midColor(220, 200, 0);
-		float markerSize = 2;//MAX(1, par->displaySize.x / par->width);
+		auto* win = ImGui::GetCurrentWindow();
+		//ds.
+		//ApplicationVec2 offset = win->Pos + ds.winPos;
+		//ApplicationVec2 csreenStar = ds.pos;// ds. ds.getLocalToGlob(cs, ds.pos);
+		//ApplicationVec2 csreenEnd = ds.pos + ds.size;//ds.getLocalToGlob(cs, ds.pos + ds.size);
 
-		for (const auto& p : points)
-		{
-			// TL is a Begin()
-			ItemVec2 pi = p;// (par->toDisplayX(p.getX()), par->toDisplayY(p.getY()));
-			pi += offset; // TL coords from app
 
-			if (pi.x < csreenStar.x || pi.y < csreenStar.y)
-				continue;
-			if (pi.x > csreenEnd.x || pi.y > csreenEnd.y)
-				continue;
+		//ImColor bigColor(128, 0, 255);
+		//ImColor midColor(220, 200, 0);
+		//float markerSize = 2;//MAX(1, par->displaySize.x / par->width);
 
-			// Center pixel for big images
-			list->AddCircleFilled(pi, 1.5 * markerSize, bigColor);
-			list->AddCircleFilled(pi, 0.8 * markerSize, midColor);
-		}
+		//for (const auto& p : points)
+		//{
+		//	// TL is a Begin()
+		//	ItemVec2 pi = p - ds.pos;// (par->toDisplayX(p.getX()), par->toDisplayY(p.getY()));
+		//	//data->cs.
+
+		//	if (pi.x < csreenStar.x || pi.y < csreenStar.y)
+		//		continue;
+		//	if (pi.x > csreenEnd.x || pi.y > csreenEnd.y)
+		//		continue;
+
+		//	auto p = ds.projItemGlobToLoc(cs, pi);
+		//	pi = offset + ImVec2(p.x, p.y);
+
+		//	// Center pixel for big images
+		//	list->AddCircleFilled(pi, 1.5 * markerSize, bigColor);
+		//	list->AddCircleFilled(pi, 0.8 * markerSize, midColor);
+		//}
 	}
 
 
@@ -506,7 +519,6 @@ public:
 	void drawProperty()
 	{
 		ImGui::Text("Tile size");
-		
 	}
 
 	void applyPropertyChanges()
@@ -524,6 +536,7 @@ public:
 	LayersList<IGuiLayer> layers;
 
 	ImVec2 drawSize;
+	DisplaySystem sys;
 
 
 	//LayersVals(GuiBackend& back) : backend(back)
@@ -620,7 +633,7 @@ public:
 		else
 			iol.out = layer->getSysId();
 
-		layer->setName(name);
+		layer->setName(name, true);
 		layer->toGuiData();
 	}
 
@@ -647,7 +660,7 @@ public:
 		}
 	}
 
-	void draw(const ImVec2 pos, const ImVec2 size)
+	void draw(const DisplaySystem& ds)
 	{
 		uint i = 0;
 		for (auto& lay : layers)
@@ -656,7 +669,7 @@ public:
 			// ImGui::SetNextWindowSize(size);
 			// ImGui::SetNextWindowViewport(viewport->ID);
 			ImGui::PushID(i);
-			lay->draw(pos, size);
+			lay->draw(ds);
 			ImGui::PopID();
 			++i;
 		}
@@ -667,14 +680,14 @@ public:
 		//ImGui::SetNextWindowViewport(viewport->ID);
 	}
 
-	void drawOverlap(const ImVec2 pos, const ImVec2 size)
+	void drawOverlap(ImVec2 pos, ImVec2 size)
 	{
 		auto t = getCurrentLayer();
 		if (t)
 			t->drawOverlap(pos, size);
 	}
 
-	void onClick(ImVec2 click)
+	void onClick(BackPoint click)
 	{
 		if (iol.in == -1)
 			return;

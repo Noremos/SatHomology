@@ -167,6 +167,11 @@ public:
 		return proj->addLayerData<VectorLayer>();
 	}
 
+	void removeLayer(uint id)
+	{
+		proj->layers.remove(id);
+	}
+
 	RasterFromDiskLayer* loadImageOrProject(const BackPathStr& path)
 	{
 		RasterFromDiskLayer* layer = nullptr;

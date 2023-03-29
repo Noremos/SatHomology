@@ -19,11 +19,21 @@ const int ImGuiWindowFlags_NoDocking = 0;
 
 void ResizeImage(int& width, int& height, int max_width, int max_height);
 
+
+using ApplicationVec2 = ImVec2;
+using WindowVec2 = ImVec2; // The top-left is a begin window
+using ItemVec2 = ImVec2; // The top-left is an Item (image) coords
+
 struct TextureId
 {
 	GLuint textureId;
 	~TextureId();
 };
+
+inline ImVec2 toIV(const BackPoint& p)
+{
+	return ImVec2(p.x, p.y);
+}
 
 class GuiImage
 {

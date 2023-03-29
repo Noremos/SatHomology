@@ -4,6 +4,7 @@ module;
 #include <iostream>
 #include <functional>
 #include <vector>
+#include <assert.h>
 
 #include "../../Bind/Common.h"
 
@@ -18,6 +19,7 @@ import CacheFilesModule;
 
 import BarcodeModule;
 import TrainIO;
+import MHashMap;
 
 
 export class BarlineClass : public IClassItem
@@ -361,7 +363,7 @@ public:
 		item->barlines = std::move(raw->childer);
 		item->setType();
 
-		assert(classes.size() !=0);
+		assert(classes.size() != 0);
 		auto& classHolder = getClass(classInd);
 		classHolder.cacheIndex.insert(std::make_pair(dataId, classHolder.container.count()));
 		classHolder.container.addItem(item);

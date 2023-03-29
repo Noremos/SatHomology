@@ -94,8 +94,9 @@ public:
 	{
 		if (!enable)
 			return;
-
-		heimap.drawImage("Heimap", pos, size);
+		//auto p = ds.projItemGlobToLoc(ds.sysCs, ds.pos);
+		//auto ps = ds.projItemGlobToLoc(ds.sysCs, ds.pos + ds.size);
+		//heimap.drawImage("Heimap", ImVec2(p.x, p.y), ImVec2(ps.x, ps.y));
 	}
 };
 

@@ -18,13 +18,6 @@ import BarcodeModule;
 using LayerMetaProvider = MetadataProvider;
 
 
-
-export struct BackPoint
-{
-	double x;
-	double y;
-};
-
 export class DrawPrimetive
 {
 public:

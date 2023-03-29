@@ -172,6 +172,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="backend\Layers\VectorLayers.ixx" />
+    <ClCompile Include="backend\CSBind.ixx" />
+    <ClCompile Include="Bind\Common.cpp" />
+    <ClCompile Include="Bind\MHashMap.ixx" />
     <ClCompile Include="frontend\GuiVectorLayer.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\Barcode.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\Barline.ixx" />

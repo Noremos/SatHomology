@@ -181,6 +181,15 @@
     <ClCompile Include="frontend\GuiVectorLayer.ixx">
       <Filter>GUI\WindowWidgets</Filter>
     </ClCompile>
+    <ClCompile Include="backend\CSBind.ixx">
+      <Filter>Backend\Bind</Filter>
+    </ClCompile>
+    <ClCompile Include="Bind\Common.cpp">
+      <Filter>Backend\Bind</Filter>
+    </ClCompile>
+    <ClCompile Include="Bind\MHashMap.ixx">
+      <Filter>Backend\Bind</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="side\imgui\imgui_internal.h">

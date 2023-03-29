@@ -1,6 +1,8 @@
 module;
 
 #include <cassert>
+#include <functional>
+
 #include "../../Bind/Common.h"
 
 export module ClassifierInterface;
@@ -13,6 +15,7 @@ import BarcodeModule;
 
 import MetadataIOCore;
 import TrainIO;
+import MHashMap;
 
 export struct FilterInfo
 {

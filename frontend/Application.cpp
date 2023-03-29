@@ -266,6 +266,9 @@ namespace MyApp
 		};
 
 		bool openPop = false;
+		bool openCoordSystemPopup = false;
+		std::vector<BackString> names;
+		int selectedName = 0;
 	};
 
 	TopbarValues tbVals;
@@ -274,7 +277,8 @@ namespace MyApp
 
 	struct ImagesValues
 	{
-		GuiResizableContainer imgMain;
+		GuiCSDisplayContainer resizble;
+		//GuiResizableContainer resizble;
 		HeimapOverlap heimap;
 		TilemapOverlap tilemap;
 
@@ -374,10 +378,10 @@ namespace MyApp
 
 				if (ImGui::Button("OK", ImVec2(120, 0)))
 				{
-					backend.loadImageOrProject(path);
+					auto* core = backend.loadImageOrProject(path);
 					if (backend.isImageLoaded())
 					{
-						tbVals.enableProcessBtn = true;
+
 						//centerVals.tilemap.init(tileSize = backend.getTileSize();
 						//classerVals.loadClassImages();
 					}
@@ -394,19 +398,29 @@ namespace MyApp
 				ImGui::EndPopup();
 			}
 
+			static RasterFromDiskLayer* layer;
+
 			ImGui::SameLine();
 			if (ImGui::Button("Load prj"))
 			{
 				BackPathStr path = openImageOrProject();
 				if (!path.empty())
 				{
-					RasterFromDiskLayer* layer = backend.loadImageOrProject(path);
+					layer = backend.loadImageOrProject(path);
 					if (backend.isImageLoaded())
 					{
-						tbVals.enableProcessBtn = true;
 						if (layer)
 						{
-							layersVals.addLayer<RasterFromDiskGuiLayer>("Loaded", layer);
+							if (layer->hasCS())
+							{
+								tbVals.enableProcessBtn = true;
+								layersVals.addLayer<RasterFromDiskGuiLayer>("Loaded", layer);
+							}
+							else
+							{
+								tbVals.names = BackProj::getWtkNames();
+								ImGui::OpenPopup("SetupCS");
+							}
 						}
 						else
 							layersVals.loadLayers();
@@ -419,6 +433,51 @@ namespace MyApp
 				}
 			}
 
+			if (ImGui::BeginPopupModal("SetupCS", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+			{
+				if (ImGui::BeginCombo("Select CS", tbVals.names[tbVals.selectedName].c_str()))
+				{
+					int k = 0;
+					for (auto& n : tbVals.names)
+					{
+						bool seled = ImGui::Selectable(n.c_str());
+						if (seled)
+						{
+							tbVals.selectedName = k;
+						}
+						++k;
+					}
+
+					ImGui::EndCombo();
+				}
+
+				ImGui::InputDouble("origin x", &layer->cs.globOrigin.x);
+				ImGui::InputDouble("origin y", &layer->cs.globOrigin.y);
+
+				ImGui::InputDouble("Scale x", layer->cs.getScaleX());
+				ImGui::InputDouble("Scale y", layer->cs.getScaleY());
+
+				ImGui::Separator();
+				if (ImGui::Button("OK", ImVec2(120, 0)))
+				{
+					tbVals.enableProcessBtn = true;
+					layersVals.addLayer<RasterFromDiskGuiLayer>("Loaded", layer);
+					tbVals.names.clear();
+
+					ImGui::CloseCurrentPopup();
+				}
+
+				ImGui::SameLine();
+				if (ImGui::Button("Cancel", ImVec2(120, 0)))
+				{
+					backend.removeLayer(layer->id);
+					tbVals.names.clear();
+					layer = nullptr;
+					ImGui::CloseCurrentPopup();
+				}
+
+				ImGui::EndPopup();
+			}
 
 			// Always center this window when appearing
 			ImVec2 center = ImGui::GetMainViewport()->GetCenter();
@@ -594,20 +653,21 @@ namespace MyApp
 
 		drawSize.x -= 10;
 		drawSize.y -= 20;
-		pos = {0,0};
+
+		auto& ds = centerVals.resizble.ds;
+		ds.displayPos = {0,0};
 
 
 		auto window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
 			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoDocking;
 			window_flags |= ImGuiWindowFlags_HorizontalScrollbar;
 
-		if (centerVals.imgMain.Begin("ImagePreview"))
+		if (centerVals.resizble.Begin("ImagePreview"))
 		{
-			ImVec2 rsize = centerVals.imgMain.displaySize;
-			layersVals.draw(pos, rsize);
-			if (centerVals.imgMain.clicked)
+			layersVals.draw(ds);
+			if (centerVals.resizble.clicked)
 			{
-				layersVals.onClick(centerVals.imgMain.clickedPos);
+				layersVals.onClick(centerVals.resizble.clickedPos);
 				RasterLineGuiLayer* lay = layersVals.getCastCurrentLayer<RasterLineGuiLayer>();
 				if (lay && lay->selectedLine)
 				{
@@ -615,16 +675,16 @@ namespace MyApp
 				}
 			}
 
-			centerVals.heimap.draw(pos, rsize);
+			centerVals.heimap.draw(ds.displayPos, ds.getDisplaySize());
 
 			TiledRasterGuiLayer<RasterFromDiskLayer>* tlay = layersVals.getCastCurrentLayer<TiledRasterGuiLayer<RasterFromDiskLayer>>();
 			if (tlay)
 			{
 				centerVals.tilemap.init(&tlay->main, &tlay->getProvider());
-				centerVals.tilemap.draw(pos, rsize);
+				centerVals.tilemap.draw(ds.displayPos, ds.getDisplaySize());
 			}
 		}
-		centerVals.imgMain.end(pos, drawSize);
+		centerVals.resizble.end(ds.displayPos, ds.getDisplaySize());
 
 
 		pos.x += drawSize.x;
@@ -998,8 +1058,11 @@ namespace MyApp
 	}
 
 
-	void MyApp::Init()
+	void MyApp::Init(const char* root)
 	{
+		Variables::setRoot(root);
+		centerVals.resizble.ds.sysProj.init(4326);
+
 		LayerFactory::RegisterFactory<RasterGuiLayer, RasterLayer>(RASTER_LAYER_FID);
 		LayerFactory::RegisterFactory<RasterLineGuiLayer, RasterLineLayer>(RASTER_LINE_LAYER_FID);
 		LayerFactory::RegisterFactory<RasterFromDiskGuiLayer, RasterFromDiskLayer>(RASTER_DISK_LAYER_FID);

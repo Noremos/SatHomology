@@ -2,6 +2,7 @@ module;
 #include <memory>
 #include <unordered_set>
 #include <algorithm>
+#include <functional>
 
 #include "../../Bind/Common.h"
 
@@ -19,6 +20,8 @@ import MetadataIOCore;
 
 import ImgReader;
 import SimpleImgReaderModule;
+import MHashMap;
+
 
 using LayerMetaProvider = MetadataProvider;
 
@@ -497,7 +500,14 @@ public:
 		int displayWid = images[imgIndex].width();
 		if (imgType == ReadType::Tiff)
 		{
-			dynamic_cast<TiffReader*>(reader)->setCurrentSubImage(imgIndex);
+			TiffReader* treader = static_cast<TiffReader*>(reader);
+			treader->setCurrentSubImage(imgIndex);
+			const auto& tags = treader->getTags();
+
+			auto& p = tags.ModelTiepointTag.points[0];
+			cs.setOrigin(p.X, p.Y);
+			cs.setScale(tags.ModelPixelScaleTag.x, tags.ModelPixelScaleTag.y);
+
 			subImageIndex = imgIndex;
 		}
 		else

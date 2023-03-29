@@ -1,17 +1,103 @@
 module;
 
 #include "GuiCommon.h"
-
-#include "imgui.h"
-#include <imgui_internal.h>
-
 #include <algorithm>
 
 export module GuiWidgets;
 
-export using ApplicationVec2 = ImVec2;
-export using WindowVec2 = ImVec2; // The top-left is a begin window
-export using ItemVec2 = ImVec2; // The top-left is a Item (image) coords
+import CSBind;
+
+
+struct CDDisplayPS
+{
+	WindowVec2 csPos;
+	ImVec2 csSize;
+};
+
+export using LocalDisplayPS = CDDisplayPS;
+export using GlobalDisplayPS = CDDisplayPS;
+
+export struct DisplaySystem
+{
+	ImVec2 displayPos;
+	BackPoint displaySize;
+
+	BackPoint csPos; // glob
+	BackPoint csSize; // glob
+	BackProj sysProj; // Dest/system coord system
+
+
+	ImVec2 getDisplaySize() const
+	{
+		return ImVec2(displaySize.x, displaySize.y);
+	}
+
+	ImVec2 projItemGlobToSys(const CSBindnig& itemCs, ImVec2 itemPos) const
+	{
+		auto p = sysProj.getThisProj(itemCs.proj, { itemPos.x, itemPos.y });
+		return ImVec2(p.x, p.y);
+	}
+
+	//static ImVec2 tov2(BackPixelPoint p)
+	//{
+	//	return ImVec2(p.x, p.y);
+	//}
+
+	BackPoint projItemGlobToDisplay(const CSBindnig& itemCs, ImVec2 itemPos) const
+	{
+		return projItemGlobToDisplay(itemCs, BackPoint(itemPos.x, itemPos.y));
+	}
+
+	BackPoint projItemGlobToDisplay(const CSBindnig& itemCs, BackPoint itemPos) const
+	{
+		auto ps = sysProj.getThisProj(itemCs.proj, itemPos);
+		return toDisplay(ps);
+	}
+
+	//BackPixelPoint projItemGlobToLoc(const CSBindnig& itemCs, BackPoint itemPos) const
+	//{
+	//	auto ps = sysCs.getThisProj(itemCs, { itemPos.x, itemPos.y });
+	//	return sysCs.toLocal(ps);
+	//}
+
+	BackPoint projItemLocalToDisplay(const CSBindnig& itemCs, BackPixelPoint itemPos) const
+	{
+		BackPoint bp = itemCs.toGlobal(itemPos.x, itemPos.y);
+		auto ps = sysProj.getThisProj(itemCs.proj, bp);
+		return toDisplay(ps);
+	}
+
+	BackPoint getDisplayEndPos() const
+	{
+		return toDisplay(csPos + csSize);
+	}
+
+
+	 //int getRealX(int x)
+	 //{
+	 //	return static_cast<float>(x - csPos) * (width / displaySize.x);
+	 //}
+
+	BackPoint toSysGlob(const BackPoint& display)
+	{
+		return (display) * (csSize / displaySize) + csPos;
+	}
+
+	BackPoint toDisplay(const BackPoint& p) const
+	{
+		return (p - csPos) * (displaySize / csSize);
+	}
+
+	 //int toDisplayX(int x)
+	 //{
+		// return static_cast<float>(x) * (displaySize.x / width) + localDisplayPos.x;
+	 //}
+	 //int toDisplayY(int y)
+	 //{
+	 //	return static_cast<float>(y) * (displaySize.y / height) + localDisplayPos.y;
+	 //}
+};
+
 
 export template<class T>
 struct SelectableKeyValues
@@ -138,7 +224,7 @@ private:
 
 export class GuiDrawInfo
 {
-	ImVec2 pos;
+	ImVec2 csPos;
 	ImVec2 size;
 };
 
@@ -229,6 +315,92 @@ public:
 	}
 };
 
+// Coord system displayer
+export class GuiCSDisplayContainer
+{
+	BackPoint zoom = BackPoint(1, 1);
+public:
+	DisplaySystem ds;
+
+	BackPoint clickedPos;
+
+	GuiCSDisplayContainer()
+	{
+		ds.csPos = BackPoint(0, 0);
+		ds.csSize = BackPoint(1000, 1000);
+	}
+
+	float getZoom()
+	{
+		return zoom.x;
+	}
+
+	bool clicked = false;
+
+	bool good;
+	bool Begin(const char* name)
+	{
+		auto window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
+			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoDocking;
+		if (!ImGui::Begin(name, NULL, window_flags))
+		{
+			good = false;
+		}
+		else
+			good = true;
+
+		return good;
+	}
+
+	void end(ImVec2, ImVec2 realSize)
+	{
+		if (!good)
+			return;
+
+		auto* win = ImGui::GetCurrentWindow();
+		auto wpos = ds.csPos;
+		const bool hovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows);
+
+		clicked = false;
+		bool drgged = false;
+		bool wheeled = false;
+		if (hovered)
+		{
+			drgged = ImGui::IsMouseDragging(ImGuiMouseButton_Left);
+			clicked = ImGui::IsMouseClicked(ImGuiMouseButton_Right);
+			wheeled = ImGui::GetIO().MouseWheel != 0;
+		}
+		if (clicked)
+		{
+			auto mp = ImGui::GetIO().MousePos;
+			clickedPos = ds.toSysGlob(BackPoint(mp.x, mp.y));
+		}
+
+		auto& offset = ds.csPos;
+
+		if (drgged)
+		{
+			offset.x -= ImGui::GetIO().MouseDelta.x * zoom.x;
+			offset.y -= ImGui::GetIO().MouseDelta.y * zoom.y;
+		}
+		if (wheeled)
+		{
+			float ads = ImGui::GetIO().MouseWheel * 0.1f;
+			zoom.x += ads;
+			zoom.y += ads;
+			zoom.x = zoom.x > 0.1f ? zoom.x : 0.1f;
+			zoom.y = zoom.y > 0.1f ? zoom.y : 0.1f;
+
+			offset.x += win->Size.x * ads;
+			offset.y += win->Size.y * ads;
+		}
+
+		ds.csSize = ds.csSize * zoom;
+
+		ImGui::End();
+	}
+};
+
 
 export class GuiDrawImage : public GuiImage
 {
@@ -260,20 +432,20 @@ public:
 		return static_cast<float>(y) * (displaySize.y / height) + localDisplayPos.y;
 	}
 
-	void drawImage(const char* name, ImVec2 pos, ImVec2 size)
+	void drawImage(const char* name, ImVec2 lpos, ImVec2 lsize)
 	{
 		auto window_flags = ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoMove;
 
-		ImGui::SetCursorPos(pos);
-		if (ImGui::BeginChild(name, size, false, window_flags))
+		ImGui::SetCursorPos(lpos);
+		if (ImGui::BeginChild(name, lsize, false, window_flags))
 		{
-			drawTexture(pos, size);
+			drawTexture(lpos, lsize);
 		}
 		ImGui::EndChild();
 	}
 
 private:
-	void drawTexture(ImVec2 pos, ImVec2 size)
+	void drawTexture(ImVec2 csPos, ImVec2 csSize)
 	{
 		auto textId = getTextureId();
 		if (textId == 0)
@@ -281,26 +453,26 @@ private:
 			ImDrawList* list = ImGui::GetWindowDrawList();
 			localDisplayPos.x = 5;
 			localDisplayPos.y = 5;
-			ImVec2 maxPos = pos;
-			maxPos.x += size.x - 10;
-			maxPos.y += size.y - 30;
+			ImVec2 maxPos = csPos;
+			maxPos.x += csSize.x - 10;
+			maxPos.y += csSize.y - 30;
 
-			ImVec2 minPos = pos + localDisplayPos;
+			ImVec2 minPos = csPos + localDisplayPos;
 			list->AddRectFilled(minPos, maxPos, ImColor(115, 140, 153));
-			//ImGui::Image((void*)0, size);
+			//ImGui::Image((void*)0, csSize);
 			return;
 		}
 
 		int newWid = width;
 		int newHei = height;
 
-		ResizeImage(newWid, newHei, size.x, size.y);
+		ResizeImage(newWid, newHei, csSize.x, csSize.y);
 		this->scaleFactor = width / static_cast<float>(newWid);
 		displaySize.x = newWid;
 		displaySize.y = newHei;
 
-		localDisplayPos.x = (size.x - newWid) / 2;
-		localDisplayPos.y = (size.y - newHei) / 2;
+		localDisplayPos.x = (csSize.x - newWid) / 2;
+		localDisplayPos.y = (csSize.y - newHei) / 2;
 		ImGui::SetCursorPos(localDisplayPos);
 		ImGui::Image((void*)(intptr_t)textId, ImVec2(newWid, newHei));
 	}
@@ -390,6 +562,7 @@ export class GuiDrawCloudPointClick : public GuiImage
 public:
 	GuiDrawImage* par = nullptr;
 	const bc::barvector* points = nullptr;
+	CoordSystem cs;
 
 	//void setPoints(bc::barvector* _point, bool drop)
 	//{
@@ -406,7 +579,7 @@ public:
 	//}
 
 
-	void draw(ImVec2 pos, ImVec2 winSize)
+	void draw(const DisplaySystem& ds)
 	{
 		if (points == nullptr)
 			return;
@@ -440,9 +613,8 @@ public:
 
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings;
 		window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
-
-		ImGui::SetCursorPos(pos);
-		if (!ImGui::BeginChild("DrawClick", winSize, false, window_flags))
+		ImGui::SetNextWindowPos(ds.displayPos);
+		if (!ImGui::BeginChild("DrawClick", ds.getDisplaySize(), false, window_flags))
 		{
 			ImGui::EndChild();
 			return;
@@ -454,29 +626,38 @@ public:
 		ImColor bigColor(128, 0, 255);
 		ImColor midColor(220, 200, 0);
 
-		ApplicationVec2 offset = win->Pos + pos;
-		ApplicationVec2 csreenStar = offset + par->localDisplayPos;
-		ApplicationVec2 csreenEnd = offset + par->localDisplayPos + par->displaySize;
-		float markerSize = 2;//MAX(1, par->displaySize.x / par->width);
-		float pixelSize = par->displaySize.x / par->width;
+		//BackPixelPoint csPos = ds.sysCs.toLocal({ ds.csPos.x, ds.csPos.y });
 
-		const bc::barvector& pointsi = *points;
-		for (const auto& p : pointsi)
-		{
-			// TL is a Begin()
-			ItemVec2 pi(par->toDisplayX(p.getX()), par->toDisplayY(p.getY()));
-			pi += offset; // TL coords from app
+		//ApplicationVec2 offset = win->Pos + ImVec2(csPos.x, csPos.y);
+		//ApplicationVec2 csreenStar = offset + ds.displayPos;
+		//ApplicationVec2 csreenEnd = offset + ds.displayPos + ds.displaySize;
+		//float markerSize = 2;//MAX(1, par->displaySize.x / par->width);
+		//float pixelSize = par->displaySize.x / par->width;
 
-			if (pi.x < csreenStar.x || pi.y < csreenStar.y)
-				continue;
-			if (pi.x > csreenEnd.x || pi.y > csreenEnd.y)
-				continue;
+		//const bc::barvector& pointsi = *points;
+		//for (const auto& p : pointsi)
+		//{
+		//	// TL is a Begin()
+		//	BackPoint bp = cs.toGlobal(p.getX(), p.getY());
+		//	bp.x += ds.csPos.x;
+		//	bp.y += ds.csPos.y;
 
-			// Center pixel for big images
-			pi += ImVec2(pixelSize / 2, pixelSize / 2);
-			list->AddCircleFilled(pi, 1.5 * markerSize, bigColor);
-			list->AddCircleFilled(pi, 0.8 * markerSize, midColor);
-		}
+		//	auto bpl = ds.projItemGlobToDisplay(cs, bp);
+		//
+		//	ItemVec2 pi(bpl.x, bpl.y);
+
+		//	if (pi.x < csreenStar.x || pi.y < csreenStar.y)
+		//		continue;
+		//	if (pi.x > csreenEnd.x || pi.y > csreenEnd.y)
+		//		continue;
+
+		//	pi += offset; // TL coords from app
+
+		//	// Center pixel for big images
+		//	pi += ImVec2(pixelSize / 2, pixelSize / 2);
+		//	list->AddCircleFilled(pi, 1.5 * markerSize, bigColor);
+		//	list->AddCircleFilled(pi, 0.8 * markerSize, midColor);
+		//}
 
 		ImGui::EndChild();
 	}

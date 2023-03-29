@@ -30,7 +30,7 @@ static void glfw_error_callback(int error, const char* description)
 	fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
-int main(int, char**)
+int main(int, char** argv)
 {
 	// Setup window
 	glfwSetErrorCallback(glfw_error_callback);
@@ -174,7 +174,7 @@ int main(int, char**)
 	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
 	//ImGui::PushFont(font);
-	MyApp::Init();
+	MyApp::Init(argv[0]);
 
 	// Main loop
 	while (!glfwWindowShouldClose(window))

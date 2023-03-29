@@ -17,3 +17,6 @@ shaders
 side/glaze-1.0.0.zip
 Temp/*
 Release/GeoBar.*
+Release/EPSG-v10_084-WKT
+Release/EPSG
+vcpkg_installed

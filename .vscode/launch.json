@@ -11,9 +11,9 @@
             "program": "${workspaceFolder}/Debug/GeoBar.exe",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/Debug",
             "environment": [],
-            "console": "integratedTerminal"
+            "console": "internalConsole"
         },
         {
             "name": "Release",

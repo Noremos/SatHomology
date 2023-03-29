@@ -3,7 +3,7 @@ namespace MyApp
 {
 	void setImGuiStyle(float highDPIscaleFactor);
 	void drawBottomBar();
-	void Init();
+	void Init(const char* root);
 	void RenderUI();
 }
 

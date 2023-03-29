@@ -13,6 +13,8 @@ import BarcodeModule;
 import Platform;
 import JsonCore;
 import MetadataIOCore;
+import CSBind;
+import MHashMap;
 
 export const int DEF_TILE_SIZE = 300;
 export const int DEF_TILE_OFFSET = 150;
@@ -35,6 +37,7 @@ public:
 	}
 };
 
+
 export class LayerProvider
 {
 public:
@@ -43,6 +46,7 @@ public:
 	int tileSize = DEF_TILE_SIZE;
 	float displayFactor;
 	bc::point layerOffset;
+
 
 	//LayerProvider(int realWid, int displayWid, int tileSize) :
 	//	width(width), tileSize(tileSize),
@@ -121,6 +125,28 @@ public:
 		return tileByIndex(index).offset;
 	}
 
+
+	// WindowVec2 localDisplayPos;
+	// ImVec2 displaySize;
+
+	// int getRealX(int x)
+	// {
+	// 	return static_cast<float>(x - localDisplayPos.x) * (width / displaySize.x);
+	// }
+	// int getRealY(int y)
+	// {
+	// 	return static_cast<float>(y - localDisplayPos.y) * (height / displaySize.y);
+	// }
+
+	// int toDisplayX(int x)
+	// {
+	// 	return static_cast<float>(x) * (displaySize.x / width) + localDisplayPos.x;
+	// }
+	// int toDisplayY(int y)
+	// {
+	// 	return static_cast<float>(y) * (displaySize.y / height) + localDisplayPos.y;
+	// }
+
 	//bc::point toLocal(uint x, uint y) const
 	//{
 	//	return { (x + offset.x) / displayFactor, (y + offset.y) / displayFactor };
@@ -171,6 +197,8 @@ public:
 public:
 	int id = -1;
 	BackString name;
+	CSBindnig cs;
+
 	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder)
 	{
 		state->scInt("coreId", id);
@@ -189,10 +217,22 @@ public:
 	{
 		return id;
 	}
+
+	bool hasCS() const
+	{
+		return cs.proj.isInited();
+	}
+
+	virtual ~ILayer()
+	{ }
 };
 
 LFID ILayer::counter = 0;
-
+export const LFID RASTER_LAYER_FID = 0;
+export const LFID RASTER_LINE_LAYER_FID = 1;
+export const LFID RASTER_DISK_LAYER_FID = 2;
+export const LFID VECTOR_LAYER_FID = 3;
+export const LFID MULTIPOLY_VECTOR_LAYER_FID = 4;// ILayer::getCountId();
 
 export class CoreLayerFactory
 {

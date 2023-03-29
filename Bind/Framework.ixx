@@ -1,5 +1,6 @@
 module;
 
+#include <assert.h>
 #include "../Bind/Common.h"
 
 // Side

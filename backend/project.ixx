@@ -2,6 +2,7 @@ module;
 
 #include <unordered_set>
 #include <random>
+#include <assert.h>
 //#include <iostream>
 
 #include "../Bind/Common.h"
@@ -25,6 +26,7 @@ import RasterLayers;
 import Classifiers;
 import MetadataIOCore;
 import VectorLayers;
+import MHashMap;
 
 
 
@@ -160,7 +162,7 @@ export class Project
 	{
 		int size = layers.size();
 		JsonArrayIOState* arrst = state->arrayBegin("layers", size);
-		
+
 		for (int i = 0; i < size; i++)
 		{
 			JsonObjectIOState* obj = arrst->objectBegin(i);

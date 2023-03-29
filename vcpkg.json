@@ -1,0 +1,9 @@
+{
+    "name": "sat-holology",
+    "version": "1.0.0",
+    "dependencies": [
+        {
+            "name": "proj"
+        }
+    ]
+}
