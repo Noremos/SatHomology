@@ -21,6 +21,7 @@ import RasterLayers;
 import GuiWidgets;
 import ClassifierInterface;
 import VectorLayers;
+import CSBind;
 
 // Todo.
 // 2 режима
@@ -38,6 +39,11 @@ public:
 	{
 		clear();
 		Project::dropProject();
+	}
+
+	DisplaySystem& getDS()
+	{
+		return proj->getDisplay();
 	}
 
 	bool isImageLoaded() const

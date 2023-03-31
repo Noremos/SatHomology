@@ -5,6 +5,8 @@ module;
 
 export module CSBind;
 
+import MetadataIOCore;
+import IOCore;
 
 template<typename T>
 PJ_COORD getPjCoord(T x, T y)
@@ -24,12 +26,22 @@ PJ_COORD getPjCoord(const T& p)
 	return cd;
 }
 
+
+template<class P>
+static void ioPoint(JsonObjectIOState* state, BackString name, P& p)
+{
+	state->scDouble(name + "_x", p.x);
+	state->scDouble(name + "_y", p.y);
+}
+
+
 export class BackProj
 {
 private:
 	PJ* proj = nullptr;
 	friend class CSBindnig;
 	PJ_CONTEXT* ctx;
+	int id = -1;
 public:
 	bool isInited() const
 	{
@@ -59,22 +71,17 @@ public:
 
 		const uchar* wtkContext = sqlite3_column_text(stmt, 0);
 
-		//char* vcpkg_dir = std::getenv("VCPKG_INSTALLED_DIR");
-		//if (vcpkg_dir != nullptr)
-		//{
-		//	printf("Vcpkg installation directory:  %s\n", vcpkg_dir);
-		//}
-		//else {
-		//	printf("Vcpkg installation directory not found: %s\n", vcpkg_dir);
-		//}
-
 		const char* cpath = Variables::prodDbPath.c_str();
 
 		ctx = proj_context_create();
 		proj_context_set_search_paths(ctx, 1, &cpath);
 		proj = proj_create_from_wkt(ctx, (const char*)wtkContext, nullptr, nullptr, nullptr);
 
-		sqlite3_finalize(stmt);
+
+		sqlite3_finalize(stmt); // Do not close before wtkContext is using
+		sqlite3_close(db);
+
+		this->id = id;
 		return true;
 	}
 
@@ -83,31 +90,25 @@ public:
 		return proj_get_name(proj);
 	}
 
-	BackPoint getThisProj(const BackProj& item, BackPoint itemPos) const
+	int getId()
+	{
+		return id;
+	}
+
+	BackPoint getThisProj(const BackProj& item, BackPoint itemPos, const bool normalize) const
 	{
 		PJ* ctc_proj = proj_create_crs_to_crs_from_pj(item.ctx, item.proj, proj, nullptr, nullptr);
+
+		if (normalize)
+			ctc_proj = proj_normalize_for_visualization(item.ctx, ctc_proj);
+
 		PJ_COORD real = proj_trans(ctc_proj, PJ_IDENT, getPjCoord(itemPos));
 		return BackPoint{ real.xy.x, real.xy.y };
 	}
 
-	~BackProj()
-	{
-		if (proj)
-		{
-			proj = proj_destroy(proj);
-			proj = nullptr;
-		}
-
-		if (ctx)
-		{
-			proj_context_destroy(ctx);
-			ctx = nullptr;
-		}
-	}
-
 	static sqlite3_stmt* prepareSelect(sqlite3* db, const char* name, const char* where = NULL)
 	{
-		auto rc = sqlite3_open_v2("meta/proj.sqlite", &db, SQLITE_OPEN_READONLY, NULL);
+		auto rc = sqlite3_open_v2((Variables::metaPath / "proj.sqlite").string().c_str(), &db, SQLITE_OPEN_READONLY, NULL);
 		if (rc != SQLITE_OK)
 		{
 			fprintf(stderr, "������ ��������/�������� ��: %s\n", sqlite3_errmsg(db));
@@ -143,8 +144,27 @@ public:
 			names.push_back(BackString((const char*)wtkContext));
 		}
 
+		sqlite3_finalize(stmt);
+		sqlite3_close(db);
+
 		return names;
 	}
+
+	~BackProj()
+	{
+		if (proj)
+		{
+			proj = proj_destroy(proj);
+			proj = nullptr;
+		}
+
+		if (ctx)
+		{
+			proj_context_destroy(ctx);
+			ctx = nullptr;
+		}
+	}
+
 };
 
 
@@ -174,12 +194,23 @@ public:
 //};
 
 
-export struct CSBindnig
+export struct CSBindnig : public IJsonIO
 {
 	// Projection of the local image for coord system
 	BackProj proj;
 	BackPoint globOrigin = {0,0};
 	double img_transform[6] = {0.0,0.0,0.0,0.0,0.0,0.0};
+
+
+	void init(const int id)
+	{
+		proj.init(id);
+	}
+
+	void init(const char* id)
+	{
+		proj.init(strToInt(id));
+	}
 
 	void setScale(double x, double y)
 	{
@@ -187,10 +218,14 @@ export struct CSBindnig
 		img_transform[5] = y;
 	}
 
-	void setOrigin(double x, double y)
+	BackPoint getScale() const
 	{
-		globOrigin.x = x;
-		globOrigin.y = y;
+		return BackPoint(img_transform[1], img_transform[5]);
+	}
+
+	BackPoint getScaledEnd(const BackPoint& locPoint) const
+	{
+		return globOrigin + locPoint * getScale();
 	}
 
 	double* getScaleX()
@@ -202,6 +237,11 @@ export struct CSBindnig
 		return &img_transform[5];
 	}
 
+	void setOrigin(double x, double y)
+	{
+		globOrigin.x = x;
+		globOrigin.y = y;
+	}
 
 	BackPixelPoint toLocal(const BackPoint& bp) const
 	{
@@ -209,12 +249,16 @@ export struct CSBindnig
 		//int y_loc = (y - stY) / uPerPixY;
 		//return { x_loc, y_loc };
 
-		PJ_COORD cd = getPjCoord(bp);
+		// PJ_COORD cd = getPjCoord(bp);
+
+
+		// PJ_COORD local = proj_trans(proj.proj, PJ_FWD, cd);
+		const BackPoint& localtr = bp;
+		// const BackPoint localtr(local.xy.x, local.xy.y);
 
 		float pixel_x, pixel_y;
-		PJ_COORD local = proj_trans(proj.proj, PJ_FWD, cd);
-		pixel_x = ((local.xy.x - globOrigin.x) / img_transform[1]);
-		pixel_y = ((local.xy.y - globOrigin.y) / img_transform[5]);
+		pixel_x = ((localtr.x - globOrigin.x) / img_transform[1]);
+		pixel_y = ((localtr.y - globOrigin.y) / img_transform[5]);
 
 		return BackPixelPoint(pixel_x, pixel_y);
 	}
@@ -230,9 +274,78 @@ export struct CSBindnig
 		x = globOrigin.x + (x * img_transform[1]) + (y * img_transform[2]);
 		y = globOrigin.y + (x * img_transform[4]) + (y * img_transform[5]);
 
-		PJ_COORD real = proj_trans(proj.proj, PJ_INV, getPjCoord(x, y));
-		return {real.xy.x, real.xy.y};
+		// PJ_COORD real = proj_trans(proj.proj, PJ_INV, getPjCoord(x, y));
+		//return { real.xy.x, real.xy.y };
+		return BackPoint(x, y);
+	}
+
+	// Унаследовано через IJsonIO
+	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder) override
+	{
+		auto displayObj = state->objectBegin("ClassBind");
+
+		int pid = proj.getId();
+		displayObj->scInt("projection", pid);
+		if (state->isReading())
+		{
+			proj.init(pid);
+		}
+
+		ioPoint(state, "globOrigin", globOrigin);
+
+		int size = 6;
+		auto* arr = state->arrayBegin("transform", size);
+		for (size_t i = 0; i < size; i++)
+		{
+			arr->scDouble(i, img_transform[i]);
+		}
 	}
 };
 
 export using CoordSystem = CSBindnig;
+
+
+
+export struct DisplaySystem : public IJsonIO
+{
+	BackPoint csPos; // glob
+	BackPoint csSize; // glob
+	BackProj sysProj; // Dest/system coord system
+
+	BackPoint projItemGlobToSys(const CSBindnig& itemCs, BackPoint itemPos) const
+	{
+		auto p = sysProj.getThisProj(itemCs.proj, itemPos, false);
+		return p;
+	}
+
+	BackPoint toSysGlob(const BackPoint& display, const BackPoint& displaySize)
+	{
+		return (display) * (csSize / displaySize) + csPos;
+	}
+
+	BackPoint toDisplay(const BackPoint& p, const BackPoint& displaySize) const
+	{
+		return (p - csPos) * (displaySize / csSize);
+	}
+
+
+	//static ImVec2 tov2(BackPixelPoint p)
+	//{
+	//	return ImVec2(p.x, p.y);
+	//}
+
+
+
+	//int getRealX(int x)
+	//{
+	//	return static_cast<float>(x - csPos) * (width / displaySize.x);
+	//}
+
+	// Унаследовано через IJsonIO
+	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder) override
+	{
+		auto displayObj = state->objectBegin("classBind");
+		ioPoint(displayObj, "csPos", csPos);
+		ioPoint(displayObj, "csSize", csSize);
+	}
+};

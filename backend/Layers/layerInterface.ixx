@@ -203,6 +203,7 @@ public:
 	{
 		state->scInt("coreId", id);
 		state->scStr("name", name);
+		cs.saveLoadState(state, metaFolder);
 	}
 
 	virtual Type getType() const = 0;
@@ -213,6 +214,18 @@ public:
 		// metaFolder.update(metaFolder.getSubMeta(lname));
 	}
 
+	virtual int displayWidth() const = 0;
+	virtual int displayHeight() const = 0;
+
+	virtual int realWidth() const
+	{
+		return displayWidth() * cs.getScale().y;
+	}
+	virtual int realHeight() const
+	{
+		return displayHeight() * cs.getScale().y;
+	}
+
 	int getSysId() const
 	{
 		return id;
@@ -221,6 +234,21 @@ public:
 	bool hasCS() const
 	{
 		return cs.proj.isInited();
+	}
+
+	BackPoint getGlobStart()
+	{
+		return cs.globOrigin;
+	}
+
+	BackPoint getGlobEnd()
+	{
+		return cs.getScaledEnd(BackPoint(displayWidth(), displayHeight()));
+	}
+
+	BackPoint getGlobSize()
+	{
+		return getGlobEnd() - getGlobStart();
 	}
 
 	virtual ~ILayer()
@@ -286,10 +314,6 @@ public:
 		jobj->scInt("layerOffsetY", prov.layerOffset.y);
 	}
 
-	virtual int displayWidth() const = 0;
-	virtual int displayHeight() const = 0;
-	virtual int realWidth() const = 0;
-	virtual int realHeight() const = 0;
 	virtual BackImage getRect(int stX, int stRow, int wid, int hei) = 0;
 
 	virtual BackImage getImage(const int max) const = 0;
@@ -309,6 +333,16 @@ public:
 	Type getType() const
 	{
 		return Type::Vector;
+	}
+
+	virtual int displayWidth() const
+	{
+		return 0;
+	}
+
+	virtual int displayHeight() const
+	{
+		return 0;
 	}
 
 	virtual void release()

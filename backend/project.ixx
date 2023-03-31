@@ -27,6 +27,7 @@ import Classifiers;
 import MetadataIOCore;
 import VectorLayers;
 import MHashMap;
+import CSBind;
 
 
 
@@ -143,6 +144,8 @@ export class Project
 		//{jsn_tileOffset, this->tileOffset}
 	};
 
+	DisplaySystem ds;
+
 	int metaCounter = 0;
 	std::unique_ptr<MetadataProvider> metaprov;
 
@@ -156,6 +159,13 @@ export class Project
 	{
 		JsonObjectIOStateWriter writer(json);
 		extraReadWrite(&writer);
+	}
+
+	template<class P>
+	static void ioPoint(JsonObjectIOState* state, BackString name, const P& p)
+	{
+		state->scDouble(name + "_x", p.x);
+		state->scDouble(name + "_y", p.y);
 	}
 
 	void extraReadWrite(JsonObjectIOState* state)
@@ -210,6 +220,8 @@ export class Project
 			}
 
 		}
+
+		ds.saveLoadState(state, getMeta());
 	}
 public:
 	//	Q_PROPERTY(SeachingSettings* searchSetts READ getSerchSetts)
@@ -222,6 +234,10 @@ public:
 		// "D:\\Programs\\Barcode\\_bar\\_p2\\";
 		settings.extraRead = [this](const BackJson& json) {extraRead(json);};
 		settings.extraWrite = [this](BackJson& json) {extraWrite(json);};
+
+		ds.csPos = BackPoint(0, 0);
+		ds.csSize = BackPoint(1000, 1000);
+
 		// mkDirIfNotExists(u_classCache);
 	}
 
@@ -233,6 +249,11 @@ public:
 		}
 
 		//closeImages();
+	}
+
+	DisplaySystem& getDisplay()
+	{
+		return ds;
 	}
 
 	bool prjCreate = false;

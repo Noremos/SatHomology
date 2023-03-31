@@ -23,9 +23,8 @@ protected:
 	int copiedId = -1; // We need to cpy Id to avoid cases when core was destroid
 public:
 	bool visible = true;
-	CoordSystem cs;
 
-	virtual void draw(const DisplaySystem& ds) = 0;
+	virtual void draw(const GuiDisplaySystem& ds) = 0;
 	virtual void drawOverlap(ImVec2 pos, ImVec2 size) = 0;
 	virtual const char* getName() const = 0;
 	virtual void setName(const BackString& name, bool updateOnlyEmpty = false) = 0;
@@ -37,6 +36,18 @@ public:
 	virtual ILayer* getCore() = 0;
 	virtual void drawProperty() = 0;
 	virtual void applyPropertyChanges() = 0;
+
+	void lockAtThis()
+	{
+		auto* ccore = getCore();
+		DisplaySystem& ds = proj->getDisplay();
+		ds.csPos = ds.projItemGlobToSys(ccore->cs, ccore->getGlobStart());
+		ds.csSize = ds.projItemGlobToSys(ccore->cs, ccore->getGlobSize());
+		if (ds.csSize.x == 0)
+		{
+			ds.csSize = BackPoint(300, 300);
+		}
+	}
 
 	virtual void onClick(BackPoint)
 	{ }
@@ -175,16 +186,17 @@ public:
 		newOffsetSize = getOffsetSize() / 10;
 	}
 
-	virtual void draw(const DisplaySystem& ds)
+	virtual void draw(const GuiDisplaySystem& ds)
 	{
 		if (!IGuiLayer::visible)
 			return;
 
-		auto start = ds.projItemLocalToDisplay(GuiLayerData<T>::getData()->cs, {0,0});
-		auto end = ds.getDisplayEndPos();
-		//ds.projItemGlobToLocal(data->cs, data->orign)
+		auto wpos = ds.getWinPos();
+		auto& cs = GuiLayerData<T>::getCore()->cs;
+		auto start = ds.getDisplayStartPos(cs) - wpos;
+		auto end = ds.getDisplayEndPos(cs) - wpos;
 
-		main.drawImage(GuiLayerData<T>::getName(), toIV(start), toIV(end - start));
+		main.drawImage(GuiLayerData<T>::getName(), wpos, ds.getDrawSize(), start, end);
 	}
 
 	virtual void drawOverlap(ImVec2 pos, ImVec2 size)
@@ -272,7 +284,7 @@ public:
 		icon.setImage(data->mat, 32, 32, true);
 	}
 
-	virtual void draw(const DisplaySystem& ds)
+	virtual void draw(const GuiDisplaySystem& ds)
 	{
 		TiledRasterGuiLayer::draw(ds);
 		if (!visible)
@@ -436,15 +448,15 @@ public:
 		}
 	}
 
-	virtual void draw(const DisplaySystem& ds)
+	virtual void draw(const GuiDisplaySystem& ds)
 	{
 		if (!IGuiLayer::visible || points.size() == 0)
 			return;
 
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
 
-		ImGui::SetCursorPos(ds.displayPos);
-		if (!ImGui::BeginChild(data->name.c_str(), ds.getDisplaySize(), false, window_flags))
+		ImGui::SetCursorPos(ds.getDrawPos());
+		if (!ImGui::BeginChild(data->name.c_str(), ds.getDrawSize(), false, window_flags))
 		{
 			ImGui::EndChild();
 			return;
@@ -466,7 +478,7 @@ public:
 	}
 
 
-	void drawPoints(const DisplaySystem& ds)
+	void drawPoints(const GuiDisplaySystem& ds)
 	{
 		ImDrawList* list = ImGui::GetWindowDrawList();
 
@@ -531,13 +543,7 @@ export class LayersVals
 {
 public:
 	InOutLayer iol;
-
-	//GuiBackend& backend;
 	LayersList<IGuiLayer> layers;
-
-	ImVec2 drawSize;
-	DisplaySystem sys;
-
 
 	//LayersVals(GuiBackend& back) : backend(back)
 	//{ }
@@ -660,7 +666,7 @@ public:
 		}
 	}
 
-	void draw(const DisplaySystem& ds)
+	void draw(const GuiDisplaySystem& ds)
 	{
 		uint i = 0;
 		for (auto& lay : layers)
@@ -781,12 +787,16 @@ public:
 				}
 
 				ImGui::SameLine();
-				bool seled = ImGui::Selectable(lay->getName(), curID == iol.in, 0, ImVec2(winsize.x - 50, selHei));
+				bool seled = ImGui::Selectable(lay->getName(), curID == iol.in, ImGuiSelectableFlags_AllowDoubleClick, ImVec2(winsize.x - 50, selHei));
 				prevId = curID;
 
 				if (seled)
 				{
 					iol.in = lay->getSysId();
+					if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+					{
+						lay->lockAtThis();
+					}
 				}
 				if (temporaly)
 				{

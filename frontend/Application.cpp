@@ -192,6 +192,7 @@ namespace MyApp
 
 		std::future<void> future;
 	};
+
 	WindowsValues commonValus;
 	LayersVals layersVals;// (backend);
 
@@ -414,11 +415,24 @@ namespace MyApp
 							if (layer->hasCS())
 							{
 								tbVals.enableProcessBtn = true;
-								layersVals.addLayer<RasterFromDiskGuiLayer>("Loaded", layer);
+								auto* guiLayer = layersVals.addLayer<RasterFromDiskGuiLayer>("Loaded", layer);
+								guiLayer->lockAtThis();
+								layer = nullptr;
 							}
 							else
 							{
 								tbVals.names = BackProj::getWtkNames();
+								for (int i = 0; i < tbVals.names.size(); i++)
+								{
+									if (tbVals.names[i] == "4326")
+									{
+										tbVals.selectedName = i;
+										break;
+									}
+								}
+
+								*layer->cs.getScaleX() = 10.0;
+								*layer->cs.getScaleY() = 10.0;
 								ImGui::OpenPopup("SetupCS");
 							}
 						}
@@ -460,10 +474,13 @@ namespace MyApp
 				ImGui::Separator();
 				if (ImGui::Button("OK", ImVec2(120, 0)))
 				{
-					tbVals.enableProcessBtn = true;
-					layersVals.addLayer<RasterFromDiskGuiLayer>("Loaded", layer);
-					tbVals.names.clear();
+					layer->cs.init(tbVals.names[tbVals.selectedName].c_str());
+					auto* guiLayer = layersVals.addLayer<RasterFromDiskGuiLayer>("Loaded", layer);
+					guiLayer->lockAtThis();
+					layer = nullptr;
 
+					tbVals.enableProcessBtn = true;
+					tbVals.names.clear();
 					ImGui::CloseCurrentPopup();
 				}
 
@@ -471,8 +488,9 @@ namespace MyApp
 				if (ImGui::Button("Cancel", ImVec2(120, 0)))
 				{
 					backend.removeLayer(layer->id);
-					tbVals.names.clear();
 					layer = nullptr;
+
+					tbVals.names.clear();
 					ImGui::CloseCurrentPopup();
 				}
 
@@ -647,24 +665,22 @@ namespace MyApp
 		ImVec2 drawSize = viewport->WorkSize;
 		// drawSize.x -= 200;
 
-		ImGui::SetNextWindowPos(pos);
-		ImGui::SetNextWindowSize(drawSize);
 		//ImGui::SetNextWindowViewport(viewport->ID);
-
-		drawSize.x -= 10;
-		drawSize.y -= 20;
-
-		auto& ds = centerVals.resizble.ds;
-		ds.displayPos = {0,0};
-
 
 		auto window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
 			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoDocking;
 			window_flags |= ImGuiWindowFlags_HorizontalScrollbar;
 
+		GuiDisplaySystem guiDisplay(backend.getDS());
+
+		ImGui::SetNextWindowPos(pos);
+		ImGui::SetNextWindowSize(drawSize);
+
+		guiDisplay.drawPos = {0,0};
+		guiDisplay.drawSize = BackPoint(drawSize.x - 10, drawSize.y - 20);
 		if (centerVals.resizble.Begin("ImagePreview"))
 		{
-			layersVals.draw(ds);
+			layersVals.draw(guiDisplay);
 			if (centerVals.resizble.clicked)
 			{
 				layersVals.onClick(centerVals.resizble.clickedPos);
@@ -675,16 +691,16 @@ namespace MyApp
 				}
 			}
 
-			centerVals.heimap.draw(ds.displayPos, ds.getDisplaySize());
+			centerVals.heimap.draw(guiDisplay.getWinPos(), guiDisplay.getDrawSize());
 
 			TiledRasterGuiLayer<RasterFromDiskLayer>* tlay = layersVals.getCastCurrentLayer<TiledRasterGuiLayer<RasterFromDiskLayer>>();
 			if (tlay)
 			{
 				centerVals.tilemap.init(&tlay->main, &tlay->getProvider());
-				centerVals.tilemap.draw(ds.displayPos, ds.getDisplaySize());
+				centerVals.tilemap.draw(guiDisplay.getWinPos(), guiDisplay.getDrawSize());
 			}
 		}
-		centerVals.resizble.end(ds.displayPos, ds.getDisplaySize());
+		centerVals.resizble.end(guiDisplay.getWinPos(), guiDisplay.getDrawSize());
 
 
 		pos.x += drawSize.x;
@@ -1061,7 +1077,7 @@ namespace MyApp
 	void MyApp::Init(const char* root)
 	{
 		Variables::setRoot(root);
-		centerVals.resizble.ds.sysProj.init(4326);
+		backend.getDS().sysProj.init(4326);
 
 		LayerFactory::RegisterFactory<RasterGuiLayer, RasterLayer>(RASTER_LAYER_FID);
 		LayerFactory::RegisterFactory<RasterLineGuiLayer, RasterLineLayer>(RASTER_LINE_LAYER_FID);
@@ -1113,6 +1129,7 @@ namespace MyApp
 		//c.icon.setSource("D:\\Learning\\BAR\\sybery\\2.png");
 		//layersVals.layers.push_back(c);
 	}
+
 	// Main
 	void MyApp::RenderUI()
 	{

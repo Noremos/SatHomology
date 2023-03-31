@@ -18,6 +18,7 @@ typedef unsigned int GLuint;
 const int ImGuiWindowFlags_NoDocking = 0;
 
 void ResizeImage(int& width, int& height, int max_width, int max_height);
+void ResizeImage(ImVec2& size, const ImVec2& maxSize);
 
 
 using ApplicationVec2 = ImVec2;
@@ -66,7 +67,7 @@ public:
 		width = std::exchange(other.width, 0);
 		height = std::exchange(other.height, 0);
 		textureId = std::move(other.textureId);
-		scaleFactor = std::exchange(other.scaleFactor, 0);
+		scaleFactor = std::exchange(other.scaleFactor, 0.f);
 	}
 
 	// Move assignment operator

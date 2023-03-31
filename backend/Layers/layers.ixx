@@ -145,14 +145,6 @@ public:
 	{
 		return mat.height();
 	}
-	virtual int realWidth() const override
-	{
-		return mat.width();
-	}
-	virtual int realHeight() const override
-	{
-		return mat.height();
-	}
 
 	virtual BackImage getRect(int stX, int stRow, int wid, int hei)
 	{

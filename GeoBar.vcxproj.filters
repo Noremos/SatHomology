@@ -219,9 +219,6 @@
     <ClInclude Include="side\stb_image.h">
       <Filter>Side</Filter>
     </ClInclude>
-    <ClInclude Include="side\sol3\sol.hpp">
-      <Filter>Side</Filter>
-    </ClInclude>
     <ClInclude Include="frontend\Application.h">
       <Filter>GUI\Core</Filter>
     </ClInclude>

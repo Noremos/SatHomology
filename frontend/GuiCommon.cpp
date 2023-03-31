@@ -20,6 +20,16 @@ void ResizeImage(int& width, int& height, int max_width, int max_height)
 	height = std::min(max_height, max_aspect_height);
 }
 
+void ResizeImage(ImVec2& size, const ImVec2& maxSize)
+{
+	// Calculate the aspect ratio of the image
+	float aspect_ratio = size.x / size.y;
+	float max_aspect_width = maxSize.y * aspect_ratio;
+	float max_aspect_height = maxSize.x / aspect_ratio;
+	size.x = std::min(maxSize.x, max_aspect_width);
+	size.y = std::min(maxSize.y, max_aspect_height);
+}
+
 
 bool GuiImage::setSource(const BackPathStr& path, bool smooth)
 {
@@ -63,8 +73,8 @@ void GuiImage::makeTexture(unsigned char* image_data, int comp, bool smooth)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	}
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // This is required on WebGL for non power-of-two textures
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Same
+	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // This is required on WebGL for non power-of-two textures
+	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Same
 
 	std::vector<unsigned char> rgba_image_data(width * height * 4);
 

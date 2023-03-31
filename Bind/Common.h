@@ -81,12 +81,12 @@ struct TPoint
 	}
 
 	// TPoint multiplication operator by scalar
-	TPoint operator*(int scalar) const {
+	TPoint operator*(T scalar) const {
 		return TPoint(x * scalar, y * scalar);
 	}
 
 	// TPoint division operator by scalar
-	TPoint operator/(int scalar) const {
+	TPoint operator/(T scalar) const {
 		return TPoint(x / scalar, y / scalar);
 	}
 
@@ -126,12 +126,14 @@ class Variables
 {
 public:
 	static BackPathStr rootPath;
+	static BackPathStr metaPath;
 	static BackString prodDbPath;
 	static void setRoot(const char* arg)
 	{
 		rootPath = arg;
 		rootPath = rootPath.parent_path();
-		prodDbPath = (rootPath / "meta" / "proj").string();
+		metaPath = rootPath / "meta";
+		prodDbPath = (metaPath / "proj").string();
 	}
 };
 
