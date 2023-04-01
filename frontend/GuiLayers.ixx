@@ -758,6 +758,7 @@ public:
 
 	RasterFromDiskGuiLayer(RasterFromDiskLayer* fromCore = nullptr) : TiledRasterGuiLayer(fromCore)
 	{
+		drawHeimap = false;
 		heimap.enable = false;
 	}
 

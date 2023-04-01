@@ -48,14 +48,14 @@ public:
 		return proj != nullptr;
 	}
 
-	bool init(int id)
+	bool init(int nid)
 	{
 		// Initialize Proj context
 		sqlite3* db = NULL;
 		char* strerr = NULL;
 		sqlite3_stmt* stmt = prepareSelect(db, "srtext", " WHERE srid = ?");
 
-		auto rc = sqlite3_bind_int(stmt, 1, id); // bind the rowid value to the first placeholder
+		auto rc = sqlite3_bind_int(stmt, 1, nid); // bind the rowid value to the first placeholder
 		if (rc != SQLITE_OK)
 		{
 			printf("Failed to bind: %s\n", sqlite3_errmsg(db));
@@ -65,7 +65,7 @@ public:
 		rc = sqlite3_step(stmt);
 		if (rc != SQLITE_ROW)
 		{
-			printf("There is not row with id %d\n", id);
+			printf("There is not row with id %d\n", nid);
 			return false;
 		}
 
@@ -81,7 +81,7 @@ public:
 		sqlite3_finalize(stmt); // Do not close before wtkContext is using
 		sqlite3_close(db);
 
-		this->id = id;
+		this->id = nid;
 		return true;
 	}
 
@@ -290,7 +290,7 @@ export struct CSBindnig : public IJsonIO
 	// Унаследовано через IJsonIO
 	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder) override
 	{
-		auto displayObj = state->objectBegin("ClassBind");
+		auto displayObj = state->objectBegin("ClassBinding");
 
 		int pid = proj.getId();
 		displayObj->scInt("projection", pid);
@@ -299,14 +299,17 @@ export struct CSBindnig : public IJsonIO
 			proj.init(pid);
 		}
 
-		ioPoint(state, "globOrigin", globOrigin);
+		ioPoint(displayObj, "globOrigin", globOrigin);
 
 		int size = 6;
-		auto* arr = state->arrayBegin("transform", size);
+		auto* arr = displayObj->arrayBegin("transform", size);
 		for (size_t i = 0; i < size; i++)
 		{
 			arr->scDouble(i, img_transform[i]);
 		}
+		displayObj->arrayEnd();
+
+		state->objectEnd();
 	}
 };
 
@@ -361,8 +364,17 @@ export struct DisplaySystem : public IJsonIO
 	// Унаследовано через IJsonIO
 	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder) override
 	{
-		auto displayObj = state->objectBegin("classBind");
+		auto displayObj = state->objectBegin("display_system");
 		ioPoint(displayObj, "csPos", csPos);
 		ioPoint(displayObj, "csSize", csSize);
+
+		int id = sysProj.getId();
+		displayObj->scInt("proj_id", id);
+		if (state->isReading())
+		{
+			sysProj.init(id);
+		}
+
+		state->objectEnd();
 	}
 };

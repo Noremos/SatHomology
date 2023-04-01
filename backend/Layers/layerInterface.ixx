@@ -319,6 +319,7 @@ public:
 		jobj->scFloat("displayFactor", prov.displayFactor);
 		jobj->scInt("layerOffsetX", prov.layerOffset.x);
 		jobj->scInt("layerOffsetY", prov.layerOffset.y);
+		state->objectEnd();
 	}
 
 	virtual BackImage getRect(int stX, int stRow, int wid, int hei) = 0;

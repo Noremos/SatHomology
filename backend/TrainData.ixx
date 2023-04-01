@@ -60,6 +60,7 @@ public:
 		arr->scUchar(0, color.r);
 		arr->scUchar(1, color.g);
 		arr->scUchar(2, color.b);
+		state->arrayEnd();
 	}
 };
 

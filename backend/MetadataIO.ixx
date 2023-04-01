@@ -245,6 +245,8 @@ public:
 	virtual void scPath(const BackString& name, BackPathStr& val) = 0;
 	virtual JsonArrayIOState* arrayBegin(const BackString& name, int& size) = 0;
 	virtual JsonObjectIOState* objectBegin(const BackString& name) = 0;
+	virtual void arrayEnd() = 0;
+	virtual void objectEnd() = 0;
 };
 
 export class JsonArrayIOState
@@ -258,6 +260,8 @@ public:
 	virtual void scPath(int ind, BackPathStr& val) = 0;
 	virtual JsonArrayIOState* arrayBegin(int ind, int& size) = 0;
 	virtual JsonObjectIOState* objectBegin(int ind) = 0;
+	virtual void arrayEnd() = 0;
+	virtual void objectEnd() = 0;
 };
 
 export class JsonObjectIOStateReader : public JsonObjectIOState
@@ -297,6 +301,15 @@ public:
 
 	JsonArrayIOState* arrayBegin(const BackString& name, int& size);
 	JsonObjectIOState* objectBegin(const BackString& name);
+
+	void arrayEnd()
+	{
+		curArray.reset(nullptr);
+	}
+	void objectEnd()
+	{
+		curObj.reset(nullptr);
+	}
 };
 
 
@@ -338,6 +351,15 @@ public:
 
 	JsonArrayIOState* arrayBegin(const BackString& name, int& size);
 	JsonObjectIOState* objectBegin(const BackString& name);
+
+	void arrayEnd()
+	{
+		curArray.reset(nullptr);
+	}
+	void objectEnd()
+	{
+		curObj.reset(nullptr);
+	}
 };
 
 
@@ -390,6 +412,15 @@ public:
 		curObj = std::make_unique<JsonObjectIOStateReader>(jobj);
 		return curObj.get();
 	}
+
+	void arrayEnd()
+	{
+		curArray.reset(nullptr);
+	}
+	void objectEnd()
+	{
+		curObj.reset(nullptr);
+	}
 };
 
 export class JsonArrayIOStateWriter : public JsonArrayIOState
@@ -440,10 +471,10 @@ public:
 
 	JsonObjectIOState* objectBegin(int ind)
 	{
-		JsonArray jarr(Json::ValueType::objectValue);
-		json[ind] = jarr;
-		BackJson& refjarr = json[ind];
-		curObj = std::make_unique<JsonObjectIOStateWriter>(refjarr);
+		JsonArray jobj(Json::ValueType::objectValue);
+		json[ind] = jobj;
+		BackJson& refobj = json[ind];
+		curObj = std::make_unique<JsonObjectIOStateWriter>(refobj);
 		return curObj.get();
 	}
 
@@ -451,6 +482,15 @@ public:
 	{
 		curObj = std::make_unique<JsonObjectIOStateWriter>(json.append(BackJson()));
 		return curObj.get();
+	}
+
+	void arrayEnd()
+	{
+		curArray.reset(nullptr);
+	}
+	void objectEnd()
+	{
+		curObj.reset(nullptr);
 	}
 };
 
@@ -465,8 +505,8 @@ JsonArrayIOState* JsonObjectIOStateReader::arrayBegin(const BackString& name, in
 
 JsonObjectIOState* JsonObjectIOStateReader::objectBegin(const BackString& name)
 {
-	const BackJson& jarr = json[name];
-	curObj = std::make_unique<JsonObjectIOStateReader>(jarr);
+	const BackJson& jobj = json[name];
+	curObj = std::make_unique<JsonObjectIOStateReader>(jobj);
 	return curObj.get();
 }
 
@@ -482,10 +522,10 @@ JsonArrayIOState* JsonObjectIOStateWriter::arrayBegin(const BackString& name, in
 
 JsonObjectIOState* JsonObjectIOStateWriter::objectBegin(const BackString& name)
 {
-	JsonObject jarr(Json::ValueType::objectValue);
-	json[name] = jarr;
-	BackJson& refjarr = json[name];
-	curObj = std::make_unique<JsonObjectIOStateWriter>(refjarr);
+	JsonObject jobj(Json::ValueType::objectValue);
+	json[name] = jobj;
+	BackJson& refjobj = json[name];
+	curObj = std::make_unique<JsonObjectIOStateWriter>(refjobj);
 	return curObj.get();
 }
 

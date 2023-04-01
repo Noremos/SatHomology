@@ -167,6 +167,8 @@ export class Project
 
 	void extraReadWrite(JsonObjectIOState* state)
 	{
+		const bool isReading = state->isReading();
+
 		int size = layers.size();
 		JsonArrayIOState* arrst = state->arrayBegin("layers", size);
 
@@ -177,7 +179,7 @@ export class Project
 
 			int layId;
 			ILayer* lay;
-			if (state->isReading())
+			if (isReading)
 			{
 				obj->scInt("layId", layId);
 				lay = CoreLayerFactory::CreateCoreLayer(layId);
@@ -191,7 +193,9 @@ export class Project
 			}
 
 			lay->saveLoadState(obj, sub);
+			arrst->objectEnd();
 		}
+		state->arrayEnd();
 
 		size = classLayers.size();
 		arrst = state->arrayBegin("classBind", size);
@@ -202,7 +206,7 @@ export class Project
 
 			int clId;
 			int layId;
-			if (!obj->isReading())
+			if (!isReading)
 			{
 				clId = cb->first;
 				layId = cb->second->id;
@@ -211,12 +215,13 @@ export class Project
 			obj->scInt("class_id", clId);
 			obj->scInt("layer_id", layId);
 
-			if (obj->isReading())
+			if (isReading)
 			{
 				classLayers[clId] = static_cast<VectorLayer*>(layers.at(layId));
 			}
-
+			arrst->objectEnd();
 		}
+		state->arrayEnd();
 
 		ds.saveLoadState(state, getMeta());
 	}

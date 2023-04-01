@@ -314,7 +314,10 @@ namespace MyApp
 							}
 						}
 						else
+						{
+							tbVals.enableProcessBtn = true;
 							layersVals.loadLayers();
+						}
 						//layer->data = backend.getMain();
 						// centerVals.heimap.init(layer->getData()->mat);
 						// centerVals.tilemap.init(&layer->main, backend.getTileSize());
