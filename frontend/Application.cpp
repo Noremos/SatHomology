@@ -555,39 +555,17 @@ namespace MyApp
 			// GBL
 			ImGui::BeginDisabled(commonValus.onAir || !tbVals.enableProcessBtn);
 
-			//ImGui::Text("Happy secondary menu bar");
+			// ImGui::SameLine();
+			// if (ImGui::Button("Выгрузить")) {
+			// 	// Open a file dialog to select a folder
+			// 	backend.exportResult(getSavePath({ "*.png" }));
+			// }
 
-			ImGui::SameLine();
-			if (ImGui::Button("Add class"))
-			{
-				backend.addClassType("");
-				// Do something when Button 1 is clicked
-			}
-
-			ImGui::SameLine(0, 30);
-			ImGui::SetNextItemWidth(100);
-			ImGui::InputInt("##input class", &bottomVals.classId, 1, 100);
-			if (bottomVals.classId < 0)
-				bottomVals.classId = 0;
-
-			ImGui::SameLine(0, 30);
-			if (ImGui::Button("Undo"))
-			{
-				// backend.undoAddClass();
-			}
-
-			ImGui::SameLine();
-			if (ImGui::Button("Выгрузить")) {
-				// Open a file dialog to select a folder
-				backend.exportResult(getSavePath({ "*.png" }));
-			}
-
-			ImGui::SameLine();
-
-			if (ImGui::Checkbox("Enable pics", &bottomVals.drawPics))
-			{
-				backend.showResultPics(bottomVals.drawPics);
-			}
+			// ImGui::SameLine();
+			// if (ImGui::Checkbox("Enable pics", &bottomVals.drawPics))
+			// {
+			// 	backend.showResultPics(bottomVals.drawPics);
+			// }
 
 			ImGui::SameLine(0, 30);
 			if (ImGui::Button("Классификатор"))
