@@ -11,10 +11,13 @@ import GuiOverlap;
 import IOCore;
 import VectorLayers;
 import CSBind;
+//import ForntnedModule;
 
 class LayersVals;
+class ILayerWorker;
 
 Project* proj = Project::getProject();
+//GuiBackend backend;
 
 export class IGuiLayer
 {
@@ -25,7 +28,6 @@ public:
 	bool visible = true;
 
 	virtual void draw(const GuiDisplaySystem& ds) = 0;
-	virtual void drawOverlap(ImVec2 pos, ImVec2 size) = 0;
 	virtual const char* getName() const = 0;
 	virtual void setName(const BackString& name, bool updateOnlyEmpty = false) = 0;
 
@@ -34,6 +36,12 @@ public:
 	virtual void toGuiData() = 0;
 
 	virtual ILayer* getCore() = 0;
+
+	virtual void drawOverlap(const GuiDisplaySystem&)
+	{ }
+
+	virtual void drawToolbox(ILayerWorker& context) = 0;
+
 	virtual void drawProperty() = 0;
 	virtual void applyPropertyChanges() = 0;
 
@@ -101,6 +109,165 @@ public:
 
 CoreLayerFactory::FunctionGuiHolder<IGuiLayer> LayerFactory::guiLayersCreators;
 
+// Contexr
+
+class ILayerWorker
+{
+public:
+	InOutLayer iol;
+	LayersList<IGuiLayer> layers;
+
+	//LayersVals(GuiBackend& back) : backend(back)
+	//{ }
+
+	InOutLayer* getIoLayer()
+	{
+		return &iol;
+	}
+
+	template<typename T>
+	T* getCastCurrentLayer()
+	{
+		IGuiLayer* l = getCurrentLayer();
+		if (l)
+			return dynamic_cast<T*>(l);
+		else
+			return nullptr;
+	}
+
+	IGuiLayer* getCurrentLayer()
+	{
+		return iol.in < 0 ? nullptr : layers.at(iol.in);
+	}
+
+	IGuiLayer* getTempLayer()
+	{
+		return iol.out < 0 ? nullptr : layers.at(iol.out);
+	}
+
+	void update()
+	{
+		if (iol.out == -1)
+			return;
+	}
+
+	template<typename T>
+	T* addLayer(const BackString& name)
+	{
+		auto t = layers.add<T>();
+		settup(t, name);
+		return t;
+	}
+
+	template<typename TGui, typename TData>
+	TGui* addLayer(const BackString& name, TData* core)
+	{
+		if (core == nullptr)
+			return nullptr;
+
+		auto t = layers.add<TGui>(core);
+		settup(t, name);
+		return t;
+	}
+
+	template<typename TGui, typename TData>
+	TGui* setLayer(const BackString& name, TData* core)
+	{
+		if (core == nullptr)
+			return nullptr;
+
+		auto ptr = new TGui(core);
+		if (layers.set(core->id, ptr))
+		{
+			settup(ptr, name);
+			return nullptr;
+		}
+		delete ptr;
+
+		return addLayer<TGui, TData>(name, core);
+	}
+
+	void settup(IGuiLayer* layer, const BackString& name)
+	{
+		if (iol.in == -1)
+		{
+			iol.in = iol.out = layer->getSysId();
+		}
+		else
+			iol.out = layer->getSysId();
+
+		layer->setName(name, true);
+		layer->toGuiData();
+	}
+
+	void setLayers(const RetLayers& rlayers, const BackString& name)
+	{
+		for (auto& lay : rlayers)
+		{
+			auto ptr = LayerFactory::CreateGuiLayer(lay.core);
+			if (!layers.set(lay.core->id, ptr))
+			{
+				layers.addMove(ptr);
+			}
+			settup(ptr, lay.getName(name));
+		}
+	}
+
+	void loadLayers()
+	{
+		for (auto& coreLay : proj->layers)
+		{
+			auto ptr = LayerFactory::CreateGuiLayer(coreLay.get());
+			layers.addMove(ptr);
+			settup(ptr, coreLay->name);
+		}
+	}
+
+	void draw(const GuiDisplaySystem& ds)
+	{
+		uint i = 0;
+		for (auto& lay : layers)
+		{
+			// ImGui::SetNextWindowPos(pos);
+			// ImGui::SetNextWindowSize(size);
+			// ImGui::SetNextWindowViewport(viewport->ID);
+			ImGui::PushID(i);
+			lay->draw(ds);
+			ImGui::PopID();
+			++i;
+		}
+
+		//pos.x += drawSize.x;
+		//ImGui::SetNextWindowPos(pos);
+		//ImGui::SetNextWindowSize(nextSize);
+		//ImGui::SetNextWindowViewport(viewport->ID);
+	}
+
+	virtual void drawToolbox()
+	{
+		auto t = getCurrentLayer();
+		if (t)
+			t->drawToolbox(*this);
+	}
+
+	void drawOverlap(const GuiDisplaySystem& ds)
+	{
+		auto t = getCurrentLayer();
+		if (t)
+			t->drawOverlap(ds);
+	}
+
+	void onClick(const GuiDisplaySystem& ds, BackPoint click)
+	{
+		if (iol.in == -1)
+			return;
+		auto layer = layers.at(iol.in);
+		if (layer)
+			layer->onClick(ds, click);
+	}
+};
+
+
 
 export template<class T>
 class GuiLayerData : public IGuiLayer
@@ -152,6 +319,19 @@ public:
 		return data->prov;
 	}
 
+	virtual void drawToolboxInner(ILayerWorker&)
+	{ }
+
+	virtual void drawToolbox(ILayerWorker& context)
+	{
+		if (ImGui::Begin("Toolbox"))
+		{
+			drawToolboxInner(context);
+		}
+		ImGui::End();
+	}
+
+
 	void setName(const BackString& name, bool updateOnlyEmpty = false)
 	{
 		if (data->name.length() != 0 && updateOnlyEmpty)
@@ -172,6 +352,8 @@ class ITiledRasterGuiLayer : public GuiLayerData<T>
 public:
 	IM main;
 	GuiTilePreview tilePrview;
+	int newTileSize;
+	int newOffsetSize;
 
 	ITiledRasterGuiLayer(T* fromCore) : GuiLayerData<T>(fromCore)
 	{ }
@@ -199,12 +381,6 @@ public:
 
 		main.drawImage(GuiLayerData<T>::getName(), wpos, ds.getDrawSize(), start, end);
 	}
-
-	virtual void drawOverlap(ImVec2 pos, ImVec2 size)
-	{ }
-
-	int newTileSize;
-	int newOffsetSize;
 
 	inline int getTileSize() const
 	{
@@ -246,6 +422,126 @@ public:
 		GuiLayerData<T>::data->prov.tileSize = newTileSize * 10;
 		GuiLayerData<T>::data->tileOffset = newOffsetSize * 10;
 	}
+
+	SelectableKeyValues<int> imgSubImages;
+
+	// Component
+	SelectableKeyValues<bc::ComponentType> componentCB =
+	{
+		{bc::ComponentType::Component, "Компонента"},
+		{bc::ComponentType::Hole, "Дыра"}
+	};
+	// ---
+
+	// Proc Type
+	SelectableKeyValues<bc::ProcType> procCB =
+	{
+		{bc::ProcType::f0t255, "От 0 до 255"},
+		{bc::ProcType::f255t0, "От 255 до 0"},
+		{bc::ProcType::Radius, "По расстоянию"},
+		{bc::ProcType::invertf0, "Инвертировать"},
+		{bc::ProcType::experiment, "Радар"},
+		{bc::ProcType::ValueRadius, "Тру растояние"}
+	};
+
+	SelectableKeyValues<bc::ColorType> colorCB =
+	{
+		{bc::ColorType::native, "Как в изображении"},
+		{bc::ColorType::gray, "Серый"},
+		{bc::ColorType::rgb, "Цветной"},
+	};
+
+	SelectableKeyValues<int> alg =
+	{
+		{0, "Растровый"},
+		{1, "Растр в точки"}
+	};
+	BarcodeProperies properties;
+	GuiFilter filterInfo;
+
+	void grabSets()
+	{
+		properties.barstruct.proctype = procCB.currentValue();
+		properties.barstruct.coltype = colorCB.currentValue();
+		properties.barstruct.comtype = componentCB.currentValue();
+		properties.alg = alg.currentIndex;
+	}
+
+	void createBarcode(ILayerWorker& context)
+	{
+		grabSets();
+		//RetLayers layerData = backend.createBarcode(layersVals.iol, properties, filterInfo.getFilter());
+		RetLayers layerData = proj->createCacheBarcode(context.iol, properties, filterInfo.getFilter());
+		context.setLayers(layerData, "barcode");
+	}
+
+
+	virtual void drawToolboxInner(ILayerWorker& context)
+	{
+		if (ImGui::Button("Построить баркод"))
+		{
+			auto subs = GuiLayerData<T>::data->getSubImageInfos();
+			if (subs.size() != 0)
+			{
+				imgSubImages.clear();
+				for (size_t i = 0; i < subs.size(); i++)
+				{
+					SubImgInf& sub = subs[i];
+					BackString s = intToStr(sub.wid) + "x" + intToStr(sub.hei);
+					imgSubImages.add(s, i);
+				}
+				imgSubImages.endAdding();
+				imgSubImages.currentIndex = 0;
+			}
+			ImGui::OpenPopup("SelectMax");
+		}
+
+		if (ImGui::BeginPopupModal("SelectMax", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			alg.drawCombobox("Алгоритм");
+			ImGui::Separator();
+
+			if (alg.currentIndex == 0)
+			{
+				componentCB.drawCombobox("##Форма");
+				procCB.drawCombobox("##Обработка");
+				colorCB.drawCombobox("##Цвет");
+
+			}
+			else
+			{
+				ImGui::Checkbox("Use holes", &properties.alg1UseHoles);
+				ImGui::Checkbox("ignore hight", &properties.alg1IgnoreHeight);
+			}
+
+			ImGui::Separator();
+			ImGui::Text("Пороги отсеивания");
+			filterInfo.draw();
+			ImGui::Separator();
+
+			if (imgSubImages.getSize() > 0)
+			{
+				imgSubImages.drawListBox("Размеры");
+			}
+
+			if (ImGui::Button("Запустить"))
+			{
+				GuiLayerData<T>::data->setSubImage(imgSubImages.currentIndex);
+
+				ImGui::CloseCurrentPopup();
+				createBarcode(context);
+			}
+
+			ImGui::SameLine();
+			if (ImGui::Button("Отмена"))
+			{
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::EndPopup();
+		}
+
+		ImGui::Separator();
+	}
 };
 
 template<class T>
@@ -262,6 +558,7 @@ public:
 export class RasterGuiLayer : public TiledRasterGuiLayer<RasterLayer>
 {
 public:
+
 	RasterGuiLayer(RasterLayer* fromCore = nullptr) : TiledRasterGuiLayer<RasterLayer>(fromCore)
 	{ }
 
@@ -280,6 +577,7 @@ export class RasterLineGuiLayer : public ITiledRasterGuiLayer<GuiDrawCloudPointC
 public:
 	BackString debug;
 	SimpleLine* selectedLine = nullptr;
+	GuiFilter filtere;
 
 	RasterLineGuiLayer(RasterLineLayer* fromCore = nullptr) : ITiledRasterGuiLayer(fromCore)
 	{
@@ -290,6 +588,45 @@ public:
 		ITiledRasterGuiLayer::toGuiData();
 		main.setImage(data->mat, false);
 		icon.setImage(data->mat, 32, 32, true);
+	}
+
+	virtual void drawToolboxInner(ILayerWorker& context)
+	{
+		ITiledRasterGuiLayer::drawToolboxInner(context);
+
+		if (ImGui::Button("Update"))
+		{
+			ImGui::OpenPopup("UpdateImage");
+		}
+
+		if (ImGui::BeginPopupModal("UpdateImage", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			filtere.draw();
+
+			if (ImGui::Button("Update"))
+			{
+				selectedLine = NULL;
+				main.unsetPoints();
+
+				ImGui::CloseCurrentPopup();
+				//auto rets = backend.processRaster(context.iol, filtere.getFilter());
+				auto rets = proj->processCachedBarcode(context.iol, filtere.getFilter());
+
+				context.setLayers(rets, "barcode");
+				//commonValus.onAir = true;
+				//commonValus.future = std::async(&GuiBackend::processRaster, std::ref(backend),
+			}
+			ImGui::SameLine();
+
+			if (ImGui::Button("Close"))
+			{
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
+		}
+
+		ImGui::Separator();
 	}
 
 	virtual void draw(const GuiDisplaySystem& ds)
@@ -414,8 +751,15 @@ private:
 export class RasterFromDiskGuiLayer : public TiledRasterGuiLayer<RasterFromDiskLayer>
 {
 public:
+	HeimapOverlap heimap;
+	TilemapOverlap tilemap;
+
+	bool drawHeimap;
+
 	RasterFromDiskGuiLayer(RasterFromDiskLayer* fromCore = nullptr) : TiledRasterGuiLayer(fromCore)
-	{ }
+	{
+		heimap.enable = false;
+	}
 
 	virtual void toGuiData()
 	{
@@ -424,6 +768,38 @@ public:
 		auto i = *data->getCachedImage();
 		main.setImage(i, false);
 		icon.setImage(i, 32, 32, true);
+	}
+
+	virtual void drawToolboxInner(ILayerWorker& context)
+	{
+		ITiledRasterGuiLayer::drawToolboxInner(context);
+
+		if (ImGui::Button("Activation"))
+		{
+			auto rets = proj->exeFilter(context.iol, 0);
+			context.setLayers(rets, "filter");
+		}
+
+		//ImGui::SameLine();
+		//ImGui::Checkbox("Переключить вид", &heimap.enable);
+		//if (heimap.enable && !heimap.isInit())
+		//{
+		//	heimap.init(main);
+		//}
+		ImGui::Separator();
+	}
+
+	virtual void drawOverlap(const GuiDisplaySystem& ds)
+	{
+		if (drawHeimap)
+		{
+			//heimap.draw(ds);
+		}
+		else
+		{
+			tilemap.init(&main, &getProvider());
+			tilemap.draw(main.displaysBegin, main.displaySize);
+		}
 	}
 
 	std::vector<SubImgInf> getSubImageInfos()
@@ -542,7 +918,6 @@ public:
 		ImDrawList* list = window->DrawList;
 		ImVec2 offset = window->Pos;
 
-
 		auto start = ds.getDisplayStartPos(getCore()->cs);
 		auto end = ds.getDisplayEndPos(getCore()->cs);
 
@@ -615,9 +990,6 @@ public:
 		}
 	}
 
-	virtual void drawOverlap(ImVec2, ImVec2)
-	{ }
-
 	void drawProperty()
 	{
 		ImGui::Text("Tile size");
@@ -629,49 +1001,13 @@ public:
 	}
 };
 
-export class LayersVals
+export class LayersVals : public ILayerWorker
 {
 public:
-	InOutLayer iol;
-	LayersList<IGuiLayer> layers;
-
-	//LayersVals(GuiBackend& back) : backend(back)
-	//{ }
-
-	InOutLayer* getIoLayer()
-	{
-		return &iol;
-	}
 
 	IRasterLayer* getCurrentRasterCore()
 	{
 		return iol.in < 0 ? nullptr : dynamic_cast<IRasterLayer*>(layers.at(iol.in)->getCore());
-	}
-
-	template<typename T>
-	T* getCastCurrentLayer()
-	{
-		IGuiLayer* l = getCurrentLayer();
-		if (l)
-			return dynamic_cast<T*>(l);
-		else
-			return nullptr;
-	}
-
-	IGuiLayer* getCurrentLayer()
-	{
-		return iol.in < 0 ? nullptr : layers.at(iol.in);
-	}
-
-	IGuiLayer* getTempLayer()
-	{
-		return iol.out < 0 ? nullptr : layers.at(iol.out);
-	}
-
-	void update()
-	{
-		if (iol.out == -1)
-			return;
 	}
 
 	RasterFromDiskGuiLayer* addImageFromDiskLayer()
@@ -682,114 +1018,6 @@ public:
 		settup(val, "From disk");
 		iol.out = -1;
 		return val;
-	}
-
-	template<typename T>
-	T* addLayer(const BackString& name)
-	{
-		auto t = layers.add<T>();
-		settup(t, name);
-		return t;
-	}
-
-	template<typename TGui, typename TData>
-	TGui* addLayer(const BackString& name, TData* core)
-	{
-		if (core == nullptr)
-			return nullptr;
-
-		auto t = layers.add<TGui>(core);
-		settup(t, name);
-		return t;
-	}
-
-	template<typename TGui, typename TData>
-	TGui* setLayer(const BackString& name, TData* core)
-	{
-		if (core == nullptr)
-			return nullptr;
-
-		auto ptr = new TGui(core);
-		if (layers.set(core->id, ptr))
-		{
-			settup(ptr, name);
-			return nullptr;
-		}
-		delete ptr;
-
-		return addLayer<TGui, TData>(name, core);
-	}
-
-	void settup(IGuiLayer* layer, const BackString& name)
-	{
-		if (iol.in == -1)
-		{
-			iol.in = iol.out = layer->getSysId();
-		}
-		else
-			iol.out = layer->getSysId();
-
-		layer->setName(name, true);
-		layer->toGuiData();
-	}
-
-	void setLayers(const RetLayers& rlayers, const BackString& name)
-	{
-		for (auto& lay : rlayers)
-		{
-			auto ptr = LayerFactory::CreateGuiLayer(lay.core);
-			if (!layers.set(lay.core->id, ptr))
-			{
-				layers.addMove(ptr);
-			}
-			settup(ptr, lay.getName(name));
-		}
-	}
-
-	void loadLayers()
-	{
-		for (auto& coreLay : proj->layers)
-		{
-			auto ptr = LayerFactory::CreateGuiLayer(coreLay.get());
-			layers.addMove(ptr);
-			settup(ptr, coreLay->name);
-		}
-	}
-
-	void draw(const GuiDisplaySystem& ds)
-	{
-		uint i = 0;
-		for (auto& lay : layers)
-		{
-			// ImGui::SetNextWindowPos(pos);
-			// ImGui::SetNextWindowSize(size);
-			// ImGui::SetNextWindowViewport(viewport->ID);
-			ImGui::PushID(i);
-			lay->draw(ds);
-			ImGui::PopID();
-			++i;
-		}
-
-		//pos.x += drawSize.x;
-		//ImGui::SetNextWindowPos(pos);
-		//ImGui::SetNextWindowSize(nextSize);
-		//ImGui::SetNextWindowViewport(viewport->ID);
-	}
-
-	void drawOverlap(ImVec2 pos, ImVec2 size)
-	{
-		auto t = getCurrentLayer();
-		if (t)
-			t->drawOverlap(pos, size);
-	}
-
-	void onClick(const GuiDisplaySystem& ds, BackPoint click)
-	{
-		if (iol.in == -1)
-			return;
-		auto layer = layers.at(iol.in);
-		if (layer)
-			layer->onClick(ds, click);
 	}
 
 	void drawLayersWindow()

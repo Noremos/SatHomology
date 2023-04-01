@@ -230,9 +230,9 @@ struct SelectableKeyValues
 	void drawCombobox(const char* name, int width = 200)
 	{
 		int oldId = currentIndex;
-		const char** items = getItems();
+		const char** itemsl = getItems();
 		ImGui::SetNextItemWidth(width);
-		ImGui::Combo(name, &currentIndex, items, size); //IM_ARRAYSIZE(items)
+		ImGui::Combo(name, &currentIndex, itemsl, size); //IM_ARRAYSIZE(items)
 
 		hasChange = oldId != currentIndex;
 	}
@@ -240,9 +240,9 @@ struct SelectableKeyValues
 	void drawListBox(const char* name, int width = 200)
 	{
 		int oldId = currentIndex;
-		const char** items = getItems();
+		const char** itemsl = getItems();
 		ImGui::SetNextItemWidth(width);
-		ImGui::ListBox(name, &currentIndex, items, size); //IM_ARRAYSIZE(items)
+		ImGui::ListBox(name, &currentIndex, itemsl, size); //IM_ARRAYSIZE(items)
 
 		hasChange = oldId != currentIndex;
 	}
@@ -453,7 +453,10 @@ export class GuiDrawImage : public GuiImage
 {
 public:
 	WindowVec2 localDisplayPos;
+
+	ImVec2 displaysBegin;
 	ImVec2 displaySize;
+
 	virtual ~GuiDrawImage()
 	{ }
 
@@ -497,6 +500,8 @@ private:
 		if (displayEnd.x < 0 || displayEnd.y < 0)
 			return;
 
+		displaysBegin = displayStart;
+
 		ImVec2 winEnd = winSize - winPos;
 		if (displayStart.x > winEnd.x || displayStart.y > winEnd.y)
 			return;
@@ -524,7 +529,7 @@ private:
 				displayEnd.y = winPos.y + winSize.y;
 			}
 
-			ImVec2 minPos = winPos + displayStart;
+			ImVec2 minPos = winPos + displaysBegin;
 			ImVec2 maxPos = winPos + displayEnd;
 
 
@@ -534,7 +539,7 @@ private:
 		}
 
 		displaySize = ImVec2(width, height);
-		ImVec2 maxSize = displayEnd - displayStart;
+		ImVec2 maxSize = displayEnd - displaysBegin;
 		ResizeImage(displaySize, maxSize); // Resize image by available display size
 
 		// this->scaleFactor = width / static_cast<float>(displaySize.x);
@@ -564,7 +569,7 @@ private:
 		// ImVec2 uv1 = ImVec2((10.0f+100.0f)/256.0f, (10.0f+200.0f)/256.0f);
 
 
-		ImGui::SetCursorPos(displayStart);
+		ImGui::SetCursorPos(displaysBegin);
 		ImGui::Image((void*)(intptr_t)textId, displaySize, ImVec2(0.f,0.f));
 	}
 };
@@ -655,6 +660,12 @@ public:
 
 	std::vector<BackPoint> pointsToDraw;
 
+	void unsetPoints()
+	{
+		pointsToDraw.clear();
+		points = nullptr;
+	}
+
 	void setPoints(const GuiDisplaySystem& ds, CSBinding& cs, const bc::barvector* _points)
 	{
 		// if (dropPoints)
@@ -665,6 +676,11 @@ public:
 
 		pointsToDraw.clear();
 		points = _points;
+
+		if (!_points)
+		{
+			return;
+		}
 
 		BackPoint start = toBP(ds.getDisplayStartPos(cs));
 
@@ -753,5 +769,62 @@ public:
 		}
 
 		ImGui::EndChild();
+	}
+};
+
+
+export struct GuiFilter
+{
+	FilterInfo filterInfo;
+	char text[10000];
+
+	SelectableKeyValues<int> typeCB =
+	{
+		{0, "Без фильтра"},
+		{1, "Простой"},
+		{2, "Lua script"}
+	};
+
+	void _drawPair(const char* name1, const char* name2, FilterInfo::FRange& rng, int max = 256)
+	{
+		ImGui::SliderInt(name1, &rng.first, 0, max, "%d");
+		ImGui::SliderInt(name2, &rng.second, 0, max, "%d");
+	}
+
+	FilterInfo* getFilter()
+	{
+		if (typeCB.currentValue() == 0)
+			return nullptr;
+		else
+			return &filterInfo;
+	}
+
+	void draw()
+	{
+		typeCB.drawCombobox("Type");
+		switch (typeCB.currentValue())
+		{
+		case 0:
+			break;
+		case 1:
+			ImGui::Text("Пороги отсеивания");
+			_drawPair("MinStart", "MaxStart", filterInfo.start);
+			_drawPair("MinLen", "MaxLen", filterInfo.len);
+			_drawPair("MinMatrSize %", "MaxMatrSize %", filterInfo.matrSizeProc, 100);
+			_drawPair("MinDepth", "Max depth", filterInfo.depth);
+			break;
+		case 2:
+			ImGui::InputTextMultiline("Lue script", text, 1000, ImVec2(500, 300));
+			break;
+		default:
+			break;
+		}
+	}
+
+	void runStrcit()
+	{
+		//sol::state lua;
+		//lua.script(text);
+		//assert(lua. <int>("beep").boop == 1);
 	}
 };

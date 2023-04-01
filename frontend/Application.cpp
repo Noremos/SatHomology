@@ -118,61 +118,6 @@ namespace MyApp
 
 	void clearBeforeCreate();
 
-	struct GuiFilter
-	{
-		FilterInfo filterInfo;
-		char text[10000];
-
-		SelectableKeyValues<int> typeCB =
-		{
-			{0, "Без фильтра"},
-			{1, "Простой"},
-			{2, "Lua script"}
-		};
-
-		void _drawPair(const char* name1, const char* name2, FilterInfo::FRange& rng, int max = 256)
-		{
-			ImGui::SliderInt(name1, &rng.first, 0, max, "%d");
-			ImGui::SliderInt(name2, &rng.second, 0, max, "%d");
-		}
-
-		FilterInfo* getFilter()
-		{
-			if (typeCB.currentValue() == 0)
-				return nullptr;
-			else
-				return &filterInfo;
-		}
-
-		void draw()
-		{
-			typeCB.drawCombobox("Type");
-			switch (typeCB.currentValue())
-			{
-			case 0:
-				break;
-			case 1:
-				ImGui::Text("Пороги отсеивания");
-				_drawPair("MinStart", "MaxStart", filterInfo.start);
-				_drawPair("MinLen", "MaxLen", filterInfo.len);
-				_drawPair("MinMatrSize %", "MaxMatrSize %", filterInfo.matrSizeProc, 100);
-				_drawPair("MinDepth", "Max depth", filterInfo.depth);
-				break;
-			case 2:
-				ImGui::InputTextMultiline("Lue script", text, 1000, ImVec2(500, 300));
-				break;
-			default:
-				break;
-			}
-		}
-
-		void runStrcit()
-		{
-			//sol::state lua;
-			//lua.script(text);
-			//assert(lua. <int>("beep").boop == 1);
-		}
-	};
 
 	struct WindowsValues
 	{
@@ -197,73 +142,8 @@ namespace MyApp
 
 	struct TopbarValues
 	{
-		// Component
-		SelectableKeyValues<bc::ComponentType> componentCB =
-		{
-			{bc::ComponentType::Component, "Компонента"},
-			{bc::ComponentType::Hole, "Дыра"}
-		};
-		// ---
-
-		// Proc Type
-		SelectableKeyValues<bc::ProcType> procCB =
-		{
-			{bc::ProcType::f0t255, "От 0 до 255"},
-			{bc::ProcType::f255t0, "От 255 до 0"},
-			{bc::ProcType::Radius, "По расстоянию"},
-			{bc::ProcType::invertf0, "Инвертировать"},
-			{bc::ProcType::experiment, "Радар"},
-			{bc::ProcType::ValueRadius, "Тру растояние"}
-		};
-
-		SelectableKeyValues<bc::ColorType> colorCB =
-		{
-			{bc::ColorType::native, "Как в изображении"},
-			{bc::ColorType::gray, "Серый"},
-			{bc::ColorType::rgb, "Цветной"},
-		};
-
 
 		bool enableProcessBtn = false;
-
-		GuiFilter filterInfo;
-		BarcodeProperies properties;
-
-		void grabSets()
-		{
-			properties.barstruct.proctype = procCB.currentValue();
-			properties.barstruct.coltype = colorCB.currentValue();
-			properties.barstruct.comtype = componentCB.currentValue();
-			properties.alg = alg.currentIndex;
-		}
-
-		void createBarcode()
-		{
-			clearBeforeCreate();
-
-			if (useAsync)
-			{
-				//commonValus.onAir = true;
-				//commonValus.future = std::async(&GuiBackend::createBarcode, &backend,
-				//		procCB.currentValue(),
-				//		colorCB.currentValue(),
-				//		componentCB.currentValue(),
-				//		std::cref(filterInfo));
-			}
-			else
-			{
-				grabSets();
-				RetLayers layerData = backend.createBarcode(layersVals.iol, properties, filterInfo.getFilter());
-				layersVals.setLayers(layerData, "barcode");
-			}
-		}
-
-		SelectableKeyValues<int> imgSubImages;
-		SelectableKeyValues<int> alg =
-		{
-			{0, "Растровый"},
-			{1, "Растр в точки"}
-		};
 
 		bool openPop = false;
 		bool openCoordSystemPopup = false;
@@ -279,8 +159,6 @@ namespace MyApp
 	{
 		GuiCSDisplayContainer resizble;
 		//GuiResizableContainer resizble;
-		HeimapOverlap heimap;
-		TilemapOverlap tilemap;
 
 		// vecotr<IOverlap*>
 	};
@@ -294,7 +172,6 @@ namespace MyApp
 		BackString debug;
 		bool drawPics = true;
 		bool showUpdaePopup = false;
-		GuiFilter filtere;
 	};
 	BottomBar bottomVals;
 
@@ -505,9 +382,6 @@ namespace MyApp
 			ImGui::BeginDisabled(!tbVals.enableProcessBtn);
 
 			ImGui::SameLine();
-			ImGui::Checkbox("Переключить вид", &centerVals.heimap.enable);
-
-			ImGui::SameLine();
 			if (ImGui::Button("Свойства слоя"))
 			{
 				ImGui::OpenPopup("ProcSetts");
@@ -544,71 +418,8 @@ namespace MyApp
 				ImGui::EndPopup();
 			}
 
-			ImGui::SameLine();
-			if (ImGui::Button("Построить баркод"))
-			{
-				IRasterLayer* core = layersVals.getCurrentRasterCore();
-
-				auto subs = core->getSubImageInfos();
-				if (subs.size() != 0)
-				{
-					for (size_t i = 0; i < subs.size(); i++)
-					{
-						SubImgInf& sub = subs[i];
-						BackString s = intToStr(sub.wid) + "x" + intToStr(sub.hei);
-						tbVals.imgSubImages.add(s, i);
-					}
-					tbVals.imgSubImages.endAdding();
-					tbVals.imgSubImages.currentIndex = 0;
-				}
-				ImGui::OpenPopup("SelectMax");
-			}
 			ImGui::EndDisabled();
 
-			if (ImGui::BeginPopupModal("SelectMax", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-			{
-				tbVals.alg.drawCombobox("Алгоритм");
-				ImGui::Separator();
-
-				if (tbVals.alg.currentIndex == 0)
-				{
-					tbVals.componentCB.drawCombobox("##Форма");
-					tbVals.procCB.drawCombobox("##Обработка");
-					tbVals.colorCB.drawCombobox("##Цвет");
-
-				}
-				else
-				{
-					ImGui::Checkbox("Use holes", &tbVals.properties.alg1UseHoles);
-					ImGui::Checkbox("ignore hight", &tbVals.properties.alg1IgnoreHeight);
-				}
-
-				ImGui::Separator();
-				ImGui::Text("Пороги отсеивания");
-				tbVals.filterInfo.draw();
-				ImGui::Separator();
-
-				if (tbVals.imgSubImages.getSize() > 0)
-				{
-					tbVals.imgSubImages.drawListBox("Размеры");
-				}
-
-				if (ImGui::Button("Запустить"))
-				{
-					IRasterLayer* core = layersVals.getCurrentRasterCore();
-					core->setSubImage(tbVals.imgSubImages.currentIndex);
-
-					ImGui::CloseCurrentPopup();
-					tbVals.createBarcode();
-				}
-
-				ImGui::SameLine();
-				if (ImGui::Button("Отмена"))
-				{
-					ImGui::CloseCurrentPopup();
-				}
-				ImGui::EndPopup();
-			}
 			// ---------------------------------
 			ImGui::SameLine();
 			if (ImGui::Button("Восстановить"))
@@ -691,16 +502,10 @@ namespace MyApp
 				}
 			}
 
-			centerVals.heimap.draw(guiDisplay.getWinPos(), guiDisplay.getDrawSize());
-
 			// TiledRasterGuiLayer<RasterFromDiskLayer>* tlay = layersVals.getCastCurrentLayer<TiledRasterGuiLayer<RasterFromDiskLayer>>();
-			RasterFromDiskGuiLayer* tlay = layersVals.getCastCurrentLayer<RasterFromDiskGuiLayer>();
-			if (tlay)
-			{
-				centerVals.tilemap.init(&tlay->main, &tlay->getProvider());
-				centerVals.tilemap.draw(guiDisplay.getWinPos(), guiDisplay.getDrawSize());
-			}
+			layersVals.drawOverlap(guiDisplay);
 		}
+
 		centerVals.resizble.end(guiDisplay.getWinPos(), guiDisplay.getDrawSize());
 
 
@@ -751,37 +556,6 @@ namespace MyApp
 			ImGui::BeginDisabled(commonValus.onAir || !tbVals.enableProcessBtn);
 
 			//ImGui::Text("Happy secondary menu bar");
-			ImGui::SameLine();
-			if (ImGui::Button("Update"))
-			{
-				ImGui::OpenPopup("LoadImg");
-				bottomVals.showUpdaePopup = true;
-			}
-
-			if (ImGui::BeginPopupModal("LoadImg", &bottomVals.showUpdaePopup, ImGuiWindowFlags_AlwaysAutoResize))
-			{
-				bottomVals.filtere.draw();
-
-				if (ImGui::Button("Update"))
-				{
-					unsetPoints();
-					bottomVals.showUpdaePopup = false;
-					ImGui::CloseCurrentPopup();
-					auto layerData = backend.processRaster(layersVals.iol, bottomVals.filtere.getFilter());
-					layersVals.setLayers(layerData, "barcode");
-
-					//commonValus.onAir = true;
-					//commonValus.future = std::async(&GuiBackend::processRaster, std::ref(backend),
-				}
-				ImGui::SameLine();
-
-				if (ImGui::Button("Close"))
-				{
-					ImGui::CloseCurrentPopup();
-				}
-
-				ImGui::End();
-			}
 
 			ImGui::SameLine();
 			if (ImGui::Button("Add class"))
@@ -809,8 +583,6 @@ namespace MyApp
 			}
 
 			ImGui::SameLine();
-			ImGui::SetNextItemWidth(300);
-			ImGui::InputText("Extra", (char*)bottomVals.valeExtra.c_str(), bottomVals.valeExtra.length());
 
 			if (ImGui::Checkbox("Enable pics", &bottomVals.drawPics))
 			{
@@ -1021,13 +793,6 @@ namespace MyApp
 			return;
 		}
 
-		if (ImGui::Button("Activation"))
-		{
-			//backend.
-			auto layerData = backend.exeFilter(layersVals.iol, 0);
-			layersVals.setLayers(layerData, "barcode");
-		}
-
 		if (ImGui::Button("Add vector Layer"))
 		{
 			//backend.
@@ -1056,7 +821,11 @@ namespace MyApp
 		drawBottomBar();
 
 
+		ImGui::BeginDisabled(commonValus.onAir || !tbVals.enableProcessBtn);
 		ToolSetDraw();
+		layersVals.drawToolbox();
+		ImGui::EndDisabled();
+
 		classerVals.drawClassifierWindow();
 		//drawClassifierMenu();
 
@@ -1089,7 +858,6 @@ namespace MyApp
 		//LayerFactory::RegisterFactory<VectorGuiLayer, VetorLayer>(VECTOR_LAYER_FID);
 
 		classerVals.ioLayer = layersVals.getIoLayer();
-		centerVals.heimap.enable = false;
 		auto drawLine = [](const bc::point& p1, const bc::point& p2, bool finale)
 		{
 			const std::lock_guard<std::mutex> lock(debugVals.drawMutex);
@@ -1136,13 +904,13 @@ namespace MyApp
 	// Main
 	void MyApp::RenderUI()
 	{
-		ImGuiID dockspace_id = 0;
-		ImGuiWindowFlags window_flags = 0;
+		//ImGuiID dockspace_id = 0;
+		//ImGuiWindowFlags window_flags = 0;
 
-		const ImGuiViewport* viewport = ImGui::GetMainViewport();
+		//const ImGuiViewport* viewport = ImGui::GetMainViewport();
 
-		bool opt_fullscreen = true;
-		bool opt_padding = false;
+		//bool opt_fullscreen = true;
+		//bool opt_padding = false;
 
 		ImGui::GetStyle().Colors[ImGuiCol_TitleBgActive] = ImVec4(0.3f, 0.3f, 0.3f, 1.0f);
 		ImGui::GetStyle().Colors[ImGuiCol_TitleBg] = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);

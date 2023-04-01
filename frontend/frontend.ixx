@@ -27,6 +27,7 @@ import CSBind;
 // 2 режима
 export class GuiBackend
 {
+	static int opens;
 	enum class GuiState
 	{
 		Empty = 0,
@@ -34,11 +35,17 @@ export class GuiBackend
 		BarcodeCreated
 	};
 public:
-	GuiBackend();
+	GuiBackend()
+	{
+		proj = Project::getProject();
+		opens++;
+	}
 	~GuiBackend()
 	{
 		clear();
-		Project::dropProject();
+		opens--;
+		if (opens == 0)
+			Project::dropProject();
 	}
 
 	DisplaySystem& getDS()
@@ -150,11 +157,6 @@ public:
 		if (!created)
 			return RetLayers();
 
-		//resultMart = mainMat;
-		ska::unordered_map<size_t, char> map;
-
-		comm.clear();
-		//proj->setReadyLaod(curImgInd);
 		return proj->processCachedBarcode(layer, filter);
 	}
 
@@ -276,6 +278,8 @@ private:
 	static std::string openImageOrProject();
 };
 
+int GuiBackend::opens = 0;
+
 
 bool getNumber(BackString path, int& numI, BackString& num)
 {
@@ -289,27 +293,6 @@ bool getNumber(BackString path, int& numI, BackString& num)
 	return *endptr == '\0';
 }
 
-GuiBackend::GuiBackend()
-{
-	proj = Project::getProject();
-	//normlPen.setColor(QColor(0, 0, 255));
-	//normlPen.setWidth(1);
-
-	//selectedPen.setColor(QColor(0, 0, 255));
-	//selectedPen.setWidthF(1.5);
-
-	//for (int s = 0, total = classer.categorues.size(); s < total; ++s)
-//		qDebug() << BackString::fromStdString(classer.categorues[s]) << " : " << BackString::fromStdString(colors[s].text());
-
-//		for (int b = 0; b < 255; b += 20)
-	//			for (int g = 255; g > 20; g -= 20)
-	//				for (int r = 0; r < 255; r += 100)
-	//					colors.push_back(Barscalar(b, g, r));
-
-	//BackDirStr directory(proj->getPath(BackPath::classfiles));
-	//directory /= "*.json";
-	//classer.addClass(createBar("D:\\Learning\\BAR\\sybery\\2.png"), 1);
-}
 
 void GuiBackend::maskInit()
 {

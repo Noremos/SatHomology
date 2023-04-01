@@ -64,6 +64,7 @@ public:
 export class HeimapOverlap : public IOverlapProcess
 {
 	GuiDrawImage heimap;
+	bool inited = false;
 public:
 
 	void init(const BackImage& mainMat)
@@ -89,10 +90,16 @@ public:
 		}
 
 		heimap.setImage(heim);
+		inited = true;
 	}
+	bool isInit()
+	{
+		return inited;
+	}
+
 	virtual void draw(ImVec2 pos, ImVec2 size)
 	{
-		if (!enable)
+		if (!enable || !inited)
 			return;
 		//auto p = ds.projItemGlobToLoc(ds.sysCs, ds.pos);
 		//auto ps = ds.projItemGlobToLoc(ds.sysCs, ds.pos + ds.size);
@@ -130,13 +137,13 @@ public:
 		ImColor lineColor(115, 115, 115);
 
 		ImDrawList* list = ImGui::GetWindowDrawList();
-		ImVec2 cont = ImGui::GetCurrentWindow()->Pos + img->localDisplayPos;
+		ImVec2 cont = ImGui::GetCurrentWindow()->Pos + pos;
 
 		float tfc = prov.tileSize / img->scaleFactor;
 		ImVec2 drawTileSize(tfc, tfc);
 
-		float newWid = img->displaySize.x;
-		float newHei = img->displaySize.y;
+		float newWid = size.x;
+		float newHei = size.y;
 
 		ImVec2 tst(0, cont.y);
 		ImVec2 ted(0, cont.y + newHei);
