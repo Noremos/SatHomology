@@ -583,6 +583,7 @@ public:
 		for (auto& i : classLayers)
 		{
 			ret.push_back(i.second);
+			i.second->clear();
 		}
 
 		// Cacher
@@ -609,7 +610,8 @@ public:
 					auto& p = vl->addPrimitive(vl->color);
 					for (const auto& pm : temp)
 					{
-						p.addPoint(BackPoint(pm.getX(), pm.getY()));
+						BackPoint iglob = vl->cs.toGlobal(pm.getX(), pm.getY());
+						p.addPoint(iglob);
 					}
 				}
 				else
@@ -672,7 +674,10 @@ public:
 		// -------
 		RetLayers ret;
 		for (auto& i : classLayers)
+		{
 			ret.push_back(i.second);
+			i.second->clear();
+		}
 
 		// RasterLineLayer* outLayer = addOrUpdateOut<RasterLineLayer>(iol);
 		// if (outLayer->cacheId == -1)

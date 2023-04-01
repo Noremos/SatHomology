@@ -1,5 +1,7 @@
 module;
+#include <cassert>
 #include <proj.h>
+
 #include "../Bind/Common.h"
 #include "sqlite/sqlite3.h"
 
@@ -33,7 +35,6 @@ static void ioPoint(JsonObjectIOState* state, BackString name, P& p)
 	state->scDouble(name + "_x", p.x);
 	state->scDouble(name + "_y", p.y);
 }
-
 
 export class BackProj
 {
@@ -101,6 +102,7 @@ public:
 			return itemPos;
 
 		PJ* ctc_proj = proj_create_crs_to_crs_from_pj(item.ctx, item.proj, proj, nullptr, nullptr);
+		assert(ctc_proj != nullptr);
 
 		if (normalize)
 			ctc_proj = proj_normalize_for_visualization(item.ctx, ctc_proj);
@@ -144,7 +146,7 @@ public:
 		while (sqlite3_step(stmt) == SQLITE_ROW)
 		{
 			const uchar* wtkContext = sqlite3_column_text(stmt, 0);
-			names.push_back(BackString((const char*)wtkContext));
+			names.push_back(BackString("EPSG:") + (const char*)wtkContext);
 		}
 
 		sqlite3_finalize(stmt);
@@ -211,6 +213,11 @@ export struct CSBindnig : public IJsonIO
 	}
 
 	void init(const char* id)
+	{
+		proj.init(strToInt(id));
+	}
+
+	void init(const BackString& id)
 	{
 		proj.init(strToInt(id));
 	}

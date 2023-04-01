@@ -31,13 +31,13 @@ public:
 		counter = mpv.counter;
 	}
 
-	BackPathStr getUniquePath(int& id)
+	BackPathStr getUniquePath(int& id) const
 	{
 		id = counter++;
 		return path / intToStr(id);
 	}
 
-	int getUniqueId()
+	int getUniqueId() const
 	{
 		return counter++;
 	}
@@ -529,6 +529,15 @@ JsonObjectIOState* JsonObjectIOStateWriter::objectBegin(const BackString& name)
 	return curObj.get();
 }
 
+export void ioPoint(JsonArrayIOState* state, int id, BackPoint& p)
+{
+	auto* obj = state->objectBegin(id);
+	obj->scDouble("x", p.x);
+	obj->scDouble("y", p.y);
+	state->objectEnd();
+}
+
+///
 
 export class IJsonIO
 {

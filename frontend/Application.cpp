@@ -354,7 +354,7 @@ namespace MyApp
 				ImGui::Separator();
 				if (ImGui::Button("OK", ImVec2(120, 0)))
 				{
-					layer->cs.init(tbVals.names[tbVals.selectedName].c_str());
+					layer->cs.init(tbVals.names[tbVals.selectedName].substr(5));
 					auto* guiLayer = layersVals.addLayer<RasterFromDiskGuiLayer>("Loaded", layer);
 					guiLayer->lockAtThis();
 					layer = nullptr;
