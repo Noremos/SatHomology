@@ -271,46 +271,52 @@ public:
 
 	int layerCounter = 0;
 	template<class LDATA>
-	LDATA* addLayerData()
+	LDATA* addLayerData(int projId = -1)
 	{
 		LDATA* d = layers.add<LDATA>();
+		if (projId != -1)
+			d->cs.init(projId);
+
 		//d->prov.init(u_displayFactor, tileSize, reader->width());
 		d->id = layerCounter++;
 		return d;
 	}
 
 	template<class LDATA>
-	LDATA* addLayerData(int keepId)
+	LDATA* addLayerData(int keepId, int projId)
 	{
 		LDATA* d = layers.add<LDATA>();
+		d->cs.init(projId);
+
 		//d->prov.init(u_displayFactor, tileSize, reader->width());
 		d->id = keepId;
 		return d;
 	}
 
 	template<class LDATA>
-	LDATA* changeLayerData(int id)
+	LDATA* changeLayerData(int id, int projId)
 	{
 		// Replace, dont add!
 		LDATA* layer = new LDATA();
 		layer->id = id;
+		layer->cs.init(projId);
 		layers.set(id, layer);
 		return layer;
 	}
 
 	template<class LDATA>
-	LDATA* addOrUpdateOut(InOutLayer& iol)
+	LDATA* addOrUpdateOut(InOutLayer& iol, int projId)
 	{
 		LDATA* layer;
 		if (iol.isOutEmpty())
 		{
-			layer = addLayerData<LDATA>();
+			layer = addLayerData<LDATA>(projId);
 			iol.out = layer->id;
 		}
 		else
 		{
 			// Replace, dont add!
-			layer = changeLayerData<LDATA>(iol.out);
+			layer = changeLayerData<LDATA>(iol.out, projId);
 		}
 
 		return layer;
@@ -564,8 +570,10 @@ public:
 		TileIterator stW(0, tileSize, tileOffset, rwid);
 		TileIterator stH(0, tileSize, tileOffset, rhei);
 
-		RasterLineLayer* layer = addOrUpdateOut<RasterLineLayer>(iol);
-		layer->init(getInRaster(iol), getMeta());
+		RasterLineLayer* layer = addOrUpdateOut<RasterLineLayer>(iol, inLayer->cs.getProjId());
+		layer->init(inLayer, getMeta());
+		layer->initCSFrom(inLayer->cs);
+
 		if (layer->cacheId == -1)
 			layer->cacheId = metaprov->getUniqueId();
 
@@ -596,9 +604,10 @@ public:
 					bc::barvector temp;
 					getCountourSimple(item->getMatrix(), temp);
 
+					auto& p = vl->addPrimitive(vl->color);
 					for (const auto& pm : temp)
 					{
-						vl->primetive.draws.push_back(BackPoint(pm.getX(), pm.getY()));
+						p.addPoint(BackPoint(pm.getX(), pm.getY()));
 					}
 				}
 				else
@@ -696,13 +705,15 @@ public:
 						bc::barvector temp;
 						getCountourSimple(item->getMatrix(), temp);
 
+						auto& p = vl->addPrimitive(vl->color);
 						for (const auto& pm : temp)
 						{
-							vl->primetive.draws.push_back(BackPoint(pm.getX(), pm.getY()));
+							BackPoint iglob = vl->cs.toGlobal(pm.getX(), pm.getY());
+							p.addPoint(iglob);
 						}
 					}
 					else
-						outLayer->addLine(parentne, i, item, tileIndex);
+						outLayer->addLine(parentne, (int)i, item, tileIndex);
 				}
 			}
 		}
@@ -742,9 +753,10 @@ public:
 	{
 		int id = classCategs.addValue(name);
 		classifier.addClass(id);
-		auto* layer = addLayerData<VectorLayer>();
+		auto* layer = addLayerData<VectorLayer>(DEFAULT_PROJECTION);
 		layer->name = "Class: " + name;
 		layer->color = BackColor::random();
+		layer->vecType = VectorLayer::VecType::polygons;
 		classLayers[id] = layer;
 		saveProject();
 		return id;
@@ -794,12 +806,15 @@ public:
 	{
 		//if (u_displayFactor < 1.0)
 		//	throw std::exception();
-		RetLayers ret;
-		RasterLayer* layer = addOrUpdateOut<RasterLayer>(iol);
-		ret.push_back(layer);
-
 		IRasterLayer* input = getInRaster(iol);
+
+		RetLayers ret;
+		RasterLayer* layer = addOrUpdateOut<RasterLayer>(iol, input->cs.getProjId());
+		layer->initCSFrom(input->cs);
+
+		ret.push_back(layer);
 		layer->init(input);
+
 
 
 		const BackImage src = *(input->getCachedImage());
@@ -914,31 +929,11 @@ using namespace bc;
 void Project::read(const BackJson& json)
 {
 	settings.read(json);
-	//this->u_displayFactor = json[jsn_displayFacto].get<double>();
-	//this->u_imgMaxVal = json[jsn_imgMaxVal].get<double>();
-	//this->u_imgMinVal = json[jsn_imgMinVal].get<double>();
-	//this->u_imgPath = json[jsn_imgPath].get<BackString>();
-	//this->u_geojsonPath = json[jsn_geojsonPath].get<BackString>();
-	//this->u_classCache = json[jsn_classfiles].get<BackString>();
-	//this->u_subImageIndex = json[jsn_dispalyImg].get<int>();
-	//this->u_algorithm = json[jsn_alg].get<int>();
-	//this->tileSize = json[jsn_tileSize].get<int>();
-	//this->tileOffset = json[jsn_tileOffset].get<int>();
 }
 
 void Project::write(BackJson& json) const
 {
 	settings.write(json);
-	//json[jsn_displayFacto] = this->u_displayFactor;
-	//json[jsn_imgMaxVal] = this->u_imgMaxVal;
-	//json[jsn_imgMinVal] = this->u_imgMinVal;
-	//json[jsn_imgPath] = u_imgPath.string();
-	//json[jsn_geojsonPath] = this->u_geojsonPath.string();
-	//json[jsn_classfiles] = this->u_classCache.string();
-	//json[jsn_dispalyImg] = this->u_subImageIndex;
-	//json[jsn_alg] = this->u_algorithm;
-	//json[jsn_tileSize] = this->tileSize;
-	//json[jsn_tileOffset] = this->tileOffset;
 }
 
 static int getFid(int wid, int s)

@@ -40,7 +40,7 @@ export class BackProj
 private:
 	PJ* proj = nullptr;
 	friend class CSBindnig;
-	PJ_CONTEXT* ctx;
+	PJ_CONTEXT* ctx = nullptr;
 	int id = -1;
 public:
 	bool isInited() const
@@ -90,13 +90,16 @@ public:
 		return proj_get_name(proj);
 	}
 
-	int getId()
+	int getId() const
 	{
 		return id;
 	}
 
 	BackPoint getThisProj(const BackProj& item, BackPoint itemPos, const bool normalize) const
 	{
+		if (item.getId() == getId())
+			return itemPos;
+
 		PJ* ctc_proj = proj_create_crs_to_crs_from_pj(item.ctx, item.proj, proj, nullptr, nullptr);
 
 		if (normalize)
@@ -199,7 +202,7 @@ export struct CSBindnig : public IJsonIO
 	// Projection of the local image for coord system
 	BackProj proj;
 	BackPoint globOrigin = {0,0};
-	double img_transform[6] = {0.0,0.0,0.0,0.0,0.0,0.0};
+	double img_transform[6] = {0.0,1.0,0.0,0.0,0.0,1.0};
 
 
 	void init(const int id)
@@ -210,6 +213,11 @@ export struct CSBindnig : public IJsonIO
 	void init(const char* id)
 	{
 		proj.init(strToInt(id));
+	}
+
+	int getProjId()
+	{
+		return proj.getId();
 	}
 
 	void setScale(double x, double y)
@@ -304,7 +312,7 @@ export struct CSBindnig : public IJsonIO
 
 export using CoordSystem = CSBindnig;
 
-
+export using CSBinding = CSBindnig;
 
 export struct DisplaySystem : public IJsonIO
 {
@@ -320,12 +328,12 @@ export struct DisplaySystem : public IJsonIO
 
 	BackPoint toSysGlob(const BackPoint& display, const BackPoint& displaySize)
 	{
-		return (display) * (csSize / displaySize) + csPos;
+		return ((display / displaySize) * csSize) + csPos;
 	}
 
-	BackPoint toDisplay(const BackPoint& p, const BackPoint& displaySize) const
+	BackPoint toDisplay(const BackPoint& sysGlob, const BackPoint& displaySize) const
 	{
-		return (p - csPos) * (displaySize / csSize);
+		return ((sysGlob - csPos) / csSize) * displaySize;
 	}
 
 

@@ -421,18 +421,19 @@ namespace MyApp
 							}
 							else
 							{
+								BackString dps = DEFAULT_PROJECTION_STR;
 								tbVals.names = BackProj::getWtkNames();
 								for (int i = 0; i < tbVals.names.size(); i++)
 								{
-									if (tbVals.names[i] == "4326")
+									if (tbVals.names[i] == dps)
 									{
 										tbVals.selectedName = i;
 										break;
 									}
 								}
 
-								*layer->cs.getScaleX() = 10.0;
-								*layer->cs.getScaleY() = 10.0;
+								// *layer->cs.getScaleX() = 10.0;
+								// *layer->cs.getScaleY() = 10.0;
 								ImGui::OpenPopup("SetupCS");
 							}
 						}
@@ -683,7 +684,7 @@ namespace MyApp
 			layersVals.draw(guiDisplay);
 			if (centerVals.resizble.clicked)
 			{
-				layersVals.onClick(centerVals.resizble.clickedPos);
+				layersVals.onClick(guiDisplay, centerVals.resizble.clickedPos);
 				RasterLineGuiLayer* lay = layersVals.getCastCurrentLayer<RasterLineGuiLayer>();
 				if (lay && lay->selectedLine)
 				{
@@ -693,7 +694,8 @@ namespace MyApp
 
 			centerVals.heimap.draw(guiDisplay.getWinPos(), guiDisplay.getDrawSize());
 
-			TiledRasterGuiLayer<RasterFromDiskLayer>* tlay = layersVals.getCastCurrentLayer<TiledRasterGuiLayer<RasterFromDiskLayer>>();
+			// TiledRasterGuiLayer<RasterFromDiskLayer>* tlay = layersVals.getCastCurrentLayer<TiledRasterGuiLayer<RasterFromDiskLayer>>();
+			RasterFromDiskGuiLayer* tlay = layersVals.getCastCurrentLayer<RasterFromDiskGuiLayer>();
 			if (tlay)
 			{
 				centerVals.tilemap.init(&tlay->main, &tlay->getProvider());
@@ -825,6 +827,8 @@ namespace MyApp
 			ImGui::SameLine(0, 30);
 			ImGui::Text(bottomVals.debug.c_str());
 
+			const auto& curpos = centerVals.resizble.currentPos;
+			ImGui::Text("%f:%f", curpos.x, curpos.y);
 
 			// GBL
 			ImGui::EndDisabled();
@@ -1077,7 +1081,7 @@ namespace MyApp
 	void MyApp::Init(const char* root)
 	{
 		Variables::setRoot(root);
-		backend.getDS().sysProj.init(4326);
+		backend.getDS().sysProj.init(DEFAULT_PROJECTION);
 
 		LayerFactory::RegisterFactory<RasterGuiLayer, RasterLayer>(RASTER_LAYER_FID);
 		LayerFactory::RegisterFactory<RasterLineGuiLayer, RasterLineLayer>(RASTER_LINE_LAYER_FID);

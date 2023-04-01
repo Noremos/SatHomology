@@ -49,7 +49,7 @@ public:
 		}
 	}
 
-	virtual void onClick(BackPoint)
+	virtual void onClick(const GuiDisplaySystem&, BackPoint)
 	{ }
 
 	virtual int getSysId()
@@ -109,6 +109,8 @@ protected:
 	T* data;
 
 public:
+	GuiImage icon;
+
 	GuiLayerData(T* fromCore = nullptr)
 	{
 		if (fromCore == nullptr)
@@ -159,23 +161,22 @@ public:
 		strId = name + intToStr(data->id);
 	}
 
-	GuiImage icon;
-
 	virtual ~GuiLayerData()
 	{ }
 };
 
 
-export template<class T>
-class TiledRasterGuiLayer : public GuiLayerData<T>
+export template<class IM, class T>
+class ITiledRasterGuiLayer : public GuiLayerData<T>
 {
 public:
-	GuiDrawImage main;
+	IM main;
+	GuiTilePreview tilePrview;
 
-	TiledRasterGuiLayer(T* fromCore) : GuiLayerData<T>(fromCore)
+	ITiledRasterGuiLayer(T* fromCore) : GuiLayerData<T>(fromCore)
 	{ }
 
-	virtual ~TiledRasterGuiLayer()
+	virtual ~ITiledRasterGuiLayer()
 	{ }
 
 	virtual void toGuiData()
@@ -204,7 +205,6 @@ public:
 
 	int newTileSize;
 	int newOffsetSize;
-	GuiTilePreview tilePrview;
 
 	inline int getTileSize() const
 	{
@@ -248,11 +248,21 @@ public:
 	}
 };
 
+template<class T>
+class TiledRasterGuiLayer : public ITiledRasterGuiLayer<GuiDrawImage, T>
+{
+public:
+	TiledRasterGuiLayer(T* fromCore) : ITiledRasterGuiLayer<GuiDrawImage, T>(fromCore)
+	{ }
+
+	virtual ~TiledRasterGuiLayer()
+	{ }
+};
 
 export class RasterGuiLayer : public TiledRasterGuiLayer<RasterLayer>
 {
 public:
-	RasterGuiLayer(RasterLayer* fromCore = nullptr) : TiledRasterGuiLayer(fromCore)
+	RasterGuiLayer(RasterLayer* fromCore = nullptr) : TiledRasterGuiLayer<RasterLayer>(fromCore)
 	{ }
 
 	virtual void toGuiData()
@@ -265,54 +275,51 @@ public:
 };
 
 
-export class RasterLineGuiLayer : public TiledRasterGuiLayer<RasterLineLayer>
+export class RasterLineGuiLayer : public ITiledRasterGuiLayer<GuiDrawCloudPointClick, RasterLineLayer>
 {
 public:
 	BackString debug;
 	SimpleLine* selectedLine = nullptr;
-	GuiDrawCloudPointClick clickHandler;
 
-	RasterLineGuiLayer(RasterLineLayer* fromCore = nullptr) : TiledRasterGuiLayer(fromCore)
+	RasterLineGuiLayer(RasterLineLayer* fromCore = nullptr) : ITiledRasterGuiLayer(fromCore)
 	{
-		clickHandler.par = &main;
 	}
 
 	virtual void toGuiData()
 	{
-		TiledRasterGuiLayer::toGuiData();
+		ITiledRasterGuiLayer::toGuiData();
 		main.setImage(data->mat, false);
 		icon.setImage(data->mat, 32, 32, true);
 	}
 
 	virtual void draw(const GuiDisplaySystem& ds)
 	{
-		TiledRasterGuiLayer::draw(ds);
 		if (!visible)
 			return;
 
-		clickHandler.draw(ds);
-		drawLineInfoWin();
+		ITiledRasterGuiLayer::draw(ds);
+
+		main.drawPoints(ds, getCore()->cs);
+		drawLineInfoWin(ds);
 	}
 
-	virtual void onClick(BackPoint pos)
+	virtual void onClick(const GuiDisplaySystem& ds, BackPoint pos)
 	{
-		// if (clicked)
+		ImVec2 wpos = ds.getWinPos();
+		ImVec2 start = ds.getDisplayStartPos(data->cs);
+		ImVec2 posInItem = ds.projItemGlobToDisplay(data->cs, pos);
+		if (ds.inRange(data->cs, posInItem))
 		{
-			auto points = click(pos.x, pos.y);
-			setPoints(points);
+			BackPixelPoint pix = data->cs.toLocal(toBP(posInItem - start));
+			auto points = click((int)pix.x, (int)pix.y);
+			setPoints(ds, points);
 		}
 	}
 
 
-	void setPoints(const bc::barvector* points)
+	void setPoints(const GuiDisplaySystem& ds, const bc::barvector* points)
 	{
-		if (points == nullptr)
-		{
-			clickHandler.points = points;
-			return;
-		}
-
-		clickHandler.points = points;
+		main.setPoints(ds, data->cs, points);
 	}
 
 
@@ -358,7 +365,7 @@ public:
 		return selectedLine = selectedLine->parent.get();
 	}
 
-	void drawLineInfoWin()
+	void drawLineInfoWin(const GuiDisplaySystem& ds)
 	{
 		SimpleLine* line = selectedLine;
 		if (!line)
@@ -378,7 +385,7 @@ public:
 			if (ImGui::Selectable("Parent"))
 			{
 				line = moveToParenr();
-				setPoints(&line->matr);
+				setPoints(ds, &line->matr);
 			}
 			ImGui::EndDisabled();
 
@@ -431,8 +438,6 @@ public:
 export class VectorGuiLayer : public GuiLayerData<VectorLayer>
 {
 public:
-	GuiDrawImage main;
-	std::vector<ImVec2> points;
 	VectorGuiLayer(VectorLayer* fromCore) : GuiLayerData<VectorLayer>(fromCore)
 	{ }
 
@@ -442,15 +447,15 @@ public:
 	virtual void toGuiData()
 	{
 		GuiLayerData<VectorLayer>::toGuiData();
-		for (auto& d : data->primetive.draws)
-		{
-			points.push_back(ImVec2(d.x, d.y));
-		}
+		//for (auto& d : data->primitives.draws)
+		//{
+		//	points.push_back(ImVec2(d.x, d.y));
+		//}
 	}
 
 	virtual void draw(const GuiDisplaySystem& ds)
 	{
-		if (!IGuiLayer::visible || points.size() == 0)
+		if (!IGuiLayer::visible)
 			return;
 
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
@@ -468,7 +473,8 @@ public:
 		case VectorLayer::VecType::points:
 			drawPoints(ds);
 			break;
-			//drawPolygon(ds);
+		case VectorLayer::VecType::polygons:
+			drawPolygons(ds);
 			break;
 		default:
 			break;
@@ -482,12 +488,28 @@ public:
 	{
 		ImDrawList* list = ImGui::GetWindowDrawList();
 
-		auto* win = ImGui::GetCurrentWindow();
-		//ds.
-		//ApplicationVec2 offset = win->Pos + ds.winPos;
-		//ApplicationVec2 csreenStar = ds.pos;// ds. ds.getLocalToGlob(cs, ds.pos);
-		//ApplicationVec2 csreenEnd = ds.pos + ds.size;//ds.getLocalToGlob(cs, ds.pos + ds.size);
+		ImColor bigColor(128, 0, 255);
+		ImColor midColor(220, 200, 0);
+		float markerSize = 2;//MAX(1, par->displaySize.x / par->width);
 
+
+		auto& d = data->primitives;
+		if (d.size() == 0)
+			return;
+
+		auto start = ds.getDisplayStartPos(data->cs);
+		auto end = ds.getDisplayEndPos(data->cs);
+		auto& points = d[0].points;
+		for (auto& p : points)
+		{
+			ImVec2 imp = toIV(p);
+			if (GuiDisplaySystem::inRange(start, end, imp))
+			{
+				const auto& pi = ds.projItemGlobToDisplay(data->cs, imp);
+				list->AddCircleFilled(pi, 1.5 * markerSize, bigColor);
+				list->AddCircleFilled(pi, 0.8 * markerSize, midColor);
+			}
+		}
 
 		//ImColor bigColor(128, 0, 255);
 		//ImColor midColor(220, 200, 0);
@@ -513,18 +535,82 @@ public:
 		//}
 	}
 
-
-	void drawPolygon(ApplicationVec2 offset, ApplicationVec2 csreenStar, ApplicationVec2 csreenEnd)
+	void drawPolygons(const GuiDisplaySystem& ds)
 	{
 		ImDrawList* list = ImGui::GetWindowDrawList();
 
-		ImColor bigColor(128, 0, 255);
-		ImColor midColor(220, 200, 0);
-		float markerSize = 2;//MAX(1, par->displaySize.x / par->width);
+		auto start = ds.getDisplayStartPos(getCore()->cs);
+		auto end = ds.getDisplayEndPos(getCore()->cs);
 
-		list->AddPolyline(points.data(), points.size(), bigColor, ImDrawFlags_Closed, 0);
+		auto cscol = data->color;
+		ImColor col(cscol.r, cscol.g, cscol.b);
+		for (auto& d : data->primitives)
+		{
+			const auto& points = d.points;
+
+			ImVec2 st = toIV(points[0]);
+			ImVec2 pend = toIV(points[0]);
+			std::vector<ImVec2> projected;
+			for (const auto& p : points)
+			{
+				if (p.x < st.x)
+				{
+					st.x = p.x;
+				}
+
+				if (p.y < st.y)
+				{
+					st.y = p.y;
+				}
+
+				if (p.x > pend.x)
+				{
+					pend.x = p.x;
+				}
+
+				if (p.y < pend.y)
+				{
+					pend.y = p.y;
+				}
+				projected.push_back(ds.projItemGlobToDisplay(data->cs, p));
+			}
+
+			if (GuiDisplaySystem::inRange(start, end, st, pend))
+			{
+				list->AddPolyline(projected.data(), projected.size(), col, ImDrawFlags_Closed, 0);
+			}
+		}
 
 	}
+
+
+	static void getRect(const std::vector<BackPoint>& points, ImVec2& st, ImVec2& end)
+	{
+		st = end = toIV(points[0]);
+		for (const BackPoint& p : points)
+		{
+			if (p.x < st.x)
+			{
+				st.x = p.x;
+			}
+
+			if (p.y < st.y)
+			{
+				st.y = p.y;
+			}
+
+			if (p.x > end.x)
+			{
+				end.x = p.x;
+			}
+
+			if (p.y < end.y)
+			{
+				end.y = p.y;
+			}
+		}
+	}
+
 	virtual void drawOverlap(ImVec2, ImVec2)
 	{ }
 
@@ -693,13 +779,13 @@ public:
 			t->drawOverlap(pos, size);
 	}
 
-	void onClick(BackPoint click)
+	void onClick(const GuiDisplaySystem& ds, BackPoint click)
 	{
 		if (iol.in == -1)
 			return;
 		auto layer = layers.at(iol.in);
 		if (layer)
-			layer->onClick(click);
+			layer->onClick(ds, click);
 	}
 
 	void drawLayersWindow()

@@ -386,8 +386,8 @@ public:
 
 	JsonObjectIOState* objectBegin(int ind)
 	{
-		const BackJson& jarr = json[ind];
-		curObj = std::make_unique<JsonObjectIOStateReader>(jarr);
+		const BackJson& jobj = json[ind];
+		curObj = std::make_unique<JsonObjectIOStateReader>(jobj);
 		return curObj.get();
 	}
 };

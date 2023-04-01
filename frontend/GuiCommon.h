@@ -36,6 +36,11 @@ inline ImVec2 toIV(const BackPoint& p)
 	return ImVec2(p.x, p.y);
 }
 
+inline BackPoint toBP(const ImVec2& p)
+{
+	return BackPoint(p.x, p.y);
+}
+
 class GuiImage
 {
 public:

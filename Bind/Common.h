@@ -28,6 +28,9 @@ using uchar = unsigned char;
 //using BackVector = std::vector<T>;
 //
 
+const int DEFAULT_PROJECTION = 4326;
+const char* const DEFAULT_PROJECTION_STR = "4326";
+
 struct BackSize
 {
 	int wid, hei;

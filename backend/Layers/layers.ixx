@@ -499,6 +499,7 @@ public:
 			auto& p = tags.ModelTiepointTag.points[0];
 			cs.setOrigin(p.X, p.Y);
 			cs.setScale(tags.ModelPixelScaleTag.x, tags.ModelPixelScaleTag.y);
+			// cs.init(tags.) // TODO: fixme
 
 			subImageIndex = imgIndex;
 		}

@@ -5,6 +5,7 @@ module;
 #include <list>
 
 #include "../../Bind/Common.h"
+#include <cassert>
 
 export module LayersCore;
 
@@ -198,6 +199,12 @@ public:
 	int id = -1;
 	BackString name;
 	CSBindnig cs;
+	void initCSFrom(const CSBindnig& csf)
+	{
+		assert(cs.proj.isInited());
+		cs.globOrigin = csf.globOrigin;
+		std::copy(csf.img_transform, csf.img_transform + 6, cs.img_transform);
+	}
 
 	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder)
 	{
