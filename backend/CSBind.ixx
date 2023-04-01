@@ -337,6 +337,15 @@ export struct DisplaySystem : public IJsonIO
 	}
 
 
+	// Return sys point; Перед использованием надо добавт Когда конвертим обрано в дисплей, перед выводом надо добавить getDisplayStartPos
+	//BackPoint toRelativeSys(const CSBindnig& itemCs, const BackPixelPoint& relativeDisplay)
+	//{
+	//	BackPoint bp(x, y);
+	//	BackPoint pix = itemCs.toGlobal(bp.x, bp.y);
+	//	return toSysGlob(pix, ds.drawSize);
+	//}
+
+
 	//static ImVec2 tov2(BackPixelPoint p)
 	//{
 	//	return ImVec2(p.x, p.y);

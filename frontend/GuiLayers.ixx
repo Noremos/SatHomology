@@ -486,7 +486,8 @@ public:
 
 	void drawPoints(const GuiDisplaySystem& ds)
 	{
-		ImDrawList* list = ImGui::GetWindowDrawList();
+		ImGuiWindow* window = ImGui::GetCurrentWindow();
+		ImDrawList* list = window->DrawList;
 
 		ImColor bigColor(128, 0, 255);
 		ImColor midColor(220, 200, 0);
@@ -537,7 +538,10 @@ public:
 
 	void drawPolygons(const GuiDisplaySystem& ds)
 	{
-		ImDrawList* list = ImGui::GetWindowDrawList();
+		ImGuiWindow* window = ImGui::GetCurrentWindow();
+		ImDrawList* list = window->DrawList;
+		ImVec2 offset = window->Pos;
+
 
 		auto start = ds.getDisplayStartPos(getCore()->cs);
 		auto end = ds.getDisplayEndPos(getCore()->cs);
@@ -572,10 +576,10 @@ public:
 				{
 					pend.y = p.y;
 				}
-				projected.push_back(ds.projItemGlobToDisplay(data->cs, p));
+				projected.push_back(ds.projItemGlobToDisplay(data->cs, p) + start + offset);
 			}
 
-			if (GuiDisplaySystem::inRange(start, end, st, pend))
+			if (GuiDisplaySystem::inRange(start + offset, end + offset, st, pend))
 			{
 				list->AddPolyline(projected.data(), projected.size(), col, ImDrawFlags_Closed, 0);
 			}
