@@ -15,7 +15,6 @@ import ClassifierInterface;
 
 import IOCore;
 import Platform;
-import CacheFilesModule;
 
 import BarcodeModule;
 import TrainIO;

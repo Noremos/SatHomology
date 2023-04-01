@@ -188,11 +188,8 @@
     <ClCompile Include="side\imgui\imgui_widgets.cpp" />
     <ClCompile Include="side\imgui\backends\imgui_impl_glfw.cpp" />
     <ClCompile Include="side\imgui\backends\imgui_impl_opengl3.cpp" />
-    <ClCompile Include="backend\BarHolders.ixx" />
-    <ClCompile Include="backend\CacheFiles.ixx" />
     <ClCompile Include="backend\Classifer\ClassicBarClassifer.ixx" />
     <ClCompile Include="backend\Classifer\ClassInterface.ixx" />
-    <ClCompile Include="backend\Classifiers.ixx" />
     <ClCompile Include="backend\GeoProcessor.ixx" />
     <ClCompile Include="backend\Layers\layerInterface.ixx" />
     <ClCompile Include="backend\Layers\layers.ixx" />

@@ -73,9 +73,6 @@
     <ClCompile Include="frontend\GuiCommon.h">
       <Filter>GUI</Filter>
     </ClCompile>
-    <ClCompile Include="backend\CacheFiles.ixx">
-      <Filter>Backend</Filter>
-    </ClCompile>
     <ClCompile Include="backend\SimpleImgReader.ixx">
       <Filter>Backend</Filter>
     </ClCompile>
@@ -154,13 +151,7 @@
     <ClCompile Include="backend\Layers\layerInterface.ixx">
       <Filter>Backend\Interfaces</Filter>
     </ClCompile>
-    <ClCompile Include="backend\Classifiers.ixx">
-      <Filter>Backend\Impl</Filter>
-    </ClCompile>
     <ClCompile Include="backend\Classifer\ClassicBarClassifer.ixx">
-      <Filter>Backend\Impl</Filter>
-    </ClCompile>
-    <ClCompile Include="backend\BarHolders.ixx">
       <Filter>Backend\Impl</Filter>
     </ClCompile>
     <ClCompile Include="backend\Layers\layers.ixx">

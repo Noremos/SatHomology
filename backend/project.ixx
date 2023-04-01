@@ -10,14 +10,11 @@ module;
 
 export module ProjectModule;
 
-import CacheFilesModule;
 import Platform;
 
 import ImgReader;
-import BarholdersModule;
 import IOCore;
 import LayersCore;
-import ClassifiersCore;
 import BarcodeModule;
 import GeoprocessorModule;
 import JsonCore;

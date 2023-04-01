@@ -17,7 +17,6 @@ import ForntnedModule;
 import Platform;
 import LayersGui;
 import BarcodeModule;
-import ClassifiersCore;
 import GuiOverlap;
 import GuiClassifierModule;
 import GuiWidgets;
