@@ -929,45 +929,47 @@ public:
 		// auto start = ds.getDisplayStartPos();
 		// auto end = ds.getDisplayEndPos();
 
-		auto cscol = data->color;
-		ImColor col(cscol.r, cscol.g, cscol.b);
-		for (auto& d : data->primitives)
+		BackColor cscol = data->color;
+		for (const auto& d : data->primitives)
 		{
 			const auto& points = d.points;
+			cscol = d.color;
+			ImColor col(cscol.r, cscol.g, cscol.b);
 
-			BackPoint itemSt = points[0];
-			BackPoint itemEnd = points[0];
-			std::vector<ImVec2> projected;
+			if (points.size() < 3)
+				continue;
+
+			int added = 0;
+			bool prevIsOut = false;
+			ImVec2 prev;
 			for (const BackPoint& p : points)
 			{
-				if (p.x < itemSt.x)
+				if (!GuiDisplaySystem::inRange(start, end, p))
 				{
-					itemSt.x = p.x;
+					if (prevIsOut)
+						continue;
+
+					prevIsOut = true;
+				}
+				else if (prevIsOut)
+				{
+					++added;
+					list->PathLineTo(prev);
+					prevIsOut = false;
 				}
 
-				if (p.y < itemSt.y)
-				{
-					itemSt.y = p.y;
-				}
+				ImVec2 pi = ds.projItemGlobToDisplay(dsc, p) + offset;
+				prev = pi;
 
-				if (p.x > itemEnd.x)
-				{
-					itemEnd.x = p.x;
-				}
-
-				if (p.y > itemEnd.y)
-				{
-					itemEnd.y = p.y;
-				}
-				projected.push_back(ds.projItemGlobToDisplay(dsc, p) + offset);
+				++added;
+				list->PathLineTo(pi);
 			}
 
-			if (GuiDisplaySystem::inRange(start, end, itemSt, itemEnd))
-			{
-				list->AddPolyline(projected.data(), projected.size(), col, ImDrawFlags_Closed, 0);
-			}
+			if (added < 3)
+				list->PathClear();
+			else
+				list->PathFillConvex(col);
 		}
-
 	}
 
 

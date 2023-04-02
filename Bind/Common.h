@@ -65,6 +65,11 @@ struct TPoint
 
 	TPoint(T _x = 0, T _y = 0) : x(_x), y(_y) {}
 
+	bool operator==(const TPoint& other) const
+	{
+		return x == other.x && y == other.y;
+	}
+
 	// Point addition operator
 	TPoint operator+(const TPoint& other) const {
 		return TPoint(x + other.x, y + other.y);

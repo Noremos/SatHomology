@@ -108,7 +108,7 @@ public:
 			ctc_proj = proj_normalize_for_visualization(item.ctx, ctc_proj);
 
 		PJ_COORD real = proj_trans(ctc_proj, PJ_IDENT, getPjCoord(itemPos));
-		return BackPoint{ real.xy.x, real.xy.y };
+		return BackPoint(real.xy.x, real.xy.y);
 	}
 
 	static sqlite3_stmt* prepareSelect(sqlite3* db, const char* name, const char* where = NULL)
