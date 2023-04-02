@@ -388,7 +388,7 @@ private:
 };
 
 
-void getCountour(const bc::barvector& points, mcountor& contur, bool aproximate)
+export void getCountour(const bc::barvector& points, mcountor& contur, bool aproximate)
 {
 	contur.clear();
 

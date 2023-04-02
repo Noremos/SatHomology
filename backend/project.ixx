@@ -604,22 +604,7 @@ public:
 		{
 			if (layer->passLine(item, info))
 			{
-				auto id = predict(item);
-				if (id != -1)
-				{
-					VectorLayer* vl = classLayers.at(id);
-
-					bc::barvector temp;
-					getCountourSimple(item->getMatrix(), temp);
-
-					auto& p = vl->addPrimitive(vl->color);
-					for (const auto& pm : temp)
-					{
-						BackPoint iglob = vl->cs.toGlobal(pm.getX(), pm.getY());
-						p.addPoint(iglob);
-					}
-				}
-				else
+				if (!predictForLayer(item, layer, tileIndex))
 					layer->addLine(parentne, inde++, item, tileIndex);
 			}
 		};
@@ -656,6 +641,31 @@ public:
 		saveProject();
 
 		return ret;
+	}
+
+	bool predictForLayer(IClassItem* item, RasterLineLayer* inLayer, int tileIndex)
+	{
+		auto id = predict(item);
+		if (id != -1)
+		{
+			VectorLayer* vl = classLayers.at(id);
+			auto tileProv = inLayer->prov.tileByIndex(tileIndex);
+
+			mcountor temp;
+			getCountour(item->getMatrix(), temp, true);
+
+			auto& p = vl->addPrimitive(vl->color);
+			for (const auto& pm : temp)
+			{
+				auto point = bc::barvalue::getStatPoint(pm);
+
+				BackPoint iglob = vl->cs.toGlobal(point.x + tileProv.offset.x, point.y + tileProv.offset.y);
+				p.addPoint(iglob);
+			}
+			return true;
+		}
+		else
+			return false;
 	}
 
 	RetLayers processCachedBarcode(InOutLayer& iol, FilterInfo* filter)
@@ -710,22 +720,7 @@ public:
 				auto item = vec.at(i);
 				if (outLayer->passLine(item, filter))
 				{
-					auto id = predict(item);
-					if (id != -1)
-					{
-						VectorLayer* vl = classLayers.at(id);
-
-						bc::barvector temp;
-						getCountourSimple(item->getMatrix(), temp);
-
-						auto& p = vl->addPrimitive(vl->color);
-						for (const auto& pm : temp)
-						{
-							BackPoint iglob = vl->cs.toGlobal(pm.getX(), pm.getY());
-							p.addPoint(iglob);
-						}
-					}
-					else
+					if (!predictForLayer(item, outLayer, tileIndex))
 						outLayer->addLine(parentne, (int)i, item, tileIndex);
 				}
 			}

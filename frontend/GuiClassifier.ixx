@@ -186,9 +186,9 @@ export struct GuiClassifer
 		{
 			setCurrentClassName();
 			const auto& col = getCurColor();
-			curColor.x = col.r;
-			curColor.y = col.g;
-			curColor.z = col.b;
+			curColor.x = static_cast<float>(col.r) / 255.f;
+			curColor.y = static_cast<float>(col.g) / 255.f;
+			curColor.z = static_cast<float>(col.r) / 255.f;
 		}
 
 		//if (ImGui::Button("Load from image"))
@@ -239,9 +239,9 @@ export struct GuiClassifer
 				if (ImGui::Button("Apply"))
 				{
 					auto& col = getCurColor();
-					col.r = curColor.x;
-					col.g = curColor.y;
-					col.b = curColor.z;
+					col.r = std::min(static_cast<int>(curColor.x * 255), 255);
+					col.g = std::min(static_cast<int>(curColor.y * 255), 255);
+					col.b = std::min(static_cast<int>(curColor.z * 255), 255);
 				}
 
 				ImGui::ColorPicker4("Color", (float*)&curColor, ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoInputs);

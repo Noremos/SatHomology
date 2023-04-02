@@ -827,9 +827,9 @@ public:
 	virtual void toGuiData()
 	{
 		GuiLayerData<VectorLayer>::toGuiData();
-		propColor.x = data->color.r / 255.f;
-		propColor.y = data->color.g / 255.f;
-		propColor.z = data->color.b / 255.f;
+		propColor.x = static_cast<float>(data->color.r) / 255.f;
+		propColor.y = static_cast<float>(data->color.g) / 255.f;
+		propColor.z = static_cast<float>(data->color.b) / 255.f;
 		//for (auto& d : data->primitives.draws)
 		//{
 		//	points.push_back(ImVec2(d.x, d.y));
@@ -881,6 +881,8 @@ public:
 		if (d.size() == 0)
 			return;
 
+		BackColor cscol = data->color;
+		ImColor col(cscol.r, cscol.g, cscol.b);
 
 		auto& cs = data->cs;
 
@@ -892,9 +894,8 @@ public:
 		{
 			if (GuiDisplaySystem::inRange(itemSt, ed, p))
 			{
-				const auto& pi = ds.projItemGlobToDisplay(cs, p);
-				list->AddCircleFilled(pi, 1.5 * markerSize, bigColor);
-				list->AddCircleFilled(pi, 0.8 * markerSize, midColor);
+				ImVec2 pi = ds.projItemGlobToDisplay(cs, p);
+				list->AddCircleFilled(pi, 3, col);
 			}
 		}
 
@@ -950,18 +951,23 @@ public:
 			ImVec2 prev;
 			for (const BackPoint& p : points)
 			{
+				// if (!GuiDisplaySystem::inRange(start, end, p))
+				// {
+				// 	if (prevIsOut)
+				// 		continue;
+
+				// 	prevIsOut = true;
+				// }
+				// else if (prevIsOut)
+				// {
+				// 	++added;
+				// 	list->PathLineTo(prev);
+				// 	prevIsOut = false;
+				// }
+
 				if (!GuiDisplaySystem::inRange(start, end, p))
 				{
-					if (prevIsOut)
-						continue;
-
-					prevIsOut = true;
-				}
-				else if (prevIsOut)
-				{
-					++added;
-					list->PathLineTo(prev);
-					prevIsOut = false;
+					continue;
 				}
 
 				ImVec2 pi = ds.projItemGlobToDisplay(dsc, p) + offset;
@@ -971,10 +977,13 @@ public:
 				list->PathLineTo(pi);
 			}
 
-			if (added < 3)
-				list->PathClear();
-			else
+			if (added >= 3)
+			{
+				ImVec2 pi = ds.projItemGlobToDisplay(dsc, points[0]) + offset; // First
 				list->PathFillConvex(col);
+			}
+
+			list->PathClear();
 		}
 	}
 
@@ -1013,9 +1022,9 @@ public:
 
 	void applyPropertyChanges()
 	{
-		data->color.r = propColor.x * 255;
-		data->color.g = propColor.y * 255;
-		data->color.b = propColor.z * 255;
+		data->color.r = std::min(static_cast<int>(propColor.x * 255), 255);
+		data->color.g = std::min(static_cast<int>(propColor.y * 255), 255);
+		data->color.b = std::min(static_cast<int>(propColor.z * 255), 255);
 	}
 };
 
