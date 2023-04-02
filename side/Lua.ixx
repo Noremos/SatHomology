@@ -57,14 +57,9 @@ public:
 
 
 const char* templ = "function filterCheck(Item)\n\treturn true\nend\n";
-export class LuaItemFilter : public LuaState
+export class LuaFilter : public LuaState
 {
 public:
-
-	static BackString getScriptTemplate() 
-	{
-		return templ;
-	}
 
 	void bindItem()
 	{
@@ -82,7 +77,7 @@ public:
 
 	}
 
-	void passScript(const char* script)
+	void setScript(const char* script)
 	{
 		state.script(script);
 	}
@@ -96,11 +91,16 @@ public:
 
 export struct ScriptFilterInfo : public IItemFilter
 {
-	LuaItemFilter lua;
+	LuaFilter lua;
 
 	ScriptFilterInfo()
 	{
 		lua.bindItem();
+	}
+
+	static BackString getScriptTemplate()
+	{
+		return templ;
 	}
 
 	bool pass(const IClassItem* item) const

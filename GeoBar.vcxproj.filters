@@ -169,9 +169,6 @@
     <ClCompile Include="backend\Layers\VectorLayers.ixx">
       <Filter>Backend\Impl</Filter>
     </ClCompile>
-    <ClCompile Include="frontend\GuiVectorLayer.ixx">
-      <Filter>GUI\WindowWidgets</Filter>
-    </ClCompile>
     <ClCompile Include="backend\CSBind.ixx">
       <Filter>Backend\Bind</Filter>
     </ClCompile>
@@ -180,6 +177,9 @@
     </ClCompile>
     <ClCompile Include="Bind\MHashMap.ixx">
       <Filter>Backend\Bind</Filter>
+    </ClCompile>
+    <ClCompile Include="side\GuiCodeEditor.cpp">
+      <Filter>GUI\WindowWidgets</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -220,6 +220,10 @@
       <Filter>Side</Filter>
     </ClInclude>
     <ClInclude Include="side\imconfig.h" />
+    <ClInclude Include="side\sol3\sol.hpp" />
+    <ClInclude Include="side\GuiCodeEditor.h">
+      <Filter>GUI\WindowWidgets</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="side\imgui\misc\debuggers\imgui.natvis">

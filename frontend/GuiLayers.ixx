@@ -349,17 +349,17 @@ public:
 };
 
 
-
+/// Widget for raster layers
 
 export struct GuiFilter
 {
 	RangeItemFilter valsFilter;
-	LuaItemFilter scriptFilter;
+	ScriptFilterInfo scriptFilter;
 	char text[10000];
 
 	GuiFilter()
 	{
-		const BackString re = LuaItemFilter::getScriptTemplate();
+		const BackString re = ScriptFilterInfo::getScriptTemplate();
 		memcpy(text, re.c_str(), re.length());
 	}
 
@@ -387,8 +387,8 @@ export struct GuiFilter
 			return &valsFilter;
 		case 2:
 		{
-			scriptFilter->lua.pass(text);
-			return &scriptFilter;
+			//scriptFilter.lua.setScript(text);
+			//return &scriptFilter;
 		}
 		}
 		return nullptr;

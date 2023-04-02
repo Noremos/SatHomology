@@ -180,6 +180,7 @@
     <ClCompile Include="side\Barcode\PrjBarlib\modules\ImageReader.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\StateBinFiles.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\TiffReader.ixx" />
+    <ClCompile Include="side\GuiCodeEditor.cpp" />
     <ClCompile Include="side\imgui\imgui.cpp" />
     <ClCompile Include="side\imgui\imgui_demo.cpp" />
     <ClCompile Include="side\imgui\imgui_draw.cpp" />
@@ -217,6 +218,7 @@
     <ClCompile Include="side\sago\platform_folders.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="side\GuiCodeEditor.h" />
     <ClInclude Include="side\imconfig.h" />
     <ClInclude Include="side\imgui\imgui.h" />
     <ClInclude Include="side\imgui\imgui_internal.h" />
