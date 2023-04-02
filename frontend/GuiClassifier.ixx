@@ -48,6 +48,9 @@ export struct GuiClassifer
 	CachedObjectId selceted;
 	InOutLayer* ioLayer;
 
+	ImVec4 curColor;
+	bool changeColor = false;
+
 	struct SelPair
 	{
 		size_t dbId = -1;
@@ -64,6 +67,7 @@ export struct GuiClassifer
 	GuiClassifer()
 	{
 		memset(buffer, 0, 200);
+		curColor = ImVec4(1.0, 1.f, 1.f, 1.f);
 	}
 
 
@@ -115,6 +119,12 @@ export struct GuiClassifer
 
 		io.loadAll(cla, classId, ClassDataIO::LF_ICON);
 		classImages.push_back(prev);
+	}
+
+	BackColor& getCurColor()
+	{
+		int claId = classesLB.currentValue().classId;
+		return proj->classCategs.categs[claId].color;
 	}
 
 	void drawClassifierWindow()
@@ -175,13 +185,17 @@ export struct GuiClassifer
 		if (classesLB.hasChanged())
 		{
 			setCurrentClassName();
+			const auto& col = getCurColor();
+			curColor.x = col.r;
+			curColor.y = col.g;
+			curColor.z = col.b;
 		}
 
-		if (ImGui::Button("Load from image"))
-		{
-			ImGui::OpenPopup("LoadImg");
-			//backend.undoAddClass();
-		}
+		//if (ImGui::Button("Load from image"))
+		//{
+		//	ImGui::OpenPopup("LoadImg");
+		//	//backend.undoAddClass();
+		//}
 
 		if (ImGui::BeginPopupModal("LoadImg", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 		{
@@ -218,6 +232,21 @@ export struct GuiClassifer
 
 		if (hasClasses)
 		{
+			ImGui::Checkbox("Изменить цвет", &changeColor);
+			if (changeColor)
+			{
+				ImGui::SameLine();
+				if (ImGui::Button("Apply"))
+				{
+					auto& col = getCurColor();
+					col.r = curColor.x;
+					col.g = curColor.y;
+					col.b = curColor.z;
+				}
+
+				ImGui::ColorPicker4("Color", (float*)&curColor, ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoInputs);
+			}
+
 			if (ImGui::Button("Show graph"))
 			{
 				graph.init(proj->classifier.dbPath, classesLB.currentValue().classId);

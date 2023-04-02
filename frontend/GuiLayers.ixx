@@ -815,7 +815,9 @@ public:
 
 export class VectorGuiLayer : public GuiLayerData<VectorLayer>
 {
+	ImVec4 propColor;
 public:
+
 	VectorGuiLayer(VectorLayer* fromCore) : GuiLayerData<VectorLayer>(fromCore)
 	{ }
 
@@ -825,6 +827,9 @@ public:
 	virtual void toGuiData()
 	{
 		GuiLayerData<VectorLayer>::toGuiData();
+		propColor.x = data->color.r / 255.f;
+		propColor.y = data->color.g / 255.f;
+		propColor.z = data->color.b / 255.f;
 		//for (auto& d : data->primitives.draws)
 		//{
 		//	points.push_back(ImVec2(d.x, d.y));
@@ -934,7 +939,7 @@ public:
 		for (const auto& d : data->primitives)
 		{
 			const auto& points = d.points;
-			cscol = d.color;
+			// cscol = d.color;
 			ImColor col(cscol.r, cscol.g, cscol.b);
 
 			if (points.size() < 3)
@@ -1003,12 +1008,14 @@ public:
 
 	void drawProperty()
 	{
-		ImGui::Text("Tile size");
+		ImGui::ColorPicker4("Color", (float*)&propColor, ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoInputs);
 	}
 
 	void applyPropertyChanges()
 	{
-
+		data->color.r = propColor.x * 255;
+		data->color.g = propColor.y * 255;
+		data->color.b = propColor.z * 255;
 	}
 };
 
