@@ -760,10 +760,12 @@ public:
 	{
 		int id = classCategs.addValue(name);
 		classifier.addClass(id);
-		auto* layer = addLayerData<VectorLayer>(DEFAULT_PROJECTION);
+		auto* layer = addLayerData<VectorLayer>(ds.sysProj.getId());
 		layer->name = "Class: " + name;
 		layer->color = BackColor::random();
 		layer->vecType = VectorLayer::VecType::polygons;
+		layer->isSystem = true;
+
 		classLayers[id] = layer;
 		saveProject();
 		return id;
@@ -779,6 +781,16 @@ public:
 		classCategs.remove(classId);
 		classifier.removeClass(classId);
 		classLayers.erase(classId);
+	}
+
+	void removeLayer(int layId)
+	{
+		ILayer* lay = layers.at(layId);
+		if (lay->isSystem)
+		{
+			return;
+		}
+		layers.remove(layId);
 	}
 
 	size_t addTrainData(int layerId, int classId, CachedObjectId srcItemId, BackImage* destIcon)

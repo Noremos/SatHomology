@@ -297,7 +297,9 @@ namespace MyApp
 							}
 							else
 							{
-								BackString dps = DEFAULT_PROJECTION_STR;
+								BackString dps = "EPSG:";
+								dps += DEFAULT_PROJECTION_STR;
+
 								tbVals.names = BackProj::getWtkNames();
 								for (int i = 0; i < tbVals.names.size(); i++)
 								{

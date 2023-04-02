@@ -198,7 +198,9 @@ public:
 public:
 	int id = -1;
 	BackString name;
-	CSBindnig cs;
+	CSBinding cs;
+	bool isSystem = false;
+
 	void initCSFrom(const CSBindnig& csf)
 	{
 		assert(cs.proj.isInited());
@@ -210,6 +212,11 @@ public:
 	{
 		state->scInt("coreId", id);
 		state->scStr("name", name);
+
+		int d = isSystem ? 1 : 0;
+		state->scInt("isSystem", d);
+		isSystem = d == 1;
+
 		cs.saveLoadState(state, metaFolder);
 	}
 

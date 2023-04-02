@@ -376,8 +376,8 @@ public:
 
 		auto wpos = ds.getWinPos();
 		auto& cs = GuiLayerData<T>::getCore()->cs;
-		auto start = ds.getDisplayStartPos(cs) - wpos;
-		auto end = ds.getDisplayEndPos(cs) - wpos;
+		auto start = ds.getDisplayStartPos(cs);
+		auto end = ds.projItemLocalToDisplay(cs, main.getSize());
 
 		main.drawImage(GuiLayerData<T>::getName(), wpos, ds.getDrawSize(), start, end);
 	}
@@ -798,8 +798,8 @@ public:
 		}
 		else
 		{
-			tilemap.init(&main, &getProvider());
-			tilemap.draw(main.displaysBegin, main.displaySize);
+			// tilemap.init(&main, &getProvider());
+			// tilemap.draw(main.displaysBegin, main.displaySize);
 		}
 	}
 
@@ -919,8 +919,10 @@ public:
 		ImDrawList* list = window->DrawList;
 		ImVec2 offset = window->Pos;
 
-		auto start = ds.getDisplayStartPos(getCore()->cs);
-		auto end = ds.getDisplayEndPos(getCore()->cs);
+
+		CSBinding& dsc = getCore()->cs;
+		auto start = ds.getDisplayStartPos(dsc);
+		auto end = ds.getDisplayEndPos(dsc);
 
 		auto cscol = data->color;
 		ImColor col(cscol.r, cscol.g, cscol.b);
@@ -952,10 +954,13 @@ public:
 				{
 					pend.y = p.y;
 				}
-				projected.push_back(ds.projItemGlobToDisplay(data->cs, p) + start + offset);
+				projected.push_back(ds.projItemGlobToDisplay(dsc, p) + offset);
 			}
 
-			if (GuiDisplaySystem::inRange(start + offset, end + offset, st, pend))
+			st = ds.projItemGlobToDisplay(dsc, st);
+			pend = ds.projItemGlobToDisplay(dsc, pend);
+
+			if (GuiDisplaySystem::inRange(start, end, st, pend))
 			{
 				list->AddPolyline(projected.data(), projected.size(), col, ImDrawFlags_Closed, 0);
 			}
@@ -1011,15 +1016,15 @@ public:
 		return iol.in < 0 ? nullptr : dynamic_cast<IRasterLayer*>(layers.at(iol.in)->getCore());
 	}
 
-	RasterFromDiskGuiLayer* addImageFromDiskLayer()
-	{
-		layers.clear();
-		proj->layers.clear();
-		RasterFromDiskGuiLayer* val = layers.add<RasterFromDiskGuiLayer>();
-		settup(val, "From disk");
-		iol.out = -1;
-		return val;
-	}
+	// RasterFromDiskGuiLayer* addImageFromDiskLayer()
+	// {
+	// 	// layers.clear();
+	// 	// proj->layers.clear();
+	// 	RasterFromDiskGuiLayer* val = layers.add<RasterFromDiskGuiLayer>();
+	// 	settup(val, "From disk");
+	// 	iol.out = -1;
+	// 	return val;
+	// }
 
 	void drawLayersWindow()
 	{
@@ -1142,7 +1147,7 @@ public:
 		if (delId != -1)
 		{
 			layers.remove(delId);
-			proj->layers.remove(delId);
+			proj->removeLayer(delId);
 		}
 
 		//ImGui::EndGroup();
