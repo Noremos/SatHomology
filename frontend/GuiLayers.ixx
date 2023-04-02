@@ -387,7 +387,7 @@ export struct GuiFilter
 			return &valsFilter;
 		case 2:
 		{
-			//scriptFilter.lua.setScript(text);
+			//scriptFilter.setScript(text);
 			//return &scriptFilter;
 		}
 		}

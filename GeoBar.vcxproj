@@ -114,6 +114,7 @@
       <TranslateIncludes>false</TranslateIncludes>
       <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -175,6 +176,9 @@
     <ClCompile Include="backend\CSBind.ixx" />
     <ClCompile Include="Bind\Common.cpp" />
     <ClCompile Include="Bind\MHashMap.ixx" />
+    <ClCompile Include="Bind\Lua.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
     <ClCompile Include="side\Barcode\PrjBarlib\modules\Barcode.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\Barline.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\ImageReader.ixx" />
@@ -214,7 +218,6 @@
     <ClCompile Include="frontend\main.cpp" />
     <ClCompile Include="frontend\Object3d.ixx" />
     <ClCompile Include="frontend\Viewer3d.ixx" />
-    <ClCompile Include="side\Lua.ixx" />
     <ClCompile Include="side\sago\platform_folders.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -233,7 +236,6 @@
     <ClInclude Include="frontend\FrontTypes.h" />
     <ClInclude Include="side\IconsFontAwesome5.h" />
     <ClInclude Include="side\PortFileDialog.h" />
-    <ClInclude Include="side\sol3\sol.hpp" />
     <ClInclude Include="side\sqlite\sqlite3.h" />
     <ClInclude Include="side\stb_image.h" />
   </ItemGroup>

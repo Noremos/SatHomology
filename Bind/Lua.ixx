@@ -91,8 +91,10 @@ public:
 
 export struct ScriptFilterInfo : public IItemFilter
 {
+private:
 	LuaFilter lua;
 
+public:
 	ScriptFilterInfo()
 	{
 		lua.bindItem();
@@ -101,6 +103,11 @@ export struct ScriptFilterInfo : public IItemFilter
 	static BackString getScriptTemplate()
 	{
 		return templ;
+	}
+
+	void setScript(const char* script)
+	{
+		lua.setScript(script);
 	}
 
 	bool pass(const IClassItem* item) const

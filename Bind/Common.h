@@ -1,7 +1,6 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-
 #include <filesystem>
 //#include <random>
 #include <fstream>
