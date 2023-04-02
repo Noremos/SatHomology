@@ -81,14 +81,6 @@ public:
 		line->getChilredAsList(childer, true, true, false);
 	}
 
-	virtual bool passFilter(const FilterInfo& filter) const
-	{
-		return filter.start.inRange(line->start) &&
-			filter.len.inRange(line->len()) &&
-			filter.matrSizeProc.inRange(line->matr.size() * 100 / filter.imgLen) &&
-			filter.depth.inRange(line->getDeath());
-	}
-
 	virtual void saveLoadState(StateBinFile::BinState* state) override
 	{
 		if (state->isReading())

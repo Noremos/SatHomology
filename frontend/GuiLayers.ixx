@@ -11,6 +11,8 @@ import GuiOverlap;
 import IOCore;
 import VectorLayers;
 import CSBind;
+import LuaStates;
+
 //import ForntnedModule;
 
 class LayersVals;
@@ -344,6 +346,75 @@ public:
 
 	virtual ~GuiLayerData()
 	{ }
+};
+
+
+
+
+export struct GuiFilter
+{
+	RangeItemFilter valsFilter;
+	LuaItemFilter scriptFilter;
+	char text[10000];
+
+	GuiFilter()
+	{
+		const BackString re = LuaItemFilter::getScriptTemplate();
+		memcpy(text, re.c_str(), re.length());
+	}
+
+	SelectableKeyValues<int> typeCB =
+	{
+		{0, "Без фильтра"},
+		{1, "Простой"},
+		{2, "Lua script"}
+	};
+
+	void _drawPair(const char* name1, const char* name2, RangeItemFilter::FRange& rng, int max = 256)
+	{
+		ImGui::SliderInt(name1, &rng.first, 0, max, "%d");
+		ImGui::SliderInt(name2, &rng.second, 0, max, "%d");
+	}
+
+	IItemFilter* getFilter()
+	{
+		int id = typeCB.currentValue();
+		switch (id)
+		{
+		case 0:
+			return nullptr;
+		case 1:
+			return &valsFilter;
+		case 2:
+		{
+			scriptFilter->lua.pass(text);
+			return &scriptFilter;
+		}
+		}
+		return nullptr;
+	}
+
+	void draw()
+	{
+		typeCB.drawCombobox("Type");
+		switch (typeCB.currentValue())
+		{
+		case 0:
+			break;
+		case 1:
+			ImGui::Text("Пороги отсеивания");
+			_drawPair("MinStart", "MaxStart", valsFilter.start);
+			_drawPair("MinLen", "MaxLen", valsFilter.len);
+			_drawPair("MinMatrSize %", "MaxMatrSize %", valsFilter.matrSizeProc, 100);
+			_drawPair("MinDepth", "Max depth", valsFilter.depth);
+			break;
+		case 2:
+			ImGui::InputTextMultiline("Lue script", text, 1000, ImVec2(500, 300));
+			break;
+		default:
+			break;
+		}
+	}
 };
 
 

@@ -137,7 +137,7 @@ public:
 		state = GuiState::ImageLoaded;
 	}
 
-	RetLayers createBarcode(InOutLayer& iol, const BarcodeProperies& propertices, FilterInfo* info)
+	RetLayers createBarcode(InOutLayer& iol, const BarcodeProperies& propertices, IItemFilter* info)
 	{
 		if (!isImageLoaded())
 			return RetLayers();
@@ -152,7 +152,7 @@ public:
 	}
 
 
-	RetLayers processRaster(InOutLayer& layer, FilterInfo* filter)
+	RetLayers processRaster(InOutLayer& layer, IItemFilter* filter)
 	{
 		if (!created)
 			return RetLayers();

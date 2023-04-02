@@ -17,55 +17,6 @@ import MetadataIOCore;
 import TrainIO;
 import MHashMap;
 
-export struct FilterInfo
-{
-	struct FRange
-	{
-		int first;
-		int second;
-
-		// template<class T>
-		// bool inRange(const T& val) const
-		//{
-		//	return val >= first && val <= second;
-		// }
-
-		bool inRange(int val) const
-		{
-			return val >= first && val <= second;
-		}
-
-		bool inRange(const Barscalar &val) const
-		{
-			return val >= first && val <= second;
-		}
-
-		bool notInRange(int val) const
-		{
-			return val < first || val > second;
-		}
-
-		bool notInRange(const Barscalar &val) const
-		{
-			return val < first && val > second;
-		}
-	};
-
-	FRange start{0, 255};
-	FRange len{0, 255};
-	FRange matrSizeProc{0, 100};
-	FRange depth{0, 1000};
-	int imgLen = 0;
-
-	 bool needSkip(bc::barline* line) const
-	 {
-	 	return start.notInRange(line->start) ||
-	 		len.notInRange(line->len()) ||
-	 		matrSizeProc.notInRange(line->matr.size() * 100 / imgLen) ||
-	 		depth.notInRange(line->getDeath());
-	 }
-};
-
 export class IClassItem : public IBffIO
 {
 public:
@@ -84,8 +35,6 @@ public:
 	virtual Barscalar start() const = 0;
 	virtual Barscalar end() const = 0;
 	// virtual IClassItem* parent() const = 0;
-
-	virtual bool passFilter(const FilterInfo &filter) const = 0;
 
 	virtual ~IClassItem()
 	{
@@ -328,3 +277,72 @@ public:
 ClassFactory::FunctionHolder<IClassItem> ClassFactory::itemCreators;
 ClassFactory::FunctionHolder<IClassItemHolder> ClassFactory::holderCreators;
 ClassFactory::FunctionHolder<IBarClassifier> ClassFactory::classifierCreators;
+
+
+export struct IItemFilter
+{
+	int imgLen = 0;
+
+	virtual bool pass(const IClassItem* line) const = 0;
+};
+
+export struct RangeItemFilter : public IItemFilter
+{
+	struct FRange
+	{
+		int first;
+		int second;
+
+		// template<class T>
+		// bool inRange(const T& val) const
+		//{
+		//	return val >= first && val <= second;
+		// }
+
+		bool inRange(int val) const
+		{
+			return val >= first && val <= second;
+		}
+
+		bool inRange(const Barscalar& val) const
+		{
+			return val >= first && val <= second;
+		}
+
+		bool notInRange(int val) const
+		{
+			return val < first || val > second;
+		}
+
+		bool notInRange(const Barscalar& val) const
+		{
+			return val < first && val > second;
+		}
+	};
+
+	FRange start{ 0, 255 };
+	FRange len{ 0, 255 };
+	FRange matrSizeProc{ 0, 100 };
+	FRange depth{ 0, 1000 };
+
+	BackImage script;
+	bool useScript;
+
+	bool pass(const IClassItem* line) const
+	{
+		auto linlen = line->end() - line->start();
+		return start.inRange(line->start()) &&
+			len.inRange(linlen) &&
+			matrSizeProc.inRange(line->getMatrixSize() * 100 / imgLen) ||
+			depth.inRange(line->getDeath());
+	}
+
+
+	//virtual bool passFilter(const IItemFilter& filter) const
+	//{
+	//	return filter.start.inRange(line->start) &&
+	//		filter.len.inRange(line->len()) &&
+	//		filter.matrSizeProc.inRange(line->matr.size() * 100 / filter.imgLen) &&
+	//		filter.depth.inRange(line->getDeath());
+	//}
+};

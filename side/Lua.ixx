@@ -3,7 +3,7 @@ module;
 #include "../Bind/Common.h"
 #include "../side/sol3/sol.hpp"
 
-export module Lua;
+export module LuaStates;
 
 import BarcodeModule;
 import VectorLayers;
@@ -56,17 +56,13 @@ public:
 };
 
 
-export class LuaFilter : public LuaState
+const char* templ = "function filterCheck(Item)\n\treturn true\nend\n";
+export class LuaItemFilter : public LuaState
 {
 public:
 
 	static BackString getScriptTemplate() 
 	{
-		BackString templ;
-		templ = "function filterCheck(Item)"
-			"\treturn true"
-			"end";
-
 		return templ;
 	}
 
@@ -91,13 +87,28 @@ public:
 		state.script(script);
 	}
 
-	bool checkFilter(const IClassItem* item)
+	bool checkFilter(const IClassItem* item) const
 	{
-
 		bool res = state["filterCheck"](item);
 		return res;
 	}
 };
+
+export struct ScriptFilterInfo : public IItemFilter
+{
+	LuaItemFilter lua;
+
+	ScriptFilterInfo()
+	{
+		lua.bindItem();
+	}
+
+	bool pass(const IClassItem* item) const
+	{
+		return lua.checkFilter(item);
+	}
+};
+
 
 export class LuaLayers : public LuaState
 {

@@ -348,12 +348,12 @@ public:
 		getCountourSimple(temp, line->matr);
 	}
 
-	bool passLine(const IClassItem* item, const FilterInfo* filter) const
+	bool passLine(const IClassItem* item, const IItemFilter* filter) const
 	{
 		if (item->getMatrixSize() == 0)
 			return false;
 
-		if (filter && !item->passFilter(*filter))
+		if (filter && !filter->pass(item))
 			return false;
 
 		return true;
@@ -401,7 +401,7 @@ public:
 		addSimpleLine(sl, matr, pointCol, tileIndex);
 	}
 
-	void addHolder(const IClassItemHolder& items, int tileIndex, const FilterInfo* filter)
+	void addHolder(const IClassItemHolder& items, int tileIndex, const IItemFilter* filter)
 	{
 		IdGrater parentne;
 

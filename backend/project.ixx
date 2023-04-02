@@ -544,7 +544,7 @@ public:
 		return classType;
 	}
 
-	RetLayers createCacheBarcode(InOutLayer& iol, const BarcodeProperies& propertices, FilterInfo* info = nullptr)
+	RetLayers createCacheBarcode(InOutLayer& iol, const BarcodeProperies& propertices, IItemFilter* info = nullptr)
 	{
 		RetLayers ret;
 		if (block) return ret;
@@ -668,7 +668,7 @@ public:
 			return false;
 	}
 
-	RetLayers processCachedBarcode(InOutLayer& iol, FilterInfo* filter)
+	RetLayers processCachedBarcode(InOutLayer& iol, IItemFilter* filter)
 	{
 		//if (u_displayFactor < 1.0)
 		//	throw std::exception();
