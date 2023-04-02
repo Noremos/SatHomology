@@ -201,7 +201,12 @@ public:
 	CSBinding cs;
 	bool isSystem = false;
 
-	void initCSFrom(const CSBindnig& csf)
+	void init(int proj)
+	{
+		cs.init(proj);
+	}
+
+	void initCSFrom(const CSBinding& csf)
 	{
 		assert(cs.proj.isInited());
 		cs.globOrigin = csf.globOrigin;

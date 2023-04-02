@@ -77,7 +77,7 @@ int main(int, char** argv)
 //	glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_FALSE);
 //#endif
 	// Create window with graphics context
-	GLFWwindow* window = glfwCreateWindow(1280, 720, "GeoBar", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(1280, 720, "SatHomology", NULL, NULL);
 	if (window == NULL)
 		return 1;
 	glfwMakeContextCurrent(window);

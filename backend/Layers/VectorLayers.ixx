@@ -29,9 +29,9 @@ static void saveLoadChar(JsonObjectIOState* state, const char* name, FR& val)
 
 export class DrawPrimitive
 {
+	bool setted = false;
 public:
 	BackColor color;
-	bool setted = false;
 	std::vector<BackPoint> points;
 
 	DrawPrimitive(const BackColor& bp = BackColor()) : color(bp)
@@ -43,6 +43,10 @@ public:
 		points.push_back(p);
 	}
 
+	void clear()
+	{
+		points.clear();
+	}
 
 	//IClassItemHolder *load(int &index, IClassItemHolder *t)
 	//{
@@ -79,6 +83,8 @@ public:
 
 export class VectorLayer : public IVectorLayer
 {
+	int binId = -1;
+
 public:
 	enum class VecType : short
 	{
@@ -90,7 +96,6 @@ public:
 	VecType vecType;
 	BackColor color;
 	std::vector<DrawPrimitive> primitives;
-	int binId = -1;
 
 	void clear()
 	{

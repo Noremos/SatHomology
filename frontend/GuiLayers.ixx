@@ -877,8 +877,8 @@ public:
 		float markerSize = 2;//MAX(1, par->displaySize.x / par->width);
 
 
-		auto& d = data->primitives;
-		if (d.size() == 0)
+		auto& prims = data->primitives;
+		if (prims.size() == 0)
 			return;
 
 		BackColor cscol = data->color;
@@ -889,38 +889,19 @@ public:
 		BackPoint itemSt = ds.getSysToItemStartPos(cs);
 		BackPoint ed = ds.getSysToItemEndPos(cs);
 
-		auto& points = d[0].points;
-		for (auto& p : points)
+		for (auto& d : prims)
 		{
-			if (GuiDisplaySystem::inRange(itemSt, ed, p))
+			auto& points = d.points;
+
+			for (auto& p : points)
 			{
-				ImVec2 pi = ds.projItemGlobToDisplay(cs, p);
-				list->AddCircleFilled(pi, 3, col);
+				if (GuiDisplaySystem::inRange(itemSt, ed, p))
+				{
+					ImVec2 pi = ds.projItemGlobToDisplay(cs, p);
+					list->AddCircleFilled(pi, 3, col);
+				}
 			}
 		}
-
-		//ImColor bigColor(128, 0, 255);
-		//ImColor midColor(220, 200, 0);
-		//float markerSize = 2;//MAX(1, par->displaySize.x / par->width);
-
-		//for (const auto& p : points)
-		//{
-		//	// TL is a Begin()
-		//	ItemVec2 pi = p - ds.pos;// (par->toDisplayX(p.getX()), par->toDisplayY(p.getY()));
-		//	//data->cs.
-
-		//	if (pi.x < csreenStar.x || pi.y < csreenStar.y)
-		//		continue;
-		//	if (pi.x > csreenEnd.x || pi.y > csreenEnd.y)
-		//		continue;
-
-		//	auto p = ds.projItemGlobToLoc(cs, pi);
-		//	pi = offset + ImVec2(p.x, p.y);
-
-		//	// Center pixel for big images
-		//	list->AddCircleFilled(pi, 1.5 * markerSize, bigColor);
-		//	list->AddCircleFilled(pi, 0.8 * markerSize, midColor);
-		//}
 	}
 
 	void drawPolygons(const GuiDisplaySystem& ds)

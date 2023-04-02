@@ -40,7 +40,7 @@ export class BackProj
 {
 private:
 	PJ* proj = nullptr;
-	friend class CSBindnig;
+	friend class CSBinding;
 	PJ_CONTEXT* ctx = nullptr;
 	int id = -1;
 public:
@@ -199,7 +199,7 @@ public:
 //};
 
 
-export struct CSBindnig : public IJsonIO
+export struct CSBinding : public IJsonIO
 {
 	// Projection of the local image for coord system
 	BackProj proj;
@@ -320,9 +320,7 @@ export struct CSBindnig : public IJsonIO
 	}
 };
 
-export using CoordSystem = CSBindnig;
-
-export using CSBinding = CSBindnig;
+export using CoordSystem = CSBinding;
 
 export struct DisplaySystem : public IJsonIO
 {
@@ -330,7 +328,7 @@ export struct DisplaySystem : public IJsonIO
 	BackPoint csSize; // glob
 	BackProj sysProj; // Dest/system coord system
 
-	BackPoint projItemGlobToSys(const CSBindnig& itemCs, BackPoint itemPos) const
+	BackPoint projItemGlobToSys(const CSBinding& itemCs, BackPoint itemPos) const
 	{
 		auto p = sysProj.getThisProj(itemCs.proj, itemPos, false);
 		return p;
@@ -348,7 +346,7 @@ export struct DisplaySystem : public IJsonIO
 
 
 	// Return sys point; Перед использованием надо добавт Когда конвертим обрано в дисплей, перед выводом надо добавить getDisplayStartPos
-	//BackPoint toRelativeSys(const CSBindnig& itemCs, const BackPixelPoint& relativeDisplay)
+	//BackPoint toRelativeSys(const CSBinding& itemCs, const BackPixelPoint& relativeDisplay)
 	//{
 	//	BackPoint bp(x, y);
 	//	BackPoint pix = itemCs.toGlobal(bp.x, bp.y);

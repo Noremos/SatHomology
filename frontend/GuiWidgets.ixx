@@ -69,30 +69,30 @@ public:
 		return ImVec2(drawSize.x, drawSize.y);
 	}
 
-	ImVec2 projItemGlobToDisplay(const CSBindnig& itemCs, ImVec2 itemPos) const
+	ImVec2 projItemGlobToDisplay(const CSBinding& itemCs, ImVec2 itemPos) const
 	{
 		return projItemGlobToDisplay(itemCs, BackPoint(itemPos.x, itemPos.y));
 	}
 
-	ImVec2 projItemGlobToDisplay(const CSBindnig& itemCs, const BackPoint& itemPos) const
+	ImVec2 projItemGlobToDisplay(const CSBinding& itemCs, const BackPoint& itemPos) const
 	{
 		auto ps = core.sysProj.getThisProj(itemCs.proj, itemPos, true);
 		return sysglobToDisplay(ps);
 	}
 
-	//BackPixelPoint projItemGlobToLoc(const CSBindnig& itemCs, BackPoint itemPos) const
+	//BackPixelPoint projItemGlobToLoc(const CSBinding& itemCs, BackPoint itemPos) const
 	//{
 	//	auto ps = sysCs.getThisProj(itemCs, { itemPos.x, itemPos.y });
 	//	return sysCs.toLocal(ps);
 	//}
 
-	BackPoint projItemLocalToSys(const CSBindnig& itemCs, const BackPixelPoint& itemPos) const
+	BackPoint projItemLocalToSys(const CSBinding& itemCs, const BackPixelPoint& itemPos) const
 	{
 		BackPoint bp = itemCs.toGlobal(itemPos.x, itemPos.y);
 		return core.sysProj.getThisProj(itemCs.proj, bp, true);
 	}
 
-	ImVec2 projItemLocalToDisplay(const CSBindnig& itemCs, const BackPixelPoint& itemPos) const
+	ImVec2 projItemLocalToDisplay(const CSBinding& itemCs, const BackPixelPoint& itemPos) const
 	{
 		BackPoint bp = itemCs.toGlobal(itemPos.x, itemPos.y);
 		auto ps = core.sysProj.getThisProj(itemCs.proj, bp, true);
