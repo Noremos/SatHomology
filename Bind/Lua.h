@@ -1,9 +1,6 @@
-module;
-
 #include "../Bind/Common.h"
 #include "../side/sol3/sol.hpp"
 
-export module LuaStates;
 
 import BarcodeModule;
 import VectorLayers;
@@ -11,15 +8,15 @@ import RasterLayers;
 import IOCore;
 import ClassifierInterface;
 
-export using CreateVectorLayerFunc = std::function<VectorLayer* ()>;
-export using FindVectorLayerByNameFunc = std::function<VectorLayer* (const char* name)>;
-export using FindVectorLayerByIdFunc = std::function<VectorLayer* (int id)>;
-export using DropLayer = std::function<void(int id)>;
+using CreateVectorLayerFunc = std::function<VectorLayer* ()>;
+using FindVectorLayerByNameFunc = std::function<VectorLayer* (const char* name)>;
+using FindVectorLayerByIdFunc = std::function<VectorLayer* (int id)>;
+using DropLayer = std::function<void(int id)>;
 
-export using FindRasterLayerByNameFunc = std::function<RasterLayer* (const char* name)>;
-export using FindRasterLayerByIdFunc = std::function<RasterLayer* (int id)>;
+using FindRasterLayerByNameFunc = std::function<RasterLayer* (const char* name)>;
+using FindRasterLayerByIdFunc = std::function<RasterLayer* (int id)>;
 
-export class LuaState
+class LuaState
 {
 protected:
 	sol::state state;
@@ -57,7 +54,7 @@ public:
 
 
 const char* templ = "function filterCheck(Item)\n\treturn true\nend\n";
-export class LuaFilter : public LuaState
+class LuaFilter : public LuaState
 {
 public:
 
@@ -89,7 +86,7 @@ public:
 	}
 };
 
-export struct ScriptFilterInfo : public IItemFilter
+struct ScriptFilterInfo : public IItemFilter
 {
 private:
 	LuaFilter lua;
@@ -117,7 +114,7 @@ public:
 };
 
 
-export class LuaLayers : public LuaState
+class LuaLayers : public LuaState
 {
 	void bindVector(CreateVectorLayerFunc& func0, FindVectorLayerByNameFunc& func1, FindVectorLayerByIdFunc& func2, DropLayer& func3)
 	{

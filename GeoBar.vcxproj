@@ -108,7 +108,7 @@
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>side\Barcode\PrjBarlib\include;side\\Barcode\PrjBarlib\modules;side\imgui;side\imgui\backends;libs\glfw\include;side\lua\src;side</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <EnableModules>true</EnableModules>
       <TranslateIncludes>false</TranslateIncludes>
@@ -176,9 +176,6 @@
     <ClCompile Include="backend\CSBind.ixx" />
     <ClCompile Include="Bind\Common.cpp" />
     <ClCompile Include="Bind\MHashMap.ixx" />
-    <ClCompile Include="Bind\Lua.ixx">
-      <FileType>Document</FileType>
-    </ClCompile>
     <ClCompile Include="side\Barcode\PrjBarlib\modules\Barcode.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\Barline.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\ImageReader.ixx" />
@@ -221,6 +218,7 @@
     <ClCompile Include="side\sago\platform_folders.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Bind\Lua.h" />
     <ClInclude Include="side\GuiCodeEditor.h" />
     <ClInclude Include="side\imconfig.h" />
     <ClInclude Include="side\imgui\imgui.h" />
