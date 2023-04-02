@@ -207,6 +207,11 @@ export struct CSBinding : public IJsonIO
 	double img_transform[6] = {0.0,1.0,0.0,0.0,0.0,1.0};
 
 
+	void initProj(const int id)
+	{
+		proj.init(id);
+	}
+
 	void init(const int id)
 	{
 		proj.init(id);

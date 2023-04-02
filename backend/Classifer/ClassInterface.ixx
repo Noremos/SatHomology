@@ -57,13 +57,13 @@ export struct FilterInfo
 	FRange depth{0, 1000};
 	int imgLen = 0;
 
-	// bool needSkip(bc::barline* line) const
-	// {
-	// 	return start.notInRange(line->start) ||
-	// 		len.notInRange(line->len()) ||
-	// 		matrSizeProc.notInRange(line->matr.size() * 100 / imgLen) ||
-	// 		depth.notInRange(line->getDeath());
-	// }
+	 bool needSkip(bc::barline* line) const
+	 {
+	 	return start.notInRange(line->start) ||
+	 		len.notInRange(line->len()) ||
+	 		matrSizeProc.notInRange(line->matr.size() * 100 / imgLen) ||
+	 		depth.notInRange(line->getDeath());
+	 }
 };
 
 export class IClassItem : public IBffIO
@@ -72,8 +72,14 @@ public:
 	virtual size_t getId() const = 0;
 	virtual size_t getParentId() const = 0;
 	// virtual const bc::barlinevector& getLines() const = 0;
+
 	virtual const bc::barvector &getMatrix() const = 0;
 	virtual const size_t getMatrixSize() const = 0;
+	bc::barvalue getMatrValue(int id) const
+	{
+		return getMatrix()[id];
+	}
+
 	virtual int getDeath() const = 0;
 	virtual Barscalar start() const = 0;
 	virtual Barscalar end() const = 0;
