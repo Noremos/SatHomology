@@ -34,6 +34,8 @@ export class GuiBackend
 		BarcodeCreated
 	};
 public:
+	Project* proj = nullptr;
+
 	GuiBackend()
 	{
 		proj = Project::getProject();
@@ -255,7 +257,6 @@ private:
 
 
 private:
-	Project* proj = nullptr;
 	int imgNumber = -1;
 
 	ComFinder comm;

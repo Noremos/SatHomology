@@ -395,6 +395,19 @@ public:
 		//return t->get();
 	}
 
+	T* at(const BackString& name)
+	{
+		for (auto& layer : layers)
+		{
+			if (layer->name == name)
+			{
+				return layer.get();
+			}
+		}
+
+		return nullptr;
+	}
+
 	void remove(uint id)
 	{
 		for (auto it = layers.begin(); it != layers.end(); it++)

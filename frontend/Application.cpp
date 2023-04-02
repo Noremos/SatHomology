@@ -3,13 +3,13 @@
 #include "GuiCommon.h"
 
 #include "../Bind/Common.h"
-#include "../Bind/Lua.h"
 
 #include <cmath>
 #include <initializer_list>
 #include <memory>
 #include <future>
 
+#include "../Bind/Lua.h"
 //#include "sol3/sol.hpp"
 //
 //#include <GLFW/glfw3.h>
@@ -25,9 +25,8 @@ import GuiWidgets;
 import IOCore;
 import VectorLayers;
 import ProjectModule;
-
+import RasterLayers;
 //import Lua;
-
 
 
 /// Widget for raster layers
@@ -93,7 +92,7 @@ struct GuiFilter
 			_drawPair("MinDepth", "Max depth", valsFilter.depth);
 			break;
 		case 2:
-			ImGui::InputTextMultiline("Lue script", text, 1000, ImVec2(500, 300));
+			ImGui::InputTextMultiline("Lua script", text, 10000, ImVec2(500, 300));
 			break;
 		default:
 			break;
@@ -567,6 +566,246 @@ public:
 };
 
 
+
+
+// Lua SCRIPT
+
+using CreateVectorLayerFunc = std::function<VectorLayer* ()>;
+using FindVectorLayerByNameFunc = std::function<VectorLayer* (const char* name)>;
+using FindVectorLayerByIdFunc = std::function<VectorLayer* (int id)>;
+using DropLayer = std::function<void(int id)>;
+
+using FindRasterLayerByNameFunc = std::function<RasterLayer* (const char* name)>;
+using FindRasterLayerByIdFunc = std::function<RasterLayer* (int id)>;
+
+class LuaLayers : public LuaState
+{
+public:
+	void setScript(const char* script)
+	{
+		state.script(script);
+	}
+
+	void bindVector(CreateVectorLayerFunc func0, FindVectorLayerByNameFunc func1, FindVectorLayerByIdFunc func2, DropLayer func3)
+	{
+		state.set_function("createVector", func0);
+		state.set_function("findVectorById", func1);
+		state.set_function("findVectorByName", func2);
+		state.set_function("dropLayer", func3);
+	}
+
+	void bindRaster(FindRasterLayerByNameFunc func0, FindRasterLayerByIdFunc func1)
+	{
+		state.set_function("findRaserById", func0);
+		state.set_function("findRasterByName", func1);
+	}
+
+
+	void bindLayers()
+	{
+		state.new_enum("VecType",
+			"points", VectorLayer::VecType::points,
+			"polygons", VectorLayer::VecType::polygons
+		);
+
+		state.new_usertype<BackPoint>("BackPoint",
+			"x", &BackPoint::x,
+			"y", &BackPoint::y
+		);
+
+		state.new_usertype<BackPixelPoint>("BackPixelPoint",
+			"x", &BackPixelPoint::x,
+			"y", &BackPixelPoint::y
+		);
+
+		state.new_usertype<BackColor>("BackColor",
+			"r", &BackColor::r,
+			"g", &BackColor::g,
+			"b", &BackColor::b
+		);
+
+		state.new_usertype<DrawPrimitive>("DrawPrimitive",
+			"addPoint", &DrawPrimitive::addPoint,
+			"clear", &DrawPrimitive::clear
+		);
+
+
+		state.new_usertype<CSBinding>("CSBinding",
+			"toGlobal", &CSBinding::toGlobal,
+			"toLocal", &CSBinding::toLocal,
+			"init", &CSBinding::initProj,
+			"getProjId", &CSBinding::getProjId,
+			"getScale", &CSBinding::getScale,
+			"getScaledEnd", &CSBinding::getScaledEnd
+		);
+
+		state.new_usertype<VectorLayer>("VectorLayer",
+			"name", &VectorLayer::name,
+			"cs", &VectorLayer::cs,
+			"vecType", &VectorLayer::vecType,
+			"init", &VectorLayer::init,
+			"getSysId", &VectorLayer::getSysId,
+			"color", &VectorLayer::color,
+			"addPrimitive", &VectorLayer::addPrimitive,
+			"clear", &VectorLayer::clear
+		);
+
+		state.new_usertype<MatrImg>("BackImage",
+			"resize", &MatrImg::resize,
+			"getRect", &MatrImg::getRect,
+			"set", &MatrImg::set,
+			"get", &MatrImg::get,
+			"channels", &MatrImg::channels,
+			"min", &MatrImg::min,
+			"max", &MatrImg::max,
+			"wid", &MatrImg::wid,
+			"hei", &MatrImg::hei,
+			"fill", &MatrImg::fill
+		);
+
+		state.new_usertype<RasterLayer>("RasterLayer",
+			"name", &RasterLayer::name,
+			"cs", &RasterLayer::cs,
+			"mat", &RasterLayer::mat,
+			"displayWidth", &RasterLayer::displayWidth,
+			"displayHeight", &RasterLayer::displayHeight,
+			"getRect", &RasterLayer::getRect
+		);
+	}
+
+	void bindBarcode()
+	{
+		// Bind enum to Lua
+
+		state.new_enum("AttachMode",
+			"firstEatSecond", bc::AttachMode::firstEatSecond,
+			"secondEatFirst", bc::AttachMode::secondEatFirst,
+			"createNew", bc::AttachMode::createNew,
+			"dontTouch", bc::AttachMode::dontTouch)
+			;
+
+		state.new_enum("CompireStrategy",
+			"CommonToLen", bc::CompireStrategy::CommonToLen,
+			"CommonToSum", bc::CompireStrategy::CommonToSum)
+			;
+
+		state.new_enum("ComponentType",
+			"Component", bc::ComponentType::Component,
+			"Hole", bc::ComponentType::Hole)
+			;
+
+		state.new_enum("ProcType",
+			"f0t255", bc::ProcType::f0t255,
+			"f255t0", bc::ProcType::f255t0,
+			"Radius", bc::ProcType::Radius)
+			;
+
+		state.new_enum("ColorType",
+			"gray", bc::ColorType::gray,
+			"native", bc::ColorType::native,
+			"rgb", bc::ColorType::rgb)
+			;
+
+		state.new_enum("ReturnType",
+			"barcode2d", bc::ReturnType::barcode2d,
+			"barcode3d", bc::ReturnType::barcode3d)
+			;
+
+		state.new_usertype<bc::point>("Point",
+			sol::constructors<bc::point(int, int)>(),
+			"x", &bc::point::x,
+			"y", &bc::point::y)
+			;
+
+		bindBarscalar();
+		// !
+
+		//#define TN(NAME) (std::string(NAME)+"8u").c_str()
+		//#include "pytemplcalsses.h"
+		///////////////////////////////////////////// TYPE /////////////////////
+
+
+
+		state.new_usertype<bc::BarRect>("BarRect",
+			"x", &bc::BarRect::x,
+			"y", &bc::BarRect::y,
+			"width", &bc::BarRect::width,
+			"height", &bc::BarRect::height,
+			"coof", &bc::BarRect::coof,
+			"right", &bc::BarRect::right,
+			"area", &bc::BarRect::area,
+			"isItemInside", &bc::BarRect::isItemInside)
+			;
+
+		state.new_usertype<bc::barline>("Barline",
+			"start", &bc::barline::start,
+			"len", &bc::barline::len,
+			"end", &bc::barline::end,
+			"getPointsSize", &bc::barline::getPointsSize,
+			"getMatrvalue", &bc::barline::getPoint,
+			"getRect", &bc::barline::getBarRect,
+			"parent", &bc::barline::parent,
+			"getChildrenSize", &bc::barline::getChildrenCount,
+			"getChild", &bc::barline::getChild);
+		//"compire3dbars", &bc::barline::compire3dbars,
+
+		//"get3dList", &bc::barline::getBarcode3d,
+		//"get3dSize", &bc::barline::getBarcode3dSize,
+		//"get3dValue", &bc::barline::getBarcode3dValue)
+		;
+
+		state.new_usertype<bc::Baritem>("Baritem",
+			"sum", &bc::Baritem::sum,
+			"relen", &bc::Baritem::relen,
+			"clone", &bc::Baritem::clone,
+			"maxLen", &bc::Baritem::maxLen,
+			"removePorog", &bc::Baritem::removePorog,
+			"preprocessBar", &bc::Baritem::preprocessBar,
+			"cmp", &bc::Baritem::compireFull,
+			"cmpOccurrence", &bc::Baritem::compareOccurrence,
+			"compireBestRes", &bc::Baritem::compireBestRes,
+			//"getBarcode", &bc::Baritem::getBarcode,
+			"SortByLineLen", &bc::Baritem::sortByLen,
+			"SortByPointsCount", &bc::Baritem::sortBySize,
+			//"calcHistByBarlen", &bc::Baritem::calcHistByBarlen,
+			"getRootNode", &bc::Baritem::getRootNode
+		);
+		//;
+
+		state.new_usertype<bc::Barcontainer>("Barcontainer",
+			"sum", &bc::Barcontainer::sum,
+			"relen", &bc::Barcontainer::relen,
+			"clone", &bc::Barcontainer::clone,
+			"maxLen", &bc::Barcontainer::maxLen,
+			"count", &bc::Barcontainer::count,
+			"removePorog", &bc::Barcontainer::removePorog,
+			"preprocessBar", &bc::Barcontainer::preprocessBar,
+			//"compireCTML", &bc::Barcontainer::compireCTML, args("bc",,
+			//"compireCTS", &bc::Barcontainer::compireCTS, args("bc",,
+			//"compireCTML", static_cast<float (bc::Barcontainer::*,(const bc::Barbase*, const> (&bc::Barcontainer::compireCTML,, args("bc",,
+			//"compireCTS", static_cast<float (bc::Barcontainer::*,(bc::Barbase const*, const>(&bc::Barcontainer::compireCTS,, args("bc",,
+			"addItem", &bc::Barcontainer::addItem,
+			"getItem", &bc::Barcontainer::getItem)
+			;
+
+		state.new_usertype<bc::BarConstructor>("BarConstructor",
+			"addStructure", &bc::BarConstructor::addStructure,
+			"setPorogStep", &bc::BarConstructor::setStep,
+			"setMaxLen", &bc::BarConstructor::setMaxLen,
+			"returnType", &bc::BarConstructor::returnType,
+			"createBinaryMasks", &bc::BarConstructor::createBinaryMasks,
+			"createGraph", &bc::BarConstructor::createGraph,
+			"attachMode", &bc::BarConstructor::attachMode,
+			"killOnMaxLen", &bc::BarConstructor::killOnMaxLen)
+			;
+
+		state.new_usertype<bc::BarcodeCreator>("BarcodeCreator",
+			"createBarcode", &bc::BarcodeCreator::createBarcode)
+			;
+	}
+};
+
+// !LUA SCRIPT
 
 namespace MyApp
 {
@@ -1310,6 +1549,25 @@ namespace MyApp
 		//ImGui::End();
 	}
 
+	LuaLayers lua;
+	char luatext[10000];
+	void drawScript()
+	{
+		if (!ImGui::Begin("Script"))
+		{
+			ImGui::End();
+			return;
+		}
+
+		if (ImGui::Button("Выполнить"))
+		{
+			lua.setScript(luatext);
+		}
+
+		ImGui::InputTextMultiline("Lua", luatext, 10000, ImVec2(500, 300));
+		ImGui::End();
+	}
+
 	void ToolSetDraw()
 	{
 		if (!ImGui::Begin("Tools"))
@@ -1347,7 +1605,8 @@ namespace MyApp
 
 
 		ImGui::BeginDisabled(commonValus.onAir || !tbVals.enableProcessBtn);
-		ToolSetDraw();
+		drawScript();
+		//ToolSetDraw();
 		layersVals.drawToolbox();
 		ImGui::EndDisabled();
 
@@ -1410,20 +1669,48 @@ namespace MyApp
 			bc::CloudPointsBarcode::drawPlygon = polyPoint;
 		}
 
-		//Layer a;
-		//a.name = "main";
-		//a.icon.setSource("D:\\Learning\\BAR\\sybery\\2.png");
-		//layersVals.layers.push_back(a);
+		// Lua bidning
+		//lua.bindBarcode();
+		//lua.bindLayers();
 
-		//Layer b;
-		//b.name = "sub";
-		//b.icon.setSource("D:\\Learning\\BAR\\sybery\\2.png");
-		//layersVals.layers.push_back(b);
+		// // Bind vector layer funcs
+		// CreateVectorLayerFunc createVec = []()
+		// {
+		// 	VectorLayer* lay = backend.proj->addLayerData<VectorLayer>();
+		// 	layersVals.addLayer<VectorGuiLayer>("New layer", lay);
+		// 	return lay;
+		// };
 
-		//Layer c;
-		//c.name = "filter";
-		//c.icon.setSource("D:\\Learning\\BAR\\sybery\\2.png");
-		//layersVals.layers.push_back(c);
+		// FindVectorLayerByNameFunc findVec = [](const char* name)
+		// {
+		// 	return dynamic_cast<VectorLayer*>(backend.proj->layers.at(name));
+		// };
+
+		// FindVectorLayerByIdFunc findVecId = [](int id)
+		// {
+		// 	return dynamic_cast<VectorLayer*>(backend.proj->layers.at(id));
+		// };
+
+		// DropLayer drop = [](int id)
+		// {
+		// 	backend.proj->layers.remove(id);
+		// };
+
+		// lua.bindVector(createVec, findVec, findVecId, drop);
+
+
+		// // Bind raster layer funcs
+		// FindRasterLayerByNameFunc rastByName = [](const char* name)
+		// {
+		// 	return dynamic_cast<RasterLayer*>(backend.proj->layers.at(name));
+		// };
+
+		// FindRasterLayerByIdFunc rastById = [](int id)
+		// {
+		// 	return dynamic_cast<RasterLayer*>(backend.proj->layers.at(id));
+		// };
+
+		// lua.bindRaster(rastByName, rastById);
 	}
 
 	// Main
@@ -1442,7 +1729,6 @@ namespace MyApp
 
 
 		drawLayout();
-
-		ImGui::ShowDemoWindow();
+		//ImGui::ShowDemoWindow();
 	}
 }
