@@ -23,8 +23,8 @@ Project* proj = Project::getProject();
 /*
 	BackPoint pix = cs.toGlobal(p.getX(), p.getY());
 
-	auto start = ds.getDisplayStartPos(cs);
-	auto end = ds.getDisplayEndPos(cs);
+	auto start = ds.getDisplayStartPos();
+	auto end = ds.getDisplayEndPos();
 
 	ImVec2 pi = ds.projItemGlobToDisplay(cs, pix);
 	if (GuiDisplaySystem::inRange(start, end, pi))
@@ -100,14 +100,24 @@ public:
 	}
 
 
-	ImVec2 getDisplayStartPos(const CSBindnig& itemCs) const
+	ImVec2 getDisplayStartPos() const
 	{
-		return projItemLocalToDisplay(itemCs, BackPixelPoint(0, 0));
+		return sysglobToDisplay(core.csPos);// projItemLocalToDisplay(itemCs, BackPixelPoint(0, 0));
 	}
 
-	ImVec2 getDisplayEndPos(const CSBindnig& itemCs) const
+	ImVec2 getDisplayEndPos() const
 	{
-		return projItemLocalToDisplay(itemCs, BackPixelPoint(drawSize.x, drawSize.y));
+		return sysglobToDisplay(core.csPos + core.csSize); //projItemLocalToDisplay(itemCs, BackPixelPoint(drawSize.x, drawSize.y));
+	}
+
+	BackPoint getSysToItemStartPos(const CSBinding& itemCs) const
+	{
+		return itemCs.proj.getThisProj(core.sysProj, core.csPos, true);
+	}
+
+	BackPoint getSysToItemEndPos(const CSBinding& itemCs) const
+	{
+		return itemCs.proj.getThisProj(core.sysProj, core.csPos + core.csSize, true);
 	}
 
 	ImVec2 sysglobToDisplay(const BackPoint& p) const
@@ -127,15 +137,19 @@ public:
 		return true;
 	}
 
-	bool inRange(const CSBinding& itemCs, const ImVec2& val) const
+	static bool inRange(const BackPoint& start, const BackPoint& end, const BackPoint& val)
 	{
-		auto start = getDisplayStartPos(itemCs);
-		auto end = getDisplayEndPos(itemCs);
+		if (val.x > end.x || val.y > end.y)
+			return false;
 
-		return inRange(start, end, val);
+		if (val.x < start.x || val.y < start.y)
+			return false;
+
+		return true;
 	}
 
-	static bool inRange(const ImVec2& start, const ImVec2& end, const ImVec2& valSt, const ImVec2& valEd)
+	template <class T>
+	static bool inRange(const T& start, const T& end, const T& valSt, const T& valEd)
 	{
 		if (valSt.x > end.x || valSt.y > end.y)
 			return false;
@@ -146,6 +160,23 @@ public:
 		return true;
 	}
 
+	bool inDisplayRange(const ImVec2& displayPos) const
+	{
+		auto start = getDisplayStartPos();
+		auto end = getDisplayEndPos();
+
+		return inRange(start, end, displayPos);
+	}
+
+	bool inSysRange(const BackPoint& poi) const
+	{
+		return inRange(core.csPos, core.csPos + core.csSize, poi);
+	}
+
+	bool inSysRange(const BackPoint& st, const BackPoint& ed) const
+	{
+		return inRange(core.csPos, core.csPos + core.csSize, st, ed);
+	}
 
 	 //int getRealX(int x)
 	 //{
@@ -524,7 +555,7 @@ private:
 
 		displaysBegin = displayStart;
 
-		ImVec2 winEnd = winSize - winPos;
+		ImVec2 winEnd = winSize + winPos;
 		if (displayStart.x > winEnd.x || displayStart.y > winEnd.y)
 			return;
 
@@ -772,13 +803,13 @@ public:
 
 		float markerSize = 2.5f;//MAX(1, par->displaySize.x / par->width);
 
-		auto start = ds.getDisplayStartPos(cs);
-		auto end = ds.getDisplayEndPos(cs);
-		for (const auto& p : pointsToDraw)
+		BackPoint start = ds.getSysToItemStartPos(cs);
+		BackPoint end = ds.getSysToItemEndPos(cs);
+		for (const BackPoint& p : pointsToDraw)
 		{
-			ImVec2 pi = ds.projItemGlobToDisplay(cs, p);
-			if (GuiDisplaySystem::inRange(start, end, pi))
+			if (GuiDisplaySystem::inRange(start, end, p))
 			{
+				ImVec2 pi = ds.projItemGlobToDisplay(cs, p);
 				pi += offset;
 				// const auto& pi = ds.projItemGlobToDisplay(cs, bpl);
 				list->AddCircleFilled(pi, 1.5f * markerSize, bigColor);

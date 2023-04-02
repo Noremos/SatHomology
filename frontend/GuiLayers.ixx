@@ -376,7 +376,7 @@ public:
 
 		auto wpos = ds.getWinPos();
 		auto& cs = GuiLayerData<T>::getCore()->cs;
-		auto start = ds.getDisplayStartPos(cs);
+		auto start = ds.projItemLocalToDisplay(cs, {0,0});
 		auto end = ds.projItemLocalToDisplay(cs, main.getSize());
 
 		main.drawImage(GuiLayerData<T>::getName(), wpos, ds.getDrawSize(), start, end);
@@ -643,11 +643,11 @@ public:
 	virtual void onClick(const GuiDisplaySystem& ds, BackPoint pos)
 	{
 		ImVec2 wpos = ds.getWinPos();
-		ImVec2 start = ds.getDisplayStartPos(data->cs);
-		ImVec2 posInItem = ds.projItemGlobToDisplay(data->cs, pos);
-		if (ds.inRange(data->cs, posInItem))
+		ImVec2 start = ds.projItemLocalToDisplay(data->cs, {0,0});
+		ImVec2 posInDisplay = ds.projItemGlobToDisplay(data->cs, pos);
+		if (ds.inDisplayRange(posInDisplay))
 		{
-			BackPixelPoint pix = data->cs.toLocal(toBP(posInItem - start));
+			BackPixelPoint pix = data->cs.toLocal(toBP(posInDisplay - start));
 			auto points = click((int)pix.x, (int)pix.y);
 			setPoints(ds, points);
 		}
@@ -875,15 +875,18 @@ public:
 		if (d.size() == 0)
 			return;
 
-		auto start = ds.getDisplayStartPos(data->cs);
-		auto end = ds.getDisplayEndPos(data->cs);
+
+		auto& cs = data->cs;
+
+		BackPoint itemSt = ds.getSysToItemStartPos(cs);
+		BackPoint ed = ds.getSysToItemEndPos(cs);
+
 		auto& points = d[0].points;
 		for (auto& p : points)
 		{
-			ImVec2 imp = toIV(p);
-			if (GuiDisplaySystem::inRange(start, end, imp))
+			if (GuiDisplaySystem::inRange(itemSt, ed, p))
 			{
-				const auto& pi = ds.projItemGlobToDisplay(data->cs, imp);
+				const auto& pi = ds.projItemGlobToDisplay(cs, p);
 				list->AddCircleFilled(pi, 1.5 * markerSize, bigColor);
 				list->AddCircleFilled(pi, 0.8 * markerSize, midColor);
 			}
@@ -921,8 +924,10 @@ public:
 
 
 		CSBinding& dsc = getCore()->cs;
-		auto start = ds.getDisplayStartPos(dsc);
-		auto end = ds.getDisplayEndPos(dsc);
+		BackPoint start = ds.getSysToItemStartPos(dsc);
+		BackPoint end = ds.getSysToItemEndPos(dsc);
+		// auto start = ds.getDisplayStartPos();
+		// auto end = ds.getDisplayEndPos();
 
 		auto cscol = data->color;
 		ImColor col(cscol.r, cscol.g, cscol.b);
@@ -930,37 +935,34 @@ public:
 		{
 			const auto& points = d.points;
 
-			ImVec2 st = toIV(points[0]);
-			ImVec2 pend = toIV(points[0]);
+			BackPoint itemSt = points[0];
+			BackPoint itemEnd = points[0];
 			std::vector<ImVec2> projected;
-			for (const auto& p : points)
+			for (const BackPoint& p : points)
 			{
-				if (p.x < st.x)
+				if (p.x < itemSt.x)
 				{
-					st.x = p.x;
+					itemSt.x = p.x;
 				}
 
-				if (p.y < st.y)
+				if (p.y < itemSt.y)
 				{
-					st.y = p.y;
+					itemSt.y = p.y;
 				}
 
-				if (p.x > pend.x)
+				if (p.x > itemEnd.x)
 				{
-					pend.x = p.x;
+					itemEnd.x = p.x;
 				}
 
-				if (p.y < pend.y)
+				if (p.y > itemEnd.y)
 				{
-					pend.y = p.y;
+					itemEnd.y = p.y;
 				}
 				projected.push_back(ds.projItemGlobToDisplay(dsc, p) + offset);
 			}
 
-			st = ds.projItemGlobToDisplay(dsc, st);
-			pend = ds.projItemGlobToDisplay(dsc, pend);
-
-			if (GuiDisplaySystem::inRange(start, end, st, pend))
+			if (GuiDisplaySystem::inRange(start, end, itemSt, itemEnd))
 			{
 				list->AddPolyline(projected.data(), projected.size(), col, ImDrawFlags_Closed, 0);
 			}
@@ -969,19 +971,19 @@ public:
 	}
 
 
-	static void getRect(const std::vector<BackPoint>& points, ImVec2& st, ImVec2& end)
+	static void getRect(const std::vector<BackPoint>& points, ImVec2& itemSt, ImVec2& end)
 	{
-		st = end = toIV(points[0]);
+		itemSt = end = toIV(points[0]);
 		for (const BackPoint& p : points)
 		{
-			if (p.x < st.x)
+			if (p.x < itemSt.x)
 			{
-				st.x = p.x;
+				itemSt.x = p.x;
 			}
 
-			if (p.y < st.y)
+			if (p.y < itemSt.y)
 			{
-				st.y = p.y;
+				itemSt.y = p.y;
 			}
 
 			if (p.x > end.x)
