@@ -14,13 +14,13 @@ module;
 
 // My
 #include "../Bind/Common.h"
-#include "flat_hash_map/unordered_map.hpp"
 
 export module GeoprocessorModule;
 
 import Platform;
 import IOCore;
 import BarcodeModule;
+import MHashMap;
 
 
 namespace bc
@@ -106,7 +106,7 @@ inline void testC()
 
 double getPsa(const bc::barvector& matr)
 {
-	ska::unordered_map<uint, bool> map;
+	MMMAP<uint, bool> map;
 
 	int minX = 10000, maxX = 0, minY = 1000, maxY = 0;
 	for (const auto& pm : matr)
@@ -269,7 +269,7 @@ class MapCountur
 	int x = 0, y = 0;
 	int stIndex = 0;
 	mcountor& contur;
-	ska::unordered_map<uint, bool> points;
+	MMMAP<uint, bool> points;
 
 	enum StartPos : char { LeftMid = 0, LeftTop = 1, TopMid = 2, RigthTop = 3, RigthMid = 4, RigthBottom = 5, BottomMid = 6, LeftBottom = 7 };
 
