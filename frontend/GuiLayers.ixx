@@ -215,6 +215,7 @@ public:
 
 	void loadLayers()
 	{
+		layers.clear();
 		for (auto& coreLay : proj->layers)
 		{
 			auto ptr = LayerFactory::CreateGuiLayer(coreLay.get());

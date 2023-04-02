@@ -148,6 +148,8 @@ export class Project
 
 	void extraRead(const BackJson& json)
 	{
+		layers.clear();
+		classLayers.clear();
 		JsonObjectIOStateReader reader(json);
 		extraReadWrite(&reader);
 	}
@@ -504,7 +506,7 @@ public:
 		setProjectPath(prjFilepath);
 
 		BackJson loadDoc = jsonFromFile(prjFilepath);
-		read(loadDoc);
+		settings.read(json);
 		prjCreate = true;
 
 		classCategs = BarCategories::loadCategories(getPath(BackPath::classifier));
@@ -519,7 +521,7 @@ public:
 			return false;
 
 		JsonObject gameObject;
-		write(gameObject);
+		settings.write(json);
 		jsonToFile(gameObject, getPath(BackPath::project));
 
 		// mkDirIfNotExists(getPath(BackPath::classfiles));
@@ -584,6 +586,7 @@ public:
 		{
 			ret.push_back(i.second);
 			i.second->clear();
+			i.second->color = classCategs.categs[i.first].color;
 		}
 
 		// Cacher
@@ -677,6 +680,7 @@ public:
 		{
 			ret.push_back(i.second);
 			i.second->clear();
+			i.second->color = classCategs.categs[i.first].color;
 		}
 
 		// RasterLineLayer* outLayer = addOrUpdateOut<RasterLineLayer>(iol);
@@ -915,10 +919,6 @@ public:
 
 		return ret;
 	}
-
-private:
-	void write(BackJson& json) const;
-	void read(const BackJson& json);
 };
 
 
@@ -941,19 +941,6 @@ using namespace bc;
 //{
 //	return false; //scal > 10;
 //}
-
-
-
-
-void Project::read(const BackJson& json)
-{
-	settings.read(json);
-}
-
-void Project::write(BackJson& json) const
-{
-	settings.write(json);
-}
 
 static int getFid(int wid, int s)
 {
