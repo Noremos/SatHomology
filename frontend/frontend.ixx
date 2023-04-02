@@ -188,7 +188,7 @@ public:
 		if (path.extension() == ".qwr")
 		{
 			if (!proj->loadProject(path))
-				return layer;
+				return nullptr;
 			//		return;
 			setProc = true;
 			newState = GuiState::BarcodeCreated;
@@ -217,7 +217,6 @@ public:
 		return layer;
 	}
 
-	bool addSelectedToClassData(int classIndex, BackImage* icon = nullptr);
 	void restoreSource();
 	void exportResult(BackDirStr path);
 
