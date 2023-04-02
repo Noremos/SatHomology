@@ -71,8 +71,8 @@ struct GuiFilter
 			return &valsFilter;
 		case 2:
 		{
-			//scriptFilter.setScript(text);
-			//return &scriptFilter;
+			scriptFilter.setScript(text);
+			return &scriptFilter;
 		}
 		}
 		return nullptr;
