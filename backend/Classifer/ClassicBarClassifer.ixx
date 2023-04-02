@@ -276,7 +276,8 @@ public:
 		bc::Barcontainer container;
 		MMMAP<size_t, int> cacheIndex;
 	};
-	std::vector<ClassData> classes;
+
+	std::vector<std::unique_ptr<ClassData>> classes;
 	// BackPathStr dbPath;
 
 	const BackString name() const
@@ -291,7 +292,7 @@ public:
 
 		// dbPath = path;
 		classes.clear();
-		for (auto categ : categs.categs)
+		for (const BarClassCategor& categ : categs.categs)
 		{
 			addClass(categ.id);
 			loadClassData(io, categ.id);
@@ -315,13 +316,13 @@ public:
 		io.loadAll(cla, classId, ClassDataIO::LF_ALL);
 	}
 
-	ClassData& getClass(int id)
+	ClassData* getClass(int id)
 	{
 		for (int i = 0; i < classes.size(); i++)
 		{
-			if (classes[i].classId == id)
+			if (classes[i]->classId == id)
 			{
-				return classes[i];
+				return classes[i].get();
 			}
 		}
 
@@ -330,16 +331,16 @@ public:
 
 	void addClass(int id)
 	{
-		ClassData nd;
-		nd.classId = id;
-		classes.push_back(nd);
+		auto nd = std::make_unique<ClassData>();
+		nd->classId = id;
+		classes.push_back(std::move(nd));
 	}
 
 	void removeClass(int id)
 	{
 		for (int i = 0; i < classes.size(); i++)
 		{
-			if (classes[i].classId == id)
+			if (classes[i]->classId == id)
 			{
 				classes.erase(classes.begin() + i);
 				break;
@@ -363,9 +364,9 @@ public:
 		item->setType();
 
 		assert(classes.size() != 0);
-		auto& classHolder = getClass(classInd);
-		classHolder.cacheIndex.insert(std::make_pair(dataId, classHolder.container.count()));
-		classHolder.container.addItem(item);
+		auto* classHolder = getClass(classInd);
+		classHolder->cacheIndex.insert(std::make_pair(dataId, classHolder->container.count()));
+		classHolder->container.addItem(item);
 	}
 
 	// void addData(int classInd, bc::barlinevector& cont, const bool move = true)
@@ -399,7 +400,7 @@ public:
 
 	bool removeDataInner(int classId, size_t id)
 	{
-		auto classHolder = getClass(classId);
+		ClassData& classHolder = *getClass(classId);
 		auto it = classHolder.cacheIndex.find(id);
 		if (it != classHolder.cacheIndex.end())
 		{
@@ -423,7 +424,7 @@ public:
 		float maxP = res;
 		for (size_t i = 0; i < classes.size(); i++)
 		{
-			float ps = classes[i].container.compireBest(&newOne, cp);
+			float ps = classes[i]->container.compireBest(&newOne, cp);
 			if (ps > maxP)
 			{
 				maxP = ps;

@@ -172,6 +172,7 @@ export class Project
 		const bool isReading = state->isReading();
 
 		int size = layers.size();
+		auto iter = layers.begin();
 		JsonArrayIOState* arrst = state->arrayBegin("layers", size);
 
 		for (int i = 0; i < size; i++)
@@ -189,9 +190,10 @@ export class Project
 			}
 			else
 			{
-				lay = layers.at(i);
-				layId = layers.at(i)->getFactoryId();
+				lay = iter->get();
+				layId = lay->getFactoryId();
 				obj->scInt("layId", layId);
+				iter++;
 			}
 
 			lay->saveLoadState(obj, sub);
@@ -506,7 +508,7 @@ public:
 		setProjectPath(prjFilepath);
 
 		BackJson loadDoc = jsonFromFile(prjFilepath);
-		settings.read(json);
+		settings.read(loadDoc);
 		prjCreate = true;
 
 		classCategs = BarCategories::loadCategories(getPath(BackPath::classifier));
@@ -520,9 +522,9 @@ public:
 		if (!prjCreate)
 			return false;
 
-		JsonObject gameObject;
-		settings.write(json);
-		jsonToFile(gameObject, getPath(BackPath::project));
+		JsonObject sets;
+		settings.write(sets);
+		jsonToFile(sets, getPath(BackPath::project));
 
 		// mkDirIfNotExists(getPath(BackPath::classfiles));
 		// mkDirIfNotExists(getPath(BackPath::tiles));
