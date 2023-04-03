@@ -361,7 +361,6 @@ public:
 			if (ImGui::Button("Update"))
 			{
 				selectedLine = NULL;
-				main.unsetPoints();
 
 				ImGui::CloseCurrentPopup();
 				auto rets = backend.processRaster(context.iol, filtere.getFilter());
@@ -444,12 +443,6 @@ public:
 
 		return nullptr;
 	}
-
-	//void unsetPoints()
-	//{
-	//	centerVals.clickHandler.points = nullptr;
-	//	centerVals.processImage.clicked = false;
-	//}
 
 
 	SimpleLine* moveToParenr()
@@ -897,9 +890,6 @@ namespace MyApp
 	} debugVals;
 
 
-	void clearBeforeCreate();
-
-
 	struct WindowsValues
 	{
 		bool onAir = false;
@@ -958,42 +948,31 @@ namespace MyApp
 
 	// -------------------
 
-	void unsetPoints()
-	{
-		//centerVals.clickHandler.points = nullptr;
-		//centerVals.processImage.clicked = false;
-	}
-
-	void clearBeforeCreate()
-	{
-		unsetPoints();
-	}
-
 	// Draws
 
 	// Top Menu
-	void drawMenu()
-	{
-		if (ImGui::BeginMainMenuBar())
-		{
-			if (ImGui::MenuItem("File")) {
-				// Do something when File is clicked
-			}
-			if (ImGui::MenuItem("Edit")) {
-				// Do something when Edit is clicked
-			}
-			//ImGui::Separator();
-			if (ImGui::MenuItem("View")) {
-				// Do something when View is clicked
-			}
+	// void drawMenu()
+	// {
+	// 	if (ImGui::BeginMainMenuBar())
+	// 	{
+	// 		if (ImGui::MenuItem("File")) {
+	// 			// Do something when File is clicked
+	// 		}
+	// 		if (ImGui::MenuItem("Edit")) {
+	// 			// Do something when Edit is clicked
+	// 		}
+	// 		//ImGui::Separator();
+	// 		if (ImGui::MenuItem("View")) {
+	// 			// Do something when View is clicked
+	// 		}
 
-			if (ImGui::MenuItem("Item 2")) {
-				// Do something when Item 2 is clicked
-			}
+	// 		if (ImGui::MenuItem("Item 2")) {
+	// 			// Do something when Item 2 is clicked
+	// 		}
 
-			ImGui::EndMainMenuBar();
-		}
-	}
+	// 		ImGui::EndMainMenuBar();
+	// 	}
+	// }
 	// --------
 
 
@@ -1105,7 +1084,6 @@ namespace MyApp
 						// centerVals.heimap.init(layer->getData()->mat);
 						// centerVals.tilemap.init(&layer->main, backend.getTileSize());
 						classerVals.init();
-						unsetPoints();
 					}
 				}
 			}
@@ -1359,8 +1337,8 @@ namespace MyApp
 				classerVals.show = true;
 			}
 
-			ImGui::SameLine(0, 30);
-			ImGui::Text(bottomVals.debug.c_str());
+			// ImGui::SameLine(0, 30);
+			// ImGui::Text(bottomVals.debug.c_str());
 
 			const auto& curpos = centerVals.resizble.currentPos;
 			ImGui::Text("%f:%f", curpos.x, curpos.y);

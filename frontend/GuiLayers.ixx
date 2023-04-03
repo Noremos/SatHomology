@@ -535,6 +535,15 @@ public:
 		}
 	}
 
+	void drawToolboxInner(ILayerWorker& context)
+	{
+		if (ImGui::Button("Выгрузить слой"))
+		{
+			BackPathStr path = getSavePath({ "*.geojson" });
+			data->savePolygonsAsGeojson(path);
+		}
+	}
+
 	void drawProperty()
 	{
 		ImGui::ColorPicker4("Color", (float*)&propColor, ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoInputs);

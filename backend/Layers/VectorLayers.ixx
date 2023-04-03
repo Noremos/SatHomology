@@ -56,21 +56,20 @@ public:
 	//	t->read(state.get());
 	//	return t;
 	//}
-	BackString pointsAsGeojson()
+	BackString pointsAsGeojson() const
 	{
-		BackString safsd = "\"geometry\": {\"type\":\"Polygon\", \"coordinates\":[[[ ";
-		asGeojsonCommon(safsd);
-		safsd += "]]]";
-
+		BackString safsd = "\"geometry\": {\"type\":\"Point\", \"coordinates\":";
+		safsd += std::format("[{},{}]", points[0].y, points[0].x);
+		safsd += "}";
 		return safsd;
 	}
 
-	BackString polygonAsGeojson()
+	BackString polygonAsGeojson() const
 	{
-		BackString safsd = "\"geometry\": {\"type\":\"Polygon\", \"coordinates\":[[[ ";
+		BackString safsd = "\"geometry\": {\"type\":\"Polygon\", \"coordinates\":[[ ";
 
 		asGeojsonCommon(safsd);
-		safsd += "]]]";
+		safsd += "]]}";
 
 		return safsd;
 	}
@@ -79,7 +78,7 @@ public:
 	{
 		for (const BackPoint& p : points)
 		{
-			prefix += std::format("[{}, {}],", p.y, p.x);
+			prefix += std::format("[{},{}],", p.y, p.x);
 		}
 		prefix[prefix.length() - 1] = ' ';
 	}
@@ -143,8 +142,10 @@ public:
 	void savePolygonsAsGeojson(const BackPathStr& savePath) const
 	{
 		BackString json = "{\"type\":\"FeatureCollection\","
-			"\"name\":\"Roofs\","
-			"\"crs\": { \"type\": \"name\", \"properties\":{\"name\": \"urn:ogc:def:crs:EPSG::";
+			"\"name\":\"";
+		json += name;
+		json += "\",";
+		json += "\"crs\": { \"type\": \"name\", \"properties\":{\"name\": \"urn:ogc:def:crs:EPSG::";
 		json += intToStr(cs.getProjId()); //3857
 		json += "\" } },";
 		json +=  "\"features\":[ ";
@@ -155,16 +156,19 @@ public:
 			safsd += "\"properties\":{\"id\":"; // TODO! Check
 			safsd += intToStr(i + 1);
 			safsd += "}, ";
-			switch (type)
+
+			switch (vecType)
 			{
 			case VecType::points:
 				safsd += primitives[i].pointsAsGeojson();
 				break;
 			case VecType::polygons:
-				safsd += primitives[i].pointsAsGeojson();
+				safsd += primitives[i].polygonAsGeojson();
 				break;
 			}
-			safsd += "}},";
+			safsd += "},";
+
+			json += safsd;
 		}
 
 

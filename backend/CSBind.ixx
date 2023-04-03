@@ -227,7 +227,7 @@ export struct CSBinding : public IJsonIO
 		proj.init(strToInt(id));
 	}
 
-	int getProjId()
+	int getProjId() const
 	{
 		return proj.getId();
 	}
