@@ -1,6 +1,6 @@
 module;
 #include <cassert>
-#include <proj.h>
+#include "../vcpkg_installed/x64-windows/include/proj.h"
 
 #include "../Bind/Common.h"
 #include "sqlite/sqlite3.h"
