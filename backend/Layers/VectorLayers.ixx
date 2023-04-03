@@ -56,6 +56,33 @@ public:
 	//	t->read(state.get());
 	//	return t;
 	//}
+	BackString pointsAsGeojson()
+	{
+		BackString safsd = "\"geometry\": {\"type\":\"Polygon\", \"coordinates\":[[[ ";
+		asGeojsonCommon(safsd);
+		safsd += "]]]";
+
+		return safsd;
+	}
+
+	BackString polygonAsGeojson()
+	{
+		BackString safsd = "\"geometry\": {\"type\":\"Polygon\", \"coordinates\":[[[ ";
+
+		asGeojsonCommon(safsd);
+		safsd += "]]]";
+
+		return safsd;
+	}
+
+	void asGeojsonCommon(BackString& prefix) const
+	{
+		for (const BackPoint& p : points)
+		{
+			prefix += std::format("[{}, {}],", p.y, p.x);
+		}
+		prefix[prefix.length() - 1] = ' ';
+	}
 
 	void saveLoadState(StateBinFile::BinState* state)
 	{
@@ -111,6 +138,45 @@ public:
 	virtual const LFID getFactoryId() const
 	{
 		return VECTOR_LAYER_FID;
+	}
+
+	void savePolygonsAsGeojson(const BackPathStr& savePath) const
+	{
+		BackString json = "{\"type\":\"FeatureCollection\","
+			"\"name\":\"Roofs\","
+			"\"crs\": { \"type\": \"name\", \"properties\":{\"name\": \"urn:ogc:def:crs:EPSG::";
+		json += intToStr(cs.getProjId()); //3857
+		json += "\" } },";
+		json +=  "\"features\":[ ";
+
+		for (int i = 0, total = primitives.size(); i < total; ++i)
+		{
+			BackString safsd = "{ \"type\": \"Feature\",";
+			safsd += "\"properties\":{\"id\":"; // TODO! Check
+			safsd += intToStr(i + 1);
+			safsd += "}, ";
+			switch (type)
+			{
+			case VecType::points:
+				safsd += primitives[i].pointsAsGeojson();
+				break;
+			case VecType::polygons:
+				safsd += primitives[i].pointsAsGeojson();
+				break;
+			}
+			safsd += "}},";
+		}
+
+
+		json[json.length() - 1] = ']';
+		json += "}";
+
+		std::ofstream file(savePath, std::ios::trunc);
+		if (file.is_open())
+		{
+			file << json;
+			file.close();
+		}
 	}
 
 	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder)
