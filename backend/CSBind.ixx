@@ -350,7 +350,9 @@ export using CoordSystem = CSBinding;
 export struct DisplaySystem : public IJsonIO
 {
 	BackPoint csPos; // glob
-	BackPoint csSize; // glob
+	// static BackPoint
+	double csScale;
+	// BackPoint csSize; // glob
 	BackProj sysProj; // Dest/system coord system
 
 	BackPoint projItemGlobToSys(const CSBinding& itemCs, BackPoint itemPos) const
@@ -359,19 +361,21 @@ export struct DisplaySystem : public IJsonIO
 		return p;
 	}
 
+	// S = D * scale
 	BackPoint toSysGlob(const BackPoint& display, const BackPoint& displaySize)
 	{
-		return ((display / displaySize) * csSize) + csPos;
+		return ((display / displaySize) * csScale) + csPos;
 	}
 
+	// D = S / scale
 	BackPoint toDisplay(const BackPoint& sysGlob, const BackPoint& displaySize) const
 	{
-		return ((sysGlob - csPos) / csSize) * displaySize;
+		return ((sysGlob - csPos) / csScale) * displaySize;
 	}
 
 	BackPoint getSizeScale() const
 	{
-		return BackPoint(1000, 1000) / (csSize);
+		return BackPoint(csScale, csScale);
 	}
 
 
@@ -400,8 +404,8 @@ export struct DisplaySystem : public IJsonIO
 	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder) override
 	{
 		auto displayObj = state->objectBegin("display_system");
-		ioPoint(displayObj, "csPos", csPos);
-		ioPoint(displayObj, "csSize", csSize);
+		ioPoint(displayObj, "csPos", csPos)
+		displayObj->scDouble("csScale", csScale);
 
 		int id = sysProj.getId();
 		displayObj->scInt("proj_id", id);

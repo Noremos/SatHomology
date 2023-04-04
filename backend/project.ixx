@@ -242,7 +242,7 @@ public:
 		settings.extraWrite = [this](BackJson& json) {extraWrite(json);};
 
 		ds.csPos = BackPoint(0, 0);
-		ds.csSize = BackPoint(1000, 1000);
+		ds.scale = 1.0;//BackPoint(1000, 1000);
 
 		// mkDirIfNotExists(u_classCache);
 	}

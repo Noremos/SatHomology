@@ -43,6 +43,14 @@ public:
 
 	BackPoint drawPos;
 	BackPoint drawSize;
+
+	// S = D * scale
+	// D = S / scale
+	BackPoint getSysSize() const
+	{
+		return drawSize * core.csScale;
+	}
+
 	// T getDrawPos() const
 	// {
 	// 	return T(displayPos.x, displayPos.y);
@@ -107,7 +115,7 @@ public:
 
 	ImVec2 getDisplayEndPos() const
 	{
-		return sysglobToDisplay(core.csPos + core.csSize); //projItemLocalToDisplay(itemCs, BackPixelPoint(drawSize.x, drawSize.y));
+		return sysglobToDisplay(core.csPos + getSysSize()); //projItemLocalToDisplay(itemCs, BackPixelPoint(drawSize.x, drawSize.y));
 	}
 
 	BackPoint getSysToItemStartPos(const CSBinding& itemCs) const
@@ -117,13 +125,12 @@ public:
 
 	BackPoint getSysToItemEndPos(const CSBinding& itemCs) const
 	{
-		return itemCs.proj.getThisProj(core.sysProj, core.csPos + core.csSize, true);
+		return itemCs.proj.getThisProj(core.sysProj, core.csPos + getSysSize(), true);
 	}
 
 	ImVec2 sysglobToDisplay(const BackPoint& p) const
 	{
-		BackPoint scale = BackPoint(1000, 1000) / core.csSize;
-		return toIV((p - core.csPos) * scale + drawPos);
+		return toIV((p - core.csPos) / core.csScale + drawPos);
 	}
 
 	static bool inRange(const ImVec2& start, const ImVec2& end, const ImVec2& val)
@@ -170,12 +177,12 @@ public:
 
 	bool inSysRange(const BackPoint& poi) const
 	{
-		return inRange(core.csPos, core.csPos + core.csSize, poi);
+		return inRange(core.csPos, core.csPos + getSysSize(), poi);
 	}
 
 	bool inSysRange(const BackPoint& st, const BackPoint& ed) const
 	{
-		return inRange(core.csPos, core.csPos + core.csSize, st, ed);
+		return inRange(core.csPos, core.csPos + getSysSize(), st, ed);
 	}
 
 	 //int getRealX(int x)
@@ -468,7 +475,7 @@ public:
 			BackPoint& offset = pds.csPos;
 			if (ImGui::IsMouseDragging(ImGuiMouseButton_Left)) // Drag
 			{
-				offset = offset - toBP(io.MouseDelta) * ( /*BackPoint(0.1f, 0.1f) * */ pds.csSize / BackPoint(1000, 1000));
+				offset = offset - toBP(io.MouseDelta) * pds.csScale;
 			}
 
 			if (io.MouseWheel != 0) // Wheeled
@@ -482,9 +489,7 @@ public:
 				assert(proc.x <= 1.0);
 				assert(proc.y <= 1.0);
 
-				auto& ssize = pds.csSize;
-				auto movePart = ssize * ads;
-				ssize = ssize - movePart;
+				pds.csScale += ads;
 
 				offset = offset + toBP(proc) * movePart;
 			}
