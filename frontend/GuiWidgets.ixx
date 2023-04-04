@@ -436,8 +436,10 @@ public:
 	bool good;
 	bool Begin(const char* name)
 	{
-		auto window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
-			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoDocking;
+		auto window_flags = ImGuiWindowFlags_NoDecoration |
+			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |
+			ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoDocking;
+
 		if (!ImGui::Begin(name, NULL, window_flags))
 		{
 			good = false;
