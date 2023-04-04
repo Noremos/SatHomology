@@ -322,30 +322,9 @@ public:
 	}
 
 	using ColorGrater = std::function<Barscalar(const IClassItem* item, bool& bad)>;
-	void addSimpleLine(std::shared_ptr<SimpleLine>& line, const bc::barvector& matr, const Barscalar& color, int tileIndex)
+	void addSimpleLine(std::shared_ptr<SimpleLine>& line, const bc::barvector& matr, int tileIndex)
 	{
-		auto tileProv = prov.tileByIndex(tileIndex);
 
-		std::unordered_set<uint> vals;
-		bc::barvector temp;
-		for (const auto& pm : matr)
-		{
-			auto o = tileProv.toGlobal(pm.getX(), pm.getY());
-			int x = (std::min)(mat.wid() - 1, o.x);
-			int y = (std::min)(mat.hei() - 1, o.y);
-			uint index = bc::barvalue::getStatInd(x, y);
-			if (vals.find(index) != vals.end())
-				continue;
-
-			vals.insert(index);
-
-			bc::point cp = bc::barvalue::getStatPoint(index);
-			temp.push_back(bc::barvalue(cp, pm.value));
-
-			setMatrPoint(x, y, line, color);
-		}
-
-		getCountourSimple(temp, line->matr);
 	}
 
 	bool passLine(const IClassItem* item, const IItemFilter* filter) const
@@ -361,9 +340,6 @@ public:
 
 	void addLine(IdGrater& parentne, int i, const IClassItem* curLine, int tileIndex)
 	{
-		Barscalar pointCol = RasterLineLayer::colors[rand() % RasterLineLayer::colors.size()];
-
-		std::unordered_set<uint> vals;
 		std::shared_ptr<SimpleLine> sl;
 		auto curIdKey = curLine->getId();
 		auto p = parentne.find(curIdKey);
@@ -398,7 +374,22 @@ public:
 		sl->end = curLine->end();
 		sl->matrSrcSize = (int)matr.size();
 
-		addSimpleLine(sl, matr, pointCol, tileIndex);
+		// Add line
+		auto tileProv = prov.tileByIndex(tileIndex);
+		Barscalar pointCol = RasterLineLayer::colors[rand() % RasterLineLayer::colors.size()];
+
+		bc::barvector temp;
+		for (const auto& pm : matr)
+		{
+			int x = (std::min)(mat.wid() - 1, pm.getX() + tileProv.offset.x);
+			int y = (std::min)(mat.hei() - 1, pm.getY() + tileProv.offset.y);
+
+			bc::point cp(x, y);
+			temp.push_back(bc::barvalue(cp, pm.value));
+
+			setMatrPoint(x, y, sl, pointCol);
+		}
+		getCountourSimple(temp, sl->matr);
 	}
 
 	void addHolder(const IClassItemHolder& items, int tileIndex, const IItemFilter* filter)

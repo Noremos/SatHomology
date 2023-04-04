@@ -164,6 +164,9 @@ public:
 		if (newTileSize + newOffsetSize > getImageMinSize() / 10)
 			newOffsetSize = getImageMinSize() / 10 - newTileSize;
 
+		if (newOffsetSize < 0)
+			newOffsetSize = 0;
+
 		ImGui::Text("Tile offset size");
 		ImGui::SliderInt("##Offset size", &newOffsetSize, 0, getImageMinSize() / 10 - newTileSize, "%d0");
 
@@ -401,7 +404,7 @@ public:
 		ImVec2 posInDisplay = ds.projItemGlobToDisplay(data->cs, pos);
 		if (ds.inDisplayRange(posInDisplay))
 		{
-			BackPixelPoint pix = data->cs.toLocal(toBP(posInDisplay - start));
+			BackPixelPoint pix = data->cs.toLocal(toBP(posInDisplay - start) * ds.core.csScale);
 			auto points = click((int)pix.x, (int)pix.y);
 			setPoints(ds, points);
 		}
@@ -419,8 +422,8 @@ public:
 		if (data->clickResponser.size() == 0)
 			return nullptr;
 
-		x = main.getRealX(x);
-		y = main.getRealY(y);
+		// x = main.getRealX(x);
+		// y = main.getRealY(y);
 
 
 		if (x < 0 || x >= main.width)
@@ -430,8 +433,8 @@ public:
 			return NULL;
 
 		//std::cout << x << " : " << y << std::endl;
-
-		SimpleLine* line = data->clickResponser[y * main.width + x].get();
+		int index = data->mat.getLineIndex(x, y);
+		SimpleLine* line = data->clickResponser[index].get();
 		if (line)
 		{
 			if (selectedLine == line && line->parent)
@@ -1238,7 +1241,6 @@ namespace MyApp
 		const ImGuiViewport* viewport = ImGui::GetMainViewport();
 		ImVec2 pos = viewport->WorkPos;
 		ImVec2 drawSize = viewport->WorkSize;
-		// drawSize.x -= 200;
 
 		//ImGui::SetNextWindowViewport(viewport->ID);
 

@@ -524,23 +524,23 @@ public:
 	GuiImage& operator=(GuiImage&& other) noexcept = delete;
 
 
-	int getRealX(int x)
-	{
-		return static_cast<float>(x - localDisplayPos.x) * (width / displaySize.x);
-	}
-	int getRealY(int y)
-	{
-		return static_cast<float>(y - localDisplayPos.y) * (height / displaySize.y);
-	}
+	// int getRealX(int x)
+	// {
+	// 	return static_cast<float>(x - localDisplayPos.x) * (width / displaySize.x);
+	// }
+	// int getRealY(int y)
+	// {
+	// 	return static_cast<float>(y - localDisplayPos.y) * (height / displaySize.y);
+	// }
 
-	int getDisplayX(int x)
-	{
-		return static_cast<float>(x) * (displaySize.x / width) + localDisplayPos.x;
-	}
-	int getDisplayY(int y)
-	{
-		return static_cast<float>(y) * (displaySize.y / height) + localDisplayPos.y;
-	}
+	// int getDisplayX(int x)
+	// {
+	// 	return static_cast<float>(x) * (displaySize.x / width) + localDisplayPos.x;
+	// }
+	// int getDisplayY(int y)
+	// {
+	// 	return static_cast<float>(y) * (displaySize.y / height) + localDisplayPos.y;
+	// }
 
 	void drawImage(const char* name, ImVec2 lpos, ImVec2 lsize, ImVec2 displayStart, ImVec2 displayEnd)
 	{
