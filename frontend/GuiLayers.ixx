@@ -51,13 +51,20 @@ public:
 	{
 		auto* ccore = getCore();
 		DisplaySystem& ds = proj->getDisplay();
-		ImVec2 dis = toIV(ccore->getDisplaySize());
-		ResizeImage(dis, realSize);
-		float maxDis = std::max(dis.x, dis.y);
-		dis.x = maxDis;
-		dis.y = maxDis;
+		BackPoint dis = ccore->getDisplaySize();
 
-		// ds.csPos = ds.projItemGlobToSys(ccore->cs, ccore->getGlobStart());
+		if (dis.x > dis.y)
+		{
+			ds.csScale = dis.x / realSize.x;
+		}
+		else
+			ds.csScale = dis.y / realSize.y;
+
+		BackPoint start = ds.projItemGlobToSys(ccore->cs, ccore->getGlobStart());
+		BackPoint end = ds.toSysGlob(toBP(realSize));
+		BackPoint itemSize = ds.toSysGlob(dis);
+		BackPoint size = end - start;
+		ds.csPos = start - (size - itemSize) / 2;
 		// ds.csSize = ds.projItemGlobToSys(ccore->cs, ccore->getGlobSize());
 		// BackPoint scale = BackPoint(1000, 1000) / ds.projItemGlobToSys;
 		// ds.csSize = scale;
@@ -469,12 +476,16 @@ public:
 		// auto start = ds.getDisplayStartPos();
 		// auto end = ds.getDisplayEndPos();
 
+		ImColor colbl(255, 255, 255);
+
 		BackColor cscol = data->color;
 		for (const auto& d : data->primitives)
 		{
 			const auto& points = d.points;
 			// cscol = d.color;
 			ImColor col(cscol.r, cscol.g, cscol.b);
+
+			// if (d->set)
 
 			if (points.size() < 3)
 				continue;
@@ -514,6 +525,7 @@ public:
 			{
 				ImVec2 pi = ds.projItemGlobToDisplay(dsc, points[0]) + offset; // First
 				list->PathFillConvex(col);
+				list->PathStroke(colbl);
 			}
 
 			list->PathClear();

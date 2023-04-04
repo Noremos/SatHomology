@@ -367,6 +367,11 @@ export struct DisplaySystem : public IJsonIO
 		return (display * csScale) + csPos;
 	}
 
+	BackPoint toSysGlob(const BackPoint& display)
+	{
+		return (display * csScale) + csPos;
+	}
+
 	// D = S / scale
 	BackPoint toDisplay(const BackPoint& sysGlob, const BackPoint& displaySize) const
 	{

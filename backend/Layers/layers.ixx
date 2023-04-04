@@ -597,7 +597,7 @@ public:
 
 		if (imgType == ReadType::Tiff)
 		{
-			TiffReader* trear = dynamic_cast<TiffReader*>(reader);
+			TiffReader* trear = static_cast<TiffReader*>(reader);
 			subImgSize = trear->getSubImageSize();
 			for (int i = 0, k = 0; i < subImgSize; ++i)
 			{
