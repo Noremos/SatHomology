@@ -122,7 +122,7 @@ public:
 
 	ImVec2 sysglobToDisplay(const BackPoint& p) const
 	{
-		BackPoint scale = drawSize / (core.csSize);
+		BackPoint scale = BackPoint(1000, 1000) / core.csSize;
 		return toIV((p - core.csPos) * scale + drawPos);
 	}
 
@@ -468,7 +468,7 @@ public:
 			BackPoint& offset = pds.csPos;
 			if (ImGui::IsMouseDragging(ImGuiMouseButton_Left)) // Drag
 			{
-				offset = offset - toBP(io.MouseDelta) * ( /*BackPoint(0.1f, 0.1f) * */ pds.csSize / toBP(realSize));
+				offset = offset - toBP(io.MouseDelta) * ( /*BackPoint(0.1f, 0.1f) * */ pds.csSize / BackPoint(1000, 1000));
 			}
 
 			if (io.MouseWheel != 0) // Wheeled

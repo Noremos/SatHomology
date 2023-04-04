@@ -1052,7 +1052,7 @@ namespace MyApp
 							{
 								tbVals.enableProcessBtn = true;
 								auto* guiLayer = layersVals.addLayer<RasterFromDiskGuiLayer>("Loaded", layer);
-								guiLayer->lockAtThis();
+								guiLayer->lockAtThis(layersVals.lastRealSize);
 								layer = nullptr;
 							}
 							else
@@ -1117,7 +1117,7 @@ namespace MyApp
 				{
 					layer->cs.init(tbVals.names[tbVals.selectedName].substr(5));
 					auto* guiLayer = layersVals.addLayer<RasterFromDiskGuiLayer>("Loaded", layer);
-					guiLayer->lockAtThis();
+					guiLayer->lockAtThis(layersVals.lastRealSize);
 					layer = nullptr;
 
 					tbVals.enableProcessBtn = true;

@@ -141,8 +141,8 @@ public:
 
 	void savePolygonsAsGeojson(const BackPathStr& savePath) const
 	{
-		BackString json = "{\"type\":\"FeatureCollection\","
-			"\"name\":\"";
+		BackString json = "{\"type\":\"FeatureCollection\",";
+		json += "\"name\":\"";
 		json += name;
 		json += "\",";
 		json += "\"crs\": { \"type\": \"name\", \"properties\":{\"name\": \"urn:ogc:def:crs:EPSG::";

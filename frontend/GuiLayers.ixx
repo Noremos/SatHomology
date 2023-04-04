@@ -47,16 +47,25 @@ public:
 	virtual void drawProperty() = 0;
 	virtual void applyPropertyChanges() = 0;
 
-	void lockAtThis()
+	void lockAtThis(ImVec2 realSize)
 	{
 		auto* ccore = getCore();
 		DisplaySystem& ds = proj->getDisplay();
-		ds.csPos = ds.projItemGlobToSys(ccore->cs, ccore->getGlobStart());
-		ds.csSize = ds.projItemGlobToSys(ccore->cs, ccore->getGlobSize());
-		if (ds.csSize.x == 0)
-		{
-			ds.csSize = BackPoint(300, 300);
-		}
+		ImVec2 dis = toIV(ccore->getDisplaySize());
+		ResizeImage(dis, realSize);
+		float maxDis = std::max(dis.x, dis.y);
+		dis.x = maxDis;
+		dis.y = maxDis;
+
+		// ds.csPos = ds.projItemGlobToSys(ccore->cs, ccore->getGlobStart());
+		// ds.csSize = ds.projItemGlobToSys(ccore->cs, ccore->getGlobSize());
+		// BackPoint scale = BackPoint(1000, 1000) / ds.projItemGlobToSys;
+		// ds.csSize = scale;
+
+		// if (ds.csSize.x == 0)
+		// {
+		// 	ds.csSize = BackPoint(300, 300);
+		// }
 	}
 
 	virtual void onClick(const GuiDisplaySystem&, BackPoint)
@@ -226,8 +235,12 @@ public:
 		}
 	}
 
+	ImVec2 lastRealSize;
+
 	void draw(const GuiDisplaySystem& ds)
 	{
+		lastRealSize = toIV(ds.drawSize);
+
 		uint i = 0;
 		for (auto& lay : layers)
 		{
@@ -539,7 +552,7 @@ public:
 	{
 		if (ImGui::Button("Выгрузить слой"))
 		{
-			BackPathStr path = getSavePath({ "*.geojson" });
+			BackPathStr path = getSavePath({ "geojson", "*.geojson" });
 			data->savePolygonsAsGeojson(path);
 		}
 	}
@@ -669,7 +682,7 @@ public:
 					iol.in = lay->getSysId();
 					if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
 					{
-						lay->lockAtThis();
+						lay->lockAtThis(lastRealSize);
 					}
 				}
 				if (temporaly)

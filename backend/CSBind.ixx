@@ -49,8 +49,28 @@ public:
 		return proj != nullptr;
 	}
 
+	bool reinit(int ind)
+	{
+		if (proj)
+		{
+			proj = proj_destroy(proj);
+			proj = nullptr;
+		}
+
+		if (ctx)
+		{
+			proj_context_destroy(ctx);
+			ctx = nullptr;
+		}
+
+		return init(ind);
+	}
+
 	bool init(int nid)
 	{
+		if (nid < 0)
+			return false;
+
 		// Initialize Proj context
 		sqlite3* db = NULL;
 		char* strerr = NULL;
@@ -347,6 +367,11 @@ export struct DisplaySystem : public IJsonIO
 	BackPoint toDisplay(const BackPoint& sysGlob, const BackPoint& displaySize) const
 	{
 		return ((sysGlob - csPos) / csSize) * displaySize;
+	}
+
+	BackPoint getSizeScale() const
+	{
+		return BackPoint(1000, 1000) / (csSize);
 	}
 
 

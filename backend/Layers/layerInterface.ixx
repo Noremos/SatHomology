@@ -236,6 +236,11 @@ public:
 	virtual int displayWidth() const = 0;
 	virtual int displayHeight() const = 0;
 
+	BackPoint getDisplaySize()
+	{
+		return BackPoint(displayWidth(), displayHeight());
+	}
+
 	virtual int realWidth() const
 	{
 		return displayWidth() * cs.getScale().y;
