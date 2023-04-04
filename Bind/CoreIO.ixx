@@ -113,6 +113,20 @@ export void mkDirIfNotExists(const BackDirStr& dirPath)
 	}
 }
 
+export void dropDir(const BackDirStr& dirPath)
+{
+	std::filesystem::remove_all(dirPath);
+}
+
+export void dropDirIfExists(const BackDirStr& dirPath)
+{
+	if (pathExists(dirPath))
+	{
+		dropDir(dirPath);
+	}
+}
+
+
 export bool endsWith(const BackString& string, const BackString endl)
 {
 	signed long long pos = string.length() - endl.length();

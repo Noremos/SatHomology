@@ -1016,7 +1016,7 @@ namespace MyApp
 				if (ImGui::Button("OK", ImVec2(120, 0)))
 				{
 					auto* core = backend.loadImageOrProject(path);
-					if (backend.isImageLoaded())
+					if (backend.isLoaded())
 					{
 
 						//centerVals.tilemap.init(tileSize = backend.getTileSize();
@@ -1044,7 +1044,7 @@ namespace MyApp
 				if (!path.empty())
 				{
 					layer = backend.loadImageOrProject(path);
-					if (backend.isImageLoaded())
+					if (backend.isLoaded())
 					{
 						if (layer)
 						{

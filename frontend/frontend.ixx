@@ -30,8 +30,7 @@ export class GuiBackend
 	enum class GuiState
 	{
 		Empty = 0,
-		ImageLoaded,
-		BarcodeCreated
+		Loaded
 	};
 public:
 	Project* proj = nullptr;
@@ -54,14 +53,9 @@ public:
 		return proj->getDisplay();
 	}
 
-	bool isImageLoaded() const
+	bool isLoaded() const
 	{
-		return state >= GuiState::ImageLoaded;
-	}
-
-	bool isBarcodeCreated() const
-	{
-		return state >= GuiState::BarcodeCreated;
+		return state >= GuiState::Loaded;
 	}
 
 	void clear();
@@ -133,14 +127,15 @@ public:
 	{
 		BackPathStr fullPath = path / name;
 		proj->setProjectPath(fullPath);
+		dropDirIfExists(proj->getPath(BackPath::metadata));
 		proj->loadImage(imgPath, 1);
 		endLoaded();
-		state = GuiState::ImageLoaded;
+		state = GuiState::Loaded;
 	}
 
 	RetLayers createBarcode(InOutLayer& iol, const BarcodeProperies& propertices, IItemFilter* info)
 	{
-		if (!isImageLoaded())
+		if (!isLoaded())
 			return RetLayers();
 
 		comm.clear();
@@ -164,7 +159,7 @@ public:
 
 	RetLayers exeFilter(InOutLayer& layer, int algNum)
 	{
-		if (!isImageLoaded())
+		if (!isLoaded())
 			return RetLayers();
 
 		return proj->exeFilter(layer, algNum);
@@ -192,15 +187,17 @@ public:
 				return nullptr;
 			//		return;
 			setProc = true;
-			newState = GuiState::BarcodeCreated;
+			newState = GuiState::Loaded;
 		}
 		else
 		{
 			if (state == GuiState::Empty)
-				proj->setProjectPath(path);
+			{
+				proj->setProjectPath(path, true);
+			}
 
+			newState = GuiState::Loaded;
 			layer = proj->loadImage(path, 1);
-			newState = GuiState::ImageLoaded;
 		}
 
 		endLoaded();

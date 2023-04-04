@@ -380,13 +380,13 @@ public:
 
 	BackString status;
 public:
-	void setProjectPath(const BackPathStr& path)
+	void setProjectPath(const BackPathStr& path, bool recreateMeta = false)
 	{
 		std::filesystem::path dir = path;
 		dir = std::filesystem::absolute(dir).parent_path();
 		projectPath = dir;
 
-		settupMeta();
+		settupMeta(recreateMeta);
 
 		/*		projectPath = (char*)dir.c_str();
 				projectPath.string
@@ -482,11 +482,22 @@ public:
 		return getPath(BackPath::metadata);
 	}
 
-	void settupMeta()
+	void settupMeta(bool recreateMeta)
 	{
-		mkDirIfNotExists(getPath(BackPath::metadata));
-		metaprov.reset(new MetadataProvider(getPath(BackPath::metadata), metaCounter));
-		classifier.open(getMetaPath());
+		auto path = getMetaPath();
+		if (pathExists(path))
+		{
+			if (recreateMeta)
+			{
+				dropDirIfExists(path);
+				mkdir(path);
+			}
+		}
+		else
+			mkdir(path);
+
+		metaprov.reset(new MetadataProvider(path, metaCounter));
+		classifier.open(path);
 	}
 
 	RasterFromDiskLayer* loadImage(const BackPathStr& path, int step)
