@@ -242,7 +242,7 @@ public:
 		settings.extraWrite = [this](BackJson& json) {extraWrite(json);};
 
 		ds.csPos = BackPoint(0, 0);
-		ds.scale = 1.0;//BackPoint(1000, 1000);
+		ds.csScale = 1.0;//BackPoint(1000, 1000);
 
 		// mkDirIfNotExists(u_classCache);
 	}
@@ -660,6 +660,8 @@ public:
 				auto point = bc::barvalue::getStatPoint(pm);
 
 				BackPoint iglob = vl->cs.toGlobal(point.x + tileProv.offset.x, point.y + tileProv.offset.y);
+				iglob.x += 0.5f;
+				iglob.y += 0.5f;
 				p.addPoint(iglob);
 			}
 			return true;

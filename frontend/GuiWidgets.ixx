@@ -489,9 +489,9 @@ public:
 				assert(proc.x <= 1.0);
 				assert(proc.y <= 1.0);
 
-				pds.csScale += ads;
+				pds.csScale -= ads;
 
-				offset = offset + toBP(proc) * movePart;
+				offset = offset + toBP(realSize) * (toBP(proc) - BackPoint(0.5, 0.5)) * ads;
 			}
 		}
 

@@ -364,13 +364,13 @@ export struct DisplaySystem : public IJsonIO
 	// S = D * scale
 	BackPoint toSysGlob(const BackPoint& display, const BackPoint& displaySize)
 	{
-		return ((display / displaySize) * csScale) + csPos;
+		return (display * csScale) + csPos;
 	}
 
 	// D = S / scale
 	BackPoint toDisplay(const BackPoint& sysGlob, const BackPoint& displaySize) const
 	{
-		return ((sysGlob - csPos) / csScale) * displaySize;
+		return ((sysGlob - csPos) / csScale);
 	}
 
 	BackPoint getSizeScale() const
@@ -404,7 +404,7 @@ export struct DisplaySystem : public IJsonIO
 	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder) override
 	{
 		auto displayObj = state->objectBegin("display_system");
-		ioPoint(displayObj, "csPos", csPos)
+		ioPoint(displayObj, "csPos", csPos);
 		displayObj->scDouble("csScale", csScale);
 
 		int id = sysProj.getId();

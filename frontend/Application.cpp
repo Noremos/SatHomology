@@ -1252,7 +1252,7 @@ namespace MyApp
 		ImGui::SetNextWindowSize(drawSize);
 
 		guiDisplay.drawPos = {0,0};
-		guiDisplay.drawSize = BackPoint(drawSize.x - 10, drawSize.y - 20);
+		guiDisplay.drawSize = BackPoint(drawSize.x, drawSize.y);
 		if (centerVals.resizble.Begin("ImagePreview"))
 		{
 			layersVals.draw(guiDisplay);
