@@ -333,7 +333,7 @@ export struct RangeItemFilter : public IItemFilter
 		auto linlen = line->end() - line->start();
 		return start.inRange(line->start()) &&
 			len.inRange(linlen) &&
-			matrSizeProc.inRange(line->getMatrixSize() * 100 / imgLen) ||
+			matrSizeProc.inRange(line->getMatrixSize() * 100 / imgLen) &&
 			depth.inRange(line->getDeath());
 	}
 
