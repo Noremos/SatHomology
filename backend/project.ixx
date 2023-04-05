@@ -555,7 +555,7 @@ public:
 		return classType;
 	}
 
-	RetLayers createCacheBarcode(InOutLayer& iol, const BarcodeProperies& propertices, IItemFilter* info = nullptr)
+	RetLayers createCacheBarcode(InOutLayer& iol, const BarcodeProperies& propertices, IItemFilter* filter = nullptr)
 	{
 		RetLayers ret;
 		if (block) return ret;
@@ -578,10 +578,10 @@ public:
 		int tileSize = inLayer->prov.tileSize;
 		int tileOffset = inLayer->tileOffset;
 
-		if (info)
+		if (filter)
 		{
 			const uint fullTile = tileSize + tileOffset;
-			info->imgLen = fullTile * fullTile;
+			filter->imgLen = fullTile * fullTile;
 		}
 
 		TileIterator stW(0, tileSize, tileOffset, rwid);
@@ -606,17 +606,18 @@ public:
 		ItemHolderCache cacher;
 		cacher.openWrite(layer->getCacheFilePath(getMeta()));
 
+		TileProvider tileProv = inLayer->prov.tileByIndex(0);
 		IdGrater parentne;
 		uint tileIndex = 0;
 		int inde = 0;
 		IClassItemHolder::ItemCallback cacheClass;
 
-		cacheClass = [this, &parentne, &inde, layer, &tileIndex, info](IClassItem* item)
+		cacheClass = [this, &parentne, &inde, layer, &tileProv, filter](IClassItem* item)
 		{
-			if (layer->passLine(item, info))
+			if (layer->passLine(item, filter))
 			{
-				if (!predictForLayer(item, layer, tileIndex))
-					layer->addLine(parentne, inde++, item, tileIndex);
+				if (!predictForLayer(item, layer, tileProv))
+					layer->addLine(parentne, inde++, item, tileProv);
 			}
 		};
 
@@ -636,12 +637,16 @@ public:
 
 				bc::point offset(stW.pos(), stH.pos());
 				BackImage rect = inLayer->getRect(offset.x, offset.y, iwid, ihei);
-				tileIndex = inLayer->prov.tileByOffset(offset.x, offset.y).index;
+
+				// Lyambda
+				tileProv = inLayer->prov.tileByOffset(offset.x, offset.y);
+				inde = 0; // Keep this! See lyambda
+				parentne.clear();// Keep this! See lyambda
+				// -------------
 
 				BaritemHolder creator;
-				inde = 0; // Keep this! See lyambda
 				creator.create(&rect, constr, cacheClass);
-				cacher.save(&creator, tileIndex);
+				cacher.save(&creator, tileProv.index);
 
 				stW.accum();
 			}
@@ -654,13 +659,12 @@ public:
 		return ret;
 	}
 
-	bool predictForLayer(IClassItem* item, RasterLineLayer* inLayer, int tileIndex)
+	bool predictForLayer(IClassItem* item, RasterLineLayer* inLayer, const TileProvider& tileProv)
 	{
 		auto id = predict(item);
 		if (id != -1)
 		{
 			VectorLayer* vl = classLayers.at(id);
-			auto tileProv = inLayer->prov.tileByIndex(tileIndex);
 
 			mcountor temp;
 			getCountour(item->getMatrix(), temp, true);
@@ -726,6 +730,7 @@ public:
 			cacher.load(tileIndex, &holder);
 
 			IdGrater parentne;
+			TileProvider tileProv = inLayer->prov.tileByIndex(tileIndex);
 
 			const auto& vec = holder.getItems();
 			for (size_t i = 0; i < vec.size(); ++i)
@@ -733,8 +738,8 @@ public:
 				auto item = vec.at(i);
 				if (outLayer->passLine(item, filter))
 				{
-					if (!predictForLayer(item, outLayer, tileIndex))
-						outLayer->addLine(parentne, (int)i, item, tileIndex);
+					if (!predictForLayer(item, outLayer, tileProv))
+						outLayer->addLine(parentne, (int)i, item, tileProv);
 				}
 			}
 		}

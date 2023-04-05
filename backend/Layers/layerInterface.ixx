@@ -27,14 +27,14 @@ public:
 	int index;
 	bc::point offset; // In rastar coords
 
-	TileProvider(float factor, int index = 0) : factor(factor), index(index), offset(0, 0)
+	TileProvider(float factor, int index) : factor(factor), index(index), offset(0, 0)
 	{ }
 	TileProvider(float factor, int x, int y) : factor(factor), index(0), offset(x, y)
 	{ }
 
-	bc::point toGlobal(uint locX, uint locY) const
+	BackPixelPoint toReal(uint locX, uint locY) const
 	{
-		return bc::point((locX + offset.x) / factor, (locY + offset.y) / factor);
+		return BackPixelPoint((locX + offset.x) / factor, (locY + offset.y) / factor);
 	}
 };
 
@@ -93,8 +93,7 @@ public:
 	TileProvider tileByIndex(uint tileIndex) const
 	{
 		int tilesInRow = getTilesInRow();
-		TileProvider p(tileIndex);
-		p.factor = displayFactor;
+		TileProvider p(displayFactor, tileIndex);
 		p.offset.x = (tileIndex % tilesInRow) * tileSize;
 		p.offset.y = (tileIndex / tilesInRow) * tileSize;
 		return p;
@@ -104,8 +103,7 @@ public:
 	{
 		int tilesInRow = getTilesInRow();
 
-		TileProvider p(offX, offY);
-		p.factor = displayFactor;
+		TileProvider p(displayFactor, offX, offY);
 		p.index = (offY / tileSize) * tilesInRow + offX / tileSize;
 		return p;
 	}

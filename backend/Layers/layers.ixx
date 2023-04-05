@@ -7,7 +7,6 @@ module;
 #include "../../Bind/Common.h"
 
 export module RasterLayers;
-//import std.core;
 import LayersCore;
 
 import BarcodeModule;
@@ -308,16 +307,16 @@ public:
 			mat.set(x, y, color);
 			clickResponser[indLocal] = newLine;
 
-			int ylek = 2;
-			for (int i = MAX(x - ylek, 0); i < std::min(x + ylek, mat.wid()); i++)
-			{
-				for (int j = MAX(y - ylek, 0); j < std::min(y + ylek, mat.hei()); j++)
-				{
-					int indLocal2 = mat.getLineIndex(i, j);
+			// int ylek = 2;
+			// for (int i = MAX(x - ylek, 0); i < std::min(x + ylek, mat.wid()); i++)
+			// {
+			// 	for (int j = MAX(y - ylek, 0); j < std::min(y + ylek, mat.hei()); j++)
+			// 	{
+			// 		int indLocal2 = mat.getLineIndex(i, j);
 
-					clickResponser[indLocal2] = newLine;
-				}
-			}
+			// 		clickResponser[indLocal2] = newLine;
+			// 	}
+			// }
 		}
 	}
 
@@ -338,7 +337,7 @@ public:
 		return true;
 	}
 
-	void addLine(IdGrater& parentne, int i, const IClassItem* curLine, int tileIndex)
+	void addLine(IdGrater& parentne, int i, const IClassItem* curLine, const TileProvider& tileProv)
 	{
 		std::shared_ptr<SimpleLine> sl;
 		auto curIdKey = curLine->getId();
@@ -350,7 +349,7 @@ public:
 		}
 		else
 		{
-			sl.reset(new SimpleLine(tileIndex, i));
+			sl.reset(new SimpleLine(tileProv.index, i));
 			parentne.insert(std::make_pair(curIdKey, sl));
 		}
 
@@ -362,7 +361,7 @@ public:
 		}
 		else
 		{
-			sl->parent.reset(new SimpleLine(tileIndex, -1));
+			sl->parent.reset(new SimpleLine(tileProv.index, -1));
 			parentne.insert(std::make_pair(curIdKey, sl->parent));
 			//sl->parent->matr = curLine->parent->matr;
 		}
@@ -375,24 +374,23 @@ public:
 		sl->matrSrcSize = (int)matr.size();
 
 		// Add line
-		auto tileProv = prov.tileByIndex(tileIndex);
 		Barscalar pointCol = RasterLineLayer::colors[rand() % RasterLineLayer::colors.size()];
 
 		bc::barvector temp;
 		for (const auto& pm : matr)
 		{
-			int x = (std::min)(mat.wid() - 1, pm.getX() + tileProv.offset.x);
-			int y = (std::min)(mat.hei() - 1, pm.getY() + tileProv.offset.y);
+			BackPixelPoint op = tileProv.toReal(pm.getX(), pm.getY());
+			op.x = (std::min)(mat.wid() - 1, op.x);
+			op.y = (std::min)(mat.hei() - 1, op.y);
 
-			bc::point cp(x, y);
-			temp.push_back(bc::barvalue(cp, pm.value));
+			temp.push_back(bc::barvalue(op.x, op.y, pm.value));
 
-			setMatrPoint(x, y, sl, pointCol);
+			setMatrPoint(op.x, op.y, sl, pointCol);
 		}
 		getCountourSimple(temp, sl->matr);
 	}
 
-	void addHolder(const IClassItemHolder& items, int tileIndex, const IItemFilter* filter)
+	void addHolder(const IClassItemHolder& items, const TileProvider& tileProv, const IItemFilter* filter)
 	{
 		IdGrater parentne;
 
@@ -403,7 +401,7 @@ public:
 			if (!passLine(curLine, filter))
 				continue;
 
-			addLine(parentne, i, curLine, tileIndex);
+			addLine(parentne, i, curLine, tileProv);
 		}
 	}
 };
