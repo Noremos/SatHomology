@@ -30,6 +30,16 @@ void ResizeImage(ImVec2& size, const ImVec2& maxSize)
 	size.y = std::min(maxSize.y, max_aspect_height);
 }
 
+void ResizeImage(BackPoint& size, const BackPoint& maxSize)
+{
+	// Calculate the aspect ratio of the image
+	double aspect_ratio = size.x / size.y;
+	double max_aspect_width = maxSize.y * aspect_ratio;
+	double max_aspect_height = maxSize.x / aspect_ratio;
+	size.x = std::min(maxSize.x, max_aspect_width);
+	size.y = std::min(maxSize.y, max_aspect_height);
+}
+
 
 bool GuiImage::setSource(const BackPathStr& path, bool smooth)
 {

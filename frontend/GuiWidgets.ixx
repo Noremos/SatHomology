@@ -570,9 +570,9 @@ private:
 			return;
 
 		auto textId = getTextureId();
+		ImDrawList* list = ImGui::GetWindowDrawList();
 		if (textId == 0)
 		{
-			ImDrawList* list = ImGui::GetWindowDrawList();
 			// localDisplayPos.x = 5;
 			// localDisplayPos.y = 5;
 			// ImVec2 maxPos = csPos;
@@ -631,6 +631,7 @@ private:
 
 		ImGui::SetCursorPos(displaysBegin);
 		ImGui::Image((void*)(intptr_t)textId, displaySize, ImVec2(0.f,0.f));
+		// list->AddImage((void*)(intptr_t)textId, displayStart + winPos, displayEnd + winPos);
 	}
 };
 

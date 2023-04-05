@@ -263,9 +263,9 @@ export struct CSBinding : public IJsonIO
 		return BackPoint(img_transform[1], img_transform[5]);
 	}
 
-	BackPoint getScaledEnd(const BackPoint& locPoint) const
+	BackPoint getScaled(const BackPoint& locPoint) const
 	{
-		return globOrigin + locPoint * getScale();
+		return locPoint * getScale();
 	}
 
 	double* getScaleX()
@@ -370,6 +370,11 @@ export struct DisplaySystem : public IJsonIO
 	BackPoint toSysGlob(const BackPoint& display)
 	{
 		return (display * csScale) + csPos;
+	}
+
+	BackPoint toSysGlobRelative(const BackPoint& display)
+	{
+		return (display * csScale);
 	}
 
 	// D = S / scale

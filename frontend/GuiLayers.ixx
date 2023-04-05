@@ -11,6 +11,7 @@ import GuiOverlap;
 import IOCore;
 import VectorLayers;
 import CSBind;
+import Platform;
 //import LuaStates;
 
 //import ForntnedModule;
@@ -61,10 +62,11 @@ public:
 			ds.csScale = dis.y / realSize.y;
 
 		BackPoint start = ds.projItemGlobToSys(ccore->cs, ccore->getGlobStart());
-		BackPoint end = ds.toSysGlob(toBP(realSize));
-		BackPoint itemSize = ds.toSysGlob(dis);
-		BackPoint size = end - start;
-		ds.csPos = start - (size - itemSize) / 2;
+		BackPoint itemSize = ds.projItemGlobToSys(ccore->cs, ccore->getGlobSize());
+
+		BackPoint winSizeInSys = ds.toSysGlobRelative(toBP(realSize));
+		ResizeImage(itemSize, winSizeInSys);
+		ds.csPos = start - (winSizeInSys - itemSize) / 2;
 		// ds.csSize = ds.projItemGlobToSys(ccore->cs, ccore->getGlobSize());
 		// BackPoint scale = BackPoint(1000, 1000) / ds.projItemGlobToSys;
 		// ds.csSize = scale;

@@ -632,7 +632,7 @@ public:
 			"init", &CSBinding::initProj,
 			"getProjId", &CSBinding::getProjId,
 			"getScale", &CSBinding::getScale,
-			"getScaledEnd", &CSBinding::getScaledEnd
+			"getScaled", &CSBinding::getScaled
 		);
 
 		state.new_usertype<VectorLayer>("VectorLayer",

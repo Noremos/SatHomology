@@ -265,12 +265,12 @@ public:
 
 	BackPoint getGlobEnd()
 	{
-		return cs.getScaledEnd(BackPoint(displayWidth(), displayHeight()));
+		return getGlobStart() + getGlobSize();
 	}
 
 	BackPoint getGlobSize()
 	{
-		return getGlobEnd() - getGlobStart();
+		return cs.getScaled(getDisplaySize());
 	}
 
 	virtual ~ILayer()

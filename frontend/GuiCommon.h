@@ -19,6 +19,7 @@ const int ImGuiWindowFlags_NoDocking = 0;
 
 void ResizeImage(int& width, int& height, int max_width, int max_height);
 void ResizeImage(ImVec2& size, const ImVec2& maxSize);
+void ResizeImage(BackPoint& size, const BackPoint& maxSize);
 
 
 using ApplicationVec2 = ImVec2;
