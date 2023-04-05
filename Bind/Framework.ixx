@@ -22,7 +22,6 @@ export
 	void imwrite(const BackPathStr& path, const BackImage& mat);
 	vbuffer imwriteToMemory(const BackImage& mat);
 
-	BackPathStr getSavePath(std::initializer_list<std::string> exts);
 	BackPathStr getDicumnetPath();
 
 	BackPathStr openImageOrProject();
@@ -171,7 +170,7 @@ BackPathStr openProject()
 	return f.result().size() == 0 ? "" : f.result()[0];
 }
 
-BackPathStr getSavePath(std::initializer_list<std::string> exts)
+export BackPathStr getSavePath(std::initializer_list<std::string> exts)
 {
 	auto fs = pfd::save_file("Choose file to save", pfd::path::home(), exts, pfd::opt::none);
 
