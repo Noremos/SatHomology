@@ -89,7 +89,7 @@ struct GuiFilter
 			_drawPair("MinStart", "MaxStart", valsFilter.start);
 			_drawPair("MinLen", "MaxLen", valsFilter.len);
 			_drawPair("MinMatrSize %", "MaxMatrSize %", valsFilter.matrSizeProc, 100);
-			_drawPair("MinDepth", "Max depth", valsFilter.depth);
+			_drawPair("MinDepth", "Max depth", valsFilter.depth, 200);
 			break;
 		case 2:
 			ImGui::InputTextMultiline("Lua script", text, 10000, ImVec2(500, 300));
