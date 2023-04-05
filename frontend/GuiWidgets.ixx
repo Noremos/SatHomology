@@ -493,7 +493,7 @@ public:
 
 				pds.csScale -= ads;
 
-				offset = offset + toBP(realSize) * (toBP(proc) - BackPoint(0.5, 0.5)) * ads;
+				offset = offset + toBP(realSize) * (toBP(proc)) * ads;
 			}
 		}
 
@@ -544,7 +544,7 @@ public:
 
 	void drawImage(const char* name, ImVec2 lpos, ImVec2 lsize, ImVec2 displayStart, ImVec2 displayEnd)
 	{
-		auto window_flags = ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoMove;
+		auto window_flags = ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs;
 
 		ImGui::SetCursorPos(lpos);
 		if (ImGui::BeginChild(name, lsize, false, window_flags))
