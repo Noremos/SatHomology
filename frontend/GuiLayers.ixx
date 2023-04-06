@@ -53,20 +53,20 @@ public:
 		auto* ccore = getCore();
 		DisplaySystem& ds = proj->getDisplay();
 		BackPoint dis = ccore->getDisplaySize();
+		ResizeImage(dis, toBP(realSize));
 
-		if (dis.x > dis.y)
-		{
-			ds.csScale = dis.x / realSize.x;
-		}
-		else
-			ds.csScale = dis.y / realSize.y;
 
 		BackPoint start = ds.projItemGlobToSys(ccore->cs, ccore->getGlobStart());
 		BackPoint itemSize = ds.projItemGlobToSys(ccore->cs, ccore->getGlobSize());
+		BackPoint itemSizeSrc = itemSize;
 
+		// ds.csScale = dis.x / realSize.x;
+
+		ds.csScale = 1.0;
 		BackPoint winSizeInSys = ds.toSysGlobRelative(toBP(realSize));
 		ResizeImage(itemSize, winSizeInSys);
 		ds.csPos = start - (winSizeInSys - itemSize) / 2;
+		ds.csScale = itemSizeSrc.x / itemSize.x;
 		// ds.csSize = ds.projItemGlobToSys(ccore->cs, ccore->getGlobSize());
 		// BackPoint scale = BackPoint(1000, 1000) / ds.projItemGlobToSys;
 		// ds.csSize = scale;
@@ -402,7 +402,9 @@ public:
 		if (!IGuiLayer::visible)
 			return;
 
-		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
+		 | ImGuiWindowFlags_NoScrollWithMouse;
+
 
 		ImGui::SetCursorPos(ds.getDrawPos());
 		if (!ImGui::BeginChild(data->name.c_str(), ds.getDrawSize(), false, window_flags))
