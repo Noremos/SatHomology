@@ -109,9 +109,6 @@
     <ClCompile Include="Bind\CoreIO.ixx">
       <Filter>Backend\Bind</Filter>
     </ClCompile>
-    <ClCompile Include="side\Lua.ixx">
-      <Filter>Backend\Bind</Filter>
-    </ClCompile>
     <ClCompile Include="Bind\Side.ixx">
       <Filter>Backend\Bind</Filter>
     </ClCompile>
@@ -220,10 +217,10 @@
       <Filter>Side</Filter>
     </ClInclude>
     <ClInclude Include="side\imconfig.h" />
-    <ClInclude Include="side\sol3\sol.hpp" />
     <ClInclude Include="side\GuiCodeEditor.h">
       <Filter>GUI\WindowWidgets</Filter>
     </ClInclude>
+    <ClInclude Include="Bind\Lua.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="side\imgui\misc\debuggers\imgui.natvis">
