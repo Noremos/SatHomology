@@ -438,6 +438,7 @@ public:
 	{
 		auto window_flags = ImGuiWindowFlags_NoDecoration |
 			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |
+			ImGuiWindowFlags_NoScrollWithMouse |
 			ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoDocking;
 
 		if (!ImGui::Begin(name, NULL, window_flags))
@@ -544,7 +545,7 @@ public:
 
 	void drawImage(const char* name, ImVec2 lpos, ImVec2 lsize, ImVec2 displayStart, ImVec2 displayEnd)
 	{
-		auto window_flags = ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs;
+		auto window_flags = ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoScrollWithMouse;
 
 		ImGui::SetCursorPos(lpos);
 		if (ImGui::BeginChild(name, lsize, false, window_flags))
