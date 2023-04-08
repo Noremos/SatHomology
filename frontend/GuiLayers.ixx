@@ -52,29 +52,18 @@ public:
 	{
 		auto* ccore = getCore();
 		DisplaySystem& ds = proj->getDisplay();
-		BackPoint dis = ccore->getDisplaySize();
-		ResizeImage(dis, toBP(realSize));
-
 
 		BackPoint start = ds.projItemGlobToSys(ccore->cs, ccore->getGlobStart());
-		BackPoint itemSize = ds.projItemGlobToSys(ccore->cs, ccore->getGlobSize());
-		BackPoint itemSizeSrc = itemSize;
+		BackPoint IT = ds.projItemGlobToSys(ccore->cs, ccore->getGlobSize());
 
-		// ds.csScale = dis.x / realSize.x;
+		BackPoint IR = IT;
+		ResizeImage(IR, toBP(realSize));
 
-		ds.csScale = 1.0;
-		BackPoint winSizeInSys = ds.toSysGlobRelative(toBP(realSize));
-		ResizeImage(itemSize, winSizeInSys);
+		ds.csScale = IT.x / IR.x;
+
+		BackPoint winSizeInSys = toBP(realSize) * ds.csScale;
+		BackPoint itemSize = IR * ds.csScale;
 		ds.csPos = start - (winSizeInSys - itemSize) / 2;
-		ds.csScale = itemSizeSrc.x / itemSize.x;
-		// ds.csSize = ds.projItemGlobToSys(ccore->cs, ccore->getGlobSize());
-		// BackPoint scale = BackPoint(1000, 1000) / ds.projItemGlobToSys;
-		// ds.csSize = scale;
-
-		// if (ds.csSize.x == 0)
-		// {
-		// 	ds.csSize = BackPoint(300, 300);
-		// }
 	}
 
 	virtual void onClick(const GuiDisplaySystem&, BackPoint)
