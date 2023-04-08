@@ -10,3 +10,6 @@
 [submodule "side/emhash"]
 	path = side/emhash
 	url = https://github.com/ktprime/emhash
+[submodule "vcpkg"]
+	path = vcpkg
+	url = https://github.com/microsoft/vcpkg.git
