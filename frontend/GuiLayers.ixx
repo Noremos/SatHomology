@@ -1,6 +1,8 @@
 module;
 #include "GuiCommon.h"
 
+#include <numeric>
+
 export module LayersGui;
 
 import RasterLayers;
@@ -366,9 +368,49 @@ public:
 export class VectorGuiLayer : public GuiLayerData<VectorLayer>
 {
 	ImVec4 propColor;
+
+	enum ChangeState
+	{
+		none,
+		add,
+		edit,
+		remove
+	} checkState = ChangeState::none;
+
+	template<class E, E curval>
+	class CheckSate
+	{
+		bool state = false;
+		E& valRef;
+
+	public:
+		CheckSate(E& valRef) : valRef(valRef)
+		{ }
+
+		void draw(const char* name)
+		{
+			ImGui::Checkbox(name, &state);
+			if (state)
+			{
+				valRef = curval;
+			}
+		}
+	};
+
+	CheckSate<ChangeState, ChangeState::add> addCB;
+	CheckSate<ChangeState, ChangeState::edit> editCB;
+	CheckSate<ChangeState, ChangeState::remove> removeCB;
+	bool isInChangeMode() const
+	{
+		return checkState != ChangeState::none;
+	}
+
+	std::vector<size_t> orders;
+
 public:
 
-	VectorGuiLayer(VectorLayer* fromCore) : GuiLayerData<VectorLayer>(fromCore)
+	VectorGuiLayer(VectorLayer* fromCore) : GuiLayerData<VectorLayer>(fromCore),
+		addCB(checkState), editCB(checkState), removeCB(checkState)
 	{ }
 
 	virtual ~VectorGuiLayer()
@@ -380,10 +422,16 @@ public:
 		propColor.x = static_cast<float>(data->color.r) / 255.f;
 		propColor.y = static_cast<float>(data->color.g) / 255.f;
 		propColor.z = static_cast<float>(data->color.b) / 255.f;
-		//for (auto& d : data->primitives.draws)
-		//{
-		//	points.push_back(ImVec2(d.x, d.y));
-		//}
+
+		orders.resize(data->primitives.size());
+		std::iota(orders.begin(), orders.end(), 0);
+
+		if (data->vecType == VectorLayer::VecType::polygons)
+		{
+			std::sort(orders.begin(), orders.end(), [&](size_t a, size_t b) {
+				return data->primitives[a].points.size() < data->primitives[b].points.size();
+			});
+		}
 	}
 
 	virtual void draw(const GuiDisplaySystem& ds)
@@ -435,23 +483,27 @@ public:
 
 		BackColor cscol = data->color;
 		ImColor col(cscol.r, cscol.g, cscol.b);
+		ImColor cursorColor(255 - cscol.r, 255 - cscol.g, 255 - cscol.b);
 
 		auto& cs = data->cs;
 
 		BackPoint itemSt = ds.getSysToItemStartPos(cs);
 		BackPoint ed = ds.getSysToItemEndPos(cs);
 
-		for (auto& d : prims)
+		for (DrawPrimitive& d : prims)
 		{
 			auto& points = d.points;
 
-			for (auto& p : points)
+			BackPoint p = points[0];
+			if (GuiDisplaySystem::inRange(itemSt, ed, p))
 			{
-				if (GuiDisplaySystem::inRange(itemSt, ed, p))
+				ImVec2 pi = ds.projItemGlobToDisplay(cs, p);
+				if (isInChangeMode() && d.isNearPoint(ds.cursorPos))
 				{
-					ImVec2 pi = ds.projItemGlobToDisplay(cs, p);
-					list->AddCircleFilled(pi, 3, col);
+					list->AddCircleFilled(pi, 3, cursorColor);
 				}
+				else
+					list->AddCircleFilled(pi, 3, col);
 			}
 		}
 	}
@@ -472,9 +524,11 @@ public:
 		ImColor colbl(255, 255, 255);
 
 		BackColor cscol = data->color;
-		for (const auto& d : data->primitives)
+		for (size_t& io : orders)
 		{
-			const auto& points = d.points;
+			const DrawPrimitive& d = data->primitives[io];
+
+			const std::vector<BackPoint>& points = d.points;
 			// cscol = d.color;
 			ImColor col(cscol.r, cscol.g, cscol.b);
 
@@ -486,6 +540,22 @@ public:
 			int added = 0;
 			bool prevIsOut = false;
 			ImVec2 prev;
+
+			bool inside = false;
+			int n = points.size();
+			BackPoint point = ds.cursorPos;
+			if (isInChangeMode())
+			{
+				for (int i = 0, j = n - 1; i < n; j = i++)
+				{
+					if (((points[i].y > point.y) != (points[j].y > point.y)) &&
+						(point.x < (points[j].x - points[i].x) * (point.y - points[i].y) / (points[j].y - points[i].y) + points[i].x))
+					{
+						inside = !inside;
+					}
+				}
+			}
+
 			for (const BackPoint& p : points)
 			{
 				// if (!GuiDisplaySystem::inRange(start, end, p))
@@ -517,8 +587,24 @@ public:
 			if (added >= 3)
 			{
 				ImVec2 pi = ds.projItemGlobToDisplay(dsc, points[0]) + offset; // First
-				list->PathFillConvex(col);
-				list->PathStroke(colbl);
+				// list->PathFillConvex(col);
+				list->PathStroke(colbl,0, 0);
+
+
+				if (inside)
+				{
+					ImColor cursorColor(255 - cscol.r, 255 - cscol.g, 255 - cscol.b);
+					for (const BackPoint& p : points)
+					{
+						if (!GuiDisplaySystem::inRange(start, end, p))
+						{
+							continue;
+						}
+
+						ImVec2 pi = ds.projItemGlobToDisplay(dsc, p) + offset;
+						list->AddCircleFilled(pi, 3, cursorColor);
+					}
+				}
 			}
 
 			list->PathClear();
@@ -560,7 +646,41 @@ public:
 			BackPathStr path = getSavePath({ "geojson", "*.geojson, *.json" });
 			data->savePolygonsAsGeojson(path);
 		}
+
+		// Add ploygon;
+		// Add line
+		// Move point
+		// Move line
+		// Drop
+		// export
+		// import
+
+
+		addCB.draw("Режим добавления");
+		editCB.draw("Режим изменения");
+		removeCB.draw("Режим удаления");
+
+		switch (data->vecType)
+		{
+		case VectorLayer::VecType::points:
+			drawPointsToolbox(context);
+			break;
+		case VectorLayer::VecType::polygons:
+			drawPolygonToolbox(context);
+			break;
+		default:
+			break;
+		}
+
 	}
+
+
+	void drawPointsToolbox(ILayerWorker& context)
+	{
+	}
+
+	void drawPolygonToolbox(ILayerWorker& context)
+	{}
 
 	void drawProperty()
 	{
