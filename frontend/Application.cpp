@@ -1343,7 +1343,7 @@ namespace MyApp
 			// ImGui::Text(bottomVals.debug.c_str());
 
 			const auto& curpos = centerVals.resizble.currentPos;
-			ImGui::Text("%f:%f", curpos.x, curpos.y);
+			ImGui::Text("%f:%f | %f", curpos.x, curpos.y, backend.getDS().csScale);
 
 			// GBL
 			ImGui::EndDisabled();
