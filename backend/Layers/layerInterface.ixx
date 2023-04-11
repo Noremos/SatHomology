@@ -231,8 +231,8 @@ public:
 		// metaFolder.update(metaFolder.getSubMeta(lname));
 	}
 
-	virtual int displayWidth() const = 0;
-	virtual int displayHeight() const = 0;
+	virtual float displayWidth() const = 0;
+	virtual float displayHeight() const = 0;
 
 	BackPoint getDisplaySize()
 	{
@@ -358,12 +358,12 @@ public:
 		return Type::Vector;
 	}
 
-	virtual int displayWidth() const
+	virtual float displayWidth() const
 	{
 		return 0;
 	}
 
-	virtual int displayHeight() const
+	virtual float displayHeight() const
 	{
 		return 0;
 	}

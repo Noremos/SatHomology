@@ -48,6 +48,31 @@ public:
 		points.clear();
 	}
 
+	// Function to check if a point is inside a polygon
+	bool isNearPoint(const BackPoint& point)
+	{
+		const BackPoint& curp = points[0];
+		return (curp.x - 2 < point.x && point.x < curp.x + 2 &&
+				curp.y - 2 < point.y && point.y < curp.y + 2);
+	}
+
+	// Function to check if a point is inside a polygon
+	bool isInsidePolygon(const BackPoint& point)
+	{
+		int n = points.size();
+		bool inside = false;
+		for (int i = 0, j = n - 1; i < n; j = i++)
+		{
+			if (((points[i].y > point.y) != (points[j].y > point.y)) &&
+				(point.x < (points[j].x - points[i].x) * (point.y - points[i].y) / (points[j].y - points[i].y) + points[i].x))
+			{
+				inside = !inside;
+			}
+		}
+
+		return inside;
+	}
+
 	//IClassItemHolder *load(int &index, IClassItemHolder *t)
 	//{
 	//	assert(state->isReading());

@@ -136,11 +136,11 @@ public:
 
 
 	// ������������ ����� IRasterLayer
-	virtual int displayWidth() const override
+	virtual float displayWidth() const override
 	{
 		return mat.width();
 	}
-	virtual int displayHeight() const override
+	virtual float displayHeight() const override
 	{
 		return mat.height();
 	}
@@ -536,7 +536,7 @@ public:
 			return info;
 		}
 
-		TiffReader* treader = dynamic_cast<TiffReader*>(reader);
+		TiffReader* treader = static_cast<TiffReader*>(reader);
 
 		auto osd = treader->getSumImageInfos();
 		for (auto& o : osd)
@@ -602,7 +602,10 @@ public:
 				//int factor = 1;
 				trear->setCurrentSubImage(i);
 				if (reader->width() <= 2000)
+				{
 					images.push_back(tiffToImg(reader, tiles / (intToStr(k++) + ".png"), 1.0, true));
+					break;
+				}
 			}
 
 			if (images.size() == 0)
@@ -647,13 +650,13 @@ public:
 	}
 
 	// ������������ ����� IRasterLayer
-	virtual int displayWidth() const override
+	virtual float displayWidth() const override
 	{
-		return reader->width() * prov.displayFactor;
+		return static_cast<float>(reader->width()) / prov.displayFactor;
 	}
-	virtual int displayHeight() const override
+	virtual float displayHeight() const override
 	{
-		return reader->height() * prov.displayFactor;
+		return static_cast<float>(reader->height()) / prov.displayFactor;
 	}
 	virtual int realWidth() const override
 	{
