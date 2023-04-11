@@ -1,7 +1,9 @@
 module;
 
 #include "GuiCommon.h"
+
 #include <algorithm>
+#include <limits>
 
 export module GuiWidgets;
 
@@ -43,6 +45,7 @@ public:
 
 	BackPoint drawPos;
 	BackPoint drawSize;
+	BackPoint cursorPos;
 
 	// S = D * scale
 	// D = S / scale
@@ -493,6 +496,10 @@ public:
 				assert(proc.y <= 1.0);
 
 				pds.csScale -= ads;
+				if (pds.csScale <= 0)
+				{
+					pds.csScale = std::numeric_limits<float>::min();
+				}
 
 				offset = offset + toBP(realSize) * (toBP(proc)) * ads;
 			}
