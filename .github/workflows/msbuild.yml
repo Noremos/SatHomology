@@ -14,7 +14,7 @@ on:
 env:
   # Path to the solution file relative to the root of the project.
   SOLUTION_FILE_PATH: .
-  
+
   PROJECT_FILE_PATH: GeoBar.vcxproj
   BUILD_PLATFORM: x64
 
@@ -39,13 +39,6 @@ jobs:
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
 
-
-    - uses: lukka/get-cmake@latest
-      
-    - name: List $RUNNER_WORKSPACE before build
-      run: find $RUNNER_WORKSPACE
-      shell: bash
-
     - name: Setup vcpkg
       uses: lukka/run-vcpkg@main
       id: runvcpkg
@@ -61,6 +54,10 @@ jobs:
     - name: Integrate vcpkg
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: vcpkg integrate install
+
+    - name: List $RUNNER_WORKSPACE before build
+      run: find $RUNNER_WORKSPACE
+      shell: bash
 
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
