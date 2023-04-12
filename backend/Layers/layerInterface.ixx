@@ -234,7 +234,7 @@ public:
 	virtual float displayWidth() const = 0;
 	virtual float displayHeight() const = 0;
 
-	BackPoint getDisplaySize()
+	BackPoint getDisplaySize() const
 	{
 		return BackPoint(displayWidth(), displayHeight());
 	}
@@ -258,17 +258,40 @@ public:
 		return cs.proj.isInited();
 	}
 
-	BackPoint getGlobStart()
+	BackPoint getNormGlobStart() const
+	{
+		BackPoint st = getGlobStart();
+		BackPoint ed = getGlobEnd();
+
+		if (st.x > ed.x)
+		{
+			std::swap(st.x, ed.x);
+		}
+
+		if (st.y > ed.y)
+		{
+			std::swap(st.y, ed.y);
+		}
+
+		return st;
+	}
+
+	BackPoint getNormGlobSize() const
+	{
+		return cs.getScaled(getDisplaySize()).abs();
+	}
+
+	BackPoint getGlobStart() const
 	{
 		return cs.globOrigin;
 	}
 
-	BackPoint getGlobEnd()
+	BackPoint getGlobEnd() const
 	{
 		return getGlobStart() + getGlobSize();
 	}
 
-	BackPoint getGlobSize()
+	BackPoint getGlobSize() const
 	{
 		return cs.getScaled(getDisplaySize());
 	}

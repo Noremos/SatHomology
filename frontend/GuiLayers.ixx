@@ -57,8 +57,8 @@ public:
 
 		BackPoint BPRealSize = toBP(realSize);
 
-		BackPoint start = ds.projItemGlobToSys(ccore->cs, ccore->getGlobStart());
-		BackPoint IT = ds.projItemGlobToSys(ccore->cs, ccore->getGlobSize());
+		BackPoint start = ds.projItemGlobToSys(ccore->cs, ccore->getNormGlobStart());
+		BackPoint IT = ds.projItemGlobToSys(ccore->cs, ccore->getNormGlobSize());
 
 		BackPoint IR = IT;
 		ResizeImage(IR, BPRealSize);

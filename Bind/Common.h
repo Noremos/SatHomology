@@ -111,6 +111,11 @@ struct TPoint
 	//	return x * other.y - y * other.x;
 	//}
 
+	TPoint abs() const
+	{
+		return TPoint(std::abs(x), std::abs(y));
+	}
+
 	// TPoint magnitude
 	double mag() const {
 		return sqrt(x * x + y * y);
