@@ -97,6 +97,10 @@ struct TPoint
 		return TPoint(x / scalar, y / scalar);
 	}
 
+	TPoint operator-(T scalar) const {
+		return TPoint(x - scalar, y - scalar);
+	}
+
 	//// TPoint dot product operator
 	//int operator*(const TPoint& other) const {
 	//	return x * other.x + y * other.y;

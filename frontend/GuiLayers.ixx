@@ -55,16 +55,18 @@ public:
 		auto* ccore = getCore();
 		DisplaySystem& ds = proj->getDisplay();
 
+		BackPoint BPRealSize = toBP(realSize);
+
 		BackPoint start = ds.projItemGlobToSys(ccore->cs, ccore->getGlobStart());
 		BackPoint IT = ds.projItemGlobToSys(ccore->cs, ccore->getGlobSize());
 
 		BackPoint IR = IT;
-		ResizeImage(IR, toBP(realSize));
+		ResizeImage(IR, BPRealSize);
 
-		ds.csScale = IT.x / IR.x;
+		ds.csScale = IR.x / IT.x;
 
-		BackPoint winSizeInSys = toBP(realSize) * ds.csScale;
-		BackPoint itemSize = IR * ds.csScale;
+		BackPoint winSizeInSys = ds.toSysGlobRelative(BPRealSize);
+		BackPoint itemSize = ds.toSysGlobRelative(IR);
 		ds.csPos = start - (winSizeInSys - itemSize) / 2;
 	}
 

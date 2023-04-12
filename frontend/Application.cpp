@@ -404,7 +404,9 @@ public:
 		ImVec2 posInDisplay = ds.projItemGlobToDisplay(data->cs, pos);
 		if (ds.inDisplayRange(posInDisplay))
 		{
-			BackPixelPoint pix = data->cs.toLocal(toBP(posInDisplay - start) * ds.core.csScale);
+			const BackPoint globP = ds.core.toSysGlobRelative(toBP(posInDisplay - start));
+			const BackPixelPoint pix = data->cs.toLocal(globP);
+
 			auto points = click((int)pix.x, (int)pix.y);
 			setPoints(ds, points);
 		}

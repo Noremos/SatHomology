@@ -362,25 +362,25 @@ export struct DisplaySystem : public IJsonIO
 	}
 
 	// S = D * scale
-	BackPoint toSysGlob(const BackPoint& display, const BackPoint& displaySize)
-	{
-		return (display * csScale) + csPos;
-	}
-
 	BackPoint toSysGlob(const BackPoint& display)
 	{
-		return (display * csScale) + csPos;
+		return (display / csScale) + csPos;
 	}
 
 	BackPoint toSysGlobRelative(const BackPoint& display)
 	{
-		return (display * csScale);
+		return (display / csScale);
 	}
 
 	// D = S / scale
-	BackPoint toDisplay(const BackPoint& sysGlob, const BackPoint& displaySize) const
+	BackPoint toDisplay(const BackPoint& sysGlob) const
 	{
-		return ((sysGlob - csPos) / csScale);
+		return ((sysGlob - csPos) * csScale);
+	}
+
+	BackPoint toDisplayRelative(const BackPoint& sysGlob) const
+	{
+		return sysGlob * csScale;
 	}
 
 	BackPoint getSizeScale() const

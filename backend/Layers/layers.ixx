@@ -478,10 +478,15 @@ public:
 
 	void setSubImage(int imgIndex)
 	{
-		int displayWid = images[imgIndex].width();
+		int realWidth;
+		int realHeight;
 		if (imgType == ReadType::Tiff)
 		{
 			TiffReader* treader = static_cast<TiffReader*>(reader);
+			auto& realTags = treader->getSubImg(0)->tags;
+			realWidth = realTags.ImageWidth;
+			realHeight = realTags.ImageLength;
+
 			treader->setCurrentSubImage(imgIndex);
 			const auto& tags = treader->getTags();
 
@@ -489,15 +494,17 @@ public:
 			cs.setOrigin(p.X, p.Y);
 			cs.setScale(tags.ModelPixelScaleTag.x, tags.ModelPixelScaleTag.y);
 			cs.proj.reinit(treader->getProjection());
-			// cs.init(tags.) // TODO: fixme
 
 			subImageIndex = imgIndex;
 		}
 		else
 		{
+			realWidth = reader->width();
+			realHeight = reader->height();
 			subImageIndex = 0;
 		}
-		prov.update(reader->width(), reader->height(), displayWid);
+
+		prov.update(realWidth, realHeight, reader->width());
 		if (prov.tileSize + tileOffset > prov.width)
 		{
 			tileOffset = prov.width - prov.tileSize;

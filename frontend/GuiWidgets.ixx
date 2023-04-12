@@ -51,7 +51,7 @@ public:
 	// D = S / scale
 	BackPoint getSysSize() const
 	{
-		return drawSize * core.csScale;
+		return core.toSysGlobRelative(drawSize);
 	}
 
 	// T getDrawPos() const
@@ -133,7 +133,7 @@ public:
 
 	ImVec2 sysglobToDisplay(const BackPoint& p) const
 	{
-		return toIV((p - core.csPos) / core.csScale + drawPos);
+		return toIV(core.toDisplay(p) + drawPos);
 	}
 
 	static bool inRange(const ImVec2& start, const ImVec2& end, const ImVec2& val)
@@ -469,7 +469,7 @@ public:
 
 			auto& io = ImGui::GetIO();
 			auto mp = io.MousePos - win->Pos;
-			currentPos = pds.toSysGlob(BackPoint(mp.x, mp.y), BackPoint(realSize.x, realSize.y));
+			currentPos = pds.toSysGlob(BackPoint(mp.x, mp.y));
 
 			clicked = ImGui::IsMouseClicked(ImGuiMouseButton_Right);
 			if (clicked)
@@ -481,7 +481,7 @@ public:
 			BackPoint& offset = pds.csPos;
 			if (ImGui::IsMouseDragging(ImGuiMouseButton_Left)) // Drag
 			{
-				offset = offset - toBP(io.MouseDelta) * pds.csScale;
+				offset = offset - toBP(io.MouseDelta) / pds.csScale;
 			}
 
 			if (io.MouseWheel != 0) // Wheeled
@@ -491,17 +491,24 @@ public:
 				// zoom.y += ads;
 				// zoom.x = zoom.x > 0.1f ? zoom.x : 0.1f;
 				// zoom.y = zoom.y > 0.1f ? zoom.y : 0.1f;
-				auto proc = mp / realSize;
+				BackPoint proc = toBP(mp / realSize);
 				assert(proc.x <= 1.0);
 				assert(proc.y <= 1.0);
 
-				pds.csScale -= ads;
+				auto displayPrev = realSize / pds.csScale;
+
+				pds.csScale += ads;
 				if (pds.csScale <= 0)
 				{
-					pds.csScale = std::numeric_limits<float>::min();
+					pds.csScale = 0.000001;
 				}
 
-				offset = offset + toBP(realSize) * (toBP(proc)) * ads;
+				auto displayAfter = realSize / pds.csScale;
+
+				BackPoint displOff = toBP(displayPrev - displayAfter);
+				// auto displOff = toBP(realSize / ads);
+
+				offset = offset + displOff * proc;
 			}
 		}
 
