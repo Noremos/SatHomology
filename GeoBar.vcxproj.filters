@@ -213,9 +213,6 @@
     <ClInclude Include="Bind\Common.h">
       <Filter>Backend\Bind</Filter>
     </ClInclude>
-    <ClInclude Include="side\sqlite\sqlite3.h">
-      <Filter>Side</Filter>
-    </ClInclude>
     <ClInclude Include="side\imconfig.h" />
     <ClInclude Include="side\GuiCodeEditor.h">
       <Filter>GUI\WindowWidgets</Filter>
@@ -225,9 +222,6 @@
   <ItemGroup>
     <None Include="side\imgui\misc\debuggers\imgui.natvis">
       <Filter>Файлы ресурсов</Filter>
-    </None>
-    <None Include="libs\sqlite3.def">
-      <Filter>Side</Filter>
     </None>
   </ItemGroup>
 </Project>

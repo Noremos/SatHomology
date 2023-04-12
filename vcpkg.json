@@ -4,6 +4,12 @@
     "dependencies": [
         {
             "name": "proj"
+        },
+        {
+            "name": "sqlite3"
+        },
+        {
+            "name": "lua"
         }
     ]
 }

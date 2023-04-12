@@ -3,7 +3,7 @@ module;
 #include <proj.h>
 
 #include "../Bind/Common.h"
-#include "sqlite/sqlite3.h"
+#include <sqlite3.h>
 
 export module CSBind;
 
