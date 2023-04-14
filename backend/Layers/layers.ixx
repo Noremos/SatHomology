@@ -671,7 +671,7 @@ public:
 		{
 			TiffReader* trear = static_cast<TiffReader*>(reader);
 			trear->cachedRows.setMaxSize(rowsSize);
-			trear->cachedTiles.setMaxSize(rowsSize);
+			trear->setMaxTilesCacheSize(rowsSize);
 		}
 	}
 
