@@ -159,20 +159,7 @@ public:
 
 	void drawProperty()
 	{
-		ImGui::Text("Tile size");
-		ImGui::SliderInt("##Tile size", &newTileSize, 1, getImageMinSize() / 10, "%d0");
-		if (newTileSize + newOffsetSize > getImageMinSize() / 10)
-			newOffsetSize = getImageMinSize() / 10 - newTileSize;
 
-		if (newOffsetSize < 0)
-			newOffsetSize = 0;
-
-		ImGui::Text("Tile offset size");
-		ImGui::SliderInt("##Offset size", &newOffsetSize, 0, getImageMinSize() / 10 - newTileSize, "%d0");
-
-		ImGui::Separator();
-		auto id = ImGui::FindWindowByName("ProcSetts")->ID;
-		tilePrview.draw(id, newTileSize * 10, newOffsetSize * 10, getImageSize());
 	}
 
 	void applyPropertyChanges()
@@ -216,7 +203,7 @@ public:
 	};
 	BarcodeProperies properties;
 	GuiFilter filterInfo;
-	int cacheMb = 10;
+	int cacheMb = 1024;
 
 	void grabSets()
 	{
@@ -284,7 +271,34 @@ public:
 			if (imgSubImages.getSize() > 0)
 			{
 				imgSubImages.drawListBox("Размеры");
+				if (imgSubImages.hasChanged())
+				{
+					if (newTileSize > getImageMinSize())
+					{
+						GuiLayerData<T>::data->setSubImage(imgSubImages.currentIndex);
+						newTileSize = getImageMinSize();
+					}
+				}
 			}
+
+			ImGui::SameLine();
+			if (ImGui::BeginChild("Tile size"))
+			{
+				ImGui::Text("Tile size");
+				ImGui::SliderInt("##Tile size", &newTileSize, 1, getImageMinSize() / 10, "%d0");
+				if (newTileSize + newOffsetSize > getImageMinSize() / 10)
+					newOffsetSize = getImageMinSize() / 10 - newTileSize;
+
+				if (newOffsetSize < 0)
+					newOffsetSize = 0;
+
+				ImGui::Text("Tile offset size");
+				ImGui::SliderInt("##Offset size", &newOffsetSize, 0, getImageMinSize() / 10 - newTileSize, "%d0");
+
+				ImGui::Separator();
+				tilePrview.draw(newTileSize * 10, newOffsetSize * 10, getImageSize());
+			}
+			ImGui::EndChild();
 
 			if (ImGui::Button("Запустить"))
 			{
@@ -1351,6 +1365,11 @@ namespace MyApp
 
 			const auto& curpos = centerVals.resizble.currentPos;
 			ImGui::Text("%f:%f | %f", curpos.x, curpos.y, backend.getDS().csScale);
+
+
+			ImGui::ProgressBar(0.0, ImVec2(0.0f, 0.0f));
+			ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+			ImGui::Text("Progress Bar");
 
 			// GBL
 			ImGui::EndDisabled();

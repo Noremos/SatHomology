@@ -660,7 +660,7 @@ export class GuiTilePreview
 		return (main + minor - 1) / minor;
 	}
 public:
-	void draw(ImGuiID parentId, int tileSize, int offset, ImVec2 imgSize)
+	void draw(int tileSize, int offset, ImVec2 imgSize)
 	{
 		//ImGui::ShowDemoWindow();
 		// ImGui::ShowMetricsWindow();
@@ -668,13 +668,13 @@ public:
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings;
 		window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
 
-		ImGuiWindow* win = ImGui::FindWindowByID(parentId);
+		ImGuiWindow* win = ImGui::GetCurrentWindow();
+		ImDrawList* list = win->DrawList;
+
 		//if (ImGui::BeginChild(parentId))
 		{
 			int y = getAddnl(imgSize.x, tileSize) * getAddnl(imgSize.y, tileSize);
 			ImGui::Text("The image will be splitted into %d tiles", y);
-
-			ImDrawList* list = ImGui::GetWindowDrawList();
 
 			ImVec2 localStartPos = ImGui::GetCursorPos();
 			//startPos.x += 5;
@@ -687,7 +687,7 @@ public:
 			float scale = imgSize.x / drawWid;
 
 			// Draw List use the coores from top beootm corner of the BASE window. So add the modal wins coords
-			ImVec2 absolutePos(win->Pos.x + localStartPos.x, win->Pos.y + localStartPos.y);
+			ImVec2 absolutePos = win->Pos + win->Scroll + localStartPos;
 			list->AddRectFilled(absolutePos, ImVec2(absolutePos.x + drawWid, absolutePos.y + drawHei), ImColor(150, 150, 150));
 
 			ImVec2 tileWithOffSize((tileSize + offset) / scale, (tileSize + offset) / scale);
