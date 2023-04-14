@@ -365,7 +365,7 @@ public:
 	virtual BackImage getImage(const int max) const = 0;
 	virtual const BackImage* getCachedImage() const = 0;
 
-
+	virtual void setCache(size_t) = 0;
 	virtual void setSubImage(int imgIndex) = 0;
 	virtual int getSubImage() = 0;
 	virtual int getFirstSmallIndex(const int maxSize = 2000) = 0;

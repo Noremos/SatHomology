@@ -136,6 +136,9 @@ public:
 
 
 	// ������������ ����� IRasterLayer
+	virtual void setCache(size_t)
+	{ }
+
 	virtual float displayWidth() const override
 	{
 		return mat.width();
@@ -263,6 +266,7 @@ public:
 		clear();
 		mat.assignCopyOf(src);
 		clickResponser.resize(mat.length());
+		printf("alloced for preview: %d", clickResponser.size());
 		prov.init(src.width(), src.height(), src.width(), tileSize);
 	}
 
@@ -274,6 +278,7 @@ public:
 		clear();
 		mat.reinit(wid, hei, 4);
 		clickResponser.resize(mat.length());
+		printf("alloced for preview: %d", clickResponser.size());
 
 
 		prov = layer->prov;
@@ -504,7 +509,9 @@ public:
 			subImageIndex = 0;
 		}
 
-		prov.update(realWidth, realHeight, reader->width());
+		prov.update(reader->width(), reader->height(), images[0].width()); // restor it when images will be dropped
+
+		// prov.update(realWidth, realHeight, reader->width()); // restor it when images will be dropped
 		if (prov.tileSize + tileOffset > prov.width)
 		{
 			tileOffset = prov.width - prov.tileSize;
@@ -657,6 +664,17 @@ public:
 	}
 
 	// ������������ ����� IRasterLayer
+
+	virtual void setCache(size_t rowsSize)
+	{
+		if (imgType == ReadType::Tiff)
+		{
+			TiffReader* trear = static_cast<TiffReader*>(reader);
+			trear->cachedRows.setMaxSize(rowsSize);
+			trear->cachedTiles.setMaxSize(rowsSize);
+		}
+	}
+
 	virtual float displayWidth() const override
 	{
 		return static_cast<float>(reader->width()) / prov.displayFactor;

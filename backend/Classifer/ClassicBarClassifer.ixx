@@ -108,6 +108,14 @@ public:
 			cline->m_end = state->pBarscalar(cline->end());
 		}
 	}
+
+	~BarlineClass()
+	{
+		for (size_t i = 0; i < childer.size(); i++)
+		{
+			delete childer[i];
+		}
+	}
 };
 
 
@@ -139,20 +147,20 @@ public:
 		}
 	}
 
-	void create(bc::DatagridProvider* img, const bc::BarConstructor& constr)
-	{
-		bc::BarcodeCreator creator;
-		std::unique_ptr<bc::Barcontainer> ret(creator.createBarcode(img, constr));
+	//void create(bc::DatagridProvider* img, const bc::BarConstructor& constr)
+	//{
+	//	bc::BarcodeCreator creator;
+	//	std::unique_ptr<bc::Barcontainer> ret(creator.createBarcode(img, constr));
 
-		item.reset(ret->exractItem(0));
+	//	item.reset(ret->exractItem(0));
 
-		int size = item->barlines.size();
-		for (int i = 0; i < size; i++)
-		{
-			IClassItem* id = new BarlineClass(item->barlines[i]);
-			items.push_back(id);
-		}
-	}
+	//	int size = item->barlines.size();
+	//	for (int i = 0; i < size; i++)
+	//	{
+	//		IClassItem* id = new BarlineClass(item->barlines[i]);
+	//		items.push_back(id);
+	//	}
+	//}
 
 	virtual void saveLoadState(StateBinFile::BinState* state) override
 	{
@@ -251,8 +259,12 @@ public:
 				v.value = state->pBarscalar(v.value);
 			}
 
-			IClassItem* id = new BarlineClass(line);
-			items.push_back(id);
+
+			if (isReading)
+			{
+				IClassItem* id = new BarlineClass(line);
+				items.push_back(id);
+			}
 		}
 		state->endItem();
 	}

@@ -199,7 +199,7 @@ public:
 		{bc::ProcType::Radius, "По расстоянию"},
 		{bc::ProcType::invertf0, "Инвертировать"},
 		{bc::ProcType::experiment, "Радар"},
-		{bc::ProcType::ValueRadius, "Тру растояние"}
+		{bc::ProcType::ValueRadius, "Тру расстояние"}
 	};
 
 	SelectableKeyValues<bc::ColorType> colorCB =
@@ -216,6 +216,7 @@ public:
 	};
 	BarcodeProperies properties;
 	GuiFilter filterInfo;
+	int cacheMb = 10;
 
 	void grabSets()
 	{
@@ -271,6 +272,9 @@ public:
 				ImGui::Checkbox("Use holes", &properties.alg1UseHoles);
 				ImGui::Checkbox("ignore hight", &properties.alg1IgnoreHeight);
 			}
+			ImGui::Separator();
+			ImGui::Text("Лимит кэша");
+			ImGui::InputInt("MB", &cacheMb);
 
 			ImGui::Separator();
 			ImGui::Text("Пороги отсеивания");
@@ -284,6 +288,7 @@ public:
 
 			if (ImGui::Button("Запустить"))
 			{
+				GuiLayerData<T>::data->setCache(cacheMb * 1024 * 1024);
 				GuiLayerData<T>::data->setSubImage(imgSubImages.currentIndex);
 
 				ImGui::CloseCurrentPopup();
@@ -1711,6 +1716,6 @@ namespace MyApp
 
 
 		drawLayout();
-		//ImGui::ShowDemoWindow();
+		ImGui::ShowDemoWindow();
 	}
 }
