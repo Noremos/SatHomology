@@ -40,27 +40,27 @@ BackImage imread(const BackString& path)
 	if (image_data == NULL)
 		return BackImage(0, 0, 0, NULL, false, false);
 
-	if (chls == 4)
-	{
-		const int req = 3;
-		unsigned int length = width * height;
-		unsigned char* fixedData = new uchar[length * req];
-		//memcpy(fixedData, image_data, length * req);
-		for (size_t i = 0, destinationIndex = 0; i < length * chls; i += chls, destinationIndex += req)
-		{
-			fixedData[destinationIndex + 0] = image_data[i + 0];
-			fixedData[destinationIndex + 1] = image_data[i + 1];
-			fixedData[destinationIndex + 2] = image_data[i + 2];
+	// if (chls == 4)
+	// {
+	// 	const int req = 3;
+	// 	unsigned int length = width * height;
+	// 	unsigned char* fixedData = new uchar[length * req];
+	// 	//memcpy(fixedData, image_data, length * req);
+	// 	for (size_t i = 0, destinationIndex = 0; i < length * chls; i += chls, destinationIndex += req)
+	// 	{
+	// 		fixedData[destinationIndex + 0] = image_data[i + 0];
+	// 		fixedData[destinationIndex + 1] = image_data[i + 1];
+	// 		fixedData[destinationIndex + 2] = image_data[i + 2];
 
-			/*for (size_t j = 0; j < i + req; ++j)
-			{
-				fixedData[j] = image_data[destinationIndexj];
-			}*/
-		}
-		delete[] image_data;
-		image_data = fixedData;
-		chls = req;
-	}
+	// 		/*for (size_t j = 0; j < i + req; ++j)
+	// 		{
+	// 			fixedData[j] = image_data[destinationIndexj];
+	// 		}*/
+	// 	}
+	// 	delete[] image_data;
+	// 	image_data = fixedData;
+	// 	chls = req;
+	// }
 	return BackImage(width, height, chls, image_data, false, true);
 }
 
