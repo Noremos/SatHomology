@@ -647,15 +647,50 @@ public:
 			this->rect = std::move(rrect);
 			this->tileProv = tileProvider;
 			busy = true;
+#ifdef _WIN32
+			SetThreadPriority(thread->native_handle(), THREAD_PRIORITY_HIGHEST);
+#elif __linux__
+			sched_param params;
+			params.sched_priority = 99;
+			pthread_setschedparam(thread->native_handle(), SCHED_FIFO, &params);
+#endif
 			taskUpdated = true;
 		}
 
 		void runAsync()
 		{
-			thread.reset(new std::jthread([this]{this->run();}));
+			thread.reset(new std::jthread([this]{this->runLoop();}));
 		}
 
-		void run()
+		void runSync()
+		{
+			const auto start = std::chrono::steady_clock::now();
+
+			// Keep this! See lyambda
+			inde = 0;
+			parentne.clear();
+			// -------------
+
+			printf("Start run for tile %d\n", tileProv.index);
+			BaritemHolder creator;
+			creator.create(&rect, constr, cacheClass);
+
+			{
+				std::lock_guard<std::mutex> guard(cacherMutex);
+				cacher.save(&creator, tileProv.index);
+			}
+
+
+			const auto end = std::chrono::steady_clock::now();
+			const auto diff = end - start;
+			const double len = std::chrono::duration<double, std::milli> (diff).count();
+			printf("End run for tile %d; Time: %dms\n", tileProv.index, (int)len);
+
+			++counter;
+			busy = false;
+		}
+
+		void runLoop()
 		{
 			while (!stopThreadFlag)
 			{
@@ -663,24 +698,15 @@ public:
 					continue;
 
 				taskUpdated = false;
+				runSync();
 
-				// Keep this! See lyambda
-				inde = 0;
-				parentne.clear();
-				// -------------
-
-				printf("Start run for tile %d\n", tileProv.index);
-				BaritemHolder creator;
-				creator.create(&rect, constr, cacheClass);
-				printf("End run for tile %d\n", tileProv.index);
-
-				{
-					std::lock_guard<std::mutex> guard(cacherMutex);
-					cacher.save(&creator, tileProv.index);
-				}
-
-				++counter;
-				busy = false;
+#ifdef _WIN32
+				SetThreadPriority(thread->native_handle(), THREAD_PRIORITY_BELOW_NORMAL);
+#elif __linux__
+				sched_param params;
+				params.sched_priority = 20;
+				pthread_setschedparam(thread->native_handle(), SCHED_FIFO, &params);
+#endif
 			}
 		}
 	};
