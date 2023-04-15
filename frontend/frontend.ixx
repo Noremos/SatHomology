@@ -58,6 +58,11 @@ public:
 		return state >= GuiState::Loaded;
 	}
 
+	MetadataProvider& getMeta()
+	{
+		return proj->getMeta();
+	}
+
 	void clear();
 
 	struct ComFinder

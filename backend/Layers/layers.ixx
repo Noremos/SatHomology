@@ -40,43 +40,112 @@ int getFid(int wid, int s)
 
 BackImage tiffToImg(ImageReader* reader, const BackPathStr& path, int fctor = 10, bool save = false)
 {
-	bool rgb = reader->getSamples() > 1;
-	int widf = getFid(reader->width(), fctor);
-	int heif = getFid(reader->height(), fctor);
-	BackImage outr(widf, heif, 3);
+	const int rwid = reader->width();
+	const int rhei = reader->height();
+	const bool rgb = reader->getSamples() > 1;
+	const float NAN_VALUE = reader->getNullValue();
 
-	float NAN_VALUE = reader->getNullValue();
-	for (int h = 0, hr = 0; h < reader->height(); h += fctor, ++hr)
+	if (fctor == 1)
 	{
-		const rowptr& rp = reader->getRowData(h);
-		for (int w = 0, wr = 0; w < reader->width(); w += fctor, ++wr)
+		BackImage out(rwid, rhei, 3);
+
+		auto rp = reader->getRect(0,0, rwid, rhei);
+
+		if (rgb)
 		{
-			float value = rp.getFloat(w);
-			if (value == NAN_VALUE)
+			for (size_t i = 0; i < out.length(); i++)
 			{
-				outr.set(wr, hr, Barscalar(0, 0, 0));
+				auto value = rp.data.getValueV(i);
+				if (value.avg() == NAN_VALUE)
+				{
+					out.setLiner(i, Barscalar(0, 0, 0));
+				}
+				else
+				{
+					out.setLiner(i, Barscalar(0, 0, 0));
+
+					auto& r = value.val.rgba;
+					out.setLiner(i, Barscalar(r.samples[0].s, r.samples[1].s, r.samples[2].s));
+				}
 			}
-			else if (rgb)
+		}
+		else
+		{
+			for (size_t i = 0; i < out.length(); i++)
 			{
-				auto r = rp.getValue(w);
-				outr.set(wr, hr, Barscalar(r.rgba.samples[0].s, r.rgba.samples[1].s, r.rgba.samples[2].s));
+				float value = rp.data.getFloat(i);
+				if (value == NAN_VALUE)
+				{
+					out.setLiner(i, Barscalar(0, 0, 0));
+				}
+				else
+				{
+					if (value < 0)
+						value = 0;
+					else if (value > 255)
+						value = 255;
+
+					out.setLiner(i, Barscalar(value, value, value));
+				}
+			}
+		}
+
+		if (save)
+			imwrite(path, out);
+		return out;
+	}
+	else
+	{
+		const int widf = getFid(rwid, fctor);
+		const int heif = getFid(reader->height(), fctor);
+		BackImage outr(widf, heif, 3);
+
+		float NAN_VALUE = reader->getNullValue();
+		for (int h = 0, hr = 0; h < reader->height(); h += fctor, ++hr)
+		{
+			const rowptr& rp = reader->getRowData(h);
+			if (rgb)
+			{
+				for (int w = 0, wr = 0; w < rwid; w += fctor, ++wr)
+				{
+					auto value = rp.getValueV(w);
+					if (value.avg() == NAN_VALUE)
+					{
+						outr.set(wr, hr, Barscalar(0, 0, 0));
+					}
+					else
+					{
+						auto& r = value.val.rgba;
+						outr.set(wr, hr, Barscalar(r.samples[0].s, r.samples[1].s, r.samples[2].s));
+					}
+				}
 			}
 			else
 			{
-				if (value < 0)
-					value = 0;
-				else if (value > 255)
-					value = 255;
+				for (int w = 0, wr = 0; w < rwid; w += fctor, ++wr)
+				{
+					float value = rp.getFloat(w);
+					if (value == NAN_VALUE)
+					{
+						outr.set(wr, hr, Barscalar(0, 0, 0));
+					}
+					else
+					{
+						if (value < 0)
+							value = 0;
+						else if (value > 255)
+							value = 255;
 
-				outr.set(wr, hr, Barscalar(value, value, value));
+						outr.set(wr, hr, Barscalar(value, value, value));
+					}
+				}
 			}
 		}
+
+		if (save)
+			imwrite(path, outr);
+		return outr;
 	}
-
-	if (save)
-		imwrite(path, outr);
-
-	return outr;
 }
 
 
@@ -473,11 +542,13 @@ public:
 		openReader();
 		if (!reader->ready)
 			return;
+	}
 
+	void cache(const MetadataProvider& metaPath)
+	{
 		writeImages(metaPath);
 		setSubImage(0);
 	}
-
 
 	int getSubImage()
 	{

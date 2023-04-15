@@ -1176,6 +1176,8 @@ namespace MyApp
 				if (ImGui::Button("OK", ImVec2(120, 0)))
 				{
 					layer->cs.init(tbVals.names[tbVals.selectedName].substr(5));
+					layer->cache(backend.getMeta());
+
 					auto* guiLayer = layersVals.addLayer<RasterFromDiskGuiLayer>("Loaded", layer);
 					guiLayer->lockAtThis(layersVals.lastRealSize);
 					layer = nullptr;
@@ -1254,7 +1256,7 @@ namespace MyApp
 			ImGui::SameLine();
 			if (ImGui::Button("Save"))
 			{
-				backend.save();
+				backend.save();	
 			}
 
 			// GBl

@@ -71,7 +71,7 @@ BackImage imread(const BackPathStr& path)
 
 void imwrite(const BackString& path, const BackImage& mat)
 {
-	stbi_write_png(path.c_str(), mat.width(), mat.height(), mat.channels(), mat.data, 0);
+	stbi_write_png(path.c_str(), mat.width(), mat.height(), mat.channels(), mat.data, 0); // so slow...
 }
 
 void imwrite(const BackPathStr& path, const BackImage& mat)
