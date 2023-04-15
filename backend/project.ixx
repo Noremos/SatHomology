@@ -1069,6 +1069,7 @@ public:
 	{
 		auto inLayer = getInTRaster<RasterLineLayer>(layerId);
 		assert(inLayer);
+		auto sourceLayer = getInTRaster<RasterLayer>(inLayer->parentlayerId);
 
 		ItemHolderCache cached;
 		cached.openRead(inLayer->getCacheFilePath(getMeta()));
@@ -1077,10 +1078,10 @@ public:
 		cached.loadSpecific(srcItemId.tileId, &item);
 
 		auto line = item.getItems()[srcItemId.vecId];
-		if (destIcon != nullptr)
+		if (destIcon != nullptr && sourceLayer)
 		{
 			auto rect = bc::getBarRect(line->getMatrix());
-			*destIcon = inLayer->getRect(rect.x, rect.y, rect.width, rect.height);
+			*destIcon = sourceLayer->getRect(rect.x, rect.y, rect.width, rect.height);
 		}
 		//rb->barlines[srcItemId.vecId] = nullptr;
 

@@ -272,6 +272,7 @@ public:
 	static std::vector<Barscalar> colors;
 	std::vector<std::shared_ptr<SimpleLine>> clickResponser;
 	int cacheId = -1;
+	int parentlayerId = -1;
 
 	RasterLineLayer()
 	{
@@ -313,6 +314,7 @@ public:
 	{
 		RasterLayer::saveLoadState(state, metaFolder);
 		state->scInt("cacheId", cacheId);
+		state->scInt("parentLayerId", parentlayerId);
 	}
 
 	//virtual void readJson(const BackJson& json, const BackDirStr& metaFolder)
@@ -335,7 +337,7 @@ public:
 		clear();
 		mat.assignCopyOf(src);
 		clickResponser.resize(mat.length());
-		printf("alloced for preview: %d", clickResponser.size());
+		printf("alloced for preview: %d\n", clickResponser.size());
 		prov.init(src.width(), src.height(), src.width(), tileSize);
 	}
 
@@ -347,9 +349,9 @@ public:
 		clear();
 		mat.reinit(wid, hei, 4);
 		clickResponser.resize(mat.length());
-		printf("alloced for preview: %d", clickResponser.size());
+		printf("alloced for preview: %d\n", clickResponser.size());
 
-
+		parentlayerId = layer->id;
 		prov = layer->prov;
 
 		mkDirIfNotExists(metadata.getSubFolder(getMetaLayerName()));
