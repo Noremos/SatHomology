@@ -32,7 +32,7 @@ import RasterLayers;
 /// Widget for raster layers
 
 GuiBackend backend;
-
+int maxThreadCount;
 
 struct GuiFilter
 {
@@ -164,8 +164,8 @@ public:
 
 	void applyPropertyChanges()
 	{
-		GuiLayerData<T>::data->prov.tileSize = newTileSize * 10;
-		GuiLayerData<T>::data->tileOffset = newOffsetSize * 10;
+		//GuiLayerData<T>::data->prov.tileSize = newTileSize * 10;
+		//GuiLayerData<T>::data->tileOffset = newOffsetSize * 10;
 	}
 
 	SelectableKeyValues<int> imgSubImages;
@@ -204,6 +204,7 @@ public:
 	BarcodeProperies properties;
 	GuiFilter filterInfo;
 	int cacheMb = 1024;
+	int threads = 1;
 
 	void grabSets()
 	{
@@ -244,64 +245,99 @@ public:
 
 		if (ImGui::BeginPopupModal("SelectMax", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 		{
-			alg.drawCombobox("Алгоритм");
-			ImGui::Separator();
-
-			if (alg.currentIndex == 0)
+			ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
+			if (ImGui::BeginTabBar("Настройки", tab_bar_flags))
 			{
-				componentCB.drawCombobox("##Форма");
-				procCB.drawCombobox("##Обработка");
-				colorCB.drawCombobox("##Цвет");
-
-			}
-			else
-			{
-				ImGui::Checkbox("Use holes", &properties.alg1UseHoles);
-				ImGui::Checkbox("ignore hight", &properties.alg1IgnoreHeight);
-			}
-			ImGui::Separator();
-			ImGui::Text("Лимит кэша");
-			ImGui::InputInt("MB", &cacheMb);
-
-			ImGui::Separator();
-			ImGui::Text("Пороги отсеивания");
-			filterInfo.draw();
-			ImGui::Separator();
-
-			if (imgSubImages.getSize() > 0)
-			{
-				imgSubImages.drawListBox("Размеры");
-				if (imgSubImages.hasChanged())
+				if (ImGui::BeginTabItem("Алгоритм"))
 				{
-					if (newTileSize > getImageMinSize())
+					if (alg.currentIndex == 0)
 					{
-						GuiLayerData<T>::data->setSubImage(imgSubImages.currentIndex);
-						newTileSize = getImageMinSize();
+						componentCB.drawCombobox("##Форма");
+						procCB.drawCombobox("##Обработка");
+						colorCB.drawCombobox("##Цвет");
+
 					}
+					else
+					{
+						ImGui::Checkbox("Use holes", &properties.alg1UseHoles);
+						ImGui::Checkbox("ignore hight", &properties.alg1IgnoreHeight);
+					}
+
+					ImGui::EndTabItem();
 				}
+				if (ImGui::BeginTabItem("Пороги отсеивания"))
+				{
+					ImGui::Separator();
+					ImGui::Text("Пороги отсеивания");
+					filterInfo.draw();
+					ImGui::EndTabItem();
+				}
+
+				if (ImGui::BeginTabItem("Оптимизация"))
+				{
+					ImGui::SetNextItemWidth(150);
+					ImGui::Text("Лимит кэша");
+
+					ImGui::SameLine();
+					ImGui::SetNextItemWidth(150);
+					ImGui::Text("Кол-во потоков");
+
+					ImGui::SetNextItemWidth(150);
+					ImGui::InputInt("MB", &cacheMb, 1);
+
+					ImGui::SameLine();
+					ImGui::SetNextItemWidth(150);
+					ImGui::InputInt("##thr", &threads, 1, 100);
+					if (threads > maxThreadCount)
+					{
+						threads = maxThreadCount;
+					}
+
+					ImGui::Separator();
+
+					if (imgSubImages.getSize() > 0)
+					{
+						imgSubImages.drawListBox("Размеры");
+						if (imgSubImages.hasChanged())
+						{
+							if (newTileSize > getImageMinSize())
+							{
+								GuiLayerData<T>::data->setSubImage(imgSubImages.currentIndex);
+								newTileSize = getImageMinSize();
+							}
+						}
+						ImGui::SameLine();
+					}
+
+
+					if (ImGui::BeginChild("Tile size", ImVec2(300, 360)))
+					{
+						ImGui::Text("Tile size");
+						ImGui::SliderInt("##Tile size", &newTileSize, 1, getImageMinSize() / 10, "%d0");
+						if (newTileSize + newOffsetSize > getImageMinSize() / 10)
+							newOffsetSize = getImageMinSize() / 10 - newTileSize;
+
+						if (newOffsetSize < 0)
+							newOffsetSize = 0;
+
+						ImGui::Text("Tile offset size");
+						ImGui::SliderInt("##Offset size", &newOffsetSize, 0, getImageMinSize() / 10 - newTileSize, "%d0");
+
+						ImGui::Separator();
+						tilePrview.draw(newTileSize * 10, newOffsetSize * 10, getImageSize());
+					}
+					ImGui::EndChild();
+					ImGui::EndTabItem();
+				}
+				ImGui::EndTabBar();
 			}
 
-			ImGui::SameLine();
-			if (ImGui::BeginChild("Tile size"))
-			{
-				ImGui::Text("Tile size");
-				ImGui::SliderInt("##Tile size", &newTileSize, 1, getImageMinSize() / 10, "%d0");
-				if (newTileSize + newOffsetSize > getImageMinSize() / 10)
-					newOffsetSize = getImageMinSize() / 10 - newTileSize;
-
-				if (newOffsetSize < 0)
-					newOffsetSize = 0;
-
-				ImGui::Text("Tile offset size");
-				ImGui::SliderInt("##Offset size", &newOffsetSize, 0, getImageMinSize() / 10 - newTileSize, "%d0");
-
-				ImGui::Separator();
-				tilePrview.draw(newTileSize * 10, newOffsetSize * 10, getImageSize());
-			}
-			ImGui::EndChild();
-
+			ImGui::Separator();
 			if (ImGui::Button("Запустить"))
 			{
+				GuiLayerData<T>::data->prov.tileSize = newTileSize * 10;
+				GuiLayerData<T>::data->tileOffset = newOffsetSize * 10;
+
 				GuiLayerData<T>::data->setCache(cacheMb * 1024 * 1024);
 				GuiLayerData<T>::data->setSubImage(imgSubImages.currentIndex);
 
@@ -1638,6 +1674,8 @@ namespace MyApp
 
 	void MyApp::Init(const char* root)
 	{
+		maxThreadCount = std::thread::hardware_concurrency();
+
 		Variables::setRoot(root);
 		backend.getDS().sysProj.init(DEFAULT_PROJECTION);
 

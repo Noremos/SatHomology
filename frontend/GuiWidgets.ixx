@@ -687,7 +687,7 @@ public:
 			float scale = imgSize.x / drawWid;
 
 			// Draw List use the coores from top beootm corner of the BASE window. So add the modal wins coords
-			ImVec2 absolutePos = win->Pos + win->Scroll + localStartPos;
+			ImVec2 absolutePos = win->Pos /* + win->Scroll*/ + localStartPos;
 			list->AddRectFilled(absolutePos, ImVec2(absolutePos.x + drawWid, absolutePos.y + drawHei), ImColor(150, 150, 150));
 
 			ImVec2 tileWithOffSize((tileSize + offset) / scale, (tileSize + offset) / scale);

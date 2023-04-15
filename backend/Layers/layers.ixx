@@ -291,8 +291,11 @@ public:
 		clickResponser.clear();
 	}
 
+	std::mutex addToMapMutex;
 	void setMatrPoint(int x, int y, std::shared_ptr<SimpleLine>& newLine, const Barscalar& color)
 	{
+		std::lock_guard<std::mutex> guard(addToMapMutex);
+
 		int indLocal = mat.getLineIndex(x, y);
 		SimpleLine* existLine = clickResponser[indLocal].get();
 

@@ -3,9 +3,19 @@ module;
 #include <unordered_set>
 #include <random>
 #include <assert.h>
+#include <chrono>
+#include <thread>
 //#include <iostream>
 
 #include "../Bind/Common.h"
+
+#ifdef __linux__
+#include <pthread.h>
+#endif
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 
 export module ProjectModule;
@@ -132,6 +142,8 @@ export class Project
 		//{jsn_imgMaxVal, u_imgMaxVal},
 		//{jsn_imgMinVal, u_imgMinVal},
 		{"metacounter", metaCounter},
+		{"threadsCount", threadsCount}
+
 		//{jsn_imgPath, u_imgPath},
 		//{jsn_geojsonPath, this->u_geojsonPath},
 		//{jsn_classfiles, this->u_classCache},
@@ -143,6 +155,7 @@ export class Project
 
 	DisplaySystem ds;
 
+	int threadsCount = 4;
 	int metaCounter = 0;
 	std::unique_ptr<MetadataProvider> metaprov;
 
@@ -555,12 +568,163 @@ public:
 		return classType;
 	}
 
+	class BarLineWorker
+	{
+	protected:
+		std::unique_ptr<std::jthread> thread;
+		int& counter;
+		IdGrater parentne;
+
+
+		bool stopThreadFlag = false;
+		bool taskUpdated = false;
+		std::atomic<bool> busy = false;
+
+	public:
+		BarLineWorker(int& counter) : counter(counter)
+		{ }
+
+		void join()
+		{
+			if (thread && busy)
+				thread->join();
+		}
+
+		bool isBusy() const
+		{
+			return busy;
+		}
+
+		void stop()
+		{
+			stopThreadFlag = true;
+		}
+	};
+
+
+	class CreateBarThreadWorker : public BarLineWorker
+	{
+		std::mutex &cacherMutex;
+
+		const bc::BarConstructor& constr;
+		IRasterLayer* inLayer;
+		ItemHolderCache& cacher;
+
+		IClassItemHolder::ItemCallback cacheClass;
+		int inde;
+
+		BackImage rect;
+		TileProvider tileProv;
+	public:
+		CreateBarThreadWorker(std::mutex& cacherMutex,
+							const bc::BarConstructor& constr,
+							IRasterLayer* inLayer,
+							ItemHolderCache& cacher,
+							int& counter)
+			: BarLineWorker(counter),
+			cacherMutex(cacherMutex),
+			constr(constr),
+			inLayer(inLayer),
+			cacher(cacher),
+			tileProv(0,0)
+		{
+		}
+
+		void setCallback(Project* proj, RasterLineLayer* layer, const IItemFilter* filter)
+		{
+			cacheClass = [this, proj, layer, filter](IClassItem* item)
+			{
+				if (layer->passLine(item, filter))
+				{
+					if (!proj->predictForLayer(item, layer, tileProv))
+						layer->addLine(parentne, inde++, item, tileProv);
+				}
+			};
+		}
+
+		void updateTask(BackImage& rrect, const TileProvider& tileProvider)
+		{
+			this->rect = std::move(rrect);
+			this->tileProv = tileProvider;
+			busy = true;
+			taskUpdated = true;
+		}
+
+		void runAsync()
+		{
+			thread.reset(new std::jthread([this]{this->run();}));
+		}
+
+		void run()
+		{
+			while (!stopThreadFlag)
+			{
+				if (!taskUpdated)
+					continue;
+
+				taskUpdated = false;
+
+				// Keep this! See lyambda
+				inde = 0;
+				parentne.clear();
+				// -------------
+
+				printf("Start run for tile %d\n", tileProv.index);
+				BaritemHolder creator;
+				creator.create(&rect, constr, cacheClass);
+				printf("End run for tile %d\n", tileProv.index);
+
+				{
+					std::lock_guard<std::mutex> guard(cacherMutex);
+					cacher.save(&creator, tileProv.index);
+				}
+
+				++counter;
+				busy = false;
+			}
+		}
+	};
+
+
+	class ProcessCacheBarThreadWorker : public BarLineWorker
+	{
+
+	public:
+		RasterLineLayer* outLayer;
+		const IItemFilter* filter;
+		Project* proj;
+
+		// void runAsync()
+		// {
+		// 	thread.reset(new std::jthread([this]{this->run();}));
+		// }
+
+		void run(BaritemHolder& holder, const TileProvider& tileProv)
+		{
+			busy = true;
+			parentne.clear();
+
+			const auto& vec = holder.getItems();
+			for (size_t i = 0; i < vec.size(); ++i)
+			{
+				auto item = vec.at(i);
+				if (outLayer->passLine(item, filter))
+				{
+					if (!proj->predictForLayer(item, outLayer, tileProv))
+						outLayer->addLine(parentne, (int)i, item, tileProv);
+				}
+			}
+
+			busy = false;
+		}
+	};
+
 	RetLayers createCacheBarcode(InOutLayer& iol, const BarcodeProperies& propertices, IItemFilter* filter = nullptr)
 	{
 		RetLayers ret;
 		if (block) return ret;
 
-		// Settup
+		// Setup
 		bc::BarConstructor constr;
 		constr.createBinaryMasks = true;
 		constr.createGraph = true;
@@ -568,13 +732,10 @@ public:
 		constr.returnType = bc::ReturnType::barcode2d;
 		constr.structure.push_back(propertices.barstruct);
 		//	constr.setStep(stepSB);
-
 		// -------
+
+		// Input Layer prepatons
 		IRasterLayer* inLayer = getInRaster(iol);
-
-		uint rwid = inLayer->realWidth();
-		uint rhei = inLayer->realHeight();
-
 		int tileSize = inLayer->prov.tileSize;
 		int tileOffset = inLayer->tileOffset;
 
@@ -583,10 +744,11 @@ public:
 			const uint fullTile = tileSize + tileOffset;
 			filter->imgLen = fullTile * fullTile;
 		}
+		// End Input Layer
 
-		TileIterator stW(0, tileSize, tileOffset, rwid);
-		TileIterator stH(0, tileSize, tileOffset, rhei);
-
+		// Setup output layers
+		//
+		// Line layer
 		RasterLineLayer* layer = addOrUpdateOut<RasterLineLayer>(iol, inLayer->cs.getProjId());
 		layer->init(inLayer, getMeta());
 		layer->initCSFrom(inLayer->cs);
@@ -595,32 +757,43 @@ public:
 			layer->cacheId = metaprov->getUniqueId();
 
 		ret.push_back(layer);
+		//
+		// Classes layers
 		for (auto& i : classLayers)
 		{
 			ret.push_back(i.second);
 			i.second->clear();
 			i.second->color = classCategs.categs[i.first].color;
 		}
+		// -------------------
 
 		// Cacher
 		ItemHolderCache cacher;
 		cacher.openWrite(layer->getCacheFilePath(getMeta()));
+		// ------
 
-		TileProvider tileProv = inLayer->prov.tileByIndex(0);
-		IdGrater parentne;
-		uint tileIndex = 0;
-		int inde = 0;
-		IClassItemHolder::ItemCallback cacheClass;
+		// Threads
+		std::mutex cacherMutex;
 
-		cacheClass = [this, &parentne, &inde, layer, &tileProv, filter](IClassItem* item)
+		threadsCount = std::thread::hardware_concurrency();
+		int counter = 0;
+		std::vector<std::unique_ptr<CreateBarThreadWorker>> workers;
+		for (unsigned short i = 0; i < threadsCount + 1; i++)
 		{
-			if (layer->passLine(item, filter))
-			{
-				if (!predictForLayer(item, layer, tileProv))
-					layer->addLine(parentne, inde++, item, tileProv);
-			}
-		};
+			CreateBarThreadWorker* worker = new CreateBarThreadWorker(cacherMutex, constr, inLayer, cacher, counter);
+			worker->setCallback(this, layer, filter);
+			worker->runAsync();
+			workers.push_back(std::unique_ptr<CreateBarThreadWorker>(worker));
+		}
 
+		// Setup tileIterators
+		uint rwid = inLayer->realWidth();
+		uint rhei = inLayer->realHeight();
+		TileIterator stW(0, tileSize, tileOffset, rwid);
+		TileIterator stH(0, tileSize, tileOffset, rhei);
+
+
+		// Run
 		for (uint i = 0; i < rhei; i += tileSize)
 		{
 			uint ihei;
@@ -636,22 +809,49 @@ public:
 					break;
 
 				bc::point offset(stW.pos(), stH.pos());
-				BackImage rect = inLayer->getRect(offset.x, offset.y, iwid, ihei);
 
-				// Lyambda
-				tileProv = inLayer->prov.tileByOffset(offset.x, offset.y);
-				inde = 0; // Keep this! See lyambda
-				parentne.clear();// Keep this! See lyambda
-				// -------------
-
-				BaritemHolder creator;
-				creator.create(&rect, constr, cacheClass);
-				cacher.save(&creator, tileProv.index);
+				bool found = false;
+				do
+				{
+					for (auto & worker : workers)
+					{
+						if (!worker->isBusy())
+						{
+							auto rect = inLayer->getRect(offset.x, offset.y, iwid, ihei);
+							auto tileProv = inLayer->prov.tileByOffset(offset.x, offset.y);
+							worker->updateTask(rect, tileProv);
+							found = true;
+							break;
+						}
+					}
+				} while (!found);
 
 				stW.accum();
 			}
 			stH.accum();
 		}
+
+		// Wait
+		using namespace std::chrono_literals;
+		bool hasRunning = false;
+		do
+		{
+			hasRunning = false;
+			for (auto& worker : workers)
+			{
+				if (worker->isBusy())
+				{
+					hasRunning = true;
+					std::this_thread::sleep_for(1000ms);
+					break;
+				}
+				else
+				{
+					worker->stop();
+					worker->join();
+				}
+			}
+		} while (hasRunning);
 
 		u_algorithm = propertices.alg;
 		saveProject();
@@ -659,31 +859,6 @@ public:
 		return ret;
 	}
 
-	bool predictForLayer(IClassItem* item, RasterLineLayer* inLayer, const TileProvider& tileProv)
-	{
-		auto id = predict(item);
-		if (id != -1)
-		{
-			VectorLayer* vl = classLayers.at(id);
-
-			mcountor temp;
-			getCountour(item->getMatrix(), temp, true);
-
-			auto& p = vl->addPrimitive(vl->color);
-			for (const auto& pm : temp)
-			{
-				auto point = bc::barvalue::getStatPoint(pm);
-
-				BackPoint iglob = vl->cs.toGlobal(point.x + tileProv.offset.x, point.y + tileProv.offset.y);
-				iglob.x += 0.5f;
-				iglob.y += 0.5f;
-				p.addPoint(iglob);
-			}
-			return true;
-		}
-		else
-			return false;
-	}
 
 	RetLayers processCachedBarcode(InOutLayer& iol, IItemFilter* filter)
 	{
@@ -746,6 +921,38 @@ public:
 
 		return ret;
 	}
+
+	std::mutex addPrimitiveMutex;
+	bool predictForLayer(IClassItem* item, RasterLineLayer* inLayer, const TileProvider& tileProv)
+	{
+		auto id = predict(item);
+		if (id != -1)
+		{
+			VectorLayer* vl = classLayers.at(id);
+
+			mcountor temp;
+			getCountour(item->getMatrix(), temp, true);
+
+			std::lock_guard<std::mutex> guard(addPrimitiveMutex);
+			auto& p = vl->addPrimitive(vl->color);
+			addPrimitiveMutex.unlock();
+			CSBinding& cs = vl->cs;
+
+			for (const auto& pm : temp)
+			{
+				auto point = bc::barvalue::getStatPoint(pm);
+
+				BackPoint iglob = cs.toGlobal(point.x + tileProv.offset.x, point.y + tileProv.offset.y);
+				iglob.x += 0.5f;
+				iglob.y += 0.5f;
+				p.addPoint(iglob);
+			}
+			return true;
+		}
+		else
+			return false;
+	}
+
 
 	//void getOffsertByTileIndex(uint tileIndex, uint& offX, uint& offY)
 	//{

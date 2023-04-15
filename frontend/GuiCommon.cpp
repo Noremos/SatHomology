@@ -92,10 +92,11 @@ void GuiImage::makeTexture(unsigned char* image_data, int comp, bool smooth)
 	{
 		size_t length = width * height;
 		rgba_image_data.resize(length * 4);
-		for (size_t i = 0; i < length; i++) {
-			rgba_image_data[i * 4 + 0] = image_data[i * 3];
-			rgba_image_data[i * 4 + 1] = image_data[i * 3];
-			rgba_image_data[i * 4 + 2] = image_data[i * 3];
+		for (size_t i = 0; i < length; i++){
+			const auto& val = image_data[i * 3];
+			rgba_image_data[i * 4 + 0] = val;
+			rgba_image_data[i * 4 + 1] = val;
+			rgba_image_data[i * 4 + 2] = val;
 			rgba_image_data[i * 4 + 3] = 255;
 		}
 

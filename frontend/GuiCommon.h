@@ -134,7 +134,7 @@ public:
 				Barscalar p3s = img.get(x_floor, y_ceil);
 				Barscalar p4s = img.get(x_ceil, y_ceil);
 
-				auto ewf = [](int p1, int p2, int p3, int p4)
+				const auto ewf = [](int p1, int p2, int p3, int p4)
 				{
 					int a = static_cast<int>((float)p1 * 0.25 + p2 * 0.25 + p3 * 0.25 + p4 * 0.25);
 					return static_cast<uchar>(MAX(MIN(a, 255), 0));

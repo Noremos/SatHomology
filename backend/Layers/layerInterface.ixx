@@ -36,6 +36,14 @@ public:
 	{
 		return BackPixelPoint((locX + offset.x) / factor, (locY + offset.y) / factor);
 	}
+
+	TileProvider& operator=(const TileProvider& other)
+	{
+		factor = other.factor;
+		index = other.index;
+		offset = other.offset;
+		return *this;
+	}
 };
 
 
