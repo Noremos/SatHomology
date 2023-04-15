@@ -646,6 +646,10 @@ public:
 		{
 			this->rect = std::move(rrect);
 			this->tileProv = tileProvider;
+		}
+
+		void runTask()
+		{
 			busy = true;
 #ifdef _WIN32
 			SetThreadPriority(thread->native_handle(), THREAD_PRIORITY_HIGHEST);
@@ -800,15 +804,18 @@ public:
 
 		// Threads
 		std::mutex cacherMutex;
+		const bool runAsync = false;
 
-		threadsCount = std::thread::hardware_concurrency();
+		threadsCount = runAsync ? std::thread::hardware_concurrency() : 0;
 		int counter = 0;
 		std::vector<std::unique_ptr<CreateBarThreadWorker>> workers;
 		for (unsigned short i = 0; i < threadsCount + 1; i++)
 		{
 			CreateBarThreadWorker* worker = new CreateBarThreadWorker(cacherMutex, constr, inLayer, cacher, counter);
 			worker->setCallback(this, layer, filter);
-			worker->runAsync();
+			if (runAsync)
+				worker->runAsync();
+
 			workers.push_back(std::unique_ptr<CreateBarThreadWorker>(worker));
 		}
 
@@ -836,21 +843,31 @@ public:
 
 				bc::point offset(stW.pos(), stH.pos());
 
-				bool found = false;
-				do
+				auto rect = inLayer->getRect(offset.x, offset.y, iwid, ihei);
+				auto tileProv = inLayer->prov.tileByOffset(offset.x, offset.y);
+
+				if (!runAsync)
 				{
-					for (auto & worker : workers)
+					workers[0]->updateTask(rect, tileProv);
+					workers[0]->runSync();
+				}
+				else
+				{
+					bool found = false;
+					do
 					{
-						if (!worker->isBusy())
+						for (auto & worker : workers)
 						{
-							auto rect = inLayer->getRect(offset.x, offset.y, iwid, ihei);
-							auto tileProv = inLayer->prov.tileByOffset(offset.x, offset.y);
-							worker->updateTask(rect, tileProv);
-							found = true;
-							break;
+							if (!worker->isBusy())
+							{
+								worker->updateTask(rect, tileProv);
+								worker->runTask();
+								found = true;
+								break;
+							}
 						}
-					}
-				} while (!found);
+					} while (!found);
+				} // Run async if
 
 				stW.accum();
 			}
@@ -858,26 +875,29 @@ public:
 		}
 
 		// Wait
-		using namespace std::chrono_literals;
-		bool hasRunning = false;
-		do
+		if (runAsync)
 		{
-			hasRunning = false;
-			for (auto& worker : workers)
+			using namespace std::chrono_literals;
+			bool hasRunning = false;
+			do
 			{
-				if (worker->isBusy())
+				hasRunning = false;
+				for (auto& worker : workers)
 				{
-					hasRunning = true;
-					std::this_thread::sleep_for(1000ms);
-					break;
+					if (worker->isBusy())
+					{
+						hasRunning = true;
+						std::this_thread::sleep_for(1000ms);
+						break;
+					}
+					else
+					{
+						worker->stop();
+						worker->join();
+					}
 				}
-				else
-				{
-					worker->stop();
-					worker->join();
-				}
-			}
-		} while (hasRunning);
+			} while (hasRunning);
+		}
 
 		u_algorithm = propertices.alg;
 		saveProject();
