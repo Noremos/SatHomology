@@ -142,7 +142,9 @@ export class Project
 		//{jsn_imgMaxVal, u_imgMaxVal},
 		//{jsn_imgMinVal, u_imgMinVal},
 		{"metacounter", metaCounter},
-		{"threadsCount", threadsCount}
+		{"threadsCount", threadsCount},
+		{"runAsync", runAsync}
+		
 
 		//{jsn_imgPath, u_imgPath},
 		//{jsn_geojsonPath, this->u_geojsonPath},
@@ -155,7 +157,6 @@ export class Project
 
 	DisplaySystem ds;
 
-	int threadsCount = 4;
 	int metaCounter = 0;
 	std::unique_ptr<MetadataProvider> metaprov;
 
@@ -257,6 +258,8 @@ public:
 		ds.csPos = BackPoint(0, 0);
 		ds.csScale = 1.0;//BackPoint(1000, 1000);
 
+		threadsCount = std::thread::hardware_concurrency();
+
 		// mkDirIfNotExists(u_classCache);
 	}
 
@@ -277,6 +280,9 @@ public:
 
 	bool prjCreate = false;
 public:
+	int threadsCount = 4;
+	bool runAsync = true;
+
 	BarCategories classCategs;
 	barclassificator classifier;
 
@@ -749,6 +755,120 @@ public:
 		}
 	};
 
+	class TileImgIterator
+	{
+		TileIterator stW, stH;
+
+		uint lastHei;
+		bool peakEnd = false;
+
+	public:
+		TileImgIterator(int tileSize, int tileOffset, int rwid, int rhei) :
+			stW(0, tileSize, tileOffset, rwid),
+			stH(0, tileSize, tileOffset, rhei)
+		{
+			lastHei = 0;
+			stH.shouldSkip(lastHei);
+		}
+
+		void reset()
+		{
+			stW.reset(0);
+			stH.reset(0);
+
+			lastHei = 0;
+			stH.shouldSkip(lastHei);
+
+			peakEnd = false;
+		}
+
+		bool iter(bc::point& offset, uint& wid, uint& hei)
+		{
+			while (stW.shouldSkip(wid))
+			{
+				stW.reset(0);
+				stH.accum();
+				if (stH.shouldSkip(lastHei))
+				{
+					return false;
+				}
+			}
+
+			offset.x = stW.pos();
+			offset.y = stH.pos();
+			hei = lastHei;
+
+			stW.accum();
+			return true;
+		}
+
+		// get 2x2 local index
+		int getLocRectIndex() const
+		{
+			return 2 * (stH.locIndex % 2) + (stW.locIndex % 2);
+		}
+
+		bool notFintInLocal() const
+		{
+			return stW.tilesInLine() > 2 || stH.tilesInLine() > 2;
+		}
+	};
+
+	template<typename TWorker>
+	class WorkerPool
+	{
+		std::vector<std::unique_ptr<TWorker>> workers;
+
+	public:
+		void add(TWorker* worker, const bool aync)
+		{
+			if (aync)
+			{
+				worker->runAsync();
+			}
+
+			workers.push_back(std::unique_ptr<TWorker>(worker));
+		}
+
+		TWorker* getFreeWorker()
+		{
+			while(true)
+			{
+				for (auto& worker : workers)
+				{
+					if (!worker->isBusy())
+					{
+						return worker.get();
+					}
+				}
+			}
+		}
+
+		void waitForAll(const bool stop)
+		{
+			using namespace std::chrono_literals;
+			bool hasRunning = false;
+			do
+			{
+				hasRunning = false;
+				for (auto& worker : workers)
+				{
+					if (worker->isBusy())
+					{
+						hasRunning = true;
+						std::this_thread::sleep_for(500ms);
+						break;
+					}
+					else if (stop)
+					{
+						worker->stop();
+						worker->join();
+					}
+				}
+			} while (hasRunning);
+		}
+	};
+
 	RetLayers createCacheBarcode(InOutLayer& iol, const BarcodeProperies& propertices, IItemFilter* filter = nullptr)
 	{
 		RetLayers ret;
@@ -802,101 +922,82 @@ public:
 		cacher.openWrite(layer->getCacheFilePath(getMeta()));
 		// ------
 
-		// Threads
-		std::mutex cacherMutex;
-		const bool runAsync = false;
-
-		threadsCount = runAsync ? std::thread::hardware_concurrency() : 0;
-		int counter = 0;
-		std::vector<std::unique_ptr<CreateBarThreadWorker>> workers;
-		for (unsigned short i = 0; i < threadsCount + 1; i++)
-		{
-			CreateBarThreadWorker* worker = new CreateBarThreadWorker(cacherMutex, constr, inLayer, cacher, counter);
-			worker->setCallback(this, layer, filter);
-			if (runAsync)
-				worker->runAsync();
-
-			workers.push_back(std::unique_ptr<CreateBarThreadWorker>(worker));
-		}
 
 		// Setup tileIterators
 		uint rwid = inLayer->realWidth();
 		uint rhei = inLayer->realHeight();
-		TileIterator stW(0, tileSize, tileOffset, rwid);
-		TileIterator stH(0, tileSize, tileOffset, rhei);
+		TileImgIterator tileIter(tileSize, tileOffset, rwid, rhei);
+
+		// We will process all the tiles in 4 steps.
+		// There is no point to run async if there is only one tile in the step
+		bool curRunAsync = runAsync ? tileIter.notFintInLocal() : false;
+		// runAsync = false;
 
 
-		// Run
-		for (uint i = 0; i < rhei; i += tileSize)
+		// Threads
+		std::mutex cacherMutex;
+
+		int curthreadsCount = curRunAsync ? threadsCount : 0;
+		int counter = 0;
+		if (curRunAsync)
 		{
-			uint ihei;
-			if (stH.shouldSkip(ihei))
-				break;
-
-			stW.reset(0);
-			//std::cout << i << std::endl;
-			for (uint j = 0; j < rwid; j += tileSize)
-			{
-				uint iwid;
-				if (stW.shouldSkip(iwid))
-					break;
-
-				bc::point offset(stW.pos(), stH.pos());
-
-				auto rect = inLayer->getRect(offset.x, offset.y, iwid, ihei);
-				auto tileProv = inLayer->prov.tileByOffset(offset.x, offset.y);
-
-				if (!runAsync)
-				{
-					workers[0]->updateTask(rect, tileProv);
-					workers[0]->runSync();
-				}
-				else
-				{
-					bool found = false;
-					do
-					{
-						for (auto & worker : workers)
-						{
-							if (!worker->isBusy())
-							{
-								worker->updateTask(rect, tileProv);
-								worker->runTask();
-								found = true;
-								break;
-							}
-						}
-					} while (!found);
-				} // Run async if
-
-				stW.accum();
-			}
-			stH.accum();
+			printf("Run in async mode with %d threads", curthreadsCount);
+		}
+		else
+		{
+			printf("Run in sync mode");
 		}
 
-		// Wait
-		if (runAsync)
+		WorkerPool<CreateBarThreadWorker> wpool;
+		for (unsigned short i = 0; i < curthreadsCount + 1; i++)
 		{
-			using namespace std::chrono_literals;
-			bool hasRunning = false;
-			do
+			CreateBarThreadWorker* worker = new CreateBarThreadWorker(cacherMutex, constr, inLayer, cacher, counter);
+			worker->setCallback(this, layer, filter);
+			wpool.add(worker, curRunAsync);
+		}
+
+		// Run
+		uint iwid, ihei;
+		bc::point offset;
+
+		if (curRunAsync)
+		{
+			// How much tiles the offset covers; We skip the conflict tiles;
+			// const int maxSteps = 1 + static_cast<int>((tileSize + tileOffset) / tileSize);
+			const int maxSteps = 4;
+			for (int step = 0; step < maxSteps; ++step)
 			{
-				hasRunning = false;
-				for (auto& worker : workers)
+				tileIter.reset();
+				int locId = tileIter.getLocRectIndex();
+				while (tileIter.iter(offset, iwid, ihei))
 				{
-					if (worker->isBusy())
-					{
-						hasRunning = true;
-						std::this_thread::sleep_for(1000ms);
-						break;
-					}
-					else
-					{
-						worker->stop();
-						worker->join();
-					}
+					const int curMatch = locId;
+					locId = tileIter.getLocRectIndex(); // Check after the iteration (pos moved)
+					if (locId != step)
+						continue;
+
+					TileProvider tileProv = inLayer->prov.tileByOffset(offset.x, offset.y);
+					auto rect = inLayer->getRect(offset.x, offset.y, iwid, ihei);
+
+					auto* worker = wpool.getFreeWorker();
+					worker->updateTask(rect, tileProv);
+					worker->runTask();
 				}
-			} while (hasRunning);
+
+				wpool.waitForAll(step + 1 == maxSteps);
+			}
+		}
+		else
+		{
+			while (tileIter.iter(offset, iwid, ihei))
+			{
+				TileProvider tileProv = inLayer->prov.tileByOffset(offset.x, offset.y);
+				auto rect = inLayer->getRect(offset.x, offset.y, iwid, ihei);
+
+				auto* worker = wpool.getFreeWorker();
+				worker->updateTask(rect, tileProv);
+				worker->runSync();
+			}
 		}
 
 		u_algorithm = propertices.alg;

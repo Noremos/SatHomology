@@ -31,14 +31,17 @@ export struct TileIterator
 	uint fullTileSize;
 
 	uint maxLen;
+	uint locIndex;
 
 	TileIterator(uint start, uint tileSize, uint offset, uint maxLen) :
-		start(start), tileSize(tileSize), fullTileSize(tileSize + offset), maxLen(maxLen)
+		start(start), tileSize(tileSize), fullTileSize(tileSize + offset), maxLen(maxLen),
+		locIndex(0)
 	{ }
 
 	void reset(uint st = 0)
 	{
 		start = st;
+		locIndex = start / tileSize;
 	}
 
 	uint pos()
@@ -48,14 +51,29 @@ export struct TileIterator
 
 	uint accum()
 	{
+		++locIndex;
 		start += tileSize;
 		return start;
+	}
+
+	uint tilesInLine() const
+	{
+		return maxLen / tileSize + (maxLen % tileSize > (fullTileSize - tileSize) ? 1 : 0);
 	}
 
 
 	uint getFullTileSize()
 	{
-		return (start + fullTileSize <= maxLen ? fullTileSize : maxLen - start);
+		if (start + fullTileSize <= maxLen)
+		{
+			return fullTileSize;
+		}
+		else if (maxLen > start)
+		{
+			return maxLen - start;
+		}
+		else
+			return 0;
 	}
 
 	bool shouldSkip(uint& len)

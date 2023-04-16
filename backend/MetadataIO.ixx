@@ -94,6 +94,7 @@ public:
 
 export union SettVariant
 {
+	bool* b;
 	int* i;
 	float* f;
 	double* d;
@@ -109,6 +110,7 @@ struct SettingValue
 private:
 	enum SettVariantType
 	{
+		sv_bool,
 		sv_int,
 		sv_float,
 		sv_double,
@@ -117,6 +119,13 @@ private:
 	} type;
 
 public:
+	SettingValue(const BackString& name, bool& val)
+	{
+		this->name = name;
+		data.b = &val;
+		type = sv_bool;
+	}
+
 	SettingValue(const BackString& name, int& val)
 	{
 		this->name = name;
@@ -154,6 +163,9 @@ public:
 	{
 		switch (type)
 		{
+		case sv_bool:
+			json[name] = *data.b;
+			break;
 		case sv_int:
 			json[name] = *data.i;
 			break;
@@ -176,6 +188,9 @@ public:
 	{
 		switch (type)
 		{
+		case sv_bool:
+			*data.b = json[name].asBool();
+			break;
 		case sv_int:
 			*data.i = json[name].asInt();
 			break;

@@ -843,3 +843,15 @@ public:
 		ImGui::EndChild();
 	}
 };
+
+export class StepIntSlider
+{
+public:
+
+	void draw(const char* name, int& val, int minv, int maxv, int step)
+	{
+		val = val - val % step;
+		ImGui::SliderInt(name, &val, minv, maxv, "%d");
+		val = val - val % step;
+	}
+};

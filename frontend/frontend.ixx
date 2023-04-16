@@ -237,6 +237,21 @@ public:
 
 	int addClassType(const BackString& name);
 
+	int& getThreadsCount()
+	{
+		return proj->threadsCount;
+	}
+
+	void setAsync(bool runAsync)
+	{
+		proj->runAsync = runAsync;
+	}
+
+	bool getAsync() const
+	{
+		return proj->runAsync;
+	}
+
 private:
 	void resetSource();
 	void printCommon(int st, int ed, bool needSort);

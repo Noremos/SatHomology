@@ -32,7 +32,7 @@ import RasterLayers;
 /// Widget for raster layers
 
 GuiBackend backend;
-int maxThreadCount;
+int maxThreadCount, minThreadCount;
 
 struct GuiFilter
 {
@@ -120,8 +120,8 @@ public:
 	{
 		GuiLayerData<T>::toGuiData();
 
-		newTileSize = getTileSize() / 10;
-		newOffsetSize = getOffsetSize() / 10;
+		newTileSize = getTileSize();
+		newOffsetSize = getOffsetSize();
 	}
 
 	virtual void draw(const GuiDisplaySystem& ds)
@@ -151,6 +151,12 @@ public:
 		return MIN(p.width, p.height);
 	}
 
+	inline int getImageMaxSize() const
+	{
+		auto p = GuiLayerData<T>::getProvider();
+		return MAX(p.width, p.height);
+	}
+
 	inline ImVec2 getImageSize() const
 	{
 		auto p = GuiLayerData<T>::getProvider();
@@ -164,8 +170,8 @@ public:
 
 	void applyPropertyChanges()
 	{
-		//GuiLayerData<T>::data->prov.tileSize = newTileSize * 10;
-		//GuiLayerData<T>::data->tileOffset = newOffsetSize * 10;
+		//GuiLayerData<T>::data->prov.tileSize = newTileSize;
+		//GuiLayerData<T>::data->tileOffset = newOffsetSize;
 	}
 
 	SelectableKeyValues<int> imgSubImages;
@@ -221,7 +227,7 @@ public:
 		//RetLayers layerData = proj->createCacheBarcode(context.iol, properties, filterInfo.getFilter());
 		context.setLayers(layerData, "barcode");
 	}
-
+	StepIntSlider tileSizeSlider, offsetSlider;
 
 	virtual void drawToolboxInner(ILayerWorker& context)
 	{
@@ -275,23 +281,11 @@ public:
 
 				if (ImGui::BeginTabItem("Оптимизация"))
 				{
-					ImGui::SetNextItemWidth(150);
 					ImGui::Text("Лимит кэша");
-
+					
 					ImGui::SameLine();
-					ImGui::SetNextItemWidth(150);
-					ImGui::Text("Кол-во потоков");
-
 					ImGui::SetNextItemWidth(150);
 					ImGui::InputInt("MB", &cacheMb, 1);
-
-					ImGui::SameLine();
-					ImGui::SetNextItemWidth(150);
-					ImGui::InputInt("##thr", &threads, 1, 100);
-					if (threads > maxThreadCount)
-					{
-						threads = maxThreadCount;
-					}
 
 					ImGui::Separator();
 
@@ -300,10 +294,10 @@ public:
 						imgSubImages.drawListBox("Размеры");
 						if (imgSubImages.hasChanged())
 						{
-							if (newTileSize > getImageMinSize())
+							if (newTileSize > getImageMaxSize())
 							{
 								GuiLayerData<T>::data->setSubImage(imgSubImages.currentIndex);
-								newTileSize = getImageMinSize();
+								newTileSize = getImageMaxSize();
 							}
 						}
 						ImGui::SameLine();
@@ -313,18 +307,17 @@ public:
 					if (ImGui::BeginChild("Tile size", ImVec2(300, 360)))
 					{
 						ImGui::Text("Tile size");
-						ImGui::SliderInt("##Tile size", &newTileSize, 1, getImageMinSize() / 10, "%d0");
-						if (newTileSize + newOffsetSize > getImageMinSize() / 10)
-							newOffsetSize = getImageMinSize() / 10 - newTileSize;
+						tileSizeSlider.draw("##Tile size", newTileSize, 10, getImageMaxSize(), 10);
 
-						if (newOffsetSize < 0)
-							newOffsetSize = 0;
+						int maxOffset = 2 * newTileSize;	
+						if (newTileSize + maxOffset > getImageMinSize())
+							maxOffset = getImageMinSize() - newTileSize;
 
 						ImGui::Text("Tile offset size");
-						ImGui::SliderInt("##Offset size", &newOffsetSize, 0, getImageMinSize() / 10 - newTileSize, "%d0");
+						offsetSlider.draw("##Offset size", newOffsetSize, 0, maxOffset, 10);
 
 						ImGui::Separator();
-						tilePrview.draw(newTileSize * 10, newOffsetSize * 10, getImageSize());
+						tilePrview.draw(newTileSize, newOffsetSize, getImageSize());
 					}
 					ImGui::EndChild();
 					ImGui::EndTabItem();
@@ -335,8 +328,8 @@ public:
 			ImGui::Separator();
 			if (ImGui::Button("Запустить"))
 			{
-				GuiLayerData<T>::data->prov.tileSize = newTileSize * 10;
-				GuiLayerData<T>::data->tileOffset = newOffsetSize * 10;
+				GuiLayerData<T>::data->prov.tileSize = newTileSize;
+				GuiLayerData<T>::data->tileOffset = newOffsetSize;
 
 				GuiLayerData<T>::data->setCache(cacheMb * 1024 * 1024);
 				GuiLayerData<T>::data->setSubImage(imgSubImages.currentIndex);
@@ -1039,6 +1032,8 @@ namespace MyApp
 
 
 	// Top bar
+	int tempThreads;
+	bool runAsync;
 
 	void drawTopBar()
 	{
@@ -1247,6 +1242,50 @@ namespace MyApp
 			}
 
 			ImGui::EndDisabled();
+
+			ImGui::SameLine();
+			if (ImGui::Button("Настрйоки проекта"))
+			{
+				ImGui::OpenPopup("ProjectSetts");
+				tempThreads = backend.getThreadsCount();
+				runAsync = backend.getAsync();
+			}
+
+			if (ImGui::BeginPopupModal("ProjectSetts", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+			{
+				ImGui::BeginDisabled(minThreadCount < 2);
+				ImGui::Checkbox("Асинхронно", &runAsync);
+				ImGui::EndDisabled();
+				
+				if (minThreadCount > 1)
+				{
+					ImGui::SetNextItemWidth(150);
+
+					ImGui::BeginDisabled(!runAsync);
+					ImGui::InputInt("##thr", &tempThreads, 2, maxThreadCount);
+					ImGui::EndDisabled();
+				}
+
+				ImGui::Separator();
+				if (ImGui::Button("OK", ImVec2(120, 0)))
+				{
+					backend.getThreadsCount() = tempThreads; 
+					backend.setAsync(runAsync);
+
+					ImGui::CloseCurrentPopup();
+				}
+
+				ImGui::SetItemDefaultFocus();
+				ImGui::SameLine();
+				if (ImGui::Button("Cancel", ImVec2(120, 0)))
+				{
+					ImGui::CloseCurrentPopup();
+				}
+
+				ImGui::EndPopup();
+			}
+
+
 
 			// ---------------------------------
 			ImGui::SameLine();
@@ -1739,6 +1778,12 @@ namespace MyApp
 
 
 		maxThreadCount = std::thread::hardware_concurrency();
+		if (maxThreadCount < 2)
+		{
+			minThreadCount = 1;
+		}
+		else
+			minThreadCount = 2;
 
 		backend.getDS().sysProj.init(DEFAULT_PROJECTION);
 
