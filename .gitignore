@@ -23,3 +23,5 @@ vcpkg_installed
 Release/*.dll
 Build/Debug
 Build/Release
+Build/Temp
+.vs
