@@ -20,5 +20,6 @@ Release/GeoBar.*
 Release/EPSG-v10_084-WKT
 Release/EPSG
 vcpkg_installed
-Release
-Release/sqlite3.dll
+Release/*.dll
+Build/Debug
+Build/Release

@@ -909,6 +909,8 @@ namespace MyApp
 		style.Colors[ImGuiCol_DragDropTarget] = ImVec4(1.00f, 1.00f, 0.00f, 0.90f);
 		style.Colors[ImGuiCol_NavHighlight] = ImVec4(0.60f, 0.60f, 0.60f, 1.00f);
 		style.Colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
+		style.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.3f, 0.3f, 0.3f, 1.0f);
+		style.Colors[ImGuiCol_TitleBg] = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
 
 		style.WindowPadding = ImVec2(8, 6);
 		style.WindowRounding = 0.0f;
@@ -1256,7 +1258,7 @@ namespace MyApp
 			ImGui::SameLine();
 			if (ImGui::Button("Save"))
 			{
-				backend.save();	
+				backend.save();
 			}
 
 			// GBl
@@ -1676,9 +1678,68 @@ namespace MyApp
 
 	void MyApp::Init(const char* root)
 	{
-		maxThreadCount = std::thread::hardware_concurrency();
+		setlocale(LC_ALL, "ru_ru.utf-8");
 
 		Variables::setRoot(root);
+
+
+		ImGuiIO& io = ImGui::GetIO(); (void)io;
+		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;	   // Enable Keyboard Controls
+		//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;	  // Enable Gamepad Controls
+
+
+		//io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;		   // Enable Docking
+		//io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;		 // Enable Multi-Viewport / Platform Windows
+
+
+		//io.ConfigViewportsNoAutoMerge = true;
+		//io.ConfigViewportsNoTaskBarIcon = true;
+
+		// Setup Dear ImGui style
+		ImGui::StyleColorsDark();
+		//ImGui::StyleColorsLight();
+		MyApp::setImGuiStyle(1.0);
+
+		ImFontConfig font_config;
+		font_config.OversampleH = 1; //or 2 is the same
+		font_config.OversampleV = 1;
+		font_config.PixelSnapH = 1;
+
+		static const ImWchar ranges[] =
+		{
+			0x0020, 0x00FF, // Basic Latin + Latin Supplement
+			0x0400, 0x044F, // Cyrillic
+			0,
+		};
+		ImFont* font = io.Fonts->AddFontFromFileTTF(Variables::getDefaultFontPath().string().c_str(), 18.0f, &font_config, ranges);
+		IM_ASSERT(font != NULL);
+
+		//setlocale(LC_ALL, "rus");
+
+		float baseFontSize = 20.0f; // 13.0f is the size of the default font. Change to the font size you use.
+		float iconFontSize = baseFontSize * 2.0f / 3.0f; // FontAwesome fonts need to have their sizes reduced by 2.0f/3.0f in order to align correctly
+
+		// merge in icons from Font Awesome
+		static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_16_FA, 0 };
+		ImFontConfig icons_config;
+		icons_config.MergeMode = true;
+		icons_config.PixelSnapH = true;
+		icons_config.GlyphMinAdvanceX = iconFontSize;
+		io.Fonts->AddFontFromFileTTF((Variables::getFontsDir() / FONT_ICON_FILE_NAME_FAS).string().c_str(), iconFontSize, &icons_config, icons_ranges);
+		// use FONT_ICON_FILE_NAME_FAR if you want regular instead of solid
+
+		// in an imgui window somewhere...
+		// outputs a paint brush icon and 'Paint' as a string.
+		//setlocale(LC_CTYPE, "rus"); // ����� ������� ��������� ������
+
+
+		//io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+		//io.ConfigFlags &= ~ImGuiConfigFlags_ViewportsEnable;
+
+
+
+		maxThreadCount = std::thread::hardware_concurrency();
+
 		backend.getDS().sysProj.init(DEFAULT_PROJECTION);
 
 		LayerFactory::RegisterFactory<RasterGuiLayer, RasterLayer>(RASTER_LAYER_FID);
@@ -1770,8 +1831,6 @@ namespace MyApp
 		//bool opt_fullscreen = true;
 		//bool opt_padding = false;
 
-		ImGui::GetStyle().Colors[ImGuiCol_TitleBgActive] = ImVec4(0.3f, 0.3f, 0.3f, 1.0f);
-		ImGui::GetStyle().Colors[ImGuiCol_TitleBg] = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
 
 
 		drawLayout();

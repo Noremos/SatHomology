@@ -10,6 +10,12 @@
         },
         {
             "name": "lua"
+        },
+        {
+            "name": "sdl2"
+        },
+        {
+            "name": "glfw3"
         }
     ]
 }

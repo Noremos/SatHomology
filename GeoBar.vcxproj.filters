@@ -52,9 +52,6 @@
     <ClCompile Include="side\imgui\imgui_draw.cpp">
       <Filter>GUI\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="side\imgui\backends\imgui_impl_glfw.cpp">
-      <Filter>GUI\imgui</Filter>
-    </ClCompile>
     <ClCompile Include="side\imgui\backends\imgui_impl_opengl3.cpp">
       <Filter>GUI\imgui</Filter>
     </ClCompile>
@@ -178,15 +175,15 @@
     <ClCompile Include="side\GuiCodeEditor.cpp">
       <Filter>GUI\WindowWidgets</Filter>
     </ClCompile>
+    <ClCompile Include="side\imgui\backends\imgui_impl_glfw.cpp">
+      <Filter>GUI\imgui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="side\imgui\imgui_internal.h">
       <Filter>GUI\imgui</Filter>
     </ClInclude>
     <ClInclude Include="side\imgui\imgui.h">
-      <Filter>GUI\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="side\imgui\backends\imgui_impl_glfw.h">
       <Filter>GUI\imgui</Filter>
     </ClInclude>
     <ClInclude Include="side\imgui\backends\imgui_impl_opengl3.h">
@@ -218,10 +215,14 @@
       <Filter>GUI\WindowWidgets</Filter>
     </ClInclude>
     <ClInclude Include="Bind\Lua.h" />
+    <ClInclude Include="side\imgui\backends\imgui_impl_glfw.h">
+      <Filter>GUI\imgui</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="side\imgui\misc\debuggers\imgui.natvis">
       <Filter>Файлы ресурсов</Filter>
     </None>
+    <None Include="libs\sqlite3.def" />
   </ItemGroup>
 </Project>

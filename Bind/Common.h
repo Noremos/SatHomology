@@ -151,6 +151,16 @@ public:
 		metaPath = rootPath / "meta";
 		prodDbPath = (metaPath / "proj").string();
 	}
+
+	static BackDirStr getFontsDir()
+	{
+		return rootPath / "fonts";
+	}
+
+	static BackPathStr getDefaultFontPath()
+	{
+		return getFontsDir() / "Arial.ttf";
+	}
 };
 
 #endif // !COMMON_H
