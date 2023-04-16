@@ -97,6 +97,25 @@ public:
 	//	state.reset(new StateBinFile::BinStateWriter(str));
 	// }
 
+	int readIndex(int id)
+	{
+		assert(state->isReading());
+		
+		auto* reader = dynamic_cast<StateBinFile::BinStateReader*>(state.get());
+		reader->moveIndex(id);
+		state->beginItem();
+
+		return reader->pInt(0);
+	}
+
+	int getItemsCount()
+	{
+		assert(state->isReading());
+
+		auto* reader = dynamic_cast<StateBinFile::BinStateReader*>(state.get());
+		return reader->getIndexSize();
+	}
+
 	IClassItemHolder *load(int &index, IClassItemHolder *t)
 	{
 		assert(state->isReading());
@@ -109,10 +128,28 @@ public:
 	IClassItemHolder *loadSpecific(int index, IClassItemHolder *t)
 	{
 		assert(state->isReading());
-		dynamic_cast<StateBinFile::BinStateReader *>(state.get())->moveIndex(index);
+		auto* reader = dynamic_cast<StateBinFile::BinStateReader*>(state.get());
+		reader->moveIndex(index);
+		int rindex = state->pInt(0);
+		if (rindex != index)
+		{
+			int memIndex = index;
+
+			const int accum = rindex < index ? 1 : -1;
+			const int readerMaxInd = reader->getIndexSize();
+
+			while (rindex != index)
+			{
+				memIndex += accum;
+				if (readerMaxInd >= memIndex || memIndex < 0)
+					return nullptr;
+
+				reader->moveIndex(memIndex);
+				rindex = reader->pInt(0);
+			}
+		}
 
 		state->beginItem();
-		index = state->pInt(0);
 		t->read(state.get());
 		return t;
 	}
@@ -122,7 +159,7 @@ public:
 		assert(!state->isReading());
 
 		state->beginItem();
-		index = state->pInt(index);
+		state->pInt(index);
 		item->write(state.get());
 	}
 

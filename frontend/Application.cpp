@@ -282,7 +282,7 @@ public:
 				if (ImGui::BeginTabItem("Оптимизация"))
 				{
 					ImGui::Text("Лимит кэша");
-					
+
 					ImGui::SameLine();
 					ImGui::SetNextItemWidth(150);
 					ImGui::InputInt("MB", &cacheMb, 1);
@@ -309,7 +309,7 @@ public:
 						ImGui::Text("Tile size");
 						tileSizeSlider.draw("##Tile size", newTileSize, 10, getImageMaxSize(), 10);
 
-						int maxOffset = 2 * newTileSize;	
+						int maxOffset = newTileSize;
 						if (newTileSize + maxOffset > getImageMinSize())
 							maxOffset = getImageMinSize() - newTileSize;
 
@@ -1256,7 +1256,7 @@ namespace MyApp
 				ImGui::BeginDisabled(minThreadCount < 2);
 				ImGui::Checkbox("Асинхронно", &runAsync);
 				ImGui::EndDisabled();
-				
+
 				if (minThreadCount > 1)
 				{
 					ImGui::SetNextItemWidth(150);
@@ -1269,7 +1269,7 @@ namespace MyApp
 				ImGui::Separator();
 				if (ImGui::Button("OK", ImVec2(120, 0)))
 				{
-					backend.getThreadsCount() = tempThreads; 
+					backend.getThreadsCount() = tempThreads;
 					backend.setAsync(runAsync);
 
 					ImGui::CloseCurrentPopup();

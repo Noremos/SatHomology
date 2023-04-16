@@ -63,6 +63,16 @@ public:
 	//{
 	//}
 
+	int getOptTilesInRow(int offset) const
+	{
+		return width / tileSize + ((width % tileSize > offset) ? 1 : 0);
+	}
+
+	int getOptTilesInCol(int offset) const
+	{
+		return height / tileSize + ((height % tileSize > offset) ? 1 : 0);
+	}
+
 	int getTilesInRow() const
 	{
 		return getCon(width, tileSize);

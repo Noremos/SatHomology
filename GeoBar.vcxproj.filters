@@ -223,6 +223,5 @@
     <None Include="side\imgui\misc\debuggers\imgui.natvis">
       <Filter>Файлы ресурсов</Filter>
     </None>
-    <None Include="libs\sqlite3.def" />
   </ItemGroup>
 </Project>

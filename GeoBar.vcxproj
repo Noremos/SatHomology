@@ -131,7 +131,7 @@
       </IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y "$(SolutionDir)\Build\Resurses\*" "$(SolutionDir)\Build\$(Configuration)"</Command>
+      <Command>xcopy "$(SolutionDir)Build\Resurses" "$(SolutionDir)Build\$(Configuration)" /d /y /s</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

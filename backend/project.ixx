@@ -144,7 +144,7 @@ export class Project
 		{"metacounter", metaCounter},
 		{"threadsCount", threadsCount},
 		{"runAsync", runAsync}
-		
+
 
 		//{jsn_imgPath, u_imgPath},
 		//{jsn_geojsonPath, this->u_geojsonPath},
@@ -590,6 +590,19 @@ public:
 		BarLineWorker(int& counter) : counter(counter)
 		{ }
 
+		void runTask()
+		{
+			busy = true;
+#ifdef _WIN32
+			SetThreadPriority(thread->native_handle(), THREAD_PRIORITY_HIGHEST);
+#elif __linux__
+			sched_param params;
+			params.sched_priority = 99;
+			pthread_setschedparam(thread->native_handle(), SCHED_FIFO, &params);
+#endif
+			taskUpdated = true;
+		}
+
 		void join()
 		{
 			if (thread && busy)
@@ -642,7 +655,7 @@ public:
 			{
 				if (layer->passLine(item, filter))
 				{
-					if (!proj->predictForLayer(item, layer, tileProv))
+					if (!proj->predictForLayer(item, tileProv))
 						layer->addLine(parentne, inde++, item, tileProv);
 				}
 			};
@@ -654,18 +667,6 @@ public:
 			this->tileProv = tileProvider;
 		}
 
-		void runTask()
-		{
-			busy = true;
-#ifdef _WIN32
-			SetThreadPriority(thread->native_handle(), THREAD_PRIORITY_HIGHEST);
-#elif __linux__
-			sched_param params;
-			params.sched_priority = 99;
-			pthread_setschedparam(thread->native_handle(), SCHED_FIFO, &params);
-#endif
-			taskUpdated = true;
-		}
 
 		void runAsync()
 		{
@@ -718,40 +719,6 @@ public:
 				pthread_setschedparam(thread->native_handle(), SCHED_FIFO, &params);
 #endif
 			}
-		}
-	};
-
-
-	class ProcessCacheBarThreadWorker : public BarLineWorker
-	{
-
-	public:
-		RasterLineLayer* outLayer;
-		const IItemFilter* filter;
-		Project* proj;
-
-		// void runAsync()
-		// {
-		// 	thread.reset(new std::jthread([this]{this->run();}));
-		// }
-
-		void run(BaritemHolder& holder, const TileProvider& tileProv)
-		{
-			busy = true;
-			parentne.clear();
-
-			const auto& vec = holder.getItems();
-			for (size_t i = 0; i < vec.size(); ++i)
-			{
-				auto item = vec.at(i);
-				if (outLayer->passLine(item, filter))
-				{
-					if (!proj->predictForLayer(item, outLayer, tileProv))
-						outLayer->addLine(parentne, (int)i, item, tileProv);
-				}
-			}
-
-			busy = false;
 		}
 	};
 
@@ -818,30 +785,47 @@ public:
 	class WorkerPool
 	{
 		std::vector<std::unique_ptr<TWorker>> workers;
+		std::unique_ptr<TWorker> syncWorker;
 
 	public:
-		void add(TWorker* worker, const bool aync)
+		void add(TWorker* worker, bool allowSync)
 		{
-			if (aync)
+			if (allowSync && !syncWorker)
 			{
-				worker->runAsync();
+				syncWorker.reset(worker);
+				return;
 			}
 
+			worker->runAsync();
 			workers.push_back(std::unique_ptr<TWorker>(worker));
 		}
 
-		TWorker* getFreeWorker()
+		void addSync(TWorker* worker)
 		{
-			while(true)
+			syncWorker.reset(worker);
+		}
+
+		TWorker* getSyncWorker()
+		{
+			return syncWorker.get();
+		}
+
+		TWorker* getFreeWorker(bool& isAsync)
+		{
+			//while(true)
 			{
 				for (auto& worker : workers)
 				{
 					if (!worker->isBusy())
 					{
+						isAsync = true;
 						return worker.get();
 					}
 				}
 			}
+
+			isAsync = false;
+			return syncWorker.get();
 		}
 
 		void waitForAll(const bool stop)
@@ -902,6 +886,7 @@ public:
 		RasterLineLayer* layer = addOrUpdateOut<RasterLineLayer>(iol, inLayer->cs.getProjId());
 		layer->init(inLayer, getMeta());
 		layer->initCSFrom(inLayer->cs);
+		layer->tileOffset = tileOffset;
 
 		if (layer->cacheId == -1)
 			layer->cacheId = metaprov->getUniqueId();
@@ -928,38 +913,41 @@ public:
 		uint rhei = inLayer->realHeight();
 		TileImgIterator tileIter(tileSize, tileOffset, rwid, rhei);
 
-		// We will process all the tiles in 4 steps.
-		// There is no point to run async if there is only one tile in the step
-		bool curRunAsync = runAsync ? tileIter.notFintInLocal() : false;
-		// runAsync = false;
-
 
 		// Threads
 		std::mutex cacherMutex;
 
-		int curthreadsCount = curRunAsync ? threadsCount : 0;
+		bool curRunAsync = runAsync ? tileIter.notFintInLocal() : false;
+		// We will process all the tiles in 4 steps.
+		// There is no point to run async if there is only one tile in the step
+		// runAsync = false;
+
+
+		int curthreadsCount = curRunAsync ? threadsCount : 1;
 		int counter = 0;
 		if (curRunAsync)
 		{
-			printf("Run in async mode with %d threads", curthreadsCount);
+			printf("Run in async mode with %d threads\n", curthreadsCount);
 		}
 		else
 		{
-			printf("Run in sync mode");
+			printf("Run in sync mode\n");
 		}
 
+		const bool allowSyncInAsync = true;
 		WorkerPool<CreateBarThreadWorker> wpool;
-		for (unsigned short i = 0; i < curthreadsCount + 1; i++)
+		for (unsigned short i = 0; i < curthreadsCount; i++)
 		{
 			CreateBarThreadWorker* worker = new CreateBarThreadWorker(cacherMutex, constr, inLayer, cacher, counter);
 			worker->setCallback(this, layer, filter);
-			wpool.add(worker, curRunAsync);
+			wpool.add(worker, allowSyncInAsync);
 		}
 
 		// Run
 		uint iwid, ihei;
 		bc::point offset;
 
+		const auto start = std::chrono::steady_clock::now();
 		if (curRunAsync)
 		{
 			// How much tiles the offset covers; We skip the conflict tiles;
@@ -973,15 +961,20 @@ public:
 				{
 					const int curMatch = locId;
 					locId = tileIter.getLocRectIndex(); // Check after the iteration (pos moved)
-					if (locId != step)
+					if (curMatch != step)
 						continue;
 
 					TileProvider tileProv = inLayer->prov.tileByOffset(offset.x, offset.y);
 					auto rect = inLayer->getRect(offset.x, offset.y, iwid, ihei);
 
-					auto* worker = wpool.getFreeWorker();
+					bool isAsync;
+					auto* worker = wpool.getFreeWorker(isAsync);
 					worker->updateTask(rect, tileProv);
-					worker->runTask();
+
+					if (isAsync)
+						worker->runTask();
+					else
+						worker->runSync();
 				}
 
 				wpool.waitForAll(step + 1 == maxSteps);
@@ -994,17 +987,103 @@ public:
 				TileProvider tileProv = inLayer->prov.tileByOffset(offset.x, offset.y);
 				auto rect = inLayer->getRect(offset.x, offset.y, iwid, ihei);
 
-				auto* worker = wpool.getFreeWorker();
+				auto* worker = wpool.getSyncWorker();
 				worker->updateTask(rect, tileProv);
 				worker->runSync();
 			}
 		}
+
+		const auto end = std::chrono::steady_clock::now();
+		const auto diff = end - start;
+		const double len = std::chrono::duration<double, std::milli> (diff).count();
+		printf("All work ended in %dms\n", (int)len);
 
 		u_algorithm = propertices.alg;
 		saveProject();
 
 		return ret;
 	}
+
+
+	class ProcessCacheBarThreadWorker : public BarLineWorker
+	{
+		RasterLineLayer* outLayer;
+		const IItemFilter* filter;
+		Project* proj;
+
+		TileProvider tileProv;
+		BaritemHolder holder;
+
+	public:
+		ProcessCacheBarThreadWorker(int& counter, RasterLineLayer* outLayer, const IItemFilter* filter, Project* proj) :
+			BarLineWorker(counter), outLayer(outLayer), filter(filter), proj(proj),
+			tileProv(0,0)
+		{ }
+
+		void runAsync()
+		{
+			thread.reset(new std::jthread([this] {this->runLoop(); }));
+		}
+
+
+		void updateTask(BaritemHolder& iholder, const TileProvider& itileProv)
+		{
+			tileProv = itileProv;
+			holder = std::move(iholder);
+		}
+
+		void runSync()
+		{
+			const auto start = std::chrono::steady_clock::now();
+
+			// Keep this! See lyambda
+			parentne.clear();
+			// -------------
+
+			printf("Start run for tile %d\n", tileProv.index);
+
+			const auto& vec = holder.getItems();
+			for (size_t i = 0; i < vec.size(); ++i)
+			{
+				auto item = vec.at(i);
+				if (outLayer->passLine(item, filter))
+				{
+					if (!proj->predictForLayer(item, tileProv))
+						outLayer->addLine(parentne, (int)i, item, tileProv);
+				}
+			}
+
+			busy = false;
+
+			const auto end = std::chrono::steady_clock::now();
+			const auto diff = end - start;
+			const double len = std::chrono::duration<double, std::milli> (diff).count();
+			printf("End run for tile %d; Time: %dms\n", tileProv.index, (int)len);
+
+			++counter;
+			busy = false;
+		}
+
+		void runLoop()
+		{
+			while (!stopThreadFlag)
+			{
+				if (!taskUpdated)
+					continue;
+
+				taskUpdated = false;
+				runSync();
+
+#ifdef _WIN32
+				SetThreadPriority(thread->native_handle(), THREAD_PRIORITY_BELOW_NORMAL);
+#elif __linux__
+				sched_param params;
+				params.sched_priority = 20;
+				pthread_setschedparam(thread->native_handle(), SCHED_FIFO, &params);
+#endif
+			}
+		}
+	};
 
 
 	RetLayers processCachedBarcode(InOutLayer& iol, IItemFilter* filter)
@@ -1045,32 +1124,98 @@ public:
 		ItemHolderCache cacher;
 		cacher.openRead(inLayer->getCacheFilePath(getMeta()));
 
-		int tileIndex = 0;
-		while (cacher.canRead())
+
+		// Thread
+		auto& prov = inLayer->prov;
+		bool curRunAsync = runAsync;
+
+		// We will process all the tiles in 4 steps.
+		// There is no point to run async if there is only one tile in the step
+		const int tilesInRow = prov.getOptTilesInRow(inLayer->tileOffset);
+		if (tilesInRow < 3 && prov.getOptTilesInCol(inLayer->tileOffset) < 3)
+			curRunAsync = false;
+		// curRunAsync = false;
+
+
+		int curthreadsCount = curRunAsync ? threadsCount : 1;
+		int counter = 0;
+		if (curRunAsync)
 		{
-			BaritemHolder holder;
-			cacher.load(tileIndex, &holder);
+			printf("Run in async mode with %d threads\n", curthreadsCount);
+		}
+		else
+		{
+			printf("Run in sync mode\n");
+		}
 
-			IdGrater parentne;
-			TileProvider tileProv = inLayer->prov.tileByIndex(tileIndex);
+		const bool allowSyncInAsync = true;
+		WorkerPool<ProcessCacheBarThreadWorker> wpool;
+		for (unsigned short i = 0; i < curthreadsCount; i++)
+		{
+			ProcessCacheBarThreadWorker* worker = new ProcessCacheBarThreadWorker(counter, outLayer, filter, this);
+			wpool.add(worker, allowSyncInAsync);
+		}
 
-			const auto& vec = holder.getItems();
-			for (size_t i = 0; i < vec.size(); ++i)
+		const auto start = std::chrono::steady_clock::now();
+		if (curRunAsync)
+		{
+			// How much tiles the offset covers; We skip the conflict tiles;
+			// const int maxSteps = 1 + static_cast<int>((tileSize + tileOffset) / tileSize);
+			const int maxSteps = 4;
+			for (int step = 0; step < maxSteps; ++step)
 			{
-				auto item = vec.at(i);
-				if (outLayer->passLine(item, filter))
+				for (int i = 0; i < cacher.getItemsCount(); ++i)
 				{
-					if (!predictForLayer(item, outLayer, tileProv))
-						outLayer->addLine(parentne, (int)i, item, tileProv);
+					int tileIndex = cacher.readIndex(i);
+					const int locId = (2 * (tileIndex % (2 * tilesInRow)) + tileIndex / (tilesInRow * 2));
+					if (locId != maxSteps)
+						continue;
+
+					BaritemHolder holder;
+					cacher.load(tileIndex, &holder);
+
+					TileProvider tileProv = prov.tileByIndex(tileIndex);
+
+					bool isAsync;
+					auto* worker = wpool.getFreeWorker(isAsync);
+					worker->updateTask(holder, tileProv);
+
+					if (isAsync)
+						worker->runTask();
+					else
+						worker->runSync();
 				}
+
+				wpool.waitForAll(step + 1 == maxSteps);
 			}
 		}
+		else // Sync
+		{
+			int tileIndex = 0;
+			while (cacher.canRead())
+			{
+				BaritemHolder holder;
+				cacher.load(tileIndex, &holder);
+
+				TileProvider tileProv = inLayer->prov.tileByIndex(tileIndex);
+
+				ProcessCacheBarThreadWorker* worker = wpool.getSyncWorker();
+				worker->updateTask(holder, tileProv);
+				worker->runSync();
+			}
+			wpool.waitForAll(true);
+		}
+
+		const auto end = std::chrono::steady_clock::now();
+		const auto diff = end - start;
+		const double len = std::chrono::duration<double, std::milli> (diff).count();
+		printf("All work ended in %dms\n", (int)len);
 
 		return ret;
 	}
 
 	std::mutex addPrimitiveMutex;
-	bool predictForLayer(IClassItem* item, RasterLineLayer* inLayer, const TileProvider& tileProv)
+	bool predictForLayer(IClassItem* item, const TileProvider& tileProv)
 	{
 		auto id = predict(item);
 		if (id != -1)
