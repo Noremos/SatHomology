@@ -142,6 +142,7 @@
     <ClCompile Include="side\Barcode\PrjBarlib\modules\ImageReader.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\StateBinFiles.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\TiffReader.ixx" />
+    <ClCompile Include="side\fpng\fpng.cpp" />
     <ClCompile Include="side\GuiCodeEditor.cpp" />
     <ClCompile Include="side\imgui\backends\imgui_impl_glfw.cpp" />
     <ClCompile Include="side\imgui\imgui.cpp" />

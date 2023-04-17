@@ -7,6 +7,8 @@ module;
 #include "PortFileDialog.h"
 #include "sago/platform_folders.h"
 
+#include "fpng/fpng.h"
+
 export module Platform;
 import SideBind;
 import IOCore;
@@ -14,6 +16,11 @@ import BackTypes;
 
 export
 {
+	void FrameworkInit()
+	{
+		fpng::fpng_init();
+	}
+
 	BackImage imread(const BackString& path);
 	BackImage imread(const BackPathStr& path);
 	BackImage imreadFromMemory(const uchar* data, size_t size);
@@ -71,7 +78,8 @@ BackImage imread(const BackPathStr& path)
 
 void imwrite(const BackString& path, const BackImage& mat)
 {
-	stbi_write_png(path.c_str(), mat.width(), mat.height(), mat.channels(), mat.data, 0); // so slow...
+	fpng::fpng_encode_image_to_file(path.c_str(), mat.data, mat.width(), mat.height(), mat.channels());
+	// stbi_write_png(path.c_str(), mat.width(), mat.height(), mat.channels(), mat.data, 0); // so slow...
 }
 
 void imwrite(const BackPathStr& path, const BackImage& mat)
@@ -110,9 +118,11 @@ vbuffer imwriteToMemory(const BackImage& mat)
 {
 	int outLen = 0;
 	vbuffer buff;
-	auto data = stbi_write_png_to_mem(mat.getData(), 0, mat.width(), mat.height(), mat.channels(), &outLen);
-	assert(outLen != 0);
-	buff.setData(data, outLen);
+
+	std::vector<uint8_t> out_buf;
+	bool r = fpng::fpng_encode_image_to_memory(mat.getData(), mat.width(), mat.height(), mat.channels(), out_buf);
+	assert(r);
+	buff.setData(out_buf.data(), out_buf.size());
 	return buff;
 }
 
