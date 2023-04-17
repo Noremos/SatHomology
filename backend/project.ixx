@@ -952,33 +952,22 @@ public:
 		{
 			// How much tiles the offset covers; We skip the conflict tiles;
 			// const int maxSteps = 1 + static_cast<int>((tileSize + tileOffset) / tileSize);
-			const int maxSteps = 4;
-			for (int step = 0; step < maxSteps; ++step)
+			tileIter.reset();
+			while (tileIter.iter(offset, iwid, ihei))
 			{
-				tileIter.reset();
-				int locId = tileIter.getLocRectIndex();
-				while (tileIter.iter(offset, iwid, ihei))
-				{
-					const int curMatch = locId;
-					locId = tileIter.getLocRectIndex(); // Check after the iteration (pos moved)
-					if (curMatch != step)
-						continue;
+				TileProvider tileProv = inLayer->prov.tileByOffset(offset.x, offset.y);
+				auto rect = inLayer->getRect(offset.x, offset.y, iwid, ihei);
 
-					TileProvider tileProv = inLayer->prov.tileByOffset(offset.x, offset.y);
-					auto rect = inLayer->getRect(offset.x, offset.y, iwid, ihei);
+				bool isAsyncl;
+				auto* worker = wpool.getFreeWorker(isAsyncl);
+				worker->updateTask(rect, tileProv);
 
-					bool isAsync;
-					auto* worker = wpool.getFreeWorker(isAsync);
-					worker->updateTask(rect, tileProv);
-
-					if (isAsync)
-						worker->runTask();
-					else
-						worker->runSync();
-				}
-
-				wpool.waitForAll(step + 1 == maxSteps);
+				if (isAsyncl)
+					worker->runTask();
+				else
+					worker->runSync();
 			}
+			wpool.waitForAll(true);
 		}
 		else
 		{
@@ -1159,35 +1148,25 @@ public:
 		const auto start = std::chrono::steady_clock::now();
 		if (curRunAsync)
 		{
-			// How much tiles the offset covers; We skip the conflict tiles;
-			// const int maxSteps = 1 + static_cast<int>((tileSize + tileOffset) / tileSize);
-			const int maxSteps = 4;
-			for (int step = 0; step < maxSteps; ++step)
+			int tileIndex = 0;
+			while (cacher.canRead())
 			{
-				for (int i = 0; i < cacher.getItemsCount(); ++i)
-				{
-					int tileIndex = cacher.readIndex(i);
-					const int locId = (2 * (tileIndex % (2 * tilesInRow)) + tileIndex / (tilesInRow * 2));
-					if (locId != maxSteps)
-						continue;
+				BaritemHolder holder;
+				cacher.load(tileIndex, &holder);
 
-					BaritemHolder holder;
-					cacher.load(tileIndex, &holder);
+				TileProvider tileProv = prov.tileByIndex(tileIndex);
 
-					TileProvider tileProv = prov.tileByIndex(tileIndex);
+				bool isAsync;
+				auto* worker = wpool.getFreeWorker(isAsync);
+				worker->updateTask(holder, tileProv);
 
-					bool isAsync;
-					auto* worker = wpool.getFreeWorker(isAsync);
-					worker->updateTask(holder, tileProv);
-
-					if (isAsync)
-						worker->runTask();
-					else
-						worker->runSync();
-				}
-
-				wpool.waitForAll(step + 1 == maxSteps);
+				if (isAsync)
+					worker->runTask();
+				else
+					worker->runSync();
 			}
+
+			wpool.waitForAll(true);
 		}
 		else // Sync
 		{
@@ -1203,7 +1182,6 @@ public:
 				worker->updateTask(holder, tileProv);
 				worker->runSync();
 			}
-			wpool.waitForAll(true);
 		}
 
 		const auto end = std::chrono::steady_clock::now();
