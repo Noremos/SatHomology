@@ -594,10 +594,10 @@ public:
 		{
 			busy = true;
 #ifdef _WIN32
-			SetThreadPriority(thread->native_handle(), THREAD_PRIORITY_HIGHEST);
+			SetThreadPriority(thread->native_handle(), THREAD_PRIORITY_ABOVE_NORMAL);
 #elif __linux__
 			sched_param params;
-			params.sched_priority = 99;
+			params.sched_priority = 75;
 			pthread_setschedparam(thread->native_handle(), SCHED_FIFO, &params);
 #endif
 			taskUpdated = true;
