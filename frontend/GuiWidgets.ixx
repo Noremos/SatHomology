@@ -853,5 +853,9 @@ public:
 		val = val - val % step;
 		ImGui::SliderInt(name, &val, minv, maxv, "%d");
 		val = val - val % step;
+		if (val < minv)
+			val = minv;
+		else if (val > maxv)
+			val = maxv;
 	}
 };
