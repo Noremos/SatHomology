@@ -119,30 +119,23 @@ public:
 };
 
 
-export class BaritemHolder : public IDataClassItemHolder<IClassItem>
+export template <typename TClassItem>
+class AntBaritemHolder : public IDataClassItemHolder<TClassItem>
 {
 	std::shared_ptr<bc::Baritem> item;
-
+	using Base = IDataClassItemHolder<TClassItem>;
 public:
-	~BaritemHolder()
-	{
-		for (size_t var = 0; var < items.size(); ++var)
-		{
-			delete items[var];
-		}
-		items.clear();
-	}
 
-	void create(bc::DatagridProvider* img, const bc::BarConstructor& constr, const ItemCallback& callback)
+	void create(bc::DatagridProvider* img, const bc::BarConstructor& constr, const Base::ItemCallback& callback)
 	{
 		bc::BarcodeCreator creator;
 		std::unique_ptr<bc::Barcontainer> ret(creator.createBarcode(img, constr));
 
 		item.reset(ret->exractItem(0));
-		int size = item->barlines.size();
+		int size = (int)item->barlines.size();
 		for (int i = 0; i < size; i++)
 		{
-			BarlineClass id(item->barlines[i]);
+			TClassItem id(item->barlines[i]);
 			callback(&id);
 		}
 	}
@@ -262,94 +255,34 @@ public:
 
 			if (isReading)
 			{
-				IClassItem* id = new BarlineClass(line);
-				items.push_back(id);
+				TClassItem* id = new TClassItem(line);
+				Base::items.push_back(id);
 			}
 		}
 		state->endItem();
 	}
 };
 
-
-export class barclassificator : public IDataBarClassifier<BarlineClass>
+export class BaritemHolder : public AntBaritemHolder<BarlineClass>
 {
 public:
-	struct ClassData
+	IClassItem* getItem(size_t id)
 	{
-		int classId;
-		bc::Barcontainer container;
-		MMMAP<size_t, int> cacheIndex;
-	};
+		return items[id];
+	}
 
-	std::vector<std::unique_ptr<ClassData>> classes;
-	// BackPathStr dbPath;
+	const IClassItem* getItem(size_t id) const
+	{
+		return items[id];
+	}
+};
 
+export class barclassificator : public TCacheClassifier<BarlineClass, bc::Barcontainer>
+{
+public:
 	const BackString name() const
 	{
 		return "CLASSIC";
-	}
-
-	void loadData(const BarCategories& categs)
-	{
-		ClassDataIO io;
-		io.open(dbPath);
-
-		// dbPath = path;
-		classes.clear();
-		for (const BarClassCategor& categ : categs.categs)
-		{
-			addClass(categ.id);
-			loadClassData(io, categ.id);
-		}
-	}
-
-	void loadClassData(ClassDataIO& io, int classId)
-	{
-		ClassDataIO::TrainCallback cla = [this](int clId, vbuffer& buf, BackImage, size_t dbLocalId)
-		{
-			std::stringstream stream;
-			stream.write(reinterpret_cast<const char*>(buf.data()), buf.size());
-			stream.seekg(0, std::ios::beg);
-			// std::istringstream stream(buf.data(), buf.size());
-
-			BarlineClass raw;
-			raw.read(stream); // Already Prepared
-			addDataInner(clId, &raw, dbLocalId);
-		};
-
-		io.loadAll(cla, classId, ClassDataIO::LF_ALL);
-	}
-
-	ClassData* getClass(int id)
-	{
-		for (int i = 0; i < classes.size(); i++)
-		{
-			if (classes[i]->classId == id)
-			{
-				return classes[i].get();
-			}
-		}
-
-		throw;
-	}
-
-	void addClass(int id)
-	{
-		auto nd = std::make_unique<ClassData>();
-		nd->classId = id;
-		classes.push_back(std::move(nd));
-	}
-
-	void removeClass(int id)
-	{
-		for (int i = 0; i < classes.size(); i++)
-		{
-			if (classes[i]->classId == id)
-			{
-				classes.erase(classes.begin() + i);
-				break;
-			}
-		}
 	}
 
 	void prepareBeforeAddInner(BarlineClass *raw)
@@ -361,58 +294,12 @@ public:
 		raw->childer = std::move(item.barlines);
 	}
 
-	void addDataInner(int classInd, BarlineClass* raw, size_t dataId, bool extractLine = false)
+	void addToContainer(bc::Barcontainer& container, BarlineClass* raw)
 	{
 		bc::Baritem* item = new bc::Baritem();
 		item->barlines = std::move(raw->childer);
 		item->setType();
-
-		assert(classes.size() != 0);
-		auto* classHolder = getClass(classInd);
-		classHolder->cacheIndex.insert(std::make_pair(dataId, classHolder->container.count()));
-		classHolder->container.addItem(item);
-	}
-
-	// void addData(int classInd, bc::barlinevector& cont, const bool move = true)
-	// {
-	// 	auto classHolder = getClass(classInd);
-	// 	bc::Baritem* item = new bc::Baritem();
-	// 	if (move)
-	// 	{
-	// 		item->barlines = std::move(cont);
-	// 	}
-	// 	else
-	// 	{
-	// 		// Copy
-	// 		for (size_t j = 0; j < cont.size(); j++)
-	// 		{
-	// 			item->barlines.push_back(cont[j]->clone());
-	// 		}
-	// 	}
-
-	// 	item->relen();
-	// 	classHolder.container.addItem(item);
-	// }
-
-	// void addData(int classInd, bc::Baritem* item)
-	// {
-	// 	auto classHolder = getClass(classInd);
-	// 	item->relen();
-	// 	classHolder.container.addItem(item);
-	// }
-
-
-	bool removeDataInner(int classId, size_t id)
-	{
-		ClassData& classHolder = *getClass(classId);
-		auto it = classHolder.cacheIndex.find(id);
-		if (it != classHolder.cacheIndex.end())
-		{
-			delete classHolder.container.exractItem(it->second);
-			classHolder.cacheIndex.erase(it);
-			return true;
-		}
-		return false;
+		container.addItem(item);
 	}
 
 	int predictInner(const BarlineClass* raw)
@@ -442,102 +329,235 @@ public:
 		assert(maxP <= 1.0);
 		return maxP > 0.5 ? maxInd : -1;
 	}
-
-
-	~barclassificator()
-	{
-		//		for (size_t i = 0; i < N * 2; i++)
-		//		{
-		//			delete classes[i];
-		//		}
-	}
-private:
-	// Barscalar asScalar(const BackJson& arr)
-	// {
-	// 	return Barscalar(arr[0].asDouble(), arr[1].asDouble(), arr[2].asDouble());
-	// }
 };
 
-//void parseItem(const JsonObject &obj, bc::barlinevector &lines)
-//{
-//	bc::barline *line = new bc::barline();
-//	line->start = asScalar(obj["start"].array());
-//	line->m_end = asScalar(obj["end"].array());
 
-//	lines.push_back(line);
+export class BettylineClass : public IClassItem
+{
+public:
+	// int id;
+	bc::barline* line = nullptr;
+	int depth = 0;
+	int matrSize = 0;
+	int betty[256];
 
-//	auto arrcoors = obj["children"].array();
-//	for (size_t i = 0; i < arrcoors.size(); i++)
-//	{
-//		parseItem(arrcoors.at(i).object(), lines);
-//	}
-//}
-//BarcodesHolder toHoldes(const bc::CloudPointsBarcode::CloudPoints& cloud)
-//{
-//	bc::CloudPointsBarcode clodCrt;
-//	std::unique_ptr<bc::Barcontainer> hold(clodCrt.createBarcode(&cloud));
+	BettylineClass(bc::barline* iline = nullptr) : line(iline)
+	{
+		if (iline)
+		{
+			depth = line->getDeath();
+			matrSize = line->matr.size();
+			update();
+		}
+	}
 
-//	BarcodesHolder holder;
-//	if (cloud.points.size() == 0)
-//		return holder;
+	virtual size_t getId() const
+	{
+		return (size_t)line;
+	}
 
-//	bc::Baritem* main = hold->getItem(0);
-//	for (size_t var = 0; var < main->barlines.size(); ++var)
-//	{
-//		auto* line = main->barlines[var];
-//		BarcodeHolder* barhold = new BarcodeHolder();
-//		holder.lines.push_back(barhold);
+	virtual size_t getParentId() const
+	{
+		return (size_t)line->parent;
+	}
 
-//		barhold->matrix = std::move(line->matr);
-//		line->getChilredAsList(barhold->lines, true, true, false);
-//	}
+	virtual int getDeath() const override
+	{
+		return depth;
+	}
 
-//	return holder;
-//}
+	virtual Barscalar start() const override
+	{
+		return line->start;
+	}
+
+	virtual Barscalar end() const override
+	{
+		return line->end();
+	}
+
+	virtual const bc::barvector& getMatrix() const
+	{
+		return line->matr;
+	}
+
+	virtual const size_t getMatrixSize() const
+	{
+		return matrSize;
+	}
+
+	void update()
+	{
+		line->getBettyNumbers(betty);
+	}
+
+	virtual void saveLoadState(StateBinFile::BinState* state) override
+	{
+		if (state->isReading())
+			line = new bc::barline();
+
+		state->beginItem();
+		state->pType(line->start.type); // Only set
+
+		line->start = state->pBarscalar(line->start);
+		line->m_end = state->pBarscalar(line->end());
+		matrSize = state->pInt(matrSize);
+		depth = state->pInt(depth);
+
+		for (short i = 0; i < 255; i++)
+		{
+			betty[i] = state->pInt(betty[i]);
+		}
+	}
+};
 
 
-//public:
-	//void addClass(const BackPathStr& binFile, int classInd)
-	//{
-	//	BackString val;
+export class BettyItemHolder : public AntBaritemHolder<BettylineClass>
+{
+public:
+	IClassItem* getItem(size_t id)
+	{
+		return items[id];
+	}
 
-	//	std::ifstream file(path.string());
-	//	BackJson jsonDocument = BackJson::parse(file);
-
-	//	// �� �������� �������� ������ � ������� ������� QJsonObject
-	//	if (jsonDocument.is_array())
-	//	{
-	//		BackJson jsonItems = jsonDocument.array();
-
-	//		for (size_t i = 0; i < jsonItems.size(); i++)
-	//		{
-	//			JsonObject jsItem = jsonItems.at(i).object();
-	//			bc::Baritem *item = new bc::Baritem();
-	//			parseItem(jsItem, item->barlines);
-	//			item->relen();
-	//			classes[classInd].addItem(item);
-	//		}
-	//	}
-	//	else
-	//	{
-	//		bc::Baritem *item = new bc::Baritem();
-	//		parseItem(jsonDocument.object(), item->barlines);
-	//		item->relen();
-	//		classes[classInd].addItem(item);
-//	}
-//}
+	const IClassItem* getItem(size_t id) const
+	{
+		return items[id];
+	}
+};
 
 
-//void addClass(bc::barline *line, int classInd)
-//{
-//	bc::Baritem *item = new bc::Baritem();
-//	line->getChilredAsList(item->barlines, true, true);
-//	item->relen();
+struct BettyVal
+{
+	int vals[256];
 
-//	classes[classInd].addItem(item);
-//}
+	BettyVal(const int* const input)
+	{
+		memcpy(vals, input, 256 * sizeof(int));
+	}
+
+	// Computes the cosine similarity between two arrays
+	float compaire(const int* const ovals)
+	{
+		double dotProduct = 0.0;
+		double magA = 0.0;
+		double magB = 0.0;
+		for (unsigned short i = 0; i < 256; i++)
+		{
+			dotProduct += vals[i] * ovals[i];
+			magA += vals[i] * vals[i];
+			magB += ovals[i] * ovals[i];
+		}
+		magA = sqrt(magA);
+		magB = sqrt(magB);
+		return dotProduct / (magA * magB);
+	}
+};
+
+class BattyClass
+{
+	std::vector<BettyVal*> data;
+
+public:
+	void add(const int* const src)
+	{
+		data.push_back(new BettyVal(src));
+	}
+
+	BettyVal* exractItem(int i)
+	{
+		BettyVal* val = data[i];
+		data[i] = nullptr;
+		return data[i];
+	}
+
+	size_t count()
+	{
+		return data.size();
+	}
+
+	float compire(const int* const other)
+	{
+		float maxc = 0;
+		// int maxId = 0;
+		for (size_t i = 0; i < data.size(); i++)
+		{
+			float locd = data[i]->compaire(other);
+			if (locd > maxc)
+			{
+				maxc = locd;
+				// maxId = i;
+			}
+		}
+
+		return maxc;
+	}
+
+	~BattyClass()
+	{
+		for (size_t i = 0; i < data.size(); ++i)
+		{
+			delete data[i];
+		}
+		data.clear();
+	}
+};
+
+
+export class BettyClassificator : public TCacheClassifier<BettylineClass, BattyClass>
+{
+public:
+	const BackString name() const
+	{
+		return "BETTY";
+	}
+
+	TClassData* getClass(int id)
+	{
+		for (int i = 0; i < classes.size(); i++)
+		{
+			if (classes[i]->classId == id)
+			{
+				return classes[i].get();
+			}
+		}
+
+		throw;
+	}
+
+	void prepareBeforeAddInner(BettylineClass*)
+	{
+	}
+
+	void addToContainer(BattyClass& container, BettylineClass* raw)
+	{
+		container.add(raw->betty);
+	}
+
+	int predictInner(const BettylineClass* newOne)
+	{
+		float res = 0;
+
+		int maxInd = -1;
+		float maxP = res;
+		for (size_t i = 0; i < classes.size(); i++)
+		{
+			float ps = classes[i]->container.compire(newOne->betty);
+			if (ps > maxP)
+			{
+				maxP = ps;
+				maxInd = i;
+			}
+		}
+
+		assert(maxP <= 1.0);
+		return maxP > 0.5 ? maxInd : -1;
+	}
+};
+
 
 void registerClassic()
 {
 	ClassFactory::RegisterFactory<BarlineClass, BaritemHolder, barclassificator>(1);
+	ClassFactory::RegisterFactory<BettylineClass, BettyItemHolder, BettyClassificator>(2);
 }

@@ -17,8 +17,8 @@ import MetadataIOCore;
 import CSBind;
 import MHashMap;
 
-export const int DEF_TILE_SIZE = 300;
-export const int DEF_TILE_OFFSET = 150;
+export const int DEF_TILE_SIZE = 1000;
+export const int DEF_TILE_OFFSET = 300;
 
 export struct TileProvider
 {

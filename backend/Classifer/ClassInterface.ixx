@@ -44,7 +44,9 @@ public:
 export class IClassItemHolder : public IBffIO
 {
 public:
-	virtual const std::vector<IClassItem*> &getItems() const = 0;
+	virtual IClassItem* getItem(size_t id) = 0;
+	virtual const IClassItem* getItem(size_t id) const = 0;
+	virtual size_t getItemsCount() const = 0;
 
 	using ItemCallback = std::function<void(IClassItem *item)>;
 
@@ -56,14 +58,22 @@ class IDataClassItemHolder : public IClassItemHolder
 {
 protected:
 	std::vector<T*> items;
+
 public:
-	virtual const std::vector<IClassItem*> &getItems() const
+
+	size_t getItemsCount() const
 	{
-		return static_cast<const std::vector<T*>&>(items);
+		return items.size();
 	}
 
 	virtual ~IDataClassItemHolder()
-	{ }
+	{
+		for (size_t var = 0; var < items.size(); ++var)
+		{
+			delete items[var];
+		}
+		items.clear();
+	}
 };
 
 
@@ -100,7 +110,7 @@ public:
 	int readIndex(int id)
 	{
 		assert(state->isReading());
-		
+
 		auto* reader = dynamic_cast<StateBinFile::BinStateReader*>(state.get());
 		reader->moveIndex(id);
 		state->beginItem();
@@ -256,6 +266,114 @@ public:
 
 	virtual ~IDataBarClassifier()
 	{ }
+};
+
+
+export template<class TItem, class TContainer>
+class TCacheClassifier : public IDataBarClassifier<TItem>
+{
+public:
+	template<class TContainer>
+	struct ClassData
+	{
+		int classId;
+		TContainer container;
+		MMMAP<size_t, int> cacheIndex;
+	};
+
+	using TClassData = ClassData<TContainer>;
+
+	std::vector<std::unique_ptr<TClassData>> classes;
+
+	const BackString name() const
+	{
+		return "CLASSIC";
+	}
+
+	void loadData(const BarCategories& categs)
+	{
+		ClassDataIO io;
+		io.open(IDataBarClassifier<TItem>::dbPath);
+
+		classes.clear();
+		for (const BarClassCategor& categ : categs.categs)
+		{
+			addClass(categ.id);
+			loadClassData(io, categ.id);
+		}
+	}
+
+	void loadClassData(ClassDataIO& io, int classId)
+	{
+		ClassDataIO::TrainCallback cla = [this](int clId, vbuffer& buf, BackImage, size_t dbLocalId)
+		{
+			std::stringstream stream;
+			stream.write(reinterpret_cast<const char*>(buf.data()), buf.size());
+			stream.seekg(0, std::ios::beg);
+			// std::istringstream stream(buf.data(), buf.size());
+
+			TItem raw;
+			raw.read(stream); // Already Prepared
+			addDataInner(clId, &raw, dbLocalId);
+		};
+
+		io.loadAll(cla, classId, ClassDataIO::LF_ALL);
+	}
+
+	TClassData* getClass(int id)
+	{
+		for (int i = 0; i < classes.size(); i++)
+		{
+			if (classes[i]->classId == id)
+			{
+				return classes[i].get();
+			}
+		}
+
+		throw;
+	}
+
+	void addClass(int id)
+	{
+		auto nd = std::make_unique<TClassData>();
+		nd->classId = id;
+		classes.push_back(std::move(nd));
+	}
+
+	void removeClass(int id)
+	{
+		for (int i = 0; i < classes.size(); i++)
+		{
+			if (classes[i]->classId == id)
+			{
+				classes.erase(classes.begin() + i);
+				break;
+			}
+		}
+	}
+
+	virtual void addToContainer(TContainer& holder, TItem* raw) = 0;
+
+	void addDataInner(int classInd, TItem* item, size_t dataId, bool extractLine = false)
+	{
+		assert(classes.size() != 0);
+		auto* classHolder = getClass(classInd);
+		classHolder->cacheIndex.insert(std::make_pair(dataId, classHolder->container.count()));
+		addToContainer(classHolder->container, item);
+	}
+
+	bool removeDataInner(int classId, size_t id)
+	{
+		TClassData& classHolder = *getClass(classId);
+		auto it = classHolder.cacheIndex.find(id);
+		if (it != classHolder.cacheIndex.end())
+		{
+			delete classHolder.container.exractItem(it->second);
+			classHolder.cacheIndex.erase(it);
+			return true;
+		}
+		return false;
+	}
 };
 
 

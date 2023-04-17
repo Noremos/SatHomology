@@ -37,6 +37,8 @@ import MHashMap;
 import CSBind;
 
 
+// using CurItemHolder = BaritemHolder;
+using CurItemHolder = BettyItemHolder;
 
 namespace bc
 {
@@ -284,7 +286,7 @@ public:
 	bool runAsync = true;
 
 	BarCategories classCategs;
-	barclassificator classifier;
+	BettyClassificator classifier;
 
 	int curLayerIndex;
 	LayersList<ILayer> layers;
@@ -683,7 +685,7 @@ public:
 			// -------------
 
 			printf("Start run for tile %d\n", tileProv.index);
-			BaritemHolder creator;
+			CurItemHolder creator;
 			creator.create(&rect, constr, cacheClass);
 
 			{
@@ -1001,7 +1003,7 @@ public:
 		Project* proj;
 
 		TileProvider tileProv;
-		BaritemHolder holder;
+		CurItemHolder holder;
 
 	public:
 		ProcessCacheBarThreadWorker(int& counter, RasterLineLayer* outLayer, const IItemFilter* filter, Project* proj) :
@@ -1015,7 +1017,7 @@ public:
 		}
 
 
-		void updateTask(BaritemHolder& iholder, const TileProvider& itileProv)
+		void updateTask(CurItemHolder& iholder, const TileProvider& itileProv)
 		{
 			tileProv = itileProv;
 			holder = std::move(iholder);
@@ -1031,10 +1033,9 @@ public:
 
 			printf("Start run for tile %d\n", tileProv.index);
 
-			const auto& vec = holder.getItems();
-			for (size_t i = 0; i < vec.size(); ++i)
+			for (size_t i = 0; i < holder.getItemsCount(); ++i)
 			{
-				auto item = vec.at(i);
+				auto item = holder.getItem(i);
 				if (outLayer->passLine(item, filter))
 				{
 					if (!proj->predictForLayer(item, tileProv))
@@ -1151,7 +1152,7 @@ public:
 			int tileIndex = 0;
 			while (cacher.canRead())
 			{
-				BaritemHolder holder;
+				CurItemHolder holder;
 				cacher.load(tileIndex, &holder);
 
 				TileProvider tileProv = prov.tileByIndex(tileIndex);
@@ -1173,7 +1174,7 @@ public:
 			int tileIndex = 0;
 			while (cacher.canRead())
 			{
-				BaritemHolder holder;
+				CurItemHolder holder;
 				cacher.load(tileIndex, &holder);
 
 				TileProvider tileProv = inLayer->prov.tileByIndex(tileIndex);
@@ -1193,6 +1194,32 @@ public:
 	}
 
 	std::mutex addPrimitiveMutex;
+	struct UnlockableLock
+	{
+		std::mutex& mutex;
+		bool locked;
+		UnlockableLock(std::mutex& mut) : mutex(mut), locked(false)
+		{
+			mutex.lock();
+			locked = true;
+		}
+
+		void unlock()
+		{
+			locked = false;
+			mutex.unlock();
+		}
+
+		~UnlockableLock()
+		{
+			if (locked)
+			{
+				mutex.unlock();
+				locked = false;
+			}
+		}
+	};
+
 	bool predictForLayer(IClassItem* item, const TileProvider& tileProv)
 	{
 		auto id = predict(item);
@@ -1203,9 +1230,10 @@ public:
 			mcountor temp;
 			getCountour(item->getMatrix(), temp, true);
 
-			std::lock_guard<std::mutex> guard(addPrimitiveMutex);
+			UnlockableLock guard(addPrimitiveMutex);
 			auto& p = vl->addPrimitive(vl->color);
-			addPrimitiveMutex.unlock();
+			guard.unlock();
+
 			CSBinding& cs = vl->cs;
 
 			for (const auto& pm : temp)
@@ -1293,24 +1321,26 @@ public:
 	{
 		auto inLayer = getInTRaster<RasterLineLayer>(layerId);
 		assert(inLayer);
-		auto sourceLayer = getInTRaster<RasterLayer>(inLayer->parentlayerId);
+		IRasterLayer* sourceLayer = getInTRaster(inLayer->parentlayerId);
 
 		ItemHolderCache cached;
 		cached.openRead(inLayer->getCacheFilePath(getMeta()));
 
-		BaritemHolder item;
+		CurItemHolder item;
 		cached.loadSpecific(srcItemId.tileId, &item);
 
-		auto line = item.getItems()[srcItemId.vecId];
+		BackImage* fromSourceImg = nullptr;
+		auto line = item.getItem(srcItemId.vecId);
 		if (destIcon != nullptr && sourceLayer)
 		{
 			auto rect = bc::getBarRect(line->getMatrix());
 			*destIcon = sourceLayer->getRect(rect.x, rect.y, rect.width, rect.height);
+			fromSourceImg = destIcon;
 		}
 		//rb->barlines[srcItemId.vecId] = nullptr;
 
 		assert(proj->classCategs.size() !=0);
-		return classifier.addData(classId, line, destIcon);
+		return classifier.addData(classId, line, fromSourceImg);
 	}
 
 	void removeTrainData(int classId, int localId)

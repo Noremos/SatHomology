@@ -381,29 +381,12 @@ public:
 		}
 		else if (existLine->getDeath() < newLine->getDeath())
 		{
-			// main(depth) < child(depth)
-			//newLine->parent = existLine;
 			mat.set(x, y, color);
 			clickResponser[indLocal] = newLine;
-
-			// int ylek = 2;
-			// for (int i = MAX(x - ylek, 0); i < std::min(x + ylek, mat.wid()); i++)
-			// {
-			// 	for (int j = MAX(y - ylek, 0); j < std::min(y + ylek, mat.hei()); j++)
-			// 	{
-			// 		int indLocal2 = mat.getLineIndex(i, j);
-
-			// 		clickResponser[indLocal2] = newLine;
-			// 	}
-			// }
 		}
 	}
 
-	using ColorGrater = std::function<Barscalar(const IClassItem* item, bool& bad)>;
-	void addSimpleLine(std::shared_ptr<SimpleLine>& line, const bc::barvector& matr, int tileIndex)
-	{
-
-	}
+	// using ColorGrater = std::function<Barscalar(const IClassItem* item, bool& bad)>;
 
 	bool passLine(const IClassItem* item, const IItemFilter* filter) const
 	{
@@ -473,10 +456,9 @@ public:
 	{
 		IdGrater parentne;
 
-		const auto& vec = items.getItems();
-		for (size_t i = 0; i < vec.size(); ++i)
+		for (size_t i = 0; i < items.getItemsCount(); ++i)
 		{
-			auto curLine = vec.at(i);
+			auto curLine = items.getItem(i);
 			if (!passLine(curLine, filter))
 				continue;
 
