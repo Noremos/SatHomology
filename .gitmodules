@@ -4,9 +4,6 @@
 [submodule "side/Barcode"]
 	path = side/Barcode
 	url = git@github.com:Noremos/Barcode.git
-[submodule "side/jsoncpp"]
-	path = side/jsoncpp
-	url = https://github.com/open-source-parsers/jsoncpp.git
 [submodule "side/emhash"]
 	path = side/emhash
 	url = https://github.com/ktprime/emhash

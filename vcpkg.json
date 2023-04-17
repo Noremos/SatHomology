@@ -6,13 +6,13 @@
             "name": "proj"
         },
         {
+            "name": "jsoncpp"
+        },
+        {
             "name": "sqlite3"
         },
         {
             "name": "lua"
-        },
-        {
-            "name": "sdl2"
         },
         {
             "name": "glfw3"
