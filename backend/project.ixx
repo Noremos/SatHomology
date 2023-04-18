@@ -1321,7 +1321,7 @@ public:
 	{
 		auto inLayer = getInTRaster<RasterLineLayer>(layerId);
 		assert(inLayer);
-		IRasterLayer* sourceLayer = getInTRaster(inLayer->parentlayerId);
+		IRasterLayer* sourceLayer = getInRaster(inLayer->parentlayerId);
 
 		ItemHolderCache cached;
 		cached.openRead(inLayer->getCacheFilePath(getMeta()));
