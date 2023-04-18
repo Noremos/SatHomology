@@ -122,8 +122,10 @@ public:
 export template <typename TClassItem>
 class AntBaritemHolder : public IDataClassItemHolder<TClassItem>
 {
-	std::shared_ptr<bc::Baritem> item;
 	using Base = IDataClassItemHolder<TClassItem>;
+protected:
+
+	std::shared_ptr<bc::Baritem> item;
 public:
 
 	void create(bc::DatagridProvider* img, const bc::BarConstructor& constr, const Base::ItemCallback& callback)
@@ -415,6 +417,14 @@ public:
 export class BettyItemHolder : public AntBaritemHolder<BettylineClass>
 {
 public:
+
+	void operator=(BettyItemHolder&& o)
+	{
+		// move
+		item = std::move(o.item);
+		items = std::move(o.items);
+	}
+
 	IClassItem* getItem(size_t id)
 	{
 		return items[id];
