@@ -146,16 +146,26 @@ public:
 
 	VecType vecType;
 	BackColor color;
-	std::vector<DrawPrimitive> primitives;
+	std::vector<DrawPrimitive*> primitives;
 
 	void clear()
 	{
+		for (size_t i = 0; i < primitives.size(); i++)
+		{
+			delete primitives[i];
+		}
+
 		primitives.clear();
 	}
 
-	DrawPrimitive& addPrimitive(const BackColor& col)
+	~VectorLayer()
 	{
-		primitives.push_back(DrawPrimitive(col));
+		clear();
+	}
+
+	DrawPrimitive* addPrimitive(const BackColor& col)
+	{
+		primitives.push_back(new DrawPrimitive(col));
 		return primitives.back();
 	}
 
@@ -185,10 +195,10 @@ public:
 			switch (vecType)
 			{
 			case VecType::points:
-				safsd += primitives[i].pointsAsGeojson();
+				safsd += primitives[i]->pointsAsGeojson();
 				break;
 			case VecType::polygons:
-				safsd += primitives[i].polygonAsGeojson();
+				safsd += primitives[i]->polygonAsGeojson();
 				break;
 			}
 			safsd += "},";
@@ -225,14 +235,16 @@ public:
 
 		if (state->isReading())
 		{
-			primitives.resize(size);
-			StateBinFile::BinStateReader binstate;
 			state->scInt("binId", binId);
 
+			StateBinFile::BinStateReader binstate;
 			binstate.open(metaFolder.getFile(intToStr(binId)).string());
+
+			primitives.resize(size);
 			for (int i = 0; i < size; i++)
 			{
-				primitives[i].saveLoadState(&binstate);
+				primitives[i] = new DrawPrimitive();
+				primitives[i]->saveLoadState(&binstate);
 			}
 			binstate.close();
 		}
@@ -248,7 +260,7 @@ public:
 			binstate.open(metaFolder.getFile(intToStr(binId)).string());
 			for (int i = 0; i < size; i++)
 			{
-				primitives[i].saveLoadState(&binstate);
+				primitives[i]->saveLoadState(&binstate);
 			}
 			binstate.close();
 		}

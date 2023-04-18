@@ -1194,32 +1194,6 @@ public:
 	}
 
 	std::mutex addPrimitiveMutex;
-	struct UnlockableLock
-	{
-		std::mutex& mutex;
-		bool locked;
-		UnlockableLock(std::mutex& mut) : mutex(mut), locked(false)
-		{
-			mutex.lock();
-			locked = true;
-		}
-
-		void unlock()
-		{
-			locked = false;
-			mutex.unlock();
-		}
-
-		~UnlockableLock()
-		{
-			if (locked)
-			{
-				mutex.unlock();
-				locked = false;
-			}
-		}
-	};
-
 	bool predictForLayer(IClassItem* item, const TileProvider& tileProv)
 	{
 		auto id = predict(item);
@@ -1230,9 +1204,11 @@ public:
 			mcountor temp;
 			getCountour(item->getMatrix(), temp, true);
 
-			UnlockableLock guard(addPrimitiveMutex);
-			auto& p = vl->addPrimitive(vl->color);
-			guard.unlock();
+			DrawPrimitive* p;
+			{
+				std::lock_guard<std::mutex> guard(addPrimitiveMutex);
+				p = vl->addPrimitive(vl->color);
+			}
 
 			CSBinding& cs = vl->cs;
 
@@ -1243,7 +1219,7 @@ public:
 				BackPoint iglob = cs.toGlobal(point.x + tileProv.offset.x, point.y + tileProv.offset.y);
 				iglob.x += 0.5f;
 				iglob.y += 0.5f;
-				p.addPoint(iglob);
+				p->addPoint(iglob);
 			}
 			return true;
 		}

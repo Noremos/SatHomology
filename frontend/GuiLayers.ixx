@@ -431,7 +431,7 @@ public:
 		if (data->vecType == VectorLayer::VecType::polygons)
 		{
 			std::sort(orders.begin(), orders.end(), [&](size_t a, size_t b) {
-				return data->primitives[a].points.size() < data->primitives[b].points.size();
+				return data->primitives[a]->points.size() < data->primitives[b]->points.size();
 			});
 		}
 	}
@@ -492,15 +492,15 @@ public:
 		BackPoint itemSt = ds.getSysToItemStartPos(cs);
 		BackPoint ed = ds.getSysToItemEndPos(cs);
 
-		for (DrawPrimitive& d : prims)
+		for (DrawPrimitive* d : prims)
 		{
-			auto& points = d.points;
+			auto& points = d->points;
 
 			BackPoint p = points[0];
 			if (GuiDisplaySystem::inRange(itemSt, ed, p))
 			{
 				ImVec2 pi = ds.projItemGlobToDisplay(cs, p);
-				if (isInChangeMode() && d.isNearPoint(ds.cursorPos))
+				if (isInChangeMode() && d->isNearPoint(ds.cursorPos))
 				{
 					list->AddCircleFilled(pi, 3, cursorColor);
 				}
@@ -528,9 +528,9 @@ public:
 		BackColor cscol = data->color;
 		for (size_t& io : orders)
 		{
-			const DrawPrimitive& d = data->primitives[io];
+			const DrawPrimitive* d = data->primitives[io];
 
-			const std::vector<BackPoint>& points = d.points;
+			const std::vector<BackPoint>& points = d->points;
 			// cscol = d.color;
 			ImColor col(cscol.r, cscol.g, cscol.b);
 
