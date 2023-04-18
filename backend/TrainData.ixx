@@ -439,7 +439,7 @@ public:
 			//std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
 		}
 
-		vbuffer imgPrev;
+		MemImgData imgPrev;
 		if (preview)
 		{
 			imgPrev = imwriteToMemory(*preview);

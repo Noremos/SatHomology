@@ -14,6 +14,7 @@ import SideBind;
 import IOCore;
 import BackTypes;
 
+export using MemImgData = std::vector<uint8_t>;
 export
 {
 	void FrameworkInit()
@@ -27,7 +28,8 @@ export
 
 	void imwrite(const BackString& path, const BackImage& mat);
 	void imwrite(const BackPathStr& path, const BackImage& mat);
-	vbuffer imwriteToMemory(const BackImage& mat);
+
+	MemImgData imwriteToMemory(const BackImage& mat);
 
 	BackPathStr getDicumnetPath();
 
@@ -114,16 +116,12 @@ BackImage imreadFromMemory(const uchar* data, size_t size)
 	return BackImage(width, height, chls, image_data, false, true);
 }
 
-vbuffer imwriteToMemory(const BackImage& mat)
+MemImgData imwriteToMemory(const BackImage& mat)
 {
-	int outLen = 0;
-	vbuffer buff;
-
-	std::vector<uint8_t> out_buf;
+	MemImgData out_buf;
 	bool r = fpng::fpng_encode_image_to_memory(mat.getData(), mat.width(), mat.height(), mat.channels(), out_buf);
 	assert(r);
-	buff.setData(out_buf.data(), out_buf.size());
-	return buff;
+	return out_buf;
 }
 
 BackPathStr openImageOrProject()
