@@ -524,6 +524,7 @@ public:
 		// this->mprov = &metaPath;
 
 		openReader();
+		setSubImage(0);
 		if (!reader->ready)
 			return;
 	}
@@ -531,7 +532,6 @@ public:
 	void cache(const MetadataProvider& metaPath)
 	{
 		writeImages(metaPath);
-		setSubImage(0);
 	}
 
 	int getSubImage()
@@ -541,6 +541,8 @@ public:
 
 	void setSubImage(int imgIndex)
 	{
+		int iwid = 2000;
+
 		int realWidth;
 		int realHeight;
 		if (imgType == ReadType::Tiff)
@@ -549,6 +551,20 @@ public:
 			auto& realTags = treader->getSubImg(0)->tags;
 			realWidth = realTags.ImageWidth;
 			realHeight = realTags.ImageLength;
+
+			TiffReader* trear = static_cast<TiffReader*>(reader);
+			subImgSize = trear->getSubImageSize();
+
+			for (int i = imgIndex; i < subImgSize; ++i)
+			{
+				//int factor = 1;
+				trear->setCurrentSubImage(i);
+				if (reader->width() <= 2000)
+				{
+					iwid = reader->width();
+					break;
+				}
+			}
 
 			treader->setCurrentSubImage(imgIndex);
 			const auto& tags = treader->getTags();
@@ -564,10 +580,12 @@ public:
 		{
 			realWidth = reader->width();
 			realHeight = reader->height();
+			iwid = reader->width();
+
 			subImageIndex = 0;
 		}
 
-		prov.update(reader->width(), reader->height(), images[0].width()); // restor it when images will be dropped
+		prov.update(realWidth, realHeight, iwid); // restor it when images will be dropped
 
 		// prov.update(realWidth, realHeight, reader->width()); // restor it when images will be dropped
 		if (prov.tileSize + tileOffset > prov.width)
