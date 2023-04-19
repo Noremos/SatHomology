@@ -362,7 +362,7 @@ public:
 		ILayer* layer = layers.at(inId);
 		auto rlayer = dynamic_cast<IRasterLayer*>(layer);
 		assert(rlayer != nullptr);
-		rlayer->setSubImage(subImgIndex);
+		//rlayer->setSubImage(subImgIndex);
 		return rlayer;
 	}
 
@@ -919,12 +919,7 @@ public:
 		// Threads
 		std::mutex cacherMutex;
 
-		bool curRunAsync = runAsync ? tileIter.notFintInLocal() : false;
-		// We will process all the tiles in 4 steps.
-		// There is no point to run async if there is only one tile in the step
-		// runAsync = false;
-
-
+		const bool curRunAsync = runAsync;
 		int curthreadsCount = curRunAsync ? threadsCount : 1;
 		int counter = 0;
 		if (curRunAsync)
@@ -1043,8 +1038,6 @@ public:
 				}
 			}
 
-			busy = false;
-
 			const auto end = std::chrono::steady_clock::now();
 			const auto diff = end - start;
 			const double len = std::chrono::duration<double, std::milli> (diff).count();
@@ -1117,16 +1110,8 @@ public:
 
 		// Thread
 		auto& prov = inLayer->prov;
-		bool curRunAsync = runAsync;
 
-		// We will process all the tiles in 4 steps.
-		// There is no point to run async if there is only one tile in the step
-		const int tilesInRow = prov.getOptTilesInRow(inLayer->tileOffset);
-		if (tilesInRow < 3 && prov.getOptTilesInCol(inLayer->tileOffset) < 3)
-			curRunAsync = false;
-		// curRunAsync = false;
-
-
+		const bool curRunAsync = runAsync;
 		int curthreadsCount = curRunAsync ? threadsCount : 1;
 		int counter = 0;
 		if (curRunAsync)
