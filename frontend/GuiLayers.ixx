@@ -523,7 +523,7 @@ public:
 		// auto start = ds.getDisplayStartPos();
 		// auto end = ds.getDisplayEndPos();
 
-		ImColor colbl(255, 255, 255);
+		ImU32 colbl = ImColor(255, 255, 255);
 
 		BackColor cscol = data->color;
 		for (size_t& io : orders)
@@ -532,20 +532,16 @@ public:
 
 			const std::vector<BackPoint>& points = d->points;
 			// cscol = d.color;
-			ImColor col(cscol.r, cscol.g, cscol.b);
+			ImU32 col = ImColor(cscol.r, cscol.g, cscol.b);
 
 			// if (d->set)
 
 			if (points.size() < 3)
 				continue;
 
-			int added = 0;
-			bool prevIsOut = false;
-			ImVec2 prev;
-
-			bool inside = false;
 			int n = points.size();
 			BackPoint point = ds.cursorPos;
+			bool inside = false;
 			if (isInChangeMode())
 			{
 				for (int i = 0, j = n - 1; i < n; j = i++)
@@ -557,59 +553,41 @@ public:
 					}
 				}
 			}
+			ImU32 cursorColor = ImColor(255 - cscol.r, 255 - cscol.g, 255 - cscol.b);
 
+			bool prevIsOut = false;
+			BackPoint prev;
+			std::vector<ImVec2> displayPoints;
 			for (const BackPoint& p : points)
 			{
-				// if (!GuiDisplaySystem::inRange(start, end, p))
-				// {
-				// 	if (prevIsOut)
-				// 		continue;
-
-				// 	prevIsOut = true;
-				// }
-				// else if (prevIsOut)
-				// {
-				// 	++added;
-				// 	list->PathLineTo(prev);
-				// 	prevIsOut = false;
-				// }
-
+				prev = p;
 				if (!GuiDisplaySystem::inRange(start, end, p))
 				{
-					continue;
+					if (prevIsOut)
+						continue;
+
+					prevIsOut = true;
+				}
+				else if (prevIsOut)
+				{
+					prevIsOut = false;
+					ImVec2 pi = ds.projItemGlobToDisplay(dsc, prev) + offset;
+					displayPoints.push_back(pi);
 				}
 
 				ImVec2 pi = ds.projItemGlobToDisplay(dsc, p) + offset;
-				prev = pi;
-
-				++added;
-				list->PathLineTo(pi);
+				displayPoints.push_back(pi);
+				if (inside) // Spot on cursor
+					list->AddCircleFilled(pi, 3, cursorColor);
 			}
 
-			if (added >= 3)
+			if (displayPoints.size() >= 3)
 			{
 				ImVec2 pi = ds.projItemGlobToDisplay(dsc, points[0]) + offset; // First
-				// list->PathFillConvex(col);
-				list->PathStroke(colbl,0, 0);
-
-
-				if (inside)
-				{
-					ImColor cursorColor(255 - cscol.r, 255 - cscol.g, 255 - cscol.b);
-					for (const BackPoint& p : points)
-					{
-						if (!GuiDisplaySystem::inRange(start, end, p))
-						{
-							continue;
-						}
-
-						ImVec2 pi = ds.projItemGlobToDisplay(dsc, p) + offset;
-						list->AddCircleFilled(pi, 3, cursorColor);
-					}
-				}
+				list->AddConvexPolyFilled(displayPoints.data(), displayPoints.size(), col);
+				list->AddPolyline(displayPoints.data(), displayPoints.size(), colbl, 0, 2.0);
 			}
-
-			list->PathClear();
+			displayPoints.clear();
 		}
 	}
 
