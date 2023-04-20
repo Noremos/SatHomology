@@ -60,7 +60,7 @@ jobs:
       shell: bash
 
     - name: Intergerte
-      run: ./vcpkg/vcpkg.exe install  --x-wait-for-lock --triplet "x64-windows" --vcpkg-root ./vcpkg --x-manifest-root=./ --x-install-root=./vcpkg_installed\x64-windows"
+      run: ./vcpkg/vcpkg.exe install  --x-wait-for-lock --triplet "x64-windows" --vcpkg-root ./vcpkg --x-manifest-root=./ --x-install-root=./vcpkg_installed\x64-windows
 
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
