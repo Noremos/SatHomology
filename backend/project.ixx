@@ -915,7 +915,7 @@ public:
 		SubImgInf curSize = inLayer->getSubImgInf(); // Cursubimg
 		TileImgIterator tileIter(tileSize, tileOffset, curSize.wid, curSize.hei);
 
-		LayerProvider prov;
+		LayerProvider& prov = layer->prov;
 		prov.update(curSize.wid, curSize.hei, inLayer->displayWidth());
 
 		// Threads
@@ -1103,7 +1103,7 @@ public:
 		// 	outLayer->cacheId = metaprov->getUniqueId();
 		// ret.push_back(outLayer);
 		RasterLineLayer* outLayer = inLayer;
-		outLayer->init(inLayer, getMeta());
+		outLayer->clearResponser();
 
 		// Cacher
 		ItemHolderCache cacher;
@@ -1289,7 +1289,7 @@ public:
 		ItemHolderCache cached;
 		cached.openRead(inLayer->getCacheFilePath(getMeta()));
 
-		CurItemHolder item;
+		CurItemHolder item; // Caching item is raw, nit processed
 		cached.loadSpecific(srcItemId.tileId, &item);
 
 		BackImage* fromSourceImg = nullptr;
@@ -1297,7 +1297,13 @@ public:
 		if (destIcon != nullptr && sourceLayer)
 		{
 			auto rect = bc::getBarRect(line->getMatrix());
-			*destIcon = sourceLayer->getRect(rect.x, rect.y, rect.width, rect.height);
+			auto tileProv = inLayer->prov.tileByIndex(srcItemId.tileId);
+			BackPixelPoint st = tileProv.tileToFull(rect.x, rect.y);
+			BackPixelPoint ed = tileProv.tileToFull(rect.right(), rect.botton());
+
+			st = st * inLayer->subToRealFactor;
+			ed = (ed * inLayer->subToRealFactor) - st;
+			*destIcon = sourceLayer->getRect(st.x, st.y, ed.x, ed.y);
 			fromSourceImg = destIcon;
 		}
 		//rb->barlines[srcItemId.vecId] = nullptr;

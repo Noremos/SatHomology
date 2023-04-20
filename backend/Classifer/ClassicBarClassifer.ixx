@@ -16,7 +16,6 @@ import ClassifierInterface;
 import IOCore;
 import Platform;
 
-import BarcodeModule;
 import TrainIO;
 import MHashMap;
 
@@ -177,6 +176,8 @@ public:
 		std::fill(ids.begin(), ids.end(), nullptr);
 		MMMAP<size_t, uint> writeIds;
 
+		const bool use32index = state->pInt(sizeof(bc::BIndex) == 4 ? 1 : 0) == 1;
+
 		// Begin
 		state->beginArray(vec, linesCount);
 		for (size_t i = 0; i < linesCount; ++i)
@@ -247,11 +248,26 @@ public:
 			//act matrSize = state->pFixedArray(line->matr, 4 + typeSize);
 			uint matrSize = state->pArray(line->matr.size());
 			state->beginArray(line->matr, matrSize);
-			for (uint j = 0; j < matrSize; ++j)
+
+			if (use32index)
 			{
-				bc::barvalue& v = line->matr[j];
-				v.index = state->pInt(v.index);
-				v.value = state->pBarscalar(v.value);
+				for (uint j = 0; j < matrSize; ++j)
+				{
+					bc::barvalue& v = line->matr[j];
+					v.setX(state->pShort(v.getX()));
+					v.setY(state->pShort(v.getY()));
+					v.value = state->pBarscalar(v.value);
+				}
+			}
+			else
+			{
+				for (uint j = 0; j < matrSize; ++j)
+				{
+					bc::barvalue& v = line->matr[j];
+					v.setX(state->pInt(v.getX()));
+					v.setY(state->pInt(v.getY()));
+					v.value = state->pBarscalar(v.value);
+				}
 			}
 
 

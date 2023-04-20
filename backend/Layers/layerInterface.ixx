@@ -32,9 +32,14 @@ public:
 	TileProvider(float factor, int x, int y) : factor(factor), index(0), offset(x, y)
 	{ }
 
-	BackPixelPoint toReal(uint locX, uint locY) const
+	BackPixelPoint tileToPreview(uint locX, uint locY) const
 	{
 		return BackPixelPoint((locX + offset.x) / factor, (locY + offset.y) / factor);
+	}
+
+	BackPixelPoint tileToFull(uint locX, uint locY) const
+	{
+		return BackPixelPoint(locX + offset.x, locY + offset.y);
 	}
 
 	TileProvider& operator=(const TileProvider& other)

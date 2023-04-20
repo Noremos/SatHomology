@@ -3,6 +3,7 @@ module;
 #include <unordered_set>
 #include <algorithm>
 #include <functional>
+#include <cassert>
 
 #include "../../Bind/Common.h"
 
@@ -356,36 +357,46 @@ public:
 	//	}
 	//}
 
-	void init(const BackImage& src, int tileSize = DEF_TILE_SIZE)
-	{
-		clear();
-		mat.assignCopyOf(src);
-		clickResponser.resize(mat.length());
-		printf("alloced for preview: %d\n", clickResponser.size());
-		prov.init(src.width(), src.height(), src.width(), tileSize);
-	}
+	//void init(const BackImage& src, int tileSize = DEF_TILE_SIZE)
+	//{
+	//	clickResponser.clear();
+	//	mat.assignCopyOf(src);
+	//	clickResponser.resize(mat.length());
+	//	printf("alloced for preview: %d\n", clickResponser.size());
+	//	prov.init(src.width(), src.height(), src.width(), tileSize);
+	//}
 
 	void init(IRasterLayer* layer, const MetadataProvider& metadata)
 	{
+		assert(layer != this);
+
+		subToRealFactor = layer->realWidth() / layer->displayWidth();
 		int wid = layer->displayWidth();
 		int hei = layer->displayHeight();
-		subToRealFactor = layer->realWidth() / layer->displayWidth();
 
-		clear();
-		mat.reinit(wid, hei, 4);
-		clickResponser.resize(mat.length());
-		printf("alloced for preview: %d\n", clickResponser.size());
-
+		resetResponser(wid, hei);
 		parentlayerId = layer->id;
 		prov = layer->prov;
 
 		mkDirIfNotExists(metadata.getSubFolder(getMetaLayerName()));
 	}
 
-	void clear()
+	void clearResponser()
+	{
+		int wid = mat.width();
+		int hei = mat.height();
+		assert(mat.length() > 1);
+		resetResponser(wid, hei);
+	}
+
+	void resetResponser(int wid, int hei)
 	{
 		clickResponser.clear();
+		mat.reinit(wid, hei, 4);
+		clickResponser.resize(mat.length());
+		printf("alloced for preview: %d\n", clickResponser.size());
 	}
+
 
 	std::mutex addToMapMutex;
 	void setMatrPoint(int x, int y, std::shared_ptr<SimpleLine>& newLine, const Barscalar& color)
@@ -494,7 +505,7 @@ public:
 
 
 			// Cast sub point to display (mat variable) via tileProv
-			BackPixelPoint op = tileProv.toReal(x, y);
+			BackPixelPoint op = tileProv.tileToPreview(x, y);
 			op.x = (std::min)(mat.wid() - 1, op.x);
 			op.y = (std::min)(mat.hei() - 1, op.y);
 

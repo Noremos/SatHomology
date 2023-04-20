@@ -111,7 +111,7 @@ double getPsa(const bc::barvector& matr)
 	int minX = 10000, maxX = 0, minY = 1000, maxY = 0;
 	for (const auto& pm : matr)
 	{
-		map[pm.index] = true;
+		map[pm.getIndex()] = true;
 		int xa = pm.getX();
 		int ya = pm.getY();
 		if (xa > maxX)
