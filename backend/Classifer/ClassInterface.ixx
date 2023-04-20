@@ -473,13 +473,16 @@ export struct RangeItemFilter : public IItemFilter
 
 	BackImage script;
 	bool useScript;
+	int minPixelsSize = 0;
 
 	bool pass(const IClassItem* line) const
 	{
+		size_t matrSize = line->getMatrixSize();
 		auto linlen = line->end() - line->start();
 		return start.inRange(line->start()) &&
 			len.inRange(linlen) &&
-			matrSizeProc.inRange(line->getMatrixSize() * 100 / imgLen) &&
+			matrSizeProc.inRange(matrSize * 100 / imgLen) &&
+			matrSize > minPixelsSize &&
 			depth.inRange(line->getDeath());
 	}
 
