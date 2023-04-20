@@ -59,6 +59,9 @@ jobs:
       run: find $RUNNER_WORKSPACE
       shell: bash
 
+    - name: Intergerte
+      run: "D:\a\SatHomology\SatHomology\vcpkg\vcpkg.exe" install  --x-wait-for-lock --triplet "x64-windows" --vcpkg-root "D:\a\SatHomology\SatHomology\vcpkg\\" "--x-manifest-root=D:\a\SatHomology\SatHomology\\" "--x-install-root=D:\a\SatHomology\SatHomology\vcpkg_installed\x64-windows\\"
+
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
       # Add additional options to the MSBuild command line here (like platform or verbosity level).
