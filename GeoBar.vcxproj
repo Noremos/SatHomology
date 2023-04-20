@@ -64,7 +64,7 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>side\Barcode\PrjBarlib\include;side\\Barcode\PrjBarlib\modules;side\imgui;side\imgui\backends;side</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>side\Barcode\PrjBarlib\include;side\Barcode\PrjBarlib\modules;side\imgui;side\imgui\backends;side</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <EnableModules>true</EnableModules>
@@ -72,9 +72,11 @@
       <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <SDLCheck>true</SDLCheck>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
       <AdditionalDependencies>jsoncpp.lib;opengl32.lib;glfw3dll.lib;lua.lib;sqlite3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <IgnoreSpecificDefaultLibraries>
@@ -113,14 +115,15 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>side\Barcode\PrjBarlib\include;side\\Barcode\PrjBarlib\modules;side\imgui;side\imgui\backends;side</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>side\Barcode\PrjBarlib\include;side\Barcode\PrjBarlib\modules;side\imgui;side\imgui\backends;side</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <EnableModules>true</EnableModules>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>jsoncpp.lib;opengl32.lib;glfw3dll.lib;lua.lib;sqlite3.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -140,7 +143,6 @@
     <ClCompile Include="side\Barcode\PrjBarlib\modules\Barcode.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\Barline.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\ImageReader.ixx" />
-    <ClCompile Include="side\Barcode\PrjBarlib\modules\StateBinFiles.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\TiffReader.ixx" />
     <ClCompile Include="side\fpng\fpng.cpp" />
     <ClCompile Include="side\GuiCodeEditor.cpp" />
@@ -175,13 +177,19 @@
     <ClCompile Include="frontend\GuiLayers.ixx" />
     <ClCompile Include="frontend\GuiWidgets.ixx" />
     <ClCompile Include="frontend\main.cpp" />
-    <ClCompile Include="frontend\Object3d.ixx" />
-    <ClCompile Include="frontend\Viewer3d.ixx" />
+    <ClCompile Include="frontend\Object3d.ixx">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="frontend\Viewer3d.ixx">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="side\sago\platform_folders.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Bind\Lua.h" />
-    <ClInclude Include="side\GuiCodeEditor.h" />
+    <ClInclude Include="side\GuiCodeEditor.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="side\imconfig.h" />
     <ClInclude Include="side\imgui\backends\imgui_impl_glfw.h" />
     <ClInclude Include="side\imgui\imgui.h" />

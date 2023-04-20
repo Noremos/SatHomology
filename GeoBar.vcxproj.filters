@@ -76,12 +76,6 @@
     <ClCompile Include="side\Barcode\PrjBarlib\modules\Barcode.ixx">
       <Filter>Barcode\modules</Filter>
     </ClCompile>
-    <ClCompile Include="side\Barcode\PrjBarlib\modules\Barline.ixx">
-      <Filter>Barcode\modules</Filter>
-    </ClCompile>
-    <ClCompile Include="side\Barcode\PrjBarlib\modules\StateBinFiles.ixx">
-      <Filter>Barcode\modules</Filter>
-    </ClCompile>
     <ClCompile Include="backend\MatrImg.ixx">
       <Filter>Backend</Filter>
     </ClCompile>
@@ -89,9 +83,6 @@
       <Filter>GUI\Core</Filter>
     </ClCompile>
     <ClCompile Include="side\Barcode\PrjBarlib\modules\TiffReader.ixx">
-      <Filter>Barcode\modules</Filter>
-    </ClCompile>
-    <ClCompile Include="side\Barcode\PrjBarlib\modules\ImageReader.ixx">
       <Filter>Barcode\modules</Filter>
     </ClCompile>
     <ClCompile Include="frontend\GuiCommon.cpp">
@@ -217,9 +208,11 @@
     <ClInclude Include="side\GuiCodeEditor.h">
       <Filter>GUI\WindowWidgets</Filter>
     </ClInclude>
-    <ClInclude Include="Bind\Lua.h" />
     <ClInclude Include="side\imgui\backends\imgui_impl_glfw.h">
       <Filter>GUI\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Bind\Lua.h">
+      <Filter>Backend\Bind</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
