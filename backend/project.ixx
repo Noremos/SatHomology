@@ -657,8 +657,8 @@ public:
 			{
 				if (layer->passLine(item, filter))
 				{
-					if (!proj->predictForLayer(item, tileProv))
-						layer->addLine(parentne, inde++, item, tileProv);
+					proj->predictForLayer(item, tileProv);
+					layer->addLine(parentne, inde++, item, tileProv);
 				}
 			};
 		}
@@ -1035,8 +1035,8 @@ public:
 				auto item = holder.getItem(i);
 				if (outLayer->passLine(item, filter))
 				{
-					if (!proj->predictForLayer(item, tileProv))
-						outLayer->addLine(parentne, (int)i, item, tileProv);
+					proj->predictForLayer(item, tileProv);
+					outLayer->addLine(parentne, (int)i, item, tileProv);
 				}
 			}
 
