@@ -65,6 +65,15 @@ jobs:
       # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
       run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} /p:Platform=${{env.BUILD_PLATFORM}} ${{env.PROJECT_FILE_PATH}}
 
+    - name: Build-2
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      # needs: [Build]
+      # if: failure()
+      if: always()
+      # Add additional options to the MSBuild command line here (like platform or verbosity level).
+      # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
+      run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} /p:Platform=${{env.BUILD_PLATFORM}} ${{env.PROJECT_FILE_PATH}}
+
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v3.1.2
       with:
