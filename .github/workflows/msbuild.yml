@@ -53,26 +53,10 @@ jobs:
 
     - name: Integrate vcpkg
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: vcpkg integrate install
-
-    - name: List $RUNNER_WORKSPACE before build
-      run: find $RUNNER_WORKSPACE
-      shell: bash
-
-    - name: Intergerte
-      run: ./vcpkg/vcpkg.exe install  --x-wait-for-lock --triplet "x64-windows" --vcpkg-root ./vcpkg --x-manifest-root=./ --x-install-root=./vcpkg_installed\x64-windows
+      run: ./vcpkg/vcpkg.exe integrate install
 
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      # Add additional options to the MSBuild command line here (like platform or verbosity level).
-      # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
-      run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} /p:Platform=${{env.BUILD_PLATFORM}} ${{env.PROJECT_FILE_PATH}}
-
-    - name: Build-2
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      # needs: [Build]
-      # if: failure()
-      if: always()
       # Add additional options to the MSBuild command line here (like platform or verbosity level).
       # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
       run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} /p:Platform=${{env.BUILD_PLATFORM}} ${{env.PROJECT_FILE_PATH}}
