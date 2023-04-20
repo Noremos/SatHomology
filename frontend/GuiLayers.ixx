@@ -543,62 +543,57 @@ public:
 
 			const std::vector<BackPoint>& points = d->points;
 			// cscol = d.color;
-			ImU32 col = ImColor(cscol.r, cscol.g, cscol.b);
+			// ImU32 col = ImColor(cscol.r, cscol.g, cscol.b, 200);
+			ImU32 col = ImColor(cscol.r, cscol.g, cscol.b, 255);
+			ImU32 colRev = ImColor(255 - cscol.r, 255 - cscol.g, 255 - cscol.b);
 
 			// if (d->set)
 
 			if (points.size() < 3)
 				continue;
 
-			int n = points.size();
 			BackPoint point = ds.cursorPos;
-			bool inside = false;
-			if (isInChangeMode())
-			{
-				for (int i = 0, j = n - 1; i < n; j = i++)
-				{
-					if (((points[i].y > point.y) != (points[j].y > point.y)) &&
-						(point.x < (points[j].x - points[i].x) * (point.y - points[i].y) / (points[j].y - points[i].y) + points[i].x))
-					{
-						inside = !inside;
-					}
-				}
-			}
 			ImU32 cursorColor = ImColor(255 - cscol.r, 255 - cscol.g, 255 - cscol.b);
 
-			bool prevIsOut = false;
-			BackPoint prev;
+			int visible = 0;
+			bool inside = false;
 			std::vector<ImVec2> displayPoints;
-			for (const BackPoint& p : points)
+			int n = points.size();
+			for (int i = 0, j = n - 1; i < n; j = i++)
 			{
-				prev = p;
-				if (!GuiDisplaySystem::inRange(start, end, p))
-				{
-					if (prevIsOut)
-						continue;
+				const BackPoint& p = points[i];
+				const BackPoint& pj = points[j];
 
-					prevIsOut = true;
-				}
-				else if (prevIsOut)
+				if (((p.y > point.y) != (pj.y > point.y)) &&
+					(point.x < (pj.x - p.x) * (point.y - p.y) / (pj.y - p.y) + p.x))
 				{
-					prevIsOut = false;
-					ImVec2 pi = ds.projItemGlobToDisplay(dsc, prev) + offset;
-					displayPoints.push_back(pi);
+					inside = !inside;
+				}
+
+				if (GuiDisplaySystem::inRange(start, end, p))
+				{
+					++visible;
 				}
 
 				ImVec2 pi = ds.projItemGlobToDisplay(dsc, p) + offset;
 				displayPoints.push_back(pi);
-				if (inside) // Spot on cursor
-					list->AddCircleFilled(pi, 3, cursorColor);
+				// if (inside) // Spot on cursor
+				// 	list->AddCircleFilled(pi, 3, cursorColor);
 			}
 
-			if (displayPoints.size() >= 2)
+			if (visible >= 2)
 			{
 				displayPoints.push_back(displayPoints[0]);
 
 				ImVec2 pi = ds.projItemGlobToDisplay(dsc, points[0]) + offset; // First
-				list->AddConvexPolyFilled(displayPoints.data(), displayPoints.size(), col);
-				list->AddPolyline(displayPoints.data(), displayPoints.size(), colbl, 0, 2.0);
+				// list->AddConvexPolyFilled(displayPoints.data(), displayPoints.size(), col);
+				// list->AddPolyline(displayPoints.data(), displayPoints.size(), colbl, 0, 2.0);
+				list->AddPolyline(displayPoints.data(), displayPoints.size(), col, 0, 2.0);
+
+				if (inside)
+				{
+					list->AddPolyline(displayPoints.data(), displayPoints.size(), colRev, 0, 2.0);
+				}
 			}
 			displayPoints.clear();
 		}
