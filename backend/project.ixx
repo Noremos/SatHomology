@@ -911,10 +911,12 @@ public:
 
 
 		// Setup tileIterators
-		uint rwid = inLayer->realWidth();
-		uint rhei = inLayer->realHeight();
-		TileImgIterator tileIter(tileSize, tileOffset, rwid, rhei);
 
+		SubImgInf curSize = inLayer->getSubImgInf(); // Cursubimg
+		TileImgIterator tileIter(tileSize, tileOffset, curSize.wid, curSize.hei);
+
+		LayerProvider prov;
+		prov.update(curSize.wid, curSize.hei, inLayer->displayWidth());
 
 		// Threads
 		std::mutex cacherMutex;
@@ -952,7 +954,7 @@ public:
 			tileIter.reset();
 			while (tileIter.iter(offset, iwid, ihei))
 			{
-				TileProvider tileProv = inLayer->prov.tileByOffset(offset.x, offset.y);
+				TileProvider tileProv = prov.tileByOffset(offset.x, offset.y);
 				auto rect = inLayer->getRect(offset.x, offset.y, iwid, ihei);
 
 				bool isAsyncl;
@@ -970,7 +972,7 @@ public:
 		{
 			while (tileIter.iter(offset, iwid, ihei))
 			{
-				TileProvider tileProv = inLayer->prov.tileByOffset(offset.x, offset.y);
+				TileProvider tileProv = prov.tileByOffset(offset.x, offset.y);
 				auto rect = inLayer->getRect(offset.x, offset.y, iwid, ihei);
 
 				auto* worker = wpool.getSyncWorker();

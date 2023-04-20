@@ -158,6 +158,15 @@ public:
 		primitives.clear();
 	}
 
+	virtual int realWidth() const override
+	{
+		return 0;
+	}
+	virtual int realHeight() const override
+	{
+		return 0;
+	}
+
 	~VectorLayer()
 	{
 		clear();

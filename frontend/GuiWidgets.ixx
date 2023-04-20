@@ -525,7 +525,6 @@ public:
 
 	ImVec2 displaysBegin;
 	ImVec2 displaySize;
-	ImVec2 pixelSize;
 
 	BackPixelPoint getSize()
 	{
@@ -614,7 +613,6 @@ private:
 		}
 
 		displaySize = displayEnd - displayStart;
-		pixelSize = displaySize / ImVec2(width, height);
 		// ImVec2 maxSize = displayEnd - displaysBegin;
 		// ResizeImage(displaySize, maxSize); // Resize image by available display size
 
@@ -775,10 +773,12 @@ public:
 	//}
 
 
-	void drawPoints(const GuiDisplaySystem& ds, CSBinding& cs)
+	void drawPoints(const GuiDisplaySystem& ds, CSBinding& cs, ImVec2 realImgSize)
 	{
 		if (points == nullptr)
 			return;
+
+		ImVec2 pixelSize = displaySize / ImVec2(width, height);;
 
 		//const ImVec2 p0 = ImGui::GetItemRectMin();
 		//const ImVec2 p1 = ImGui::GetItemRectMax();

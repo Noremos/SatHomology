@@ -165,7 +165,6 @@ public:
 
 		LayerMetaProvider layerMeta(getLayerMeta(metaFolder));
 		// int imgId = metaFolder.getUniqueId();
-		// state->scInt("mat_id", imgId);
 		const BackPathStr path = layerMeta.getSubFolder("mat.png");
 
 		if (state->isReading())
@@ -208,6 +207,15 @@ public:
 	virtual void setCache(size_t)
 	{ }
 
+	virtual int realWidth() const override
+	{
+		return mat.width();
+	}
+	virtual int realHeight() const override
+	{
+		return mat.height();
+	}
+
 	virtual float displayWidth() const override
 	{
 		return mat.width();
@@ -230,7 +238,12 @@ public:
 		return &mat;
 	}
 
-	void setSubImage(int) {}
+	virtual SubImgInf getSubImgInf()
+	{
+		return SubImgInf(mat.width(), mat.height());
+	}
+
+	void setSubImage(int,bool = false) {}
 	int getSubImage() {return 0;}
 	int getFirstSmallIndex(const int maxSize = 2000) {return 0;}
 	std::vector<SubImgInf> getSubImageInfos()
@@ -273,6 +286,7 @@ public:
 	std::vector<std::shared_ptr<SimpleLine>> clickResponser;
 	int cacheId = -1;
 	int parentlayerId = -1;
+	float subToRealFactor = 1.f;
 
 	RasterLineLayer()
 	{
@@ -315,6 +329,16 @@ public:
 		RasterLayer::saveLoadState(state, metaFolder);
 		state->scInt("cacheId", cacheId);
 		state->scInt("parentLayerId", parentlayerId);
+		state->scFloat("subToRealFactor", subToRealFactor);
+	}
+
+	virtual int realWidth() const override
+	{
+		return mat.width() * subToRealFactor;
+	}
+	virtual int realHeight() const override
+	{
+		return mat.height() * subToRealFactor;
 	}
 
 	//virtual void readJson(const BackJson& json, const BackDirStr& metaFolder)
@@ -345,6 +369,7 @@ public:
 	{
 		int wid = layer->displayWidth();
 		int hei = layer->displayHeight();
+		subToRealFactor = layer->realWidth() / layer->displayWidth();
 
 		clear();
 		mat.reinit(wid, hei, 4);
@@ -438,18 +463,53 @@ public:
 		// Add line
 		Barscalar pointCol = RasterLineLayer::colors[rand() % RasterLineLayer::colors.size()];
 
-		bc::barvector temp;
+		// Countur
+		DictWrap dictPoints;
+		for (auto& p : matr)
+		{
+			dictPoints.set(p.getIndex());
+			int x = p.getX();
+			int y = p.getY();
+			if (x > dictPoints.hei)
+			{
+				dictPoints.hei = x;
+			}
+			if (y > dictPoints.wid)
+			{
+				dictPoints.wid = y;
+			}
+		}
+
+		auto& outMatr = sl->matr;
 		for (const auto& pm : matr)
 		{
-			BackPixelPoint op = tileProv.toReal(pm.getX(), pm.getY());
+			// We have:
+			// - a real img size (input)
+			// - a sub img size (selected subimg in input)
+			// - a display img (for LineRaster).
+
+			// Get a pixels form a sub
+			int x = pm.getX();
+			int y = pm.getY();
+
+
+			// Cast sub point to display (mat variable) via tileProv
+			BackPixelPoint op = tileProv.toReal(x, y);
 			op.x = (std::min)(mat.wid() - 1, op.x);
 			op.y = (std::min)(mat.hei() - 1, op.y);
 
-			temp.push_back(bc::barvalue(op.x, op.y, pm.value));
-
+			// Set display point
 			setMatrPoint(op.x, op.y, sl, pointCol);
+
+			// Get countur
+			if (dictPoints.hasCorners(x, y)) // Skip
+			{
+				continue;
+			}
+
+			// Cast to a real img via factor and save for draw
+			outMatr.push_back(bc::barvalue(op.x * subToRealFactor, op.y * subToRealFactor, pm.value));
 		}
-		getCountourSimple(temp, sl->matr);
 	}
 
 	void addHolder(const IClassItemHolder& items, const TileProvider& tileProv, const IItemFilter* filter)
@@ -484,6 +544,7 @@ public:
 	int subImageIndex = 0;
 	std::vector<BackImage> images;
 	int subImgSize;
+	BackPixelPoint realSize;
 
 	~RasterFromDiskLayer()
 	{
@@ -524,7 +585,8 @@ public:
 		// this->mprov = &metaPath;
 
 		openReader();
-		setSubImage(0);
+
+		setSubImage(0, true);
 		if (!reader->ready)
 			return;
 	}
@@ -539,53 +601,50 @@ public:
 		return subImageIndex;
 	}
 
-	void setSubImage(int imgIndex)
+	SubImgInf getSubImgInf()
+	{
+		return SubImgInf(reader->width(), reader->height());
+	}
+
+	void setSubImage(int imgIndex, bool overrideCs = false)
 	{
 		int iwid = 2000;
 
-		int realWidth;
-		int realHeight;
 		if (imgType == ReadType::Tiff)
 		{
 			TiffReader* treader = static_cast<TiffReader*>(reader);
-			auto& realTags = treader->getSubImg(0)->tags;
-			realWidth = realTags.ImageWidth;
-			realHeight = realTags.ImageLength;
-
-			TiffReader* trear = static_cast<TiffReader*>(reader);
-			subImgSize = trear->getSubImageSize();
-
-			for (int i = imgIndex; i < subImgSize; ++i)
+			for (int i = imgIndex; i < treader->getSubImageSize(); ++i)
 			{
 				//int factor = 1;
-				trear->setCurrentSubImage(i);
-				if (reader->width() <= 2000)
+				int tegWid = treader->getSubImg(i)->tags.ImageWidth;
+				if (tegWid <= 2000)
 				{
-					iwid = reader->width();
+					iwid = tegWid;
 					break;
 				}
 			}
 
 			treader->setCurrentSubImage(imgIndex);
-			const auto& tags = treader->getTags();
 
-			auto& p = tags.ModelTiepointTag.points[0];
-			cs.setOrigin(p.X, p.Y);
-			cs.setScale(tags.ModelPixelScaleTag.x, tags.ModelPixelScaleTag.y);
-			cs.proj.reinit(treader->getProjection());
+			if (overrideCs)
+			{
+				const auto& tags = treader->getTags();
+
+				auto& p = tags.ModelTiepointTag.points[0];
+				cs.setOrigin(p.X, p.Y);
+				cs.setScale(tags.ModelPixelScaleTag.x, tags.ModelPixelScaleTag.y);
+				cs.proj.reinit(treader->getProjection());
+			}
 
 			subImageIndex = imgIndex;
 		}
 		else
 		{
-			realWidth = reader->width();
-			realHeight = reader->height();
 			iwid = reader->width();
-
 			subImageIndex = 0;
 		}
 
-		prov.update(realWidth, realHeight, iwid); // restor it when images will be dropped
+		prov.update(realSize.x, realSize.y, iwid); // restor it when images will be dropped
 
 		// prov.update(realWidth, realHeight, reader->width()); // restor it when images will be dropped
 		if (prov.tileSize + tileOffset > prov.width)
@@ -666,6 +725,19 @@ public:
 
 		if (!reader->ready)
 			reader->open(imgPath.string());
+
+		if (imgType == ReadType::Tiff)
+		{
+			TiffReader* treader = static_cast<TiffReader*>(reader);
+			auto& realTags = treader->getSubImg(0)->tags;
+			realSize.x = realTags.ImageWidth;
+			realSize.y = realTags.ImageLength;
+		}
+		else
+		{
+			realSize.x = reader->width();
+			realSize.y = reader->height();
+		}
 	}
 
 	void writeImages(MetadataProvider metaprov)
@@ -753,26 +825,26 @@ public:
 
 	virtual float displayWidth() const override
 	{
-		return static_cast<float>(reader->width()) / prov.displayFactor;
+		return realSize.x / prov.displayFactor;
 	}
 	virtual float displayHeight() const override
 	{
-		return static_cast<float>(reader->height()) / prov.displayFactor;
+		return realSize.y / prov.displayFactor;
 	}
 	virtual int realWidth() const override
 	{
-		return reader->width();
+		return realSize.x;
 	}
 	virtual int realHeight() const override
 	{
-		return reader->height();
+		return realSize.y;
 	}
 	virtual BackImage getRect(int stX, int stRow, int wid, int hei) override
 	{
 		DataRect r = reader->getRect(stX, stRow, wid, hei);
 		return BackImage(r.wid, r.hei, r.samples(), r.getData());
 	}
-	virtual BackImage getImage(const int max) const override
+	virtual BackImage getImage(const int) const override
 	{
 		return images[0];
 	}

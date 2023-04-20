@@ -431,7 +431,7 @@ export void getCountour(const bc::barvector& points, mcountor& contur, bool apro
 
 
 
-struct DictWrap
+export struct DictWrap
 {
 	std::unordered_set<uint> points;
 	int wid = 0, hei = 0;
@@ -459,7 +459,7 @@ struct DictWrap
 	}
 };
 
-export void getCountourSimple(const bc::barvector& points, bc::barvector& contur)
+export void getCountourSimple(const bc::barvector& points, bc::barvector& contur, float changeFactor)
 {
 	contur.clear();
 
@@ -479,10 +479,13 @@ export void getCountourSimple(const bc::barvector& points, bc::barvector& contur
 		}
 	}
 
-	for (auto& p : points)
+	for (auto p : points)
 	{
-		if (!dictPoints.hasCorners(p.getX(), p.getY()))
+		int x = p.getX();
+		int y = p.getY();
+		if (!dictPoints.hasCorners(x, y))
 		{
+			p.setXY(x * changeFactor, y * changeFactor);
 			contur.push_back(p);
 		}
 	}

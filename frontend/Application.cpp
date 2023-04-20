@@ -129,10 +129,12 @@ public:
 		if (!IGuiLayer::visible)
 			return;
 
+		auto* core = GuiLayerData<T>::data;
+		BackPixelPoint realSize(core->realWidth(), core->realHeight());
+
 		auto wpos = ds.getWinPos();
-		auto& cs = GuiLayerData<T>::getCore()->cs;
-		auto start = ds.projItemLocalToDisplay(cs, { 0,0 });
-		auto end = ds.projItemLocalToDisplay(cs, main.getSize());
+		auto start = ds.projItemLocalToDisplay(core->cs, { 0,0 });
+		auto end = ds.projItemLocalToDisplay(core->cs, realSize);
 
 		main.drawImage(GuiLayerData<T>::getName(), wpos, ds.getDrawSize(), start, end);
 	}
@@ -145,22 +147,10 @@ public:
 	{
 		return GuiLayerData<T>::data->tileOffset;
 	}
-	inline int getImageMinSize() const
-	{
-		auto p = GuiLayerData<T>::getProvider();
-		return MIN(p.width, p.height);
-	}
-
-	inline int getImageMaxSize() const
-	{
-		auto p = GuiLayerData<T>::getProvider();
-		return MAX(p.width, p.height);
-	}
 
 	inline ImVec2 getImageSize() const
 	{
-		auto p = GuiLayerData<T>::getProvider();
-		return ImVec2(p.width, p.height);
+		return ImVec2(GuiLayerData<T>::data->realWidth(), GuiLayerData<T>::data->realHeight());
 	}
 
 	void drawProperty()
@@ -228,23 +218,28 @@ public:
 		context.setLayers(layerData, "barcode");
 	}
 	StepIntSlider tileSizeSlider, offsetSlider;
+	std::vector<SubImgInf> subImgs;
 
 	virtual void drawToolboxInner(ILayerWorker& context)
 	{
 		if (ImGui::Button("Построить баркод"))
 		{
-			auto subs = GuiLayerData<T>::data->getSubImageInfos();
-			if (subs.size() != 0)
+			subImgs = GuiLayerData<T>::data->getSubImageInfos();
+			if (subImgs.size() != 0)
 			{
 				imgSubImages.clear();
-				for (size_t i = 0; i < subs.size(); i++)
+				for (size_t i = 0; i < subImgs.size(); i++)
 				{
-					SubImgInf& sub = subs[i];
+					SubImgInf& sub = subImgs[i];
 					BackString s = intToStr(sub.wid) + "x" + intToStr(sub.hei);
 					imgSubImages.add(s, i);
 				}
 				imgSubImages.endAdding();
 				imgSubImages.currentIndex = 0;
+			}
+			else
+			{
+				subImgs.push_back(BackSize(GuiLayerData<T>::data->realWidth(), GuiLayerData<T>::data->realHeight()));
 			}
 			ImGui::OpenPopup("SelectMax");
 		}
@@ -289,35 +284,38 @@ public:
 
 					ImGui::Separator();
 
-					if (imgSubImages.getSize() > 0)
+					if (imgSubImages.getSize() > 1)
 					{
 						imgSubImages.drawListBox("Размеры");
 						if (imgSubImages.hasChanged())
 						{
-							if (newTileSize > getImageMaxSize())
+							GuiLayerData<T>::data->setSubImage(imgSubImages.currentIndex);
+							SubImgInf& sub = subImgs[imgSubImages.currentIndex];
+							int maxSize = std::max(sub.wid, sub.hei);
+							if (newTileSize > maxSize)
 							{
-								GuiLayerData<T>::data->setSubImage(imgSubImages.currentIndex);
-								newTileSize = getImageMaxSize();
+								newTileSize = maxSize;
 							}
 						}
 						ImGui::SameLine();
 					}
 
-
 					if (ImGui::BeginChild("Tile size", ImVec2(300, 360)))
 					{
+						SubImgInf& sub = subImgs[imgSubImages.currentIndex];
+						int maxSize = std::max(sub.wid, sub.hei);
 						ImGui::Text("Tile size");
-						tileSizeSlider.draw("##Tile size", newTileSize, 10, getImageMaxSize(), 10);
+						tileSizeSlider.draw("##Tile size", newTileSize, 10, maxSize, 10);
 
 						int maxOffset = newTileSize;
-						if (newTileSize + maxOffset > getImageMinSize())
-							maxOffset = getImageMinSize() - newTileSize;
+						if (newTileSize + maxOffset > maxSize)
+							maxOffset = maxSize - newTileSize;
 
 						ImGui::Text("Tile offset size");
-						offsetSlider.draw("##Offset size", newOffsetSize, 0, maxOffset, 10);
+						offsetSlider.draw("##Offset size", newOffsetSize, 0, maxOffset, 1);
 
 						ImGui::Separator();
-						tilePrview.draw(newTileSize, newOffsetSize, getImageSize());
+						tilePrview.draw(newTileSize, newOffsetSize, ImVec2(sub.wid, sub.hei));
 					}
 					ImGui::EndChild();
 					ImGui::EndTabItem();
@@ -336,6 +334,7 @@ public:
 
 				ImGui::CloseCurrentPopup();
 				createBarcode(context);
+				GuiLayerData<T>::data->setSubImage(0);
 			}
 
 			ImGui::SameLine();
@@ -441,21 +440,24 @@ public:
 
 		ITiledRasterGuiLayer::draw(ds);
 
-		main.drawPoints(ds, getCore()->cs);
+		ImVec2 realSize(data->displayWidth(), data->displayHeight());
+		main.drawPoints(ds, getCore()->cs, realSize);
 		drawLineInfoWin(ds);
 	}
 
 	virtual void onClick(const GuiDisplaySystem& ds, BackPoint pos)
 	{
-		ImVec2 wpos = ds.getWinPos();
-		ImVec2 start = ds.projItemLocalToDisplay(data->cs, { 0,0 });
 		ImVec2 posInDisplay = ds.projItemGlobToDisplay(data->cs, pos);
 		if (ds.inDisplayRange(posInDisplay))
 		{
-			const BackPoint globP = ds.core.toSysGlobRelative(toBP(posInDisplay - start));
-			const BackPixelPoint pix = data->cs.toLocal(globP);
+			// globP =
+			// 1. sub point -> display (mat variable) via tileProv
+			// 2. Cast to a real img via factor and save for draw
 
-			auto points = click((int)pix.x, (int)pix.y);
+			// (pos - origin) / factor
+			auto ps = data->cs.proj.getThisProj(ds.core.sysProj, pos, false);
+			const BackPixelPoint pix = data->cs.toLocal(pos);
+			auto points = click(pix.x / data->subToRealFactor, pix.y / data->subToRealFactor);
 			setPoints(ds, points);
 		}
 	}
@@ -1443,7 +1445,7 @@ namespace MyApp
 			// ImGui::Text(bottomVals.debug.c_str());
 
 			const auto& curpos = centerVals.resizble.currentPos;
-			ImGui::Text("%f:%f | %f", curpos.x, curpos.y, backend.getDS().csScale);
+			ImGui::Text("%f : %f   | %f", curpos.x, curpos.y, backend.getDS().csScale);
 
 
 			ImGui::ProgressBar(0.0, ImVec2(0.0f, 0.0f));

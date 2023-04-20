@@ -311,12 +311,13 @@ export struct CSBinding : public IJsonIO
 		// return QgsPointXY(rectangle.xMinimum() + p[0] * pixelSizeX, rectangle.yMaximum() - p[1] * pixelSizeY)
 
 		 // Convert the pixel coordinates to the real-world coordinates
-		x = globOrigin.x + (x * img_transform[1]) + (y * img_transform[2]);
-		y = globOrigin.y + (x * img_transform[4]) + (y * img_transform[5]);
+		BackPoint r;
+		r.x = globOrigin.x + (x * img_transform[1]) + (y * img_transform[2]);
+		r.y = globOrigin.y + (x * img_transform[4]) + (y * img_transform[5]);
 
 		// PJ_COORD real = proj_trans(proj.proj, PJ_INV, getPjCoord(x, y));
 		//return { real.xy.x, real.xy.y };
-		return BackPoint(x, y);
+		return r;
 	}
 
 	// Унаследовано через IJsonIO

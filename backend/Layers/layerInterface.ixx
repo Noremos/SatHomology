@@ -57,6 +57,14 @@ public:
 	bc::point layerOffset;
 
 
+	LayerProvider() :
+		width(0), height(0),
+		tileSize(DEF_TILE_SIZE),
+		displayFactor(1.f),
+		layerOffset(0,0)
+	{
+	}
+
 	//LayerProvider(int realWid, int displayWid, int tileSize) :
 	//	width(width), tileSize(tileSize),
 	//	layerOffset(0,0), displayFactor(_displayFactor)
@@ -257,14 +265,13 @@ public:
 		return BackPoint(displayWidth(), displayHeight());
 	}
 
-	virtual int realWidth() const
+	BackPoint getRealSize() const
 	{
-		return displayWidth() * cs.getScale().y;
+		return BackPoint(realWidth(), realHeight());
 	}
-	virtual int realHeight() const
-	{
-		return displayHeight() * cs.getScale().y;
-	}
+
+	virtual int realWidth() const = 0;
+	virtual int realHeight() const = 0;
 
 	int getSysId() const
 	{
@@ -296,7 +303,7 @@ public:
 
 	BackPoint getNormGlobSize() const
 	{
-		return cs.getScaled(getDisplaySize()).abs();
+		return cs.getScaled(getRealSize()).abs();
 	}
 
 	BackPoint getGlobStart() const
@@ -384,8 +391,10 @@ public:
 	virtual const BackImage* getCachedImage() const = 0;
 
 	virtual void setCache(size_t) = 0;
-	virtual void setSubImage(int imgIndex) = 0;
+	virtual void setSubImage(int imgIndex, bool overrideCs = false) = 0;
 	virtual int getSubImage() = 0;
+	virtual SubImgInf getSubImgInf() = 0;
+
 	virtual int getFirstSmallIndex(const int maxSize = 2000) = 0;
 	virtual std::vector<SubImgInf> getSubImageInfos() = 0;
 };
