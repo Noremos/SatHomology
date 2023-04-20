@@ -1037,6 +1037,91 @@ namespace MyApp
 	int tempThreads;
 	bool runAsync;
 
+	void drawProjectSettings()
+	{
+		if (ImGui::Button("Настройки проекта"))
+		{
+			ImGui::OpenPopup("ProjectSetts");
+			tempThreads = backend.getThreadsCount();
+			runAsync = backend.getAsync();
+		}
+
+		if (ImGui::BeginPopupModal("ProjectSetts", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			ImGui::BeginDisabled(minThreadCount < 2);
+			ImGui::Checkbox("Асинхронно", &runAsync);
+			ImGui::EndDisabled();
+
+			if (minThreadCount > 1)
+			{
+				ImGui::SetNextItemWidth(150);
+
+				ImGui::BeginDisabled(!runAsync);
+				ImGui::InputInt("##thr", &tempThreads, 2, maxThreadCount);
+				ImGui::EndDisabled();
+			}
+
+			ImGui::Separator();
+			if (ImGui::Button("OK", ImVec2(120, 0)))
+			{
+				backend.getThreadsCount() = tempThreads;
+				backend.setAsync(runAsync);
+
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::SetItemDefaultFocus();
+			ImGui::SameLine();
+			if (ImGui::Button("Cancel", ImVec2(120, 0)))
+			{
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
+		}
+	}
+
+	void drawLayerSettings()
+	{
+		if (ImGui::Button("Свойства слоя"))
+		{
+			ImGui::OpenPopup("ProcSetts");
+		}
+
+		if (ImGui::BeginPopupModal("ProcSetts", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			layersVals.getCurrentLayer()->drawProperty();
+			//if (ImGui::IsItemHovered())
+			//	ImGui::SetTooltip("I am a tooltip over a popup");
+
+			//static int unused_i = 0;
+			//ImGui::Combo("Combo", &unused_i, "Delete\0Delete harder\0");
+
+			ImGui::Separator();
+			if (ImGui::Button("OK", ImVec2(120, 0)))
+			{
+				ImGui::CloseCurrentPopup();
+				layersVals.getCurrentLayer()->applyPropertyChanges();
+
+				IRasterLayer* core = layersVals.getCurrentRasterCore();
+
+				// if (core)
+					// centerVals.tilemap.setTilesize(core.prov.tileSize);
+			}
+
+			ImGui::SetItemDefaultFocus();
+			ImGui::SameLine();
+			if (ImGui::Button("Cancel", ImVec2(120, 0)))
+			{
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
+		}
+
+		ImGui::EndDisabled();
+	}
+
 	void drawTopBar()
 	{
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar;
@@ -1206,88 +1291,14 @@ namespace MyApp
 			ImGui::SameLine();
 			ImGui::BeginDisabled(!tbVals.enableProcessBtn);
 
-			ImGui::SameLine();
-			if (ImGui::Button("Свойства слоя"))
-			{
-				ImGui::OpenPopup("ProcSetts");
-			}
-
-			if (ImGui::BeginPopupModal("ProcSetts", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-			{
-				layersVals.getCurrentLayer()->drawProperty();
-				//if (ImGui::IsItemHovered())
-				//	ImGui::SetTooltip("I am a tooltip over a popup");
-
-				//static int unused_i = 0;
-				//ImGui::Combo("Combo", &unused_i, "Delete\0Delete harder\0");
-
-				ImGui::Separator();
-				if (ImGui::Button("OK", ImVec2(120, 0)))
-				{
-					ImGui::CloseCurrentPopup();
-					layersVals.getCurrentLayer()->applyPropertyChanges();
-
-					IRasterLayer* core = layersVals.getCurrentRasterCore();
-
-					// if (core)
-						// centerVals.tilemap.setTilesize(core.prov.tileSize);
-				}
-
-				ImGui::SetItemDefaultFocus();
-				ImGui::SameLine();
-				if (ImGui::Button("Cancel", ImVec2(120, 0)))
-				{
-					ImGui::CloseCurrentPopup();
-				}
-
-				ImGui::EndPopup();
-			}
-
-			ImGui::EndDisabled();
 
 			ImGui::SameLine();
-			if (ImGui::Button("Настрйоки проекта"))
-			{
-				ImGui::OpenPopup("ProjectSetts");
-				tempThreads = backend.getThreadsCount();
-				runAsync = backend.getAsync();
-			}
-
-			if (ImGui::BeginPopupModal("ProjectSetts", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-			{
-				ImGui::BeginDisabled(minThreadCount < 2);
-				ImGui::Checkbox("Асинхронно", &runAsync);
-				ImGui::EndDisabled();
-
-				if (minThreadCount > 1)
-				{
-					ImGui::SetNextItemWidth(150);
-
-					ImGui::BeginDisabled(!runAsync);
-					ImGui::InputInt("##thr", &tempThreads, 2, maxThreadCount);
-					ImGui::EndDisabled();
-				}
-
-				ImGui::Separator();
-				if (ImGui::Button("OK", ImVec2(120, 0)))
-				{
-					backend.getThreadsCount() = tempThreads;
-					backend.setAsync(runAsync);
-
-					ImGui::CloseCurrentPopup();
-				}
-
-				ImGui::SetItemDefaultFocus();
-				ImGui::SameLine();
-				if (ImGui::Button("Cancel", ImVec2(120, 0)))
-				{
-					ImGui::CloseCurrentPopup();
-				}
-
-				ImGui::EndPopup();
-			}
+			drawProjectSettings();
 
 
+			// ----------------------------
+			ImGui::SameLine();
+			drawLayerSettings();
 
 			// ---------------------------------
 			ImGui::SameLine();
