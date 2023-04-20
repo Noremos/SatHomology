@@ -139,25 +139,16 @@ public:
 	{
 		assert(state->isReading());
 		auto* reader = dynamic_cast<StateBinFile::BinStateReader*>(state.get());
-		reader->moveIndex(index);
-		int rindex = state->pInt(0);
-		if (rindex != index)
+
+		size_t i = 0, total = reader->getIndexSize();
+		for (; i < total; ++i)
 		{
-			int memIndex = index;
-
-			const int accum = rindex < index ? 1 : -1;
-			const int readerMaxInd = reader->getIndexSize();
-
-			while (rindex != index)
-			{
-				memIndex += accum;
-				if (readerMaxInd >= memIndex || memIndex < 0)
-					return nullptr;
-
-				reader->moveIndex(memIndex);
-				rindex = reader->pInt(0);
-			}
+			reader->moveIndex(i);
+			int rindex = state->pInt(0);
+			if (rindex == index)
+				break;
 		}
+		assert(i != total);
 
 		state->beginItem();
 		t->read(state.get());

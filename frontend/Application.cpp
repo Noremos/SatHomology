@@ -339,9 +339,24 @@ public:
 template<class T>
 class TiledRasterGuiLayer : public ITiledRasterGuiLayer<GuiDrawImage, T>
 {
+	using Base = ITiledRasterGuiLayer<GuiDrawImage, T>;
 public:
 	TiledRasterGuiLayer(T* fromCore) : ITiledRasterGuiLayer<GuiDrawImage, T>(fromCore)
 	{ }
+
+	float tempVal = 1.f;
+	virtual void drawProperty()
+	{
+		Base::drawProperty();
+		ImGui::Separator();
+		ImGui::SliderFloat("Прозрачность", &tempVal, 0.f, 1.f);
+	}
+
+	virtual void applyPropertyChanges()
+	{
+		Base::applyPropertyChanges();
+		Base::main.opacity = tempVal;
+	}
 
 	virtual ~TiledRasterGuiLayer()
 	{ }
@@ -358,6 +373,7 @@ public:
 	{
 		TiledRasterGuiLayer::toGuiData();
 
+		tempVal = 1.f;
 		main.setImage(data->mat, false);
 		icon.setImage(data->mat, 32, 32, true);
 	}
@@ -366,6 +382,7 @@ public:
 
 class RasterLineGuiLayer : public ITiledRasterGuiLayer<GuiDrawCloudPointClick, RasterLineLayer>
 {
+	using Base = ITiledRasterGuiLayer;
 public:
 	BackString debug;
 	SimpleLine* selectedLine = nullptr;
@@ -375,16 +392,29 @@ public:
 	{
 	}
 
+	float tempVal = 1.f;
+	virtual void drawProperty()
+	{
+		Base::drawProperty();
+		ImGui::Separator();
+		ImGui::SliderFloat("Прозрачность", &tempVal, 0.f, 1.f);
+	}
+	virtual void applyPropertyChanges()
+	{
+		Base::applyPropertyChanges();
+		main.opacity = tempVal;
+	}
+
 	virtual void toGuiData()
 	{
-		ITiledRasterGuiLayer::toGuiData();
+		Base::toGuiData();
 		main.setImage(data->mat, false);
 		icon.setImage(data->mat, 32, 32, true);
 	}
 
 	virtual void drawToolboxInner(ILayerWorker& context)
 	{
-		ITiledRasterGuiLayer::drawToolboxInner(context);
+		Base::drawToolboxInner(context);
 		ImGui::Separator();
 
 		if (ImGui::Button("Update"))
@@ -424,7 +454,7 @@ public:
 		if (!visible)
 			return;
 
-		ITiledRasterGuiLayer::draw(ds);
+		Base::draw(ds);
 
 		ImVec2 realSize(data->displayWidth(), data->displayHeight());
 		main.drawPoints(ds, getCore()->cs, realSize);

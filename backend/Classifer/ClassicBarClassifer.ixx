@@ -506,9 +506,11 @@ public:
 	{
 		float maxc = 0;
 		// int maxId = 0;
+		float sum = 0;
 		for (size_t i = 0; i < data.size(); i++)
 		{
 			float locd = data[i]->compaire(other);
+			sum += locd;
 			if (locd > maxc)
 			{
 				maxc = locd;
@@ -516,7 +518,7 @@ public:
 			}
 		}
 
-		return maxc;
+		return sum / data.size();
 	}
 
 	~BattyClass()

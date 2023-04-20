@@ -145,7 +145,8 @@ export class Project
 		//{jsn_imgMinVal, u_imgMinVal},
 		{"metacounter", metaCounter},
 		{"threadsCount", threadsCount},
-		{"runAsync", runAsync}
+		{"runAsync", runAsync},
+		{"layerCounter", layerCounter}
 
 
 		//{jsn_imgPath, u_imgPath},
@@ -196,19 +197,19 @@ export class Project
 			JsonObjectIOState* obj = arrst->objectBegin(i);
 			MetadataProvider sub = *metaprov;// Do not reffer!
 
-			int layId;
+			int factoryId;
 			ILayer* lay;
 			if (isReading)
 			{
-				obj->scInt("layId", layId);
-				lay = CoreLayerFactory::CreateCoreLayer(layId);
+				obj->scInt("factoryId", factoryId);
+				lay = CoreLayerFactory::CreateCoreLayer(factoryId);
 				layers.addMove(lay);
 			}
 			else
 			{
 				lay = iter->get();
-				layId = lay->getFactoryId();
-				obj->scInt("layId", layId);
+				factoryId = lay->getFactoryId();
+				obj->scInt("factoryId", factoryId);
 				iter++;
 			}
 
@@ -225,19 +226,21 @@ export class Project
 			JsonObjectIOState* obj = arrst->objectBegin(i);
 
 			int clId;
-			int layId;
+			int coreId;
 			if (!isReading)
 			{
 				clId = cb->first;
-				layId = cb->second->id;
+				coreId = cb->second->id;
 				++cb;
 			}
 			obj->scInt("class_id", clId);
-			obj->scInt("layer_id", layId);
+			obj->scInt("layer_id", coreId);
 
 			if (isReading)
 			{
-				classLayers[clId] = static_cast<VectorLayer*>(layers.at(layId));
+				auto* vectLayer = layers.at(coreId);
+				if (vectLayer)
+					classLayers[clId] = static_cast<VectorLayer*>(vectLayer);
 			}
 			arrst->objectEnd();
 		}
@@ -309,16 +312,16 @@ public:
 		return d;
 	}
 
-	template<class LDATA>
-	LDATA* addLayerData(int keepId, int projId)
-	{
-		LDATA* d = layers.add<LDATA>();
-		d->cs.init(projId);
+	// template<class LDATA>
+	// LDATA* addLayerData(int keepId, int projId)
+	// {
+	// 	LDATA* d = layers.add<LDATA>();
+	// 	d->cs.init(projId);
 
-		//d->prov.init(u_displayFactor, tileSize, reader->width());
-		d->id = keepId;
-		return d;
-	}
+	// 	//d->prov.init(u_displayFactor, tileSize, reader->width());
+	// 	d->id = keepId;
+	// 	return d;
+	// }
 
 	template<class LDATA>
 	LDATA* changeLayerData(int id, int projId)
@@ -1106,6 +1109,7 @@ public:
 		// ret.push_back(outLayer);
 		RasterLineLayer* outLayer = inLayer;
 		outLayer->clearResponser();
+		ret.push_back(outLayer);
 
 		// Cacher
 		ItemHolderCache cacher;
@@ -1273,14 +1277,13 @@ public:
 		classLayers.erase(classId);
 	}
 
-	void removeLayer(int layId)
+	void removeLayer(int coreId)
 	{
-		ILayer* lay = layers.at(layId);
-		if (lay->isSystem)
+		ILayer* lay = layers.at(coreId);
+		if (!lay->isSystem)
 		{
-			return;
+			layers.remove(coreId);
 		}
-		layers.remove(layId);
 	}
 
 	size_t addTrainData(int layerId, int classId, CachedObjectId srcItemId, BackImage* destIcon)
@@ -1296,6 +1299,7 @@ public:
 		cached.loadSpecific(srcItemId.tileId, &item);
 
 		BackImage* fromSourceImg = nullptr;
+		assert(srcItemId.vecId < item.getItemsCount());
 		auto line = item.getItem(srcItemId.vecId);
 		if (destIcon != nullptr && sourceLayer)
 		{

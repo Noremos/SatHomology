@@ -525,6 +525,7 @@ public:
 
 	ImVec2 displaysBegin;
 	ImVec2 displaySize;
+	float opacity = 1.f;
 
 	BackPixelPoint getSize()
 	{
@@ -643,7 +644,8 @@ private:
 		// ImVec2 uv1 = ImVec2((10.0f+100.0f)/256.0f, (10.0f+200.0f)/256.0f);
 
 		ImGui::SetCursorPos(displaysBegin);
-		ImGui::Image((void*)(intptr_t)textId, displaySize, ImVec2(0.f,0.f));
+		ImVec4 color_multipler(1, 1, 1, opacity);
+		ImGui::Image((void*)(intptr_t)textId, displaySize, ImVec2(0.f,0.f), ImVec2(1.0f, 1.0f), color_multipler);
 		// list->AddImage((void*)(intptr_t)textId, displayStart + winPos, displayEnd + winPos);
 	}
 };
