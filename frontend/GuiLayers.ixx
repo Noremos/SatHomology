@@ -310,6 +310,7 @@ public:
 	{
 		copiedId = data->getSysId();
 		strId = data->name + intToStr(copiedId);
+		projSet.setup(data->cs);
 	}
 
 	T* getData()
@@ -347,6 +348,16 @@ public:
 			drawToolboxInner(context);
 		}
 		ImGui::End();
+	}
+
+	ProjectionSettings projSet;
+	virtual void drawProperty()
+	{
+		projSet.draw();
+	}
+	virtual void applyPropertyChanges()
+	{
+		projSet.setup(data->cs);
 	}
 
 
@@ -662,13 +673,19 @@ public:
 	void drawPolygonToolbox(ILayerWorker& context)
 	{}
 
-	void drawProperty()
+	virtual void drawProperty()
 	{
+		GuiLayerData<VectorLayer>::drawProperty();
+		ImGui::Separator();
+
 		ImGui::ColorPicker4("Color", (float*)&propColor, ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoInputs);
 	}
 
-	void applyPropertyChanges()
+	virtual void applyPropertyChanges()
 	{
+		GuiLayerData<VectorLayer>::applyPropertyChanges();
+		ImGui::Separator();
+
 		data->color.r = std::min(static_cast<int>(propColor.x * 255), 255);
 		data->color.g = std::min(static_cast<int>(propColor.y * 255), 255);
 		data->color.b = std::min(static_cast<int>(propColor.z * 255), 255);

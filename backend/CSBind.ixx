@@ -98,7 +98,6 @@ public:
 		proj_context_set_search_paths(ctx, 1, &cpath);
 		proj = proj_create_from_wkt(ctx, (const char*)wtkContext, nullptr, nullptr, nullptr);
 
-
 		sqlite3_finalize(stmt); // Do not close before wtkContext is using
 		sqlite3_close(db);
 
@@ -226,6 +225,12 @@ export struct CSBinding : public IJsonIO
 	BackPoint globOrigin = {0,0};
 	double img_transform[6] = {0.0,1.0,0.0,0.0,0.0,1.0};
 
+	void copyTo(CSBinding& other) const
+	{
+		other.initProj(proj.id);
+		other.globOrigin = globOrigin;
+		memcpy(other.img_transform, img_transform, sizeof(img_transform));
+	}
 
 	void initProj(const int id)
 	{

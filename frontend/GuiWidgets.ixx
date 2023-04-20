@@ -859,3 +859,75 @@ public:
 			val = maxv;
 	}
 };
+
+export class ProjectionSettings
+{
+	static std::vector<BackString> projections;
+	int selectedProjId = 0;
+	CSBinding curcs;
+public:
+	void setup(const CSBinding& cs)
+	{
+		cs.copyTo(curcs);
+
+		BackString projectionName;
+		if (cs.proj.isInited())
+		{
+			projectionName = intToStr(cs.proj.getId());
+		}
+		else
+		{
+			projectionName = DEFAULT_PROJECTION_STR;
+		}
+
+		if (projections.size() == 0)
+		{
+			projections = BackProj::getWtkNames();
+		}
+
+		selectedProjId = -1;
+		for (int i = 0; i < projections.size(); i++)
+		{
+			if (projections[i].substr(5) == projectionName)
+			{
+				selectedProjId = i;
+				break;
+			}
+		}
+
+		assert(selectedProjId != -1);
+	}
+
+	void draw()
+	{
+		if (ImGui::BeginCombo("Select CS", projections[selectedProjId].c_str()))
+		{
+			int k = 0;
+			for (auto& n : projections)
+			{
+				bool seled = ImGui::Selectable(n.c_str());
+				if (seled)
+				{
+					selectedProjId = k;
+				}
+				++k;
+			}
+
+			ImGui::EndCombo();
+		}
+
+		ImGui::InputDouble("Origin x", &curcs.globOrigin.x);
+		ImGui::InputDouble("Origin y", &curcs.globOrigin.y);
+
+		ImGui::InputDouble("Scale x", curcs.getScaleX());
+		ImGui::InputDouble("Scale y", curcs.getScaleY());
+	}
+
+	void apply(CSBinding& cs)
+	{
+		curcs.init(projections[selectedProjId].substr(5));
+		curcs.copyTo(cs);
+	}
+};
+
+std::vector<BackString> ProjectionSettings::projections;

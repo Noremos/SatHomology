@@ -153,17 +153,6 @@ public:
 		return ImVec2(GuiLayerData<T>::data->realWidth(), GuiLayerData<T>::data->realHeight());
 	}
 
-	void drawProperty()
-	{
-
-	}
-
-	void applyPropertyChanges()
-	{
-		//GuiLayerData<T>::data->prov.tileSize = newTileSize;
-		//GuiLayerData<T>::data->tileOffset = newOffsetSize;
-	}
-
 	SelectableKeyValues<int> imgSubImages;
 
 	// Component
@@ -398,6 +387,7 @@ public:
 	virtual void drawToolboxInner(ILayerWorker& context)
 	{
 		ITiledRasterGuiLayer::drawToolboxInner(context);
+		ImGui::Separator();
 
 		if (ImGui::Button("Update"))
 		{
@@ -970,13 +960,8 @@ namespace MyApp
 
 	struct TopbarValues
 	{
-
 		bool enableProcessBtn = false;
-
-		bool openPop = false;
-		bool openCoordSystemPopup = false;
-		std::vector<BackString> names;
-		int selectedName = 0;
+		ProjectionSettings projset;
 	};
 
 	TopbarValues tbVals;
@@ -1201,21 +1186,8 @@ namespace MyApp
 							}
 							else
 							{
-								BackString dps = "EPSG:";
-								dps += DEFAULT_PROJECTION_STR;
-
-								tbVals.names = BackProj::getWtkNames();
-								for (int i = 0; i < tbVals.names.size(); i++)
-								{
-									if (tbVals.names[i] == dps)
-									{
-										tbVals.selectedName = i;
-										break;
-									}
-								}
-
-								// *layer->cs.getScaleX() = 10.0;
-								// *layer->cs.getScaleY() = 10.0;
+								layer->cs.init(DEFAULT_PROJECTION);
+								tbVals.projset.setup(layer->cs);
 								ImGui::OpenPopup("SetupCS");
 							}
 						}
@@ -1234,32 +1206,12 @@ namespace MyApp
 
 			if (ImGui::BeginPopupModal("SetupCS", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 			{
-				if (ImGui::BeginCombo("Select CS", tbVals.names[tbVals.selectedName].c_str()))
-				{
-					int k = 0;
-					for (auto& n : tbVals.names)
-					{
-						bool seled = ImGui::Selectable(n.c_str());
-						if (seled)
-						{
-							tbVals.selectedName = k;
-						}
-						++k;
-					}
-
-					ImGui::EndCombo();
-				}
-
-				ImGui::InputDouble("origin x", &layer->cs.globOrigin.x);
-				ImGui::InputDouble("origin y", &layer->cs.globOrigin.y);
-
-				ImGui::InputDouble("Scale x", layer->cs.getScaleX());
-				ImGui::InputDouble("Scale y", layer->cs.getScaleY());
+				tbVals.projset.draw();
 
 				ImGui::Separator();
 				if (ImGui::Button("OK", ImVec2(120, 0)))
 				{
-					layer->cs.init(tbVals.names[tbVals.selectedName].substr(5));
+					tbVals.projset.apply(layer->cs);
 					layer->cache(backend.getMeta());
 
 					auto* guiLayer = layersVals.addLayer<RasterFromDiskGuiLayer>("Loaded", layer);
@@ -1267,7 +1219,6 @@ namespace MyApp
 					layer = nullptr;
 
 					tbVals.enableProcessBtn = true;
-					tbVals.names.clear();
 					ImGui::CloseCurrentPopup();
 				}
 
@@ -1277,7 +1228,6 @@ namespace MyApp
 					backend.removeLayer(layer->id);
 					layer = nullptr;
 
-					tbVals.names.clear();
 					ImGui::CloseCurrentPopup();
 				}
 
@@ -1429,7 +1379,7 @@ namespace MyApp
 	{
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar;
 		// https://github.com/bkaradzic/bgfx/blob/master/3rdparty/dear-imgui/widgets/range_slider.inl
-		if (ImGui::BeginViewportSideBar("##BottomBar", NULL, ImGuiDir_Down, 100, window_flags))
+		if (ImGui::BeginViewportSideBar("##BottomBar", NULL, ImGuiDir_Down, 50, window_flags))
 		{
 			// GBL
 			ImGui::BeginDisabled(commonValus.onAir || !tbVals.enableProcessBtn);
@@ -1452,13 +1402,15 @@ namespace MyApp
 				classerVals.show = true;
 			}
 
-			// ImGui::SameLine(0, 30);
 			// ImGui::Text(bottomVals.debug.c_str());
 
+			// Current cursor pos
+			ImGui::SameLine();
 			const auto& curpos = centerVals.resizble.currentPos;
 			ImGui::Text("%f : %f   | %f", curpos.x, curpos.y, backend.getDS().csScale);
 
-
+			// Progress bar
+			ImGui::SameLine();
 			ImGui::ProgressBar(0.0, ImVec2(0.0f, 0.0f));
 			ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
 			ImGui::Text("Progress Bar");
