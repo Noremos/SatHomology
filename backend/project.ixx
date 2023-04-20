@@ -657,7 +657,7 @@ public:
 			{
 				if (layer->passLine(item, filter))
 				{
-					proj->predictForLayer(item, tileProv);
+					proj->predictForLayer(item, tileProv, layer->subToRealFactor);
 					layer->addLine(parentne, inde++, item, tileProv);
 				}
 			};
@@ -901,6 +901,7 @@ public:
 			ret.push_back(i.second);
 			i.second->clear();
 			i.second->color = classCategs.categs[i.first].color;
+			i.second->initCSFrom(inLayer->cs);
 		}
 		// -------------------
 
@@ -1035,7 +1036,7 @@ public:
 				auto item = holder.getItem(i);
 				if (outLayer->passLine(item, filter))
 				{
-					proj->predictForLayer(item, tileProv);
+					proj->predictForLayer(item, tileProv, outLayer->subToRealFactor);
 					outLayer->addLine(parentne, (int)i, item, tileProv);
 				}
 			}
@@ -1096,6 +1097,7 @@ public:
 			ret.push_back(i.second);
 			i.second->clear();
 			i.second->color = classCategs.categs[i.first].color;
+			i.second->initCSFrom(inLayer->cs);
 		}
 
 		// RasterLineLayer* outLayer = addOrUpdateOut<RasterLineLayer>(iol);
@@ -1181,7 +1183,7 @@ public:
 	}
 
 	std::mutex addPrimitiveMutex;
-	bool predictForLayer(IClassItem* item, const TileProvider& tileProv)
+	bool predictForLayer(IClassItem* item, const TileProvider& tileProv, float subToRealFactor)
 	{
 		auto id = predict(item);
 		if (id != -1)
@@ -1203,7 +1205,8 @@ public:
 			{
 				auto point = bc::barvalue::getStatPoint(pm);
 
-				BackPoint iglob = cs.toGlobal(point.x + tileProv.offset.x, point.y + tileProv.offset.y);
+				BackPixelPoint op = tileProv.tileToFull(point.x, point.y);
+				BackPoint iglob = cs.toGlobal(point.x * subToRealFactor, point.y * subToRealFactor);
 				iglob.x += 0.5f;
 				iglob.y += 0.5f;
 				p->addPoint(iglob);

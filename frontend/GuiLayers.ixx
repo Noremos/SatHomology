@@ -592,8 +592,10 @@ public:
 					list->AddCircleFilled(pi, 3, cursorColor);
 			}
 
-			if (displayPoints.size() >= 3)
+			if (displayPoints.size() >= 2)
 			{
+				displayPoints.push_back(displayPoints[0]);
+
 				ImVec2 pi = ds.projItemGlobToDisplay(dsc, points[0]) + offset; // First
 				list->AddConvexPolyFilled(displayPoints.data(), displayPoints.size(), col);
 				list->AddPolyline(displayPoints.data(), displayPoints.size(), colbl, 0, 2.0);
