@@ -893,6 +893,9 @@ public:
 		layer->initCSFrom(inLayer->cs);
 		layer->tileOffset = tileOffset;
 
+		LayerProvider& prov = layer->prov;
+		prov.update(curSize.wid, curSize.hei, inLayer->displayWidth(), tileSize);
+
 		if (layer->cacheId == -1)
 			layer->cacheId = metaprov->getUniqueId();
 
@@ -918,9 +921,6 @@ public:
 
 		SubImgInf curSize = inLayer->getSubImgInf(); // Cursubimg
 		TileImgIterator tileIter(tileSize, tileOffset, curSize.wid, curSize.hei);
-
-		LayerProvider& prov = layer->prov;
-		prov.update(curSize.wid, curSize.hei, inLayer->displayWidth());
 
 		// Threads
 		std::mutex cacherMutex;
@@ -1290,6 +1290,7 @@ public:
 		auto inLayer = getInTRaster<RasterLineLayer>(layerId);
 		assert(inLayer);
 		IRasterLayer* sourceLayer = getInRaster(inLayer->parentlayerId);
+		sourceLayer->setSubImage(0);
 
 		ItemHolderCache cached;
 		cached.openRead(inLayer->getCacheFilePath(getMeta()));
@@ -1314,7 +1315,7 @@ public:
 		}
 		//rb->barlines[srcItemId.vecId] = nullptr;
 
-		assert(proj->classCategs.size() !=0);
+		assert(proj->classCategs.size() != 0);
 		return classifier.addData(classId, line, fromSourceImg);
 	}
 
