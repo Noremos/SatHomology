@@ -308,7 +308,7 @@ export struct CSBinding : public IJsonIO
 		return BackPixelPoint(pixel_x, pixel_y);
 	}
 
-	BackPoint toGlobal(int x, int y) const
+	BackPoint toGlobal(float x, float y) const
 	{
 		//float x_glob = x * uPerPixX + stX;
 		//float y_glob = y * uPerPixY + stY;

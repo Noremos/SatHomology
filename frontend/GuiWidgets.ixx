@@ -780,7 +780,8 @@ public:
 		if (points == nullptr)
 			return;
 
-		ImVec2 pixelSize = displaySize / ImVec2(width, height);;
+		// TODO: replce it with toDisplay(0.5); Can be with minus
+		ImVec2 pixelSize = displaySize / ImVec2(width, height);
 
 		//const ImVec2 p0 = ImGui::GetItemRectMin();
 		//const ImVec2 p1 = ImGui::GetItemRectMax();

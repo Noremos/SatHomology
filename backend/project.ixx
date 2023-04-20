@@ -1210,9 +1210,8 @@ public:
 				auto point = bc::barvalue::getStatPoint(pm);
 
 				BackPixelPoint op = tileProv.tileToFull(point.x, point.y);
-				BackPoint iglob = cs.toGlobal(point.x * subToRealFactor, point.y * subToRealFactor);
-				iglob.x += 0.5f;
-				iglob.y += 0.5f;
+				BackPoint iglob((static_cast<float>(op.x) + 0.5f), static_cast<float>(op.y) + 0.5f);
+				iglob = cs.toGlobal(iglob.x * subToRealFactor, iglob.y * subToRealFactor);
 				p->addPoint(iglob);
 			}
 			return true;
