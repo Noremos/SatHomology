@@ -333,8 +333,6 @@ public:
 			}
 			ImGui::EndPopup();
 		}
-
-		ImGui::Separator();
 	}
 };
 
@@ -419,8 +417,6 @@ public:
 
 			ImGui::EndPopup();
 		}
-
-		ImGui::Separator();
 	}
 
 	virtual void draw(const GuiDisplaySystem& ds)
