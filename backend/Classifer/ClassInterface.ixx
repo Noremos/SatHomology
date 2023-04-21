@@ -466,14 +466,14 @@ export struct RangeItemFilter : public IItemFilter
 		}
 	};
 
-	FRange start{ 0, 255 };
+	FRange start{ 100, 255 };
 	FRange len{ 0, 255 };
-	FRange matrSizeProc{ 0, 100 };
-	FRange depth{ 0, 1000 };
+	FRange matrSizeProc{ 0, 4 };
+	FRange depth{ 1, 1000 };
 
 	BackImage script;
 	bool useScript;
-	int minPixelsSize = 0;
+	int minPixelsSize = 1500;
 
 	bool pass(const IClassItem* line) const
 	{
