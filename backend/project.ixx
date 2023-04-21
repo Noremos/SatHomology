@@ -225,22 +225,32 @@ export class Project
 		{
 			JsonObjectIOState* obj = arrst->objectBegin(i);
 
-			int clId;
+			int classId;
 			int coreId;
 			if (!isReading)
 			{
-				clId = cb->first;
+				classId = cb->first;
 				coreId = cb->second->id;
 				++cb;
 			}
-			obj->scInt("class_id", clId);
+			obj->scInt("class_id", classId);
 			obj->scInt("layer_id", coreId);
 
 			if (isReading)
 			{
 				auto* vectLayer = layers.at(coreId);
 				if (vectLayer)
-					classLayers[clId] = static_cast<VectorLayer*>(vectLayer);
+					classLayers[classId] = static_cast<VectorLayer*>(vectLayer);
+				else
+				{
+					auto* layer = addLayerData<VectorLayer>(ds.sysProj.getId());
+					layer->name = "Class layer";
+					layer->color = BackColor::random();
+					layer->vecType = VectorLayer::VecType::polygons;
+					layer->isSystem = true;
+
+					classLayers[classId] = layer;
+				}
 			}
 			arrst->objectEnd();
 		}
@@ -907,7 +917,7 @@ public:
 		{
 			ret.push_back(i.second);
 			i.second->clear();
-			i.second->color = classCategs.categs[i.first].color;
+			i.second->color = classCategs.get(i.first)->color;
 			i.second->initCSFrom(inLayer->cs);
 		}
 		// -------------------
@@ -1098,7 +1108,7 @@ public:
 		{
 			ret.push_back(i.second);
 			i.second->clear();
-			i.second->color = classCategs.categs[i.first].color;
+			i.second->color = classCategs.get(i.first)->color;
 			i.second->initCSFrom(inLayer->cs);
 		}
 
@@ -1188,10 +1198,11 @@ public:
 	std::mutex addPrimitiveMutex;
 	bool predictForLayer(IClassItem* item, const TileProvider& tileProv, float diplsayToRealFactor)
 	{
-		auto id = predict(item);
-		if (id != -1)
+		auto classId = predict(item);
+		if (classId != -1)
 		{
-			VectorLayer* vl = classLayers.at(id);
+			VectorLayer* vl = classLayers.at(classId);
+			assert(vl != nullptr);
 
 			mcountor temp;
 			getCountour(item->getMatrix(), temp, true);
@@ -1251,17 +1262,17 @@ public:
 	MMMAP<int, VectorLayer*> classLayers;
 	int addClassType(const BackString& name)
 	{
-		int id = classCategs.addValue(name);
-		classifier.addClass(id);
+		int classId = classCategs.addValue(name);
+		classifier.addClass(classId);
 		auto* layer = addLayerData<VectorLayer>(ds.sysProj.getId());
 		layer->name = "Class: " + name;
 		layer->color = BackColor::random();
 		layer->vecType = VectorLayer::VecType::polygons;
 		layer->isSystem = true;
 
-		classLayers[id] = layer;
+		classLayers[classId] = layer;
 		saveProject();
-		return id;
+		return classId;
 	}
 
 	void changeClassName(int classId, const BackString& name)
@@ -1273,6 +1284,9 @@ public:
 	{
 		classCategs.remove(classId);
 		classifier.removeClass(classId);
+
+		auto claVec = classLayers.find(classId);
+		claVec->second->isSystem = false;
 		classLayers.erase(classId);
 	}
 

@@ -15,12 +15,6 @@ Project* proj = Project::getProject();
 
 export struct GuiClassifer
 {
-	struct GuiClass
-	{
-		int classId;
-		int vecId;
-	};
-
 	struct TrainPiecePreview
 	{
 		size_t dbLocalId;
@@ -33,13 +27,16 @@ export struct GuiClassifer
 			img.setImage(inimg, false);
 		}
 	};
-	struct ClassPreview
+
+	struct GuiClass
 	{
+		int classId;
 		std::vector<TrainPiecePreview> imgs;
+		GuiClass(int id) : classId(id)
+		{ }
 	};
 
 	SelectableKeyValues<GuiClass> classesLB;
-	std::vector<ClassPreview> classImages;
 
 	BarChart graph;
 	BarChart graphBarlines;
@@ -100,31 +97,29 @@ export struct GuiClassifer
 
 		for (auto &&c : proj->classCategs.categs)
 		{
-			classesLB.add(c.name, {c.id, (int)classImages.size()});
-			loadClassImages(io, c.id);
+			classesLB.add(c.name, {c.id});
+			loadClassImages(io, classesLB.back());
 		}
 		classesLB.endAdding();
 
-		if (classImages.size() > 0)
+		if (classesLB.getSize() > 0)
 			setCurrentClassName();
 	}
 
-	void loadClassImages(ClassDataIO& io, int classId)
+	void loadClassImages(ClassDataIO& io, GuiClass& classDisplayData)
 	{
-		ClassPreview prev;
-		ClassDataIO::TrainCallback cla = [&prev](int, vbuffer&, BackImage preview, size_t dbLocalId)
+		ClassDataIO::TrainCallback cla = [&classDisplayData](int, vbuffer&, BackImage preview, size_t dbLocalId)
 		{
-			prev.imgs.push_back(TrainPiecePreview(preview, dbLocalId));
+			classDisplayData.imgs.push_back(TrainPiecePreview(preview, dbLocalId));
 		};
 
-		io.loadAll(cla, classId, ClassDataIO::LF_ICON);
-		classImages.push_back(prev);
+		io.loadAll(cla, classDisplayData.classId, ClassDataIO::LF_ICON);
 	}
 
 	BackColor& getCurColor()
 	{
 		int claId = classesLB.currentValue().classId;
-		return proj->classCategs.categs[claId].color;
+		return proj->classCategs.get(claId)->color;
 	}
 
 	void drawClassifierWindow()
@@ -145,18 +140,18 @@ export struct GuiClassifer
 		{
 			BackString st(buffer);
 			int classId = proj->addClassType(st);
-			classesLB.add(st, {classId, (int)classImages.size()});
+
+			classesLB.add(st, {classId});
 			classesLB.endAdding();
 
-			classImages.push_back(ClassPreview());
-			if (classImages.size() == 1)
+			if (classesLB.getSize() == 1)
 			{
 				setCurrentClassName();
 			}
 		}
 		ImGui::EndDisabled();
 
-		const bool hasClasses = classesLB.getSize() != 0;
+		bool hasClasses = classesLB.getSize() != 0;
 		ImGui::BeginDisabled(!hasClasses);
 
 		ImGui::SameLine();
@@ -174,12 +169,13 @@ export struct GuiClassifer
 		ImGui::SameLine();
 		if (ImGui::Button("Drop"))
 		{
-			auto selectedClass = classesLB.currentValue();
-			proj->removeClassType(selectedClass.classId);
-			classImages.erase(classImages.begin() + selectedClass.vecId);
+			int selClassID = classesLB.currentValue().classId;
+			proj->removeClassType(selClassID);
 			classesLB.remove(classesLB.currentIndex);
 		}
 		ImGui::EndDisabled();
+
+		hasClasses = classesLB.getSize() != 0; // Check it again after the dropping
 
 		classesLB.drawListBox("Категории");
 		if (classesLB.hasChanged())
@@ -249,8 +245,9 @@ export struct GuiClassifer
 
 			if (ImGui::Button("Show graph"))
 			{
-				graph.init(proj->classifier.dbPath, classesLB.currentValue().classId);
-				graphBarlines.initBarlines(proj->classifier.dbPath, classesLB.currentValue().classId);
+				int classId = classesLB.currentValue().classId;
+				graph.init(proj->classifier.dbPath, classId);
+				graphBarlines.initBarlines(proj->classifier.dbPath, classId);
 			}
 
 			ImGui::BeginDisabled(!selceted.hasData());
@@ -258,10 +255,10 @@ export struct GuiClassifer
 			if (ImGui::Button("Add selected"))
 			{
 				BackImage icon;
-				auto selectedClass = classesLB.currentValue();
+				auto& selectedClass = classesLB.currentValue();
 				assert(proj->classCategs.size() !=0);
 				size_t dbLocalId = proj->addTrainData(ioLayer->in, selectedClass.classId, selceted, &icon);
-				classImages[selectedClass.vecId].imgs.push_back(TrainPiecePreview(icon, dbLocalId));
+				selectedClass.imgs.push_back(TrainPiecePreview(icon, dbLocalId));
 			}
 			ImGui::EndDisabled();
 
@@ -269,9 +266,9 @@ export struct GuiClassifer
 			ImGui::SameLine();
 			if (ImGui::Button("Drop data"))
 			{
-				auto selectedClass = classesLB.currentValue();
+				auto& selectedClass = classesLB.currentValue();
 				proj->removeTrainData(selectedClass.classId, selectedPrevied.dbId);
-				auto& b = classImages[selectedClass.vecId].imgs;
+				auto& b = selectedClass.imgs;
 				b.erase(b.begin() + selectedPrevied.vecId);
 				selectedPrevied.vecId = -1;
 			}
@@ -286,17 +283,15 @@ export struct GuiClassifer
 			//auto& pngs = getClassImagesData().imgs;
 
 			float winWid = ImGui::GetCurrentWindow()->Size.x;
-			if (ImGui::BeginListBox("##LayersList", ImVec2(winWid, 0)))
+			if (ImGui::BeginListBox("##ClassDataList", ImVec2(winWid, 0)))
 			{
 				ImVec2 posAfter;
 
 				int j = 0;
-				int selectedClass = classesLB.currentValue().vecId;
-				ClassPreview& prev = classImages[selectedClass];
-
+				auto& prevImgs = classesLB.currentValue().imgs;
 
 				float stX = 0;
-				for (auto& icon : prev.imgs)
+				for (auto& icon : prevImgs)
 				{
 					ImGui::PushID(j);
 

@@ -582,7 +582,7 @@ public:
 		}
 
 		assert(maxP <= 1.0);
-		return maxP > 0.5 ? maxInd : -1;
+		return maxP > 0.5 ? classes[maxInd]->classId : -1;
 	}
 };
 

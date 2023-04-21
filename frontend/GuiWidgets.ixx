@@ -240,7 +240,7 @@ struct SelectableKeyValues
 		--size;
 		endAdding();
 
-		if (id <= currentIndex)
+		if (currentIndex >= size)
 		{
 			--currentIndex;
 		}
@@ -273,7 +273,12 @@ struct SelectableKeyValues
 		return items.data();
 	}
 
-	T currentValue()
+	T& back()
+	{
+		return values.back();
+	}
+
+	T& currentValue()
 	{
 		return values[currentIndex];
 	}
