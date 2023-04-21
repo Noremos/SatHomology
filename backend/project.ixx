@@ -1186,7 +1186,7 @@ public:
 	}
 
 	std::mutex addPrimitiveMutex;
-	bool predictForLayer(IClassItem* item, const TileProvider& tileProv, float subToRealFactor)
+	bool predictForLayer(IClassItem* item, const TileProvider& tileProv, float diplsayToRealFactor)
 	{
 		auto id = predict(item);
 		if (id != -1)
@@ -1208,9 +1208,10 @@ public:
 			{
 				auto point = bc::barvalue::getStatPoint(pm);
 
-				BackPixelPoint op = tileProv.tileToFull(point.x, point.y);
+				BackPixelPoint op = tileProv.tileToPreview(point.x, point.y); // To display
 				BackPoint iglob((static_cast<float>(op.x) + 0.5f), static_cast<float>(op.y) + 0.5f);
-				iglob = cs.toGlobal(iglob.x * subToRealFactor, iglob.y * subToRealFactor);
+
+				iglob = cs.toGlobal(iglob.x * diplsayToRealFactor, iglob.y * diplsayToRealFactor); // To real
 				p->addPoint(iglob);
 			}
 			return true;
