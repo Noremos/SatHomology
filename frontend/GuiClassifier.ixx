@@ -124,6 +124,9 @@ export struct GuiClassifer
 
 	void drawClassifierWindow()
 	{
+		if (!show)
+			return;
+
 		graph.draw();
 		graphBarlines.draw("Chart - barlines");
 
