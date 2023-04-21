@@ -435,7 +435,7 @@ public:
 				ImGui::CloseCurrentPopup();
 				auto rets = backend.processRaster(context.iol, filtere.getFilter());
 				//auto rets = proj->processCachedBarcode(context.iol, filtere.getFilter());
-
+				this->toGuiData();
 				context.setLayers(rets, "barcode");
 				//commonValus.onAir = true;
 				//commonValus.future = std::async(&GuiBackend::processRaster, std::ref(backend),

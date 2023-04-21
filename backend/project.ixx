@@ -1108,7 +1108,7 @@ public:
 		// ret.push_back(outLayer);
 		RasterLineLayer* outLayer = inLayer;
 		outLayer->clearResponser();
-		ret.push_back(outLayer);
+		//ret.push_back(outLayer); // Do not recreate this node
 
 		// Cacher
 		ItemHolderCache cacher;
