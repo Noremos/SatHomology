@@ -13,7 +13,8 @@
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/Debug",
             "environment": [],
-            "console": "externalTerminal"
+            // "console": "externalTerminal"
+            "console": "integratedTerminal"
         },
         {
             "name": "Release",
