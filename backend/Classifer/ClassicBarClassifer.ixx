@@ -456,27 +456,31 @@ public:
 struct BettyVal
 {
 	int vals[256];
+	int offset;
 
-	BettyVal(const int* const input)
+	BettyVal(const int* const input, int off)
 	{
 		memcpy(vals, input, 256 * sizeof(int));
+		offset = off;
 	}
 
 	// Computes the cosine similarity between two arrays
-	float compaire(const int* const ovals)
+	float compaire(const int* const ovals, int off)
 	{
-		double dotProduct = 0.0;
-		double magA = 0.0;
-		double magB = 0.0;
+		size_t dotProduct = 0;
+		size_t magA = 0;
+		size_t magB = 0;
 		for (unsigned short i = 0; i < 256; i++)
 		{
-			dotProduct += vals[i] * ovals[i];
-			magA += vals[i] * vals[i];
-			magB += ovals[i] * ovals[i];
+			int v = (i - offset) < 0 ? 0 : vals[i];
+			int o = (i - off) < 0 ? 0 : ovals[i];
+			dotProduct += v * o;
+			magA += v * v;
+			magB += o * o;
 		}
-		magA = sqrt(magA);
-		magB = sqrt(magB);
-		return dotProduct / (magA * magB);
+		// magA = sqrt(magA);
+		// magB = sqrt(magB);
+		return static_cast<double>(dotProduct) / (sqrt(magA) * sqrt(magB));
 	}
 };
 
@@ -485,9 +489,9 @@ class BattyClass
 	std::vector<BettyVal*> data;
 
 public:
-	void add(const int* const src)
+	void add(const int* const src, int off)
 	{
-		data.push_back(new BettyVal(src));
+		data.push_back(new BettyVal(src, off));
 	}
 
 	BettyVal* exractItem(int i)
@@ -502,7 +506,7 @@ public:
 		return data.size();
 	}
 
-	float compire(const int* const other)
+	float compire(const int* const other, int off)
 	{
 		float maxc = 0;
 		// int maxId = 0;
@@ -512,7 +516,7 @@ public:
 			if (data[i] == nullptr)
 				continue;
 
-			float locd = data[i]->compaire(other);
+			float locd = data[i]->compaire(other, off);
 			sum += locd;
 			if (locd > maxc)
 			{
@@ -562,18 +566,29 @@ public:
 
 	void addToContainer(BattyClass& container, BettylineClass* raw)
 	{
-		container.add(raw->betty);
+		short st = raw->line->start.getAvgUchar();
+		short ed = raw->line->end().getAvgUchar();
+		if (st > ed)
+			st = ed;
+
+		container.add(raw->betty, st);
 	}
 
 	int predictInner(const BettylineClass* newOne)
 	{
+
+		short st = newOne->line->start.getAvgUchar();
+		short ed = newOne->line->end().getAvgUchar();
+		if (st > ed)
+			st = ed;
+
 		float res = 0;
 
 		int maxInd = -1;
 		float maxP = res;
 		for (size_t i = 0; i < classes.size(); i++)
 		{
-			float ps = classes[i]->container.compire(newOne->betty);
+			float ps = classes[i]->container.compire(newOne->betty, st);
 			if (ps > maxP)
 			{
 				maxP = ps;
