@@ -5,6 +5,7 @@
 #include <sqlite3.h>
 
 #include <vector>
+#include <cassert>
 //#include <iostream>
 
 export module TrainIO;
@@ -262,8 +263,8 @@ public:
 			return 0;
 		}
 
-		if (classId != -1)
-			sqlite3_bind_int64(stmt, 1, classId); // bind the rowid value to the first placeholder
+		assert(classId != -1);
+		sqlite3_bind_int64(stmt, 1, classId); // bind the rowid value to the first placeholder
 
 		rc = sqlite3_step(stmt);
 		if (rc != SQLITE_ROW)
@@ -482,22 +483,22 @@ public:
 		sqlite3_stmt* stmt = NULL;
 		const char* statement = "DELETE FROM CLASS_DATA WHERE ROWID = ?;";
 
-		auto rc = sqlite3_prepare_v2(db, statement, 0, &stmt, NULL);
+		auto rc = sqlite3_prepare_v2(db, statement, -1, &stmt, NULL);
 		if (rc != SQLITE_OK)
 		{
-			//std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+			printf("Failed to prepare statement : %s\n", sqlite3_errmsg(db));
 		}
 
 		rc = sqlite3_bind_int64(stmt, 1, localId); // bind the rowid value to the first placeholder
 		if (rc != SQLITE_OK)
 		{
-			//std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+			printf("Failed to bind data: %s\n", sqlite3_errmsg(db));
 		}
 
 		rc = sqlite3_step(stmt);
 		if (rc != SQLITE_OK)
 		{
-			//std::cerr << "Failed to execute statement: " << sqlite3_errmsg(db) << std::endl;
+			printf("Failed to execute statement : %s\n", sqlite3_errmsg(db));
 		}
 
 		// Finalize statement
