@@ -109,6 +109,11 @@ float SimpleImgReader::getNullValue()
 
 DataRect SimpleImgReader::getRect(int stX, int stRow, int wid, int hei)
 {
+	if (stX > main.width() || stRow > main.height())
+	{
+		return DataRect(1, 1, type, samples);
+	}
+
 	if (stX + wid > main.width())
 		wid = main.width() - stX;
 	if (stRow + hei > main.height())
