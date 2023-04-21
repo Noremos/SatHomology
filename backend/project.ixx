@@ -877,6 +877,7 @@ public:
 		IRasterLayer* inLayer = getInRaster(iol);
 		int tileSize = inLayer->prov.tileSize;
 		int tileOffset = inLayer->tileOffset;
+		SubImgInf curSize = inLayer->getSubImgInf(); // Cursubimg
 
 		if (filter)
 		{
@@ -894,7 +895,7 @@ public:
 		layer->tileOffset = tileOffset;
 
 		LayerProvider& prov = layer->prov;
-		prov.update(curSize.wid, curSize.hei, inLayer->displayWidth(), tileSize);
+		prov.init(curSize.wid, curSize.hei, inLayer->displayWidth(), tileSize);
 
 		if (layer->cacheId == -1)
 			layer->cacheId = metaprov->getUniqueId();
@@ -918,8 +919,6 @@ public:
 
 
 		// Setup tileIterators
-
-		SubImgInf curSize = inLayer->getSubImgInf(); // Cursubimg
 		TileImgIterator tileIter(tileSize, tileOffset, curSize.wid, curSize.hei);
 
 		// Threads
@@ -1308,8 +1307,11 @@ public:
 			BackPixelPoint st = tileProv.tileToFull(rect.x, rect.y);
 			BackPixelPoint ed = tileProv.tileToFull(rect.right(), rect.botton());
 
-			st = st * inLayer->subToRealFactor;
-			ed = (ed * inLayer->subToRealFactor) - st;
+			float realFactor = inLayer->subToRealFactor / inLayer->prov.displayFactor;
+			printf("Get rect (%d, %d) (%d, %d) with factor %f\n", st.x, st.y, ed.x + st.x, ed.y + st.y, realFactor);
+			ed = (ed - st) * realFactor;
+			st = st * realFactor;
+			printf("Get rect (%d, %d) (%d, %d)\n", st.x, st.y, ed.x + st.x, ed.y + st.y);
 			*destIcon = sourceLayer->getRect(st.x, st.y, ed.x, ed.y);
 			fromSourceImg = destIcon;
 		}

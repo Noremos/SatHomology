@@ -87,13 +87,28 @@ struct TPoint
 		return TPoint(x / other.x, y / other.y);
 	}
 
-	// TPoint multiplication operator by scalar
-	TPoint operator*(T scalar) const {
+
+	TPoint operator*(double scalar) const {
 		return TPoint(x * scalar, y * scalar);
 	}
 
-	// TPoint division operator by scalar
-	TPoint operator/(T scalar) const {
+	TPoint operator/(double scalar) const {
+		return TPoint(x / scalar, y / scalar);
+	}
+
+	TPoint operator*(float scalar) const {
+		return TPoint(x * scalar, y * scalar);
+	}
+
+	TPoint operator/(float scalar) const {
+		return TPoint(x / scalar, y / scalar);
+	}
+
+	TPoint operator*(int scalar) const {
+		return TPoint(x * scalar, y * scalar);
+	}
+
+	TPoint operator/(int scalar) const {
 		return TPoint(x / scalar, y / scalar);
 	}
 

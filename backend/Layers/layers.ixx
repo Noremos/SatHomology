@@ -330,16 +330,16 @@ public:
 		RasterLayer::saveLoadState(state, metaFolder);
 		state->scInt("cacheId", cacheId);
 		state->scInt("parentLayerId", parentlayerId);
-		state->scFloat("subToRealFactor", subToRealFactor);
+		state->scFloat("subToRealFactor", subToRealFactor); // TODO: rename it to SubToDsiplay
 	}
 
 	virtual int realWidth() const override
 	{
-		return mat.width() * subToRealFactor;
+		return mat.width() * subToRealFactor; // Invalid
 	}
 	virtual int realHeight() const override
 	{
-		return mat.height() * subToRealFactor;
+		return mat.height() * subToRealFactor; // Invaild; 
 	}
 
 	//virtual void readJson(const BackJson& json, const BackDirStr& metaFolder)
@@ -370,7 +370,7 @@ public:
 	{
 		assert(layer != this);
 
-		subToRealFactor = layer->realWidth() / layer->displayWidth();
+		subToRealFactor = layer->realWidth() / layer->displayWidth(); // SubToDsiplay
 		int wid = layer->displayWidth();
 		int hei = layer->displayHeight();
 
