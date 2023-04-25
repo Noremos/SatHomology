@@ -346,9 +346,6 @@ public:
 	WindowVec2 offset = ImVec2(0, 0);
 	ItemVec2 clickedPos = ImVec2(0, 0);
 
-	GuiImage& operator=(const GuiImage& other) noexcept = delete;
-	GuiImage& operator=(GuiImage&& other) noexcept = delete;
-
 	float getZoom()
 	{
 		return zoom.x;
@@ -356,19 +353,31 @@ public:
 
 	bool clicked = false;
 
+	bool floatable = false;
 	bool good;
+	bool open = false;
 	bool Begin(const char* name)
 	{
+		floatable = true;
+		if (open)
+		{
+			auto window_flags = ImGuiWindowFlags_HorizontalScrollbar;
+			good = ImGui::Begin(name, &open, window_flags);
+		}
+		else
+			good = false;
+
+		return good;
+	}
+
+	bool BeginAsChild(const char* name)
+	{
+		floatable = false;
 		auto window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
 			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoDocking;
 		window_flags |= ImGuiWindowFlags_HorizontalScrollbar;
-		if (!ImGui::Begin(name, NULL, window_flags))
-		{
-			good = false;
-		}
-		else
-			good = true;
 
+		good = ImGui::Begin(name, &open, window_flags);
 		return good;
 	}
 
@@ -398,7 +407,7 @@ public:
 		offset.x = ImGui::GetScrollX();
 		offset.y = ImGui::GetScrollY();
 
-		if (drgged)
+		if (drgged && !floatable)
 		{
 			offset.x -= io.MouseDelta.x;
 			offset.y -= io.MouseDelta.y;
@@ -419,8 +428,11 @@ public:
 		ImVec2 nsize = ImVec2((float)realSize.x * zoom.x, (float)realSize.y * zoom.y);
 		displaySize = nsize;
 
-		ImGui::SetScrollX(offset.x);
-		ImGui::SetScrollY(offset.y);
+		if (!floatable)
+		{
+			ImGui::SetScrollX(offset.x);
+			ImGui::SetScrollY(offset.y);
+		}
 
 		ImGui::End();
 	}
@@ -561,6 +573,18 @@ public:
 	// {
 	// 	return static_cast<float>(y) * (displaySize.y / height) + localDisplayPos.y;
 	// }
+
+	void drawImage(const char* name, ImVec2 lpos, ImVec2 lsize)
+	{
+		auto window_flags = ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoScrollWithMouse;
+
+		ImGui::SetCursorPos(lpos);
+		if (ImGui::BeginChild(name, lsize, false, window_flags))
+		{
+			drawTexture(lpos, lsize, ImVec2(0,0), ImVec2(width, height));
+		}
+		ImGui::EndChild();
+	}
 
 	void drawImage(const char* name, ImVec2 lpos, ImVec2 lsize, ImVec2 displayStart, ImVec2 displayEnd)
 	{
