@@ -10,3 +10,6 @@
 [submodule "vcpkg"]
 	path = vcpkg
 	url = https://github.com/microsoft/vcpkg.git
+[submodule "side/sol2"]
+	path = side/sol2
+	url = https://github.com/ThePhD/sol2
