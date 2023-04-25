@@ -631,7 +631,8 @@ public:
 	{
 		if (ImGui::Button("Выгрузить слой"))
 		{
-			BackPathStr path = getSavePath({ "geojson", "*.geojson, *.json" });
+			BackPathStr path = getSavePath({ "geojson", "*.geojson",
+											"json", "*.json" });
 			data->savePolygonsAsGeojson(path);
 		}
 
