@@ -35,7 +35,7 @@ public:
 		if (line)
 		{
 			depth = line->getDeath();
-			matrSize = line->matr.size();
+			matrSize = line->getMatrSize();
 			update();
 		}
 	}
@@ -364,7 +364,7 @@ public:
 		if (iline)
 		{
 			depth = line->getDeath();
-			matrSize = line->matr.size();
+			matrSize = line->getMatrSize();
 			update();
 		}
 	}
