@@ -364,20 +364,90 @@ public:
 	{ }
 };
 
-class RasterGuiLayer : public TiledRasterGuiLayer<RasterLayer>
+
+template<class T>
+class RasterToolsLayer : public TiledRasterGuiLayer<T>
+{
+	GuiFilter filtere;
+
+public:
+	RasterToolsLayer(T* fromCore = nullptr) : TiledRasterGuiLayer<T>(fromCore)
+	{ }
+
+	virtual void drawToolboxInner(ILayerWorker& context)
+	{
+		TiledRasterGuiLayer<T>::drawToolboxInner(context);
+
+		if (ImGui::Button("Activation"))
+		{
+			//auto rets = proj->exeFilter(context.iol, 0);
+			auto rets = backend.exeFilter(context.iol, 0);
+			context.setLayers(rets, "filter");
+		}
+
+		if (ImGui::Button("GUI"))
+		{
+			ImGui::OpenPopup("UpdateImage");
+		}
+
+		if (ImGui::BeginPopupModal("UpdateImage", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			filtere.draw();
+
+			TiledRasterGuiLayer<T>::componentCB.drawCombobox("##Форма");
+			TiledRasterGuiLayer<T>::procCB.drawCombobox("##Обработка");
+			TiledRasterGuiLayer<T>::colorCB.drawCombobox("##Цвет");
+
+			if (ImGui::Button("Run"))
+			{
+				TiledRasterGuiLayer<T>::grabSets();
+				auto rets = backend.exeGUI(context.iol, TiledRasterGuiLayer<T>::properties, filtere.getFilter());
+
+				ImGui::CloseCurrentPopup();
+				context.setLayers(rets, "GUI");
+			}
+			ImGui::EndPopup();
+		}
+		//ImGui::SameLine();
+		//ImGui::Checkbox("Переключить вид", &heimap.enable);
+		//if (heimap.enable && !heimap.isInit())
+		//{
+		//	heimap.init(main);
+		//}
+		ImGui::Separator();
+	}
+};
+
+
+
+class RasterGuiLayer : public RasterToolsLayer<RasterLayer>
 {
 public:
 
-	RasterGuiLayer(RasterLayer* fromCore = nullptr) : TiledRasterGuiLayer<RasterLayer>(fromCore)
+	RasterGuiLayer(RasterLayer* fromCore = nullptr) : RasterToolsLayer<RasterLayer>(fromCore)
 	{ }
 
 	virtual void toGuiData()
 	{
-		TiledRasterGuiLayer::toGuiData();
+		RasterToolsLayer::toGuiData();
 
 		tempVal = 1.f;
 		main.setImage(data->mat, false);
 		icon.setImage(data->mat, 32, 32, true);
+	}
+
+	virtual void drawToolboxInner(ILayerWorker& context)
+	{
+		RasterToolsLayer<RasterLayer>::drawToolboxInner(context);
+
+		if (ImGui::Button("Выгрузить"))
+		{
+			BackPathStr path = getSavePath({ "png", "*.png",
+								"jpg", "*.jpg" });
+			imwrite(path, data->mat);
+		}
+		ImGui::Separator();
+
 	}
 };
 
@@ -569,7 +639,7 @@ private:
 };
 
 
-class RasterFromDiskGuiLayer : public TiledRasterGuiLayer<RasterFromDiskLayer>
+class RasterFromDiskGuiLayer : public RasterToolsLayer<RasterFromDiskLayer>
 {
 public:
 	HeimapOverlap heimap;
@@ -577,7 +647,7 @@ public:
 
 	bool drawHeimap;
 
-	RasterFromDiskGuiLayer(RasterFromDiskLayer* fromCore = nullptr) : TiledRasterGuiLayer(fromCore)
+	RasterFromDiskGuiLayer(RasterFromDiskLayer* fromCore = nullptr) : RasterToolsLayer<RasterFromDiskLayer>(fromCore)
 	{
 		drawHeimap = false;
 		heimap.enable = false;
@@ -590,26 +660,6 @@ public:
 		auto i = *data->getCachedImage();
 		main.setImage(i, false);
 		icon.setImage(i, 32, 32, true);
-	}
-
-	virtual void drawToolboxInner(ILayerWorker& context)
-	{
-		ITiledRasterGuiLayer::drawToolboxInner(context);
-
-		if (ImGui::Button("Activation"))
-		{
-			//auto rets = proj->exeFilter(context.iol, 0);
-			auto rets = backend.exeFilter(context.iol, 0);
-			context.setLayers(rets, "filter");
-		}
-
-		//ImGui::SameLine();
-		//ImGui::Checkbox("Переключить вид", &heimap.enable);
-		//if (heimap.enable && !heimap.isInit())
-		//{
-		//	heimap.init(main);
-		//}
-		ImGui::Separator();
 	}
 
 	bool isDrawing = false;

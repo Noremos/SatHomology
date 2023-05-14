@@ -165,6 +165,7 @@ public:
 		IRasterLayer::saveLoadState(state, metaFolder);
 
 		LayerMetaProvider layerMeta(getLayerMeta(metaFolder));
+		layerMeta.mkdir();
 		// int imgId = metaFolder.getUniqueId();
 		const BackPathStr path = layerMeta.getSubFolder("mat.png");
 
@@ -287,6 +288,8 @@ public:
 	std::vector<std::shared_ptr<SimpleLine>> clickResponser;
 	int cacheId = -1;
 	int parentlayerId = -1;
+
+	// Sub to display factor
 	float subToRealFactor = 1.f;
 
 	RasterLineLayer()
@@ -339,7 +342,7 @@ public:
 	}
 	virtual int realHeight() const override
 	{
-		return mat.height() * subToRealFactor; // Invaild; 
+		return mat.height() * subToRealFactor; // Invaild;
 	}
 
 	//virtual void readJson(const BackJson& json, const BackDirStr& metaFolder)

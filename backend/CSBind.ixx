@@ -224,6 +224,7 @@ export struct CSBinding : public IJsonIO
 	BackProj proj;
 	BackPoint globOrigin = {0,0};
 	double img_transform[6] = {0.0,1.0,0.0,0.0,0.0,1.0};
+	// Define glob bottom
 
 	void copyTo(CSBinding& other) const
 	{
@@ -319,6 +320,8 @@ export struct CSBinding : public IJsonIO
 		BackPoint r;
 		r.x = globOrigin.x + (x * img_transform[1]) + (y * img_transform[2]);
 		r.y = globOrigin.y + (x * img_transform[4]) + (y * img_transform[5]);
+		// r.y = r.y * -1;
+		// r.y = bottom - r.y;
 
 		// PJ_COORD real = proj_trans(proj.proj, PJ_INV, getPjCoord(x, y));
 		//return { real.xy.x, real.xy.y };

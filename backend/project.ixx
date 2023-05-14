@@ -1322,7 +1322,7 @@ public:
 			BackPixelPoint st = tileProv.tileToFull(rect.x, rect.y);
 			BackPixelPoint ed = tileProv.tileToFull(rect.right(), rect.botton());
 
-			float realFactor = inLayer->subToRealFactor / inLayer->prov.displayFactor;
+			float realFactor = inLayer->subToRealFactor / inLayer->prov.displayFactor; // sub -> display -> real
 			printf("Get rect (%d, %d) (%d, %d) with factor %f\n", st.x, st.y, ed.x + st.x, ed.y + st.y, realFactor);
 			ed = (ed - st) * realFactor;
 			st = st * realFactor;
@@ -1390,8 +1390,7 @@ public:
 		setted.resize(src.length());
 		std::fill(setted.begin(), setted.end(), 0);
 
-		BackImage& imgout = layer->mat;
-		imgout = src;
+		BackImage& imgout = layer->mat = src;
 
 		//.width(), src.hei(), src.channels());
 		//imgout.fill(0);
@@ -1429,6 +1428,61 @@ public:
 				{
 					setted[re] = 10;
 					//imgout.set(IcurPoint.x, IcurPoint.y, 0);
+				}
+			}
+		}
+
+		return ret;
+	}
+
+	RetLayers exeGUI(InOutLayer& iol, const BarcodeProperies& propertices, IItemFilter* filter)
+	{
+		//if (u_displayFactor < 1.0)
+		//	throw std::exception();
+		IRasterLayer* input = getInRaster(iol);
+
+		RetLayers ret;
+		RasterLayer* layer = addOrUpdateOut<RasterLayer>(iol, input->cs.getProjId());
+		layer->initCSFrom(input->cs);
+
+		ret.push_back(layer);
+		layer->init(input);
+
+		BackImage src = *(input->getCachedImage());
+
+		bc::BarConstructor constr;
+		constr.createBinaryMasks = true;
+		constr.createGraph = true;
+		constr.attachMode = bc::AttachMode::morePointsEatLow;
+		constr.returnType = bc::ReturnType::barcode2d;
+		constr.maxRadius = 10;
+		constr.maxLen.set(15);
+		constr.structure.push_back(propertices.barstruct);
+
+		bc::BarcodeCreator bc;
+		auto containner = bc.createBarcode(&src, constr);
+		std::unique_ptr<bc::Baritem> item(containner->exractItem(0));
+		delete containner;
+
+		BackImage& imgout = layer->mat;
+		imgout.fill(0);
+		auto& lines = item->barlines;
+
+		if (filter)
+			filter->imgLen = src.length();
+
+		RasterLineLayer(); // init colors
+		for (size_t i = 0; i < lines.size(); i++)
+		{
+			auto* line = lines[i];
+			BettylineClass cls(line);
+			if (filter == nullptr || filter->pass(&cls))
+			{
+				Barscalar pointCol = RasterLineLayer::colors[rand() % RasterLineLayer::colors.size()];
+				//line->getChildsMatr(line->matr, true);
+				for (auto& p : line->matr)
+				{
+					imgout.set(p.x, p.y, pointCol);
 				}
 			}
 		}

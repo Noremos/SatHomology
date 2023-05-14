@@ -170,6 +170,13 @@ public:
 		return proj->exeFilter(layer, algNum);
 	}
 
+	RetLayers exeGUI(InOutLayer& layer, const BarcodeProperies& propertices, IItemFilter* filter)
+	{
+		if (!isLoaded())
+			return RetLayers();
+
+		return proj->exeGUI(layer, propertices, filter);
+	}
 
 	VectorLayer* addVectorLayer()
 	{
