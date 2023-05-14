@@ -1837,7 +1837,7 @@ namespace MyApp
 	void MyApp::Init(const char* root)
 	{
 		setlocale(LC_ALL, "ru_ru.utf-8");
-
+		srand(time(NULL));
 		Variables::setRoot(root);
 
 

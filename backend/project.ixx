@@ -243,13 +243,8 @@ export class Project
 					classLayers[classId] = static_cast<VectorLayer*>(vectLayer);
 				else
 				{
-					auto* layer = addLayerData<VectorLayer>(ds.sysProj.getId());
+					auto* layer = addClassLayer(classId);
 					layer->name = "Class layer";
-					layer->color = BackColor::random();
-					layer->vecType = VectorLayer::VecType::polygons;
-					layer->isSystem = true;
-
-					classLayers[classId] = layer;
 				}
 			}
 			arrst->objectEnd();
@@ -1195,6 +1190,14 @@ public:
 		return ret;
 	}
 
+
+	BackPoint toGlob(const CSBinding& cs, const TileProvider& tileProv, float diplsayToRealFactor, BackPoint p)
+	{
+		BackPixelPoint op = tileProv.tileToPreview(p.x, p.y); // To display
+		BackPoint iglob((static_cast<float>(op.x) + 0.5f), static_cast<float>(op.y) + 0.5f);
+		return cs.toGlobal(iglob.x * diplsayToRealFactor, iglob.y * diplsayToRealFactor); // To real
+	}
+
 	std::mutex addPrimitiveMutex;
 	bool predictForLayer(IClassItem* item, const TileProvider& tileProv, float diplsayToRealFactor)
 	{
@@ -1204,8 +1207,10 @@ public:
 			VectorLayer* vl = classLayers.at(classId);
 			assert(vl != nullptr);
 
-			mcountor temp;
-			getCountour(item->getMatrix(), temp, true);
+			BackPoint center;
+			float r;
+			getCircle(item->getMatrix(), center, r);
+			BackPoint rb(center.x + r, center.y + r);
 
 			DrawPrimitive* p;
 			{
@@ -1215,16 +1220,10 @@ public:
 
 			CSBinding& cs = vl->cs;
 
-			for (const auto& pm : temp)
-			{
-				auto point = bc::barvalue::getStatPoint(pm);
+			BackPoint iglob = toGlob(cs, tileProv, diplsayToRealFactor, center);
+			BackPoint globRb = toGlob(cs, tileProv, diplsayToRealFactor, rb);
+			p->setCircle(iglob, globRb);
 
-				BackPixelPoint op = tileProv.tileToPreview(point.x, point.y); // To display
-				BackPoint iglob((static_cast<float>(op.x) + 0.5f), static_cast<float>(op.y) + 0.5f);
-
-				iglob = cs.toGlobal(iglob.x * diplsayToRealFactor, iglob.y * diplsayToRealFactor); // To real
-				p->addPoint(iglob);
-			}
 			return true;
 		}
 		else
@@ -1264,15 +1263,21 @@ public:
 	{
 		int classId = classCategs.addValue(name);
 		classifier.addClass(classId);
-		auto* layer = addLayerData<VectorLayer>(ds.sysProj.getId());
+		auto* layer = addClassLayer(classId);
 		layer->name = "Class: " + name;
-		layer->color = BackColor::random();
-		layer->vecType = VectorLayer::VecType::polygons;
-		layer->isSystem = true;
 
-		classLayers[classId] = layer;
 		saveProject();
 		return classId;
+	}
+
+	VectorLayer* addClassLayer(int classId)
+	{
+		auto* layer = addLayerData<VectorLayer>(ds.sysProj.getId());
+		layer->color = BackColor::random();
+		layer->vecType = VectorLayer::VecType::circles;
+		layer->isSystem = true;
+		classLayers[classId] = layer;
+		return layer;
 	}
 
 	void changeClassName(int classId, const BackString& name)

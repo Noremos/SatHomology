@@ -605,3 +605,34 @@ void saveAsGeojson(const bc::barlinevector& lines, const BackPathStr& savePath, 
 	//	widget->importedMakrers->release();
 	//	//	Size2 size = imgsrch.getTileSize();
 }
+
+
+export void getCircle(const bc::barvector& points, BackPoint& center, float& r)
+{
+	int rect[4]{ 99999999, 99999999, 0, 0 };
+	for (const auto& p : points)
+	{
+		int x = p.getX();
+		int y = p.getY();
+
+		if (x < rect[0])
+			rect[0] = x;
+		if (x > rect[2])
+			rect[2] = x;
+
+		if (y < rect[1])
+			rect[1] = y;
+		if (y > rect[3])
+			rect[3] = y;
+	}
+
+
+	const int wid = rect[2] - rect[0];
+	const int hei = rect[3] - rect[1];
+	if (wid < 3 || hei < 3)// || (wid > 1000 && hei > 1000))
+		return;
+
+	center.x = rect[0] + wid / 2;
+	center.y = rect[1] + hei / 2;
+	r = (center.x > center.y ? wid : hei) / 2;
+}

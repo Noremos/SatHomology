@@ -296,7 +296,7 @@ public:
 	{
 		if (colors.size() == 0)
 		{
-			srand(300);
+			// srand(300);
 			colors.push_back(Barscalar(255, 0, 0));
 			colors.push_back(Barscalar(0, 0, 0));
 			colors.push_back(Barscalar(0, 255, 0));

@@ -472,6 +472,9 @@ public:
 		case VectorLayer::VecType::polygons:
 			drawPolygons(ds);
 			break;
+		case VectorLayer::VecType::circles:
+			drawCircles(ds);
+			break;
 		default:
 			break;
 		}
@@ -596,6 +599,60 @@ public:
 				}
 			}
 			displayPoints.clear();
+		}
+	}
+
+	void drawCircles(const GuiDisplaySystem& ds)
+	{
+		ImGuiWindow* window = ImGui::GetCurrentWindow();
+		ImDrawList* list = window->DrawList;
+		ImVec2 offset = window->Pos;
+
+
+		CSBinding& dsc = getCore()->cs;
+		const BackPoint start = ds.getSysToItemStartPos(dsc);
+		const BackPoint end = ds.getSysToItemEndPos(dsc);
+
+		BackColor cscol = data->color;
+		for (const DrawPrimitive* d : data->primitives)
+		{
+			const std::vector<BackPoint>& points = d->points;
+			if (points.size() == 0)
+				return;
+
+			assert(points.size() == 2);
+			{
+				BackPoint rad(points[1].x - points[0].x, points[1].y - points[1].y);
+
+				std::vector<BackPoint> inCheck;
+				inCheck.push_back(points[0]);
+				inCheck.push_back(BackPoint(points[0].x - rad.x, points[0].y - rad.y));
+				inCheck.push_back(BackPoint(points[0].x - rad.x, points[0].y + rad.y));
+				inCheck.push_back(BackPoint(points[0].x + rad.x, points[0].y - rad.y));
+				inCheck.push_back(points[1]);
+
+				bool inDraw = false;
+				for (int i = 0; i < inCheck.size(); ++i)
+				{
+					const BackPoint& p = inCheck[i];
+					if (GuiDisplaySystem::inRange(start, end, p))
+					{
+						inDraw = true;
+					}
+				}
+
+				if (!inDraw)
+					continue;
+			}
+
+			// ImU32 col = ImColor(cscol.r, cscol.g, cscol.b, 200);
+			ImU32 col = ImColor(cscol.r, cscol.g, cscol.b, 255);
+			ImVec2 pi = ds.projItemGlobToDisplay(dsc, points[0]) + offset; // First
+			ImVec2 radDisplay = ds.projItemGlobToDisplay(dsc, points[1]) + offset; // Radius
+
+			const float rX = radDisplay.x - pi.x;
+			const float rY = radDisplay.y - pi.y;
+			list->AddCircle(pi, rX > rY ? rX : rY, col, 0, 5);
 		}
 	}
 

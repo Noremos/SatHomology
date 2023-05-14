@@ -43,6 +43,12 @@ public:
 		points.push_back(p);
 	}
 
+	void setCircle(BackPoint p, BackPoint r)
+	{
+		points.push_back(p);
+		points.push_back(r);
+	}
+
 	void clear()
 	{
 		points.clear();
@@ -141,6 +147,7 @@ public:
 	{
 		points,
 		polygons,
+		circles,
 		multipolygons
 	};
 
