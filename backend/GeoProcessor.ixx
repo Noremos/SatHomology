@@ -23,11 +23,6 @@ import BarcodeModule;
 import MHashMap;
 
 
-namespace bc
-{
-	using barlinevector = std::vector<bc::barline*>;
-	using barvector = std::vector<bc::barvalue>;
-}
 using uint = unsigned int;
 
 export struct Cound
@@ -42,6 +37,30 @@ export struct ProcPoint
 	float x, y;
 };
 
+
+
+export struct CounturRect
+{
+	BackPoint topLeft;
+	BackPoint bottomRight;
+
+	BackPoint topRight()
+	{
+		return {bottomRight.x + 1, topLeft.y};
+	}
+
+	BackPoint bottomLeft()
+	{
+		return {topLeft.x, bottomRight.y + 1};
+	}
+
+	BackPoint getBottomRight()
+	{
+		return {bottomRight.x + 1, bottomRight.y + 1};
+	}
+};
+
+
 export void getMaskRes(const BackImage& matres, std::vector<Cound*>& veas, Cound** resmap);
 
 //export void parseGeojson();
@@ -51,7 +70,7 @@ export using mcountor = std::vector<uint>;
 export void saveAsGeojson(const bc::barlinevector& lines, const BackPathStr& savePath, ProcPoint startOffset, double coof);
 export void saveJson(const std::string& text, int st);
 
-void getCountour(const bc::barvector& points, mcountor& contur, bool aproximate = false);
+export CounturRect getCountour(const bc::barvector& points, mcountor& contur, bool aproximate = false);
 
 using std::string;
 //static int pr = 10;
@@ -284,6 +303,7 @@ public:
 	{
 		static int poss[16][2] = { {-1, 0}, {-1, -1}, {0, -1}, {1, -1}, {1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}, {0, -1}, {1, -1}, {1, 0}, {1, 1}, {0, 1}, {-1, 1} };
 
+		int prevS;
 		dirct = RigthMid;
 		while (true)
 		{
@@ -292,7 +312,7 @@ public:
 			// Check
 			// 1 2 3
 			// 0 X 4
-			int prevS = getIndex();
+			prevS = getIndex();
 
 			for (; start < end; ++start)
 			{
@@ -345,6 +365,12 @@ public:
 				y = p.y;
 			}
 		}
+
+		if (aproxim)
+		{
+			contur.push_back(prevS);
+			//					contur.push_back(s);
+		}
 	}
 
 	void set(const bc::barvalue& p) { points[p.getIndex()] = true; }
@@ -388,7 +414,7 @@ private:
 };
 
 
-export void getCountour(const bc::barvector& points, mcountor& contur, bool aproximate)
+CounturRect getCountour(const bc::barvector& points, mcountor& contur, bool aproximate)
 {
 	contur.clear();
 
@@ -422,11 +448,13 @@ export void getCountour(const bc::barvector& points, mcountor& contur, bool apro
 	int wid = rect[2] - rect[0];
 	int hei = rect[3] - rect[1];
 
-	if (wid < 5 || hei < 5)// || (wid > 1000 && hei > 1000))
-		return;
+	if (wid < 3 || hei < 3)// || (wid > 1000 && hei > 1000))
+		return {BackPoint(rect[0], rect[1]), BackPoint(rect[2], rect[3])};
 
 	dictPoints.setStart(rect[0], stY);
 	dictPoints.run(aproximate);
+
+	return {BackPoint(rect[0], rect[1]), BackPoint(rect[2], rect[3])};
 }
 
 
@@ -635,4 +663,28 @@ export void getCircle(const bc::barvector& points, BackPoint& center, float& r)
 	center.x = rect[0] + wid / 2;
 	center.y = rect[1] + hei / 2;
 	r = (center.x > center.y ? wid : hei) / 2;
+}
+
+export void getRect(const bc::barvector& points, BackPoint& topLeft, BackPoint& bottomRight)
+{
+	topLeft.x = 99999999;
+	topLeft.y = 99999999;
+	bottomRight.x = 0;
+	bottomRight.y = 0;
+
+	for (const auto& p : points)
+	{
+		int x = p.getX();
+		int y = p.getY();
+
+		if (x < topLeft.x)
+			topLeft.x = x;
+		if (x > bottomRight.x)
+			bottomRight.x = x;
+
+		if (y < topLeft.y)
+			topLeft.y = y;
+		if (y > bottomRight.y)
+			bottomRight.y = y;
+	}
 }

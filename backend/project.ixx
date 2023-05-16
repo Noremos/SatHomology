@@ -40,12 +40,6 @@ import CSBind;
 // using CurItemHolder = BaritemHolder;
 using CurItemHolder = BettyItemHolder;
 
-namespace bc
-{
-	using barlinevector = std::vector<bc::barline*>;
-	using barvector = std::vector<bc::barvalue>;
-}
-
 
 export struct InOutLayer
 {
@@ -1447,11 +1441,20 @@ public:
 		IRasterLayer* input = getInRaster(iol);
 
 		RetLayers ret;
-		RasterLayer* layer = addOrUpdateOut<RasterLayer>(iol, input->cs.getProjId());
+		VectorLayer* layer = addOrUpdateOut<VectorLayer>(iol, input->cs.getProjId());
+		layer->color = BackColor::random();
+		layer->vecType = VectorLayer::VecType::polygons;
 		layer->initCSFrom(input->cs);
 
+		auto* layerRect = addLayerData<VectorLayer>(input->cs.getProjId());
+		layerRect->color = BackColor::random();
+		layerRect->vecType = VectorLayer::VecType::polygons;
+		layerRect->initCSFrom(input->cs);
+
+
 		ret.push_back(layer);
-		layer->init(input);
+		ret.push_back(layerRect);
+		// layer->init(input);
 
 		BackImage src = *(input->getCachedImage());
 
@@ -1460,8 +1463,8 @@ public:
 		constr.createGraph = true;
 		constr.attachMode = bc::AttachMode::morePointsEatLow;
 		constr.returnType = bc::ReturnType::barcode2d;
-		constr.maxRadius = 10;
-		constr.maxLen.set(15);
+		// constr.maxRadius = 10;
+		//constr.maxLen.set(15);
 		constr.structure.push_back(propertices.barstruct);
 
 		bc::BarcodeCreator bc;
@@ -1469,8 +1472,6 @@ public:
 		std::unique_ptr<bc::Baritem> item(containner->exractItem(0));
 		delete containner;
 
-		BackImage& imgout = layer->mat;
-		imgout.fill(0);
 		auto& lines = item->barlines;
 
 		if (filter)
@@ -1483,11 +1484,27 @@ public:
 			BettylineClass cls(line);
 			if (filter == nullptr || filter->pass(&cls))
 			{
-				Barscalar pointCol = RasterLineLayer::colors[rand() % RasterLineLayer::colors.size()];
+				// Barscalar pointCol = RasterLineLayer::colors[rand() % RasterLineLayer::colors.size()];
 				//line->getChildsMatr(line->matr, true);
-				for (auto& p : line->matr)
+				std::vector<uint> out;
+				auto rect = getCountour(line->matr, out, true);
+				if (out.size() > 0)
 				{
-					imgout.set(p.x, p.y, pointCol);
+					DrawPrimitive* p = layer->addPrimitive(BackColor::random());
+					for (const auto& pm : out)
+					{
+						auto op = bc::barvalue::getStatPoint(pm);
+						BackPoint iglob((static_cast<float>(op.x) + 0.5f), static_cast<float>(op.y) + 0.5f);
+
+						iglob =  layer->cs.toGlobal(iglob.x, iglob.y); // To real
+						p->addPoint(iglob);
+					}
+
+					p = layerRect->addPrimitive(BackColor::random());
+					p->addPoint(rect.topLeft);
+					p->addPoint(rect.topRight());
+					p->addPoint(rect.getBottomRight());
+					p->addPoint(rect.bottomLeft());
 				}
 			}
 		}

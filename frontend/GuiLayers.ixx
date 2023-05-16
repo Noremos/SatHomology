@@ -545,7 +545,7 @@ public:
 			const DrawPrimitive* d = data->primitives[io];
 
 			const std::vector<BackPoint>& points = d->points;
-			// cscol = d.color;
+			cscol = d->color;
 			// ImU32 col = ImColor(cscol.r, cscol.g, cscol.b, 200);
 			ImU32 col = ImColor(cscol.r, cscol.g, cscol.b, 255);
 			ImU32 colRev = ImColor(255 - cscol.r, 255 - cscol.g, 255 - cscol.b);
@@ -584,18 +584,18 @@ public:
 				// 	list->AddCircleFilled(pi, 3, cursorColor);
 			}
 
-			if (visible >= 2)
+			if (visible >= 1)
 			{
 				displayPoints.push_back(displayPoints[0]);
 
 				ImVec2 pi = ds.projItemGlobToDisplay(dsc, points[0]) + offset; // First
 				// list->AddConvexPolyFilled(displayPoints.data(), displayPoints.size(), col);
 				// list->AddPolyline(displayPoints.data(), displayPoints.size(), colbl, 0, 2.0);
-				list->AddPolyline(displayPoints.data(), displayPoints.size(), col, 0, 2.0);
+				list->AddPolyline(displayPoints.data(), displayPoints.size(), col, 0, 3.0);
 
 				if (inside)
 				{
-					list->AddPolyline(displayPoints.data(), displayPoints.size(), colRev, 0, 2.0);
+					list->AddPolyline(displayPoints.data(), displayPoints.size(), colRev, 0, 3.0);
 				}
 			}
 			displayPoints.clear();
