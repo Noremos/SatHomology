@@ -228,7 +228,7 @@ public:
 	}
 
 	void restoreSource();
-	void exportResult(BackDirStr path);
+	// void exportResult(BackDirStr path);
 
 	void save()
 	{
@@ -383,11 +383,6 @@ void GuiBackend::clear()
 
 ///////////////////////==============
 
-void GuiBackend::exportResult(BackDirStr path)
-{
-	//imwrite(path / "result.png", resultMart);
-	//saveAllJsons(geojson, imgNumber, path);
-}
 
 void GuiBackend::restoreSource()
 {

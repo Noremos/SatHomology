@@ -90,8 +90,11 @@ public:
 	BackString pointsAsGeojson() const
 	{
 		BackString safsd = "\"geometry\": {\"type\":\"Point\", \"coordinates\":";
-		safsd += std::format("[{},{}]", points[0].x, points[0].y);
-		safsd += "}";
+		safsd += "[";
+		safsd += intToStr(points[0].x);
+		safsd += ",";
+		safsd += intToStr(points[0].y);
+		safsd += "]}";
 		return safsd;
 	}
 
@@ -109,7 +112,12 @@ public:
 	{
 		for (const BackPoint& p : points)
 		{
-			prefix += std::format("[{},{}],", p.x, p.y);
+			// prefix += std::format("[{},{}],", p.x, p.y);
+			prefix += "[";
+			prefix += intToStr(points[0].x);
+			prefix += ",";
+			prefix += intToStr(points[0].y);
+			prefix += "],";
 		}
 		prefix[prefix.length() - 1] = ' ';
 	}
@@ -118,9 +126,9 @@ public:
 	{
 		state->beginItem();
 
-		color.r = state->pInt(color.r);
-		color.g = state->pInt(color.g);
-		color.b = state->pInt(color.b);
+		color.r = (uchar)state->pInt(color.r);
+		color.g = (uchar)state->pInt(color.g);
+		color.b = (uchar)state->pInt(color.b);
 
 		int size = state->pInt(points.size());
 		if (state->isReading())
@@ -130,8 +138,8 @@ public:
 
 		for (int i = 0; i < size; i++)
 		{
-			state->pInt(points[i].x);
-			state->pInt(points[i].y);
+			points[i].x = state->pFloat(points[i].x);
+			points[i].y = state->pFloat(points[i].y);
 		}
 
 		state->endItem();

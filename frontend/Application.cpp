@@ -1578,8 +1578,7 @@ namespace MyApp
 
 	void debugWindow()
 	{
-		return;
-		if (!ImGui::Begin("debug"))
+		/*if (!ImGui::Begin("debug"))
 		{
 			ImGui::End();
 			return;
@@ -1627,7 +1626,7 @@ namespace MyApp
 			}
 		}
 
-		ImGui::End();
+		ImGui::End();*/
 	}
 
 	void draw3d()

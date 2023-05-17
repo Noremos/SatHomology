@@ -215,7 +215,8 @@ public:
 
 	BackString getMetaLayerName()
 	{
-		return std::format("{}_layer", id);
+		BackString name = intToStr(id);
+		return name + "_layer";
 	}
 
 	MetadataProvider getLayerMeta(const MetadataProvider& metaFolder)

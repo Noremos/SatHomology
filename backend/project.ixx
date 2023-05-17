@@ -17,6 +17,8 @@ module;
 #include <windows.h>
 #endif
 
+#include "../side/Barcode/PrjBarlib/include/CellEater.h"
+
 
 export module ProjectModule;
 
@@ -569,8 +571,6 @@ public:
 
 	void readGeojson();
 	void readMyGeo(bool reinitY);
-
-	void exportResult(int imgNumber, const BackImage& resultMart);
 
 	int predict(const IClassItem* item)
 	{
@@ -1445,15 +1445,21 @@ public:
 		layer->color = BackColor::random();
 		layer->vecType = VectorLayer::VecType::polygons;
 		layer->initCSFrom(input->cs);
+		layer->name = "Source bounds";
 
 		auto* layerRect = addLayerData<VectorLayer>(input->cs.getProjId());
 		layerRect->color = BackColor::random();
 		layerRect->vecType = VectorLayer::VecType::polygons;
 		layerRect->initCSFrom(input->cs);
+		layerRect->name = "Rect bounds";
 
+		RasterLayer* rasterSpot = addLayerData<RasterLayer>(input->cs.getProjId());
+		rasterSpot->initCSFrom(input->cs);
+		rasterSpot->init(input);
 
 		ret.push_back(layer);
 		ret.push_back(layerRect);
+		ret.push_back(rasterSpot);
 		// layer->init(input);
 
 		BackImage src = *(input->getCachedImage());
@@ -1467,10 +1473,14 @@ public:
 		//constr.maxLen.set(15);
 		constr.structure.push_back(propertices.barstruct);
 
-		bc::BarcodeCreator bc;
-		auto containner = bc.createBarcode(&src, constr);
-		std::unique_ptr<bc::Baritem> item(containner->exractItem(0));
-		delete containner;
+		// bc::BarcodeCreator bc;
+		// auto containner = bc.createBarcode(&src, constr);
+		// std::unique_ptr<bc::Baritem> item(containner->exractItem(0));
+		// delete containner;
+
+		std::unique_ptr<bc::Baritem> item(bc::Eater::createBarcode(&src));
+
+		BackImage& imgout = rasterSpot->mat = src;
 
 		auto& lines = item->barlines;
 
@@ -1488,9 +1498,18 @@ public:
 				//line->getChildsMatr(line->matr, true);
 				std::vector<uint> out;
 				auto rect = getCountour(line->matr, out, true);
+
+				BackColor pointCol = BackColor::random();
+				Barscalar barclo(pointCol.r, pointCol.g, pointCol.b);
+				//line->getChildsMatr(line->matr, true);
+				for (auto& p : line->matr)
+				{
+					imgout.set(p.x, p.y, barclo);
+				}
+
 				if (out.size() > 0)
 				{
-					DrawPrimitive* p = layer->addPrimitive(BackColor::random());
+					DrawPrimitive* p = layer->addPrimitive(pointCol);
 					for (const auto& pm : out)
 					{
 						auto op = bc::barvalue::getStatPoint(pm);
@@ -1500,7 +1519,7 @@ public:
 						p->addPoint(iglob);
 					}
 
-					p = layerRect->addPrimitive(BackColor::random());
+					p = layerRect->addPrimitive(pointCol);
 					p->addPoint(rect.topLeft);
 					p->addPoint(rect.topRight());
 					p->addPoint(rect.getBottomRight());
@@ -1608,10 +1627,4 @@ void Project::readMyGeo(bool reinitY)
 	//	inputFile.close();
 
 	//	widget->markers->updateBuffer();
-}
-
-void Project::exportResult(int imgNumber, const BackImage& resultMart)
-{
-	imwrite(getPath(BackPath::root) / "result.png", resultMart);
-	saveAllJsons(geojson, imgNumber, getPath(BackPath::geojson));
 }
