@@ -130,16 +130,16 @@ export struct GuiClassifer
 		graph.draw();
 		graphBarlines.draw("Chart - barlines");
 
-		if (!ImGui::Begin("Classifier", &show))
+		if (!ImGui::Begin("Классификатор", &show))
 		{
 			ImGui::End();
 			return;
 		}
-		ImGui::InputText("Name", buffer, 200);
+		ImGui::InputText("Имя", buffer, 200);
 
 		const bool emptyName = strlen(buffer) == 0;
 		ImGui::BeginDisabled(emptyName);
-		if (ImGui::Button("Add"))
+		if (ImGui::Button("Добавить"))
 		{
 			BackString st(buffer);
 			int classId = proj->addClassType(st);
@@ -160,7 +160,7 @@ export struct GuiClassifer
 		ImGui::SameLine();
 
 		ImGui::BeginDisabled(emptyName);
-		if (ImGui::Button("Edit"))
+		if (ImGui::Button("Изменить"))
 		{
 			BackString st(buffer);
 			int selectedClass = classesLB.currentValue().classId;
@@ -170,7 +170,7 @@ export struct GuiClassifer
 		ImGui::EndDisabled();
 
 		ImGui::SameLine();
-		if (ImGui::Button("Drop"))
+		if (ImGui::Button("Удалить"))
 		{
 			int selClassID = classesLB.currentValue().classId;
 			proj->removeClassType(selClassID);
@@ -235,7 +235,7 @@ export struct GuiClassifer
 			if (changeColor)
 			{
 				ImGui::SameLine();
-				if (ImGui::Button("Apply"))
+				if (ImGui::Button("Применить"))
 				{
 					auto& col = getCurColor();
 					col.r = std::min(static_cast<int>(curColor.x * 255), 255);
@@ -243,19 +243,19 @@ export struct GuiClassifer
 					col.b = std::min(static_cast<int>(curColor.z * 255), 255);
 				}
 
-				ImGui::ColorPicker4("Color", (float*)&curColor, ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoInputs);
+				ImGui::ColorPicker4("Цвет", (float*)&curColor, ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoInputs);
 			}
 
-			if (ImGui::Button("Show graph"))
-			{
-				int classId = classesLB.currentValue().classId;
-				graph.init(proj->classifier.dbPath, classId);
-				graphBarlines.initBarlines(proj->classifier.dbPath, classId);
-			}
+			//if (ImGui::Button("Show graph"))
+			//{
+			//	int classId = classesLB.currentValue().classId;
+			//	graph.init(proj->classifier.dbPath, classId);
+			//	graphBarlines.initBarlines(proj->classifier.dbPath, classId);
+			//}
 
 			ImGui::BeginDisabled(!selceted.hasData());
 			ImGui::SameLine();
-			if (ImGui::Button("Add selected"))
+			if (ImGui::Button("Добавить выбранный"))
 			{
 				BackImage icon;
 				auto& selectedClass = classesLB.currentValue();
@@ -267,7 +267,7 @@ export struct GuiClassifer
 
 			ImGui::BeginDisabled(!selectedPrevied.hasData());
 			ImGui::SameLine();
-			if (ImGui::Button("Drop data"))
+			if (ImGui::Button("Удалить данные"))
 			{
 				auto& selectedClass = classesLB.currentValue();
 				proj->removeTrainData(selectedClass.classId, selectedPrevied.dbId);

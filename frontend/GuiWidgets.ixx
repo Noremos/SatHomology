@@ -932,7 +932,7 @@ public:
 
 	void draw()
 	{
-		if (ImGui::BeginCombo("Select CS", projections[selectedProjId].c_str()))
+		if (ImGui::BeginCombo("СК.", projections[selectedProjId].c_str()))
 		{
 			int k = 0;
 			for (auto& n : projections)
@@ -948,11 +948,11 @@ public:
 			ImGui::EndCombo();
 		}
 
-		ImGui::InputDouble("Origin x", &curcs.globOrigin.x);
-		ImGui::InputDouble("Origin y", &curcs.globOrigin.y);
+		ImGui::InputDouble("Начало x", &curcs.globOrigin.x);
+		ImGui::InputDouble("Начало y", &curcs.globOrigin.y);
 
-		ImGui::InputDouble("Scale x", curcs.getScaleX());
-		ImGui::InputDouble("Scale y", curcs.getScaleY());
+		ImGui::InputDouble("Масштаб. x", curcs.getScaleX());
+		ImGui::InputDouble("Масштаб. y", curcs.getScaleY());
 	}
 
 	void apply(CSBinding& cs)

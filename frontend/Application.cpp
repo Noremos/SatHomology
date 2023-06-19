@@ -79,22 +79,22 @@ struct GuiFilter
 
 	void draw()
 	{
-		typeCB.drawCombobox("Type");
+		typeCB.drawCombobox("Тип");
 		switch (typeCB.currentValue())
 		{
 		case 0:
 			break;
 		case 1:
 			ImGui::Text("Пороги отсеивания");
-			_drawPair("MinStart", "MaxStart", valsFilter.start);
-			_drawPair("MinLen", "MaxLen", valsFilter.len);
-			_drawPair("MinMatrSize %", "MaxMatrSize %", valsFilter.matrSizeProc, 100);
-			_drawPair("MinDepth", "Max depth", valsFilter.depth, 200);
-			ImGui::InputInt("Min matr size", &valsFilter.minPixelsSize); // matr size must be more then this
+			_drawPair("Мин. Начало", "Макс. Начало", valsFilter.start);
+			_drawPair("Мин. Длина", "Макс. Длина", valsFilter.len);
+			_drawPair("Мин. Размер матрицы в %", "Макс. размер матрицы в %", valsFilter.matrSizeProc, 100);
+			_drawPair("Мин. Глубина", "Макс. Глубина", valsFilter.depth, 200);
+			ImGui::InputInt("Мин. объем матрицы", &valsFilter.minPixelsSize); // matr size must be more then this
 
 			break;
 		case 2:
-			ImGui::InputTextMultiline("Lua script", text, 10000, ImVec2(500, 300));
+			ImGui::InputTextMultiline("Lua скрипт", text, 10000, ImVec2(500, 300));
 			break;
 		default:
 			break;
@@ -173,7 +173,7 @@ public:
 		{bc::ProcType::Radius, "По расстоянию"},
 		{bc::ProcType::invertf0, "Инвертировать"},
 		{bc::ProcType::experiment, "Радар"},
-		{bc::ProcType::ValueRadius, "Тру расстояние"}
+		// {bc::ProcType::ValueRadius, "Тру расстояние"}
 	};
 
 	SelectableKeyValues<bc::ColorType> colorCB =
@@ -251,8 +251,8 @@ public:
 					}
 					else
 					{
-						ImGui::Checkbox("Use holes", &properties.alg1UseHoles);
-						ImGui::Checkbox("ignore hight", &properties.alg1IgnoreHeight);
+						ImGui::Checkbox("Использовать дыры", &properties.alg1UseHoles);
+						ImGui::Checkbox("Игнорировать высоту", &properties.alg1IgnoreHeight);
 					}
 
 					ImGui::EndTabItem();
@@ -295,14 +295,14 @@ public:
 					{
 						SubImgInf& sub = subImgs[imgSubImages.currentIndex];
 						int maxSize = std::max(sub.wid, sub.hei);
-						ImGui::Text("Tile size");
+						ImGui::Text("Размер тайла");
 						tileSizeSlider.draw("##Tile size", newTileSize, 10, maxSize, 10);
 
 						int maxOffset = newTileSize;
 						if (newTileSize + maxOffset > maxSize)
 							maxOffset = maxSize - newTileSize;
 
-						ImGui::Text("Tile offset size");
+						ImGui::Text("Доп. наложение тайла");
 						offsetSlider.draw("##Offset size", newOffsetSize, 0, maxOffset, 1);
 
 						ImGui::Separator();
@@ -378,7 +378,7 @@ public:
 	{
 		TiledRasterGuiLayer<T>::drawToolboxInner(context);
 
-		if (ImGui::Button("Activation"))
+		if (ImGui::Button("Функция активации"))
 		{
 			//auto rets = proj->exeFilter(context.iol, 0);
 			auto rets = backend.exeFilter(context.iol, 0);
@@ -404,7 +404,7 @@ public:
 				auto rets = backend.exeGUI(context.iol, TiledRasterGuiLayer<T>::properties, filtere.getFilter());
 
 				ImGui::CloseCurrentPopup();
-				context.setLayers(rets, "GUI");
+				context.setLayers(rets, "Разложить");
 			}
 			ImGui::EndPopup();
 		}
@@ -454,7 +454,7 @@ public:
 
 class RasterLineGuiLayer : public ITiledRasterGuiLayer<GuiDrawCloudPointClick, RasterLineLayer>
 {
-	using Base = ITiledRasterGuiLayer;
+	using Base = ITiledRasterGuiLayer<GuiDrawCloudPointClick, RasterLineLayer>;
 public:
 	BackString debug;
 	SimpleLine* selectedLine = nullptr;
@@ -480,8 +480,8 @@ public:
 	virtual void toGuiData()
 	{
 		Base::toGuiData();
-		main.setImage(data->mat, false);
-		icon.setImage(data->mat, 32, 32, true);
+		main.setImage(Base::data->mat, false);
+		icon.setImage(Base::data->mat, 32, 32, true);
 	}
 
 	virtual void drawToolboxInner(ILayerWorker& context)
@@ -1211,7 +1211,7 @@ namespace MyApp
 
 			ImGui::SetItemDefaultFocus();
 			ImGui::SameLine();
-			if (ImGui::Button("Cancel", ImVec2(120, 0)))
+			if (ImGui::Button("Отмена", ImVec2(120, 0)))
 			{
 				ImGui::CloseCurrentPopup();
 			}
@@ -1250,7 +1250,7 @@ namespace MyApp
 
 			ImGui::SetItemDefaultFocus();
 			ImGui::SameLine();
-			if (ImGui::Button("Cancel", ImVec2(120, 0)))
+			if (ImGui::Button("Отмена", ImVec2(120, 0)))
 			{
 				ImGui::CloseCurrentPopup();
 			}
@@ -1310,7 +1310,7 @@ namespace MyApp
 				}
 
 				ImGui::SameLine();
-				if (ImGui::Button("Cancel", ImVec2(120, 0)))
+				if (ImGui::Button("Отмена", ImVec2(120, 0)))
 				{
 					ImGui::CloseCurrentPopup();
 				}
@@ -1321,7 +1321,7 @@ namespace MyApp
 			static RasterFromDiskLayer* layer;
 
 			ImGui::SameLine();
-			if (ImGui::Button("Load prj"))
+			if (ImGui::Button("Загрузить..."))
 			{
 				BackPathStr path = openImageOrProject();
 				if (!path.empty())
@@ -1342,7 +1342,7 @@ namespace MyApp
 							{
 								layer->cs.init(DEFAULT_PROJECTION);
 								tbVals.projset.setup(layer->cs);
-								ImGui::OpenPopup("SetupCS");
+								ImGui::OpenPopup("Система координат");
 							}
 						}
 						else
@@ -1358,7 +1358,7 @@ namespace MyApp
 				}
 			}
 
-			if (ImGui::BeginPopupModal("SetupCS", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+			if (ImGui::BeginPopupModal("Система координат", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 			{
 				tbVals.projset.draw();
 
@@ -1377,7 +1377,7 @@ namespace MyApp
 				}
 
 				ImGui::SameLine();
-				if (ImGui::Button("Cancel", ImVec2(120, 0)))
+				if (ImGui::Button("Отмена", ImVec2(120, 0)))
 				{
 					backend.removeLayer(layer->id);
 					layer = nullptr;
@@ -1412,7 +1412,7 @@ namespace MyApp
 			}
 
 			ImGui::SameLine();
-			if (ImGui::Button("Save"))
+			if (ImGui::Button("Сохранить как..."))
 			{
 				backend.save();
 			}
@@ -1567,7 +1567,7 @@ namespace MyApp
 			ImGui::SameLine();
 			ImGui::ProgressBar(0.0, ImVec2(0.0f, 0.0f));
 			ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-			ImGui::Text("Progress Bar");
+			ImGui::Text("Прогресс");
 
 			// GBL
 			ImGui::EndDisabled();
@@ -1756,7 +1756,7 @@ namespace MyApp
 	char luatext[10000];
 	void drawScript()
 	{
-		if (!ImGui::Begin("Script"))
+		if (!ImGui::Begin("Скрипт"))
 		{
 			ImGui::End();
 			return;
@@ -1773,13 +1773,13 @@ namespace MyApp
 
 	void ToolSetDraw()
 	{
-		if (!ImGui::Begin("Tools"))
+		if (!ImGui::Begin("Инструменты"))
 		{
 			ImGui::End();
 			return;
 		}
 
-		if (ImGui::Button("Add vector Layer"))
+		if (ImGui::Button("Добавить векторный слой"))
 		{
 			//backend.
 			VectorLayer* layerData = backend.addVectorLayer();
@@ -1910,6 +1910,7 @@ namespace MyApp
 		LayerFactory::RegisterFactory<RasterFromDiskGuiLayer, RasterFromDiskLayer>(RASTER_DISK_LAYER_FID);
 		LayerFactory::RegisterFactory<VectorGuiLayer, VectorLayer>(VECTOR_LAYER_FID);
 		//LayerFactory::RegisterFactory<VectorGuiLayer, VetorLayer>(VECTOR_LAYER_FID);
+		LayerFactory::RegisterFactory<TreeVectorGuiLayer, TreeVectorLayer>(TREE_VECTOR_LAYER_FID);
 
 		classerVals.ioLayer = layersVals.getIoLayer();
 		auto drawLine = [](const bc::point& p1, const bc::point& p2, bool finale)
@@ -1997,6 +1998,6 @@ namespace MyApp
 
 
 		drawLayout();
-		ImGui::ShowDemoWindow();
+		//ImGui::ShowDemoWindow();
 	}
 }
