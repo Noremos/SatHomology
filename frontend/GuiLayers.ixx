@@ -343,7 +343,7 @@ public:
 
 	virtual void drawToolbox(ILayerWorker& context)
 	{
-		if (ImGui::Begin("Toolbox"))
+		if (ImGui::Begin("Инструмаенты слоя"))
 		{
 			drawToolboxInner(context);
 		}
@@ -377,9 +377,10 @@ public:
 
 
 // Vector layer
-
-export class VectorGuiLayer : public GuiLayerData<VectorLayer>
+export template<class T>
+class VectorBaseLayer : public GuiLayerData<T>
 {
+	using Base = GuiLayerData<T>;
 	ImVec4 propColor;
 
 	enum ChangeState
@@ -421,28 +422,27 @@ export class VectorGuiLayer : public GuiLayerData<VectorLayer>
 	std::vector<size_t> orders;
 
 public:
-
-	VectorGuiLayer(VectorLayer* fromCore) : GuiLayerData<VectorLayer>(fromCore),
+	VectorBaseLayer(T* fromCore) : GuiLayerData<T>(fromCore),
 		addCB(checkState), editCB(checkState), removeCB(checkState)
 	{ }
 
-	virtual ~VectorGuiLayer()
+	virtual ~VectorBaseLayer()
 	{ }
 
 	virtual void toGuiData()
 	{
-		GuiLayerData<VectorLayer>::toGuiData();
-		propColor.x = static_cast<float>(data->color.r) / 255.f;
-		propColor.y = static_cast<float>(data->color.g) / 255.f;
-		propColor.z = static_cast<float>(data->color.b) / 255.f;
+		Base::toGuiData();
+		propColor.x = static_cast<float>(Base::data->color.r) / 255.f;
+		propColor.y = static_cast<float>(Base::data->color.g) / 255.f;
+		propColor.z = static_cast<float>(Base::data->color.b) / 255.f;
 
-		orders.resize(data->primitives.size());
+		orders.resize(Base::data->primitives.size());
 		std::iota(orders.begin(), orders.end(), 0);
 
-		if (data->vecType == VectorLayer::VecType::polygons)
+		if (Base::data->vecType == VectorLayer::VecType::polygons)
 		{
 			std::sort(orders.begin(), orders.end(), [&](size_t a, size_t b) {
-				return data->primitives[a]->points.size() < data->primitives[b]->points.size();
+				return Base::data->primitives[a]->points.size() < Base::data->primitives[b]->points.size();
 			});
 		}
 	}
@@ -457,14 +457,14 @@ public:
 
 
 		ImGui::SetCursorPos(ds.getDrawPos());
-		if (!ImGui::BeginChild(data->name.c_str(), ds.getDrawSize(), false, window_flags))
+		if (!ImGui::BeginChild(Base::data->name.c_str(), ds.getDrawSize(), false, window_flags))
 		{
 			ImGui::EndChild();
 			return;
 		}
 
 
-		switch (data->vecType)
+		switch (Base::data->vecType)
 		{
 		case VectorLayer::VecType::points:
 			drawPoints(ds);
@@ -492,23 +492,24 @@ public:
 		ImColor midColor(220, 200, 0);
 		float markerSize = 2;//MAX(1, par->displaySize.x / par->width);
 
-
-		auto& prims = data->primitives;
+		auto& prims = Base::data->primitives;
 		if (prims.size() == 0)
 			return;
 
-		BackColor cscol = data->color;
+		BackColor cscol = Base::data->color;
 		ImColor col(cscol.r, cscol.g, cscol.b);
 		ImColor cursorColor(255 - cscol.r, 255 - cscol.g, 255 - cscol.b);
 
-		auto& cs = data->cs;
+		auto& cs = Base::data->cs;
 
 		BackPoint itemSt = ds.getSysToItemStartPos(cs);
 		BackPoint ed = ds.getSysToItemEndPos(cs);
 
+		int i = 0;
 		for (DrawPrimitive* d : prims)
 		{
 			auto& points = d->points;
+			float tickness = spotId == i ? 3 : 10;
 
 			BackPoint p = points[0];
 			if (GuiDisplaySystem::inRange(itemSt, ed, p))
@@ -516,89 +517,95 @@ public:
 				ImVec2 pi = ds.projItemGlobToDisplay(cs, p);
 				if (isInChangeMode() && d->isNearPoint(ds.cursorPos))
 				{
-					list->AddCircleFilled(pi, 3, cursorColor);
+					list->AddCircleFilled(pi, tickness, cursorColor);
 				}
 				else
-					list->AddCircleFilled(pi, 3, col);
+					list->AddCircleFilled(pi, tickness, col);
 			}
+
+			++i;
 		}
 	}
 
-	void drawPolygons(const GuiDisplaySystem& ds)
+
+	void drawPolygon(const DrawPrimitive* d, const GuiDisplaySystem& ds, float tick = 3.0)
 	{
 		ImGuiWindow* window = ImGui::GetCurrentWindow();
 		ImDrawList* list = window->DrawList;
 		ImVec2 offset = window->Pos;
 
+		const CSBinding& dsc = Base::data->cs;
+		const BackPoint start = ds.getSysToItemStartPos(dsc);
+		const BackPoint end = ds.getSysToItemEndPos(dsc);
 
-		CSBinding& dsc = getCore()->cs;
-		BackPoint start = ds.getSysToItemStartPos(dsc);
-		BackPoint end = ds.getSysToItemEndPos(dsc);
+		const std::vector<BackPoint>& points = d->points;
+		auto cscol = d->color;
+		// ImU32 col = ImColor(cscol.r, cscol.g, cscol.b, 200);
+		ImU32 col = ImColor(cscol.r, cscol.g, cscol.b, 255);
+		ImU32 colRev = ImColor(255 - cscol.r, 255 - cscol.g, 255 - cscol.b);
+
+		if (points.size() < 3)
+			return;
+
+		BackPoint point = ds.cursorPos;
+		ImU32 cursorColor = ImColor(255 - cscol.r, 255 - cscol.g, 255 - cscol.b);
+
+		int visible = 0;
+		bool inside = false;
+		std::vector<ImVec2> displayPoints;
+		int n = points.size();
+		for (int i = 0, j = n - 1; i < n; j = i++)
+		{
+			const BackPoint& p = points[i];
+			const BackPoint& pj = points[j];
+
+			if (((p.y > point.y) != (pj.y > point.y)) &&
+				(point.x < (pj.x - p.x) * (point.y - p.y) / (pj.y - p.y) + p.x))
+			{
+				inside = !inside;
+			}
+
+			if (GuiDisplaySystem::inRange(start, end, p))
+			{
+				++visible;
+			}
+
+			ImVec2 pi = ds.projItemGlobToDisplay(dsc, p) + offset;
+			displayPoints.push_back(pi);
+			// if (inside) // Spot on cursor
+			// 	list->AddCircleFilled(pi, 3, cursorColor);
+		}
+
+		if (visible >= 1)
+		{
+			displayPoints.push_back(displayPoints[0]);
+
+			ImVec2 pi = ds.projItemGlobToDisplay(dsc, points[0]) + offset; // First
+			// list->AddConvexPolyFilled(displayPoints.data(), displayPoints.size(), col);
+			// list->AddPolyline(displayPoints.data(), displayPoints.size(), colbl, 0, 2.0);
+			list->AddPolyline(displayPoints.data(), displayPoints.size(), col, 0, tick);
+
+			//if (inside)
+			//{
+			//	list->AddPolyline(displayPoints.data(), displayPoints.size(), colRev, 0, tick);
+			//}
+		}
+		displayPoints.clear();
+	}
+
+	int spotId = -1;
+	void drawPolygons(const GuiDisplaySystem& ds)
+	{
 		// auto start = ds.getDisplayStartPos();
 		// auto end = ds.getDisplayEndPos();
 
 		ImU32 colbl = ImColor(255, 255, 255);
 
-		BackColor cscol = data->color;
+		BackColor cscol = Base::data->color;
 		for (size_t& io : orders)
 		{
-			const DrawPrimitive* d = data->primitives[io];
-
-			const std::vector<BackPoint>& points = d->points;
-			cscol = d->color;
-			// ImU32 col = ImColor(cscol.r, cscol.g, cscol.b, 200);
-			ImU32 col = ImColor(cscol.r, cscol.g, cscol.b, 255);
-			ImU32 colRev = ImColor(255 - cscol.r, 255 - cscol.g, 255 - cscol.b);
-
-			// if (d->set)
-
-			if (points.size() < 3)
-				continue;
-
-			BackPoint point = ds.cursorPos;
-			ImU32 cursorColor = ImColor(255 - cscol.r, 255 - cscol.g, 255 - cscol.b);
-
-			int visible = 0;
-			bool inside = false;
-			std::vector<ImVec2> displayPoints;
-			int n = points.size();
-			for (int i = 0, j = n - 1; i < n; j = i++)
-			{
-				const BackPoint& p = points[i];
-				const BackPoint& pj = points[j];
-
-				if (((p.y > point.y) != (pj.y > point.y)) &&
-					(point.x < (pj.x - p.x) * (point.y - p.y) / (pj.y - p.y) + p.x))
-				{
-					inside = !inside;
-				}
-
-				if (GuiDisplaySystem::inRange(start, end, p))
-				{
-					++visible;
-				}
-
-				ImVec2 pi = ds.projItemGlobToDisplay(dsc, p) + offset;
-				displayPoints.push_back(pi);
-				// if (inside) // Spot on cursor
-				// 	list->AddCircleFilled(pi, 3, cursorColor);
-			}
-
-			if (visible >= 1)
-			{
-				displayPoints.push_back(displayPoints[0]);
-
-				ImVec2 pi = ds.projItemGlobToDisplay(dsc, points[0]) + offset; // First
-				// list->AddConvexPolyFilled(displayPoints.data(), displayPoints.size(), col);
-				// list->AddPolyline(displayPoints.data(), displayPoints.size(), colbl, 0, 2.0);
-				list->AddPolyline(displayPoints.data(), displayPoints.size(), col, 0, 3.0);
-
-				if (inside)
-				{
-					list->AddPolyline(displayPoints.data(), displayPoints.size(), colRev, 0, 3.0);
-				}
-			}
-			displayPoints.clear();
+			const DrawPrimitive* d = Base::data->primitives[io];
+			drawPolygon(d, ds, io == spotId ? 10.0 : 3.0);
 		}
 	}
 
@@ -609,12 +616,12 @@ public:
 		ImVec2 offset = window->Pos;
 
 
-		CSBinding& dsc = getCore()->cs;
+		CSBinding& dsc = Base::data->cs;
 		const BackPoint start = ds.getSysToItemStartPos(dsc);
 		const BackPoint end = ds.getSysToItemEndPos(dsc);
 
-		BackColor cscol = data->color;
-		for (const DrawPrimitive* d : data->primitives)
+		BackColor cscol = Base::data->color;
+		for (const DrawPrimitive* d : Base::data->primitives)
 		{
 			const std::vector<BackPoint>& points = d->points;
 			if (points.size() == 0)
@@ -656,6 +663,75 @@ public:
 		}
 	}
 
+	void drawToolboxInner(ILayerWorker& context)
+	{
+		if (ImGui::Button("Выгрузить слой"))
+		{
+			BackPathStr path = getSavePath({ "geojson", "*.geojson",
+											"json", "*.json" });
+			Base::data->savePolygonsAsGeojson(path);
+		}
+
+		// Add ploygon;
+		// Add line
+		// Move point
+		// Move line
+		// Drop
+		// export
+		// import
+
+
+		//addCB.draw("Режим добавления");
+		//editCB.draw("Режим изменения");
+		//removeCB.draw("Режим удаления");
+
+		//switch (Base::data->vecType)
+		//{
+		//case VectorLayer::VecType::points:
+		//	drawPointsToolbox(context);
+		//	break;
+		//case VectorLayer::VecType::polygons:
+		//	drawPolygonToolbox(context);
+		//	break;
+		//default:
+		//	break;
+		//}
+
+	}
+
+
+	void drawPointsToolbox(ILayerWorker& context)
+	{
+	}
+
+	void drawPolygonToolbox(ILayerWorker& context)
+	{}
+
+	virtual void drawProperty()
+	{
+		Base::drawProperty();
+		ImGui::Separator();
+
+		ImGui::ColorPicker4("Color", (float*)&propColor, ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoInputs);
+	}
+
+	virtual void applyPropertyChanges()
+	{
+		Base::applyPropertyChanges();
+		ImGui::Separator();
+
+		Base::data->color.r = std::min(static_cast<int>(propColor.x * 255), 255);
+		Base::data->color.g = std::min(static_cast<int>(propColor.y * 255), 255);
+		Base::data->color.b = std::min(static_cast<int>(propColor.z * 255), 255);
+	}
+};
+
+
+export class VectorGuiLayer : public VectorBaseLayer<VectorLayer>
+{
+public:
+	VectorGuiLayer(VectorLayer* fromCore) : VectorBaseLayer<VectorLayer>(fromCore)
+	{ }
 
 	static void getRect(const std::vector<BackPoint>& points, ImVec2& itemSt, ImVec2& end)
 	{
@@ -684,67 +760,6 @@ public:
 		}
 	}
 
-	void drawToolboxInner(ILayerWorker& context)
-	{
-		if (ImGui::Button("Выгрузить слой"))
-		{
-			BackPathStr path = getSavePath({ "geojson", "*.geojson",
-											"json", "*.json" });
-			data->savePolygonsAsGeojson(path);
-		}
-
-		// Add ploygon;
-		// Add line
-		// Move point
-		// Move line
-		// Drop
-		// export
-		// import
-
-
-		addCB.draw("Режим добавления");
-		editCB.draw("Режим изменения");
-		removeCB.draw("Режим удаления");
-
-		switch (data->vecType)
-		{
-		case VectorLayer::VecType::points:
-			drawPointsToolbox(context);
-			break;
-		case VectorLayer::VecType::polygons:
-			drawPolygonToolbox(context);
-			break;
-		default:
-			break;
-		}
-
-	}
-
-
-	void drawPointsToolbox(ILayerWorker& context)
-	{
-	}
-
-	void drawPolygonToolbox(ILayerWorker& context)
-	{}
-
-	virtual void drawProperty()
-	{
-		GuiLayerData<VectorLayer>::drawProperty();
-		ImGui::Separator();
-
-		ImGui::ColorPicker4("Color", (float*)&propColor, ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoInputs);
-	}
-
-	virtual void applyPropertyChanges()
-	{
-		GuiLayerData<VectorLayer>::applyPropertyChanges();
-		ImGui::Separator();
-
-		data->color.r = std::min(static_cast<int>(propColor.x * 255), 255);
-		data->color.g = std::min(static_cast<int>(propColor.y * 255), 255);
-		data->color.b = std::min(static_cast<int>(propColor.z * 255), 255);
-	}
 };
 
 export class LayersVals : public ILayerWorker
@@ -768,7 +783,7 @@ public:
 
 	void drawLayersWindow()
 	{
-		if (!ImGui::Begin("Layers"))
+		if (!ImGui::Begin("Слои"))
 		{
 			ImGui::End();
 			return;
@@ -900,3 +915,81 @@ public:
 		}
 	}
 };
+
+
+class TreeVectorGuiLayer;
+void drawTree(const GuiDisplaySystem& ds, TreeVectorGuiLayer* layer, VecTree& tree, int& counter);
+
+
+export class TreeVectorGuiLayer : public VectorBaseLayer<TreeVectorLayer>
+{
+public:
+	TreeVectorGuiLayer(TreeVectorLayer* fromCore) : VectorBaseLayer<TreeVectorLayer>(fromCore)
+	{ }
+
+	virtual void draw(const GuiDisplaySystem& ds)
+	{
+		if (!IGuiLayer::visible)
+			return;
+
+		VectorBaseLayer<TreeVectorLayer>::draw(ds);
+
+		int counter = 0;
+		if (ImGui::Begin("Tree"))
+		{
+			drawTree(ds, this, data->tree, counter);
+		}
+		ImGui::End();
+	}
+
+	DrawPrimitive* getPrim(int id)
+	{
+		return data->primitives[id];
+	}
+};
+
+
+
+void drawTree(const GuiDisplaySystem& ds, TreeVectorGuiLayer* layer, VecTree& tree, int& counter)
+{
+	//if (tree.size == -1 && tree.children.size() == 0)
+	//	return;
+
+	++counter;
+
+
+	static int node_clicked = 0;
+	ImGuiTreeNodeFlags node_flags = 0;
+	if (counter == node_clicked)
+	{
+		node_flags |= ImGuiTreeNodeFlags_Selected; // ImGuiTreeNodeFlags_Bullet
+		layer->spotId = tree.primId;
+	}
+
+	int size = tree.size; //layer->getPrim(tree.primId)->points.size();
+	if (tree.children.size() == 0)
+	{
+		node_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+		ImGui::TreeNodeEx((void*)(intptr_t)counter, node_flags, "%d", size);
+		if (ImGui::IsItemClicked())
+			node_clicked = counter;
+
+	}
+	else
+	{
+		node_flags |= ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+		if (ImGui::TreeNodeEx((void*)(intptr_t)counter, node_flags, "%d", size))
+		{
+			if (ImGui::IsItemClicked())
+				node_clicked = counter;
+
+			for (VecTree& i : tree.children)
+			{
+				drawTree(ds, layer, i, counter);
+			}
+			ImGui::TreePop();
+		}
+		else if (ImGui::IsItemClicked())
+			node_clicked = counter;
+	}
+}

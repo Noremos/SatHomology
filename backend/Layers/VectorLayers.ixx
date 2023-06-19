@@ -33,8 +33,9 @@ export class DrawPrimitive
 public:
 	BackColor color;
 	std::vector<BackPoint> points;
+	int id;
 
-	DrawPrimitive(const BackColor& bp = BackColor()) : color(bp)
+	DrawPrimitive(int id, const BackColor& bp = BackColor()) : id(id), color(bp)
 	{
 	}
 
@@ -189,7 +190,7 @@ public:
 
 	DrawPrimitive* addPrimitive(const BackColor& col)
 	{
-		primitives.push_back(new DrawPrimitive(col));
+		primitives.push_back(new DrawPrimitive(primitives.size(), col));
 		return primitives.back();
 	}
 
@@ -267,7 +268,7 @@ public:
 			primitives.resize(size);
 			for (int i = 0; i < size; i++)
 			{
-				primitives[i] = new DrawPrimitive();
+				primitives[i] = new DrawPrimitive(i);
 				primitives[i]->saveLoadState(&binstate);
 			}
 			binstate.close();
@@ -298,5 +299,29 @@ public:
 	virtual const LFID getFactoryId() const
 	{
 		return MULTIPOLY_VECTOR_LAYER_FID;
+	}
+};
+
+
+export struct VecTree
+{
+	int primId = -1;
+	int size = 0;
+	std::vector<VecTree> children;
+
+	inline bool inited() const
+	{
+		return primId != -1 || children.size() > 0;
+	}
+};
+
+export class TreeVectorLayer : public VectorLayer
+{
+public:
+	VecTree tree;
+
+	virtual const LFID getFactoryId() const
+	{
+		return TREE_VECTOR_LAYER_FID;
 	}
 };

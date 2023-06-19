@@ -337,6 +337,7 @@ export const LFID RASTER_LINE_LAYER_FID = 1;
 export const LFID RASTER_DISK_LAYER_FID = 2;
 export const LFID VECTOR_LAYER_FID = 3;
 export const LFID MULTIPOLY_VECTOR_LAYER_FID = 4;// ILayer::getCountId();
+export const LFID TREE_VECTOR_LAYER_FID = 5;
 
 export class CoreLayerFactory
 {

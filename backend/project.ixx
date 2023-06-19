@@ -17,7 +17,7 @@ module;
 #include <windows.h>
 #endif
 
-#include "../side/Barcode/PrjBarlib/include/CellEater.h"
+//#include "../side/Barcode/PrjBarlib/include/CellEater.h"
 
 
 export module ProjectModule;
@@ -1200,11 +1200,7 @@ public:
 		{
 			VectorLayer* vl = classLayers.at(classId);
 			assert(vl != nullptr);
-
-			BackPoint center;
-			float r;
-			getCircle(item->getMatrix(), center, r);
-			BackPoint rb(center.x + r, center.y + r);
+			CSBinding& cs = vl->cs;
 
 			DrawPrimitive* p;
 			{
@@ -1212,11 +1208,27 @@ public:
 				p = vl->addPrimitive(vl->color);
 			}
 
-			CSBinding& cs = vl->cs;
+			//BackPoint center;
+			//float r;
+			//getCircle(item->getMatrix(), center, r);
+			//BackPoint rb(center.x + r, center.y + r);
+			//BackPoint iglob = toGlob(cs, tileProv, diplsayToRealFactor, center);
+			//BackPoint globRb = toGlob(cs, tileProv, diplsayToRealFactor, rb);
+			//p->setCircle(iglob, globRb);
 
-			BackPoint iglob = toGlob(cs, tileProv, diplsayToRealFactor, center);
-			BackPoint globRb = toGlob(cs, tileProv, diplsayToRealFactor, rb);
-			p->setCircle(iglob, globRb);
+
+			mcountor temp;
+			getCountour(item->getMatrix(), temp, true);
+			for (const auto& pm : temp)
+			{
+				auto point = bc::barvalue::getStatPoint(pm);
+
+				BackPixelPoint op = tileProv.tileToPreview(point.x, point.y); // To display
+				BackPoint iglob((static_cast<float>(op.x) + 0.5f), static_cast<float>(op.y) + 0.5f);
+
+				iglob = cs.toGlobal(iglob.x * diplsayToRealFactor, iglob.y * diplsayToRealFactor); // To real
+				p->addPoint(iglob);
+			}
 
 			return true;
 		}
@@ -1268,7 +1280,8 @@ public:
 	{
 		auto* layer = addLayerData<VectorLayer>(ds.sysProj.getId());
 		layer->color = BackColor::random();
-		layer->vecType = VectorLayer::VecType::circles;
+		//layer->vecType = VectorLayer::VecType::circles;
+		layer->vecType = VectorLayer::VecType::polygons;
 		layer->isSystem = true;
 		classLayers[classId] = layer;
 		return layer;
@@ -1434,6 +1447,98 @@ public:
 		return ret;
 	}
 
+	class TreeWalk
+	{
+	public:
+		TreeVectorLayer* layer;
+		VectorLayer* layerRect;
+		RasterLayer* rasterSpot;
+		IItemFilter* filter;
+
+		VecTree addTree(bc::barline* line)
+		{
+			VecTree guiTree;
+
+			BettylineClass cls(line);
+			if (filter != nullptr && !filter->pass(&cls))
+				return guiTree;
+
+			BackColor pointCol = BackColor::random();
+			Barscalar barclo(pointCol.r, pointCol.g, pointCol.b);
+			BackImage& imgout = rasterSpot->mat;
+			for (auto& p : line->matr)
+			{
+				imgout.set(p.x, p.y, barclo);
+			}
+
+			const int childrenSize = line->children.size();
+			for (int i = 0; i < childrenSize; i++)
+			{
+				VecTree t = addTree(line->children[i]);
+				const bool passed = t.inited();
+				if (passed)
+				{
+					guiTree.children.push_back(t);
+					//printf("%d\n", guiTree.children.size());
+				}
+			}
+
+			/*if (guiTree.children.size() < 2)
+			{
+				return VecTree();
+			}*/
+
+			
+			// Barscalar pointCol = RasterLineLayer::colors[rand() % RasterLineLayer::colors.size()];
+			//line->getChildsMatr(line->matr, true);
+			//line->getChildsMatr(line->matr, true);
+
+			if (line->matr.size() == 0)
+				return guiTree;
+
+			std::vector<uint> out;
+			auto rect = getCountourOder(line->matr, out, true);
+			if (out.size() == 0)
+			{
+				//return guiTree;
+				//for (const auto& pm : line->matr)
+				//{
+				//	out.push_back(bc::barvalue::getStatInd(pm.getX(), pm.getY()));
+				//}
+			}
+
+
+			DrawPrimitive* p = layer->addPrimitive(pointCol);
+			guiTree.primId = p->id;
+			guiTree.size = line->matr.size();
+			for (const auto& pm : out)
+			{
+				auto op = bc::barvalue::getStatPoint(pm);
+				//BackPoint iglob(static_cast<float>(op.x) + 0.5f, static_cast<float>(op.y) + 0.5f);
+				BackPoint iglob(static_cast<float>(op.x), static_cast<float>(op.y));
+
+				iglob = layer->cs.toGlobal(iglob.x, iglob.y); // To real
+				p->addPoint(iglob);
+			}
+
+			p = layerRect->addPrimitive(pointCol);
+			p->addPoint(rect.topLeft);
+			p->addPoint(rect.topRight());
+			p->addPoint(rect.getBottomRight());
+			p->addPoint(rect.bottomLeft());
+
+
+			if (guiTree.children.size() < 2)
+			{
+				//guiTree.size = -1;
+			}
+
+			return guiTree;
+		}
+
+	};
+
+
 	RetLayers exeGUI(InOutLayer& iol, const BarcodeProperies& propertices, IItemFilter* filter)
 	{
 		//if (u_displayFactor < 1.0)
@@ -1441,7 +1546,7 @@ public:
 		IRasterLayer* input = getInRaster(iol);
 
 		RetLayers ret;
-		VectorLayer* layer = addOrUpdateOut<VectorLayer>(iol, input->cs.getProjId());
+		TreeVectorLayer* layer = addOrUpdateOut<TreeVectorLayer>(iol, input->cs.getProjId());
 		layer->color = BackColor::random();
 		layer->vecType = VectorLayer::VecType::polygons;
 		layer->initCSFrom(input->cs);
@@ -1457,9 +1562,9 @@ public:
 		rasterSpot->initCSFrom(input->cs);
 		rasterSpot->init(input);
 
+		//ret.push_back(rasterSpot);
 		ret.push_back(layer);
-		ret.push_back(layerRect);
-		ret.push_back(rasterSpot);
+		//ret.push_back(layerRect);
 		// layer->init(input);
 
 		BackImage src = *(input->getCachedImage());
@@ -1473,60 +1578,28 @@ public:
 		//constr.maxLen.set(15);
 		constr.structure.push_back(propertices.barstruct);
 
-		// bc::BarcodeCreator bc;
-		// auto containner = bc.createBarcode(&src, constr);
-		// std::unique_ptr<bc::Baritem> item(containner->exractItem(0));
-		// delete containner;
+		 bc::BarcodeCreator bc;
+		 auto containner = bc.createBarcode(&src, constr);
+		 std::unique_ptr<bc::Baritem> item(containner->exractItem(0));
+		 delete containner;
 
-		std::unique_ptr<bc::Baritem> item(bc::Eater::createBarcode(&src));
+		//std::unique_ptr<bc::Baritem> item(bc::Eater::createBarcode(&src));
 
-		BackImage& imgout = rasterSpot->mat = src;
-
-		auto& lines = item->barlines;
-
+		rasterSpot->mat = src;
 		if (filter)
 			filter->imgLen = src.length();
 
 		RasterLineLayer(); // init colors
-		for (size_t i = 0; i < lines.size(); i++)
-		{
-			auto* line = lines[i];
-			BettylineClass cls(line);
-			if (filter == nullptr || filter->pass(&cls))
-			{
-				// Barscalar pointCol = RasterLineLayer::colors[rand() % RasterLineLayer::colors.size()];
-				//line->getChildsMatr(line->matr, true);
-				std::vector<uint> out;
-				auto rect = getCountour(line->matr, out, true);
 
-				BackColor pointCol = BackColor::random();
-				Barscalar barclo(pointCol.r, pointCol.g, pointCol.b);
-				//line->getChildsMatr(line->matr, true);
-				for (auto& p : line->matr)
-				{
-					imgout.set(p.x, p.y, barclo);
-				}
+		auto* root = item->getRootNode();
 
-				if (out.size() > 0)
-				{
-					DrawPrimitive* p = layer->addPrimitive(pointCol);
-					for (const auto& pm : out)
-					{
-						auto op = bc::barvalue::getStatPoint(pm);
-						BackPoint iglob((static_cast<float>(op.x) + 0.5f), static_cast<float>(op.y) + 0.5f);
-
-						iglob =  layer->cs.toGlobal(iglob.x, iglob.y); // To real
-						p->addPoint(iglob);
-					}
-
-					p = layerRect->addPrimitive(pointCol);
-					p->addPoint(rect.topLeft);
-					p->addPoint(rect.topRight());
-					p->addPoint(rect.getBottomRight());
-					p->addPoint(rect.bottomLeft());
-				}
-			}
-		}
+		TreeWalk helper;
+		helper.layer = layer;
+		helper.layerRect = layerRect;
+		helper.rasterSpot = rasterSpot;
+		helper.filter = filter;
+		assert(root->children.size() == 1);
+		layer->tree = helper.addTree(root->children[0]);
 
 		return ret;
 	}
