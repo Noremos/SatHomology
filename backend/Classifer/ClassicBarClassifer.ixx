@@ -364,7 +364,8 @@ public:
 		if (iline)
 		{
 			depth = line->getDeath();
-			matrSize = line->getMatrSize();
+			// matrSize = line->getMatrSize();
+			matrSize = line->matr.size();
 			update();
 		}
 	}
@@ -599,7 +600,7 @@ public:
 		}
 
 		assert(maxP <= 1.0);
-		return maxP > 0.9 ? classes[maxInd]->classId : -1;
+		return maxP > 0.7 ? classes[maxInd]->classId : -1;
 	}
 };
 
