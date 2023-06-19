@@ -133,7 +133,7 @@ public:
 		draws.push_back({ "mart size", count, 1000});
 
 
-		ClassDataIO::TrainCallback cla = [this, endC, matrsizeC, lenC](int, vbuffer& buf, BackImage, size_t dbLocalId)
+		ClassDataIO::TrainCallback cla = [this, endC, matrsizeC, lenC](int, vbuffer& buf, BackImage, size_t /*dbLocalId*/)
 		{
 			std::ostringstream oss;
 			oss.write(reinterpret_cast<const char*>(buf.data()), buf.size());
