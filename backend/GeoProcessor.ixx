@@ -296,15 +296,33 @@ class MapCountur
 	std::stack<StartPos> dirs;
 	std::stack<uint> pointsStack;
 
+	int accum = 2;
+	int poss[16][2] = { {-1, 0}, {-1, -1}, {0, -1}, {1, -1}, {1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}, {0, -1}, {1, -1}, {1, 0}, {1, 1}, {0, 1}, {-1, 1} };
+
 public:
-	MapCountur(mcountor& contur) : contur(contur) {}
+	MapCountur(mcountor& contur) : contur(contur)
+	{ }
+
+	void setFull()
+	{
+		accum = 2;
+	}
+
+	void setShort()
+	{
+		accum = 1;
+	}
 
 	void run(const bool aproxim = false)
 	{
-		static int poss[16][2] = { {-1, 0}, {-1, -1}, {0, -1}, {1, -1}, {1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}, {0, -1}, {1, -1}, {1, 0}, {1, 1}, {0, 1}, {-1, 1} };
-
 		int prevS;
 		dirct = RigthMid;
+
+		if (aproxim)
+		{
+			contur.push_back(stIndex);
+		}
+
 		while (true)
 		{
 			char start = (dirct + 6) % 8; // Safe minus 2
@@ -314,7 +332,7 @@ public:
 			// 0 X 4
 			prevS = getIndex();
 
-			for (; start < end; ++start)
+			for (; start < end; start += accum)
 			{
 				int* off = poss[(int)start];
 				if (tryVal(off[0], off[1]))
@@ -366,14 +384,16 @@ public:
 			}
 		}
 
-		if (aproxim)
-		{
-			contur.push_back(prevS);
-			//					contur.push_back(s);
-		}
+		//if (aproxim)
+		//{
+		//	contur.push_back(prevS);
+		//	//contur.push_back(getIndex());
+		//	//					contur.push_back(s);
+		//}
 	}
 
 	void set(const bc::barvalue& p) { points[p.getIndex()] = true; }
+	void set(int x, int y) { points[bc::barvalue::getStatInd(x, y)] = true; }
 
 	void setStart(int x, int y)
 	{
@@ -419,17 +439,21 @@ CounturRect getCountour(const bc::barvector& points, mcountor& contur, bool apro
 	contur.clear();
 
 	int rect[4]{ 99999999, 99999999, 0, 0 };
-	int stY;
+	int stY = 99999;
 	MapCountur dictPoints(contur);
+	dictPoints.setFull();
 	for (auto& p : points)
 	{
 		dictPoints.set(p);
 		int x = p.getX();
 		int y = p.getY();
-		if (x < rect[0])
+		if (x <= rect[0])
 		{
 			rect[0] = x;
-			stY = y;
+			if (stY > y)
+			{
+				stY = y;
+			}
 		}
 		if (x > rect[2])
 		{
@@ -455,6 +479,53 @@ CounturRect getCountour(const bc::barvector& points, mcountor& contur, bool apro
 	dictPoints.run(aproximate);
 
 	return {BackPoint(rect[0], rect[1]), BackPoint(rect[2], rect[3])};
+}
+
+
+
+
+export CounturRect getCountourOder(const bc::barvector& points, mcountor& contur, bool aproximate)
+{
+	contur.clear();
+
+	int rect[4]{ 99999999, 99999999, 0, 0 };
+	int stY;
+	MapCountur dictPoints(contur);
+	dictPoints.setShort();
+	for (auto& p : points)
+	{
+		dictPoints.set(p);
+		dictPoints.set(p.x, p.y + 1);
+		dictPoints.set(p.x + 1, p.y);
+		dictPoints.set(p.x + 1, p.y + 1);
+		int x = p.getX();
+		int y = p.getY();
+		if (x < rect[0])
+		{
+			rect[0] = x;
+			stY = y;
+		}
+		if (x > rect[2])
+		{
+			rect[2] = x;
+		}
+		if (y < rect[1])
+		{
+			rect[1] = y;
+		}
+		if (y > rect[3])
+		{
+			rect[3] = y;
+		}
+	}
+
+	int wid = rect[2] - rect[0];
+	int hei = rect[3] - rect[1];
+
+	dictPoints.setStart(rect[0], stY);
+	dictPoints.run(aproximate);
+
+	return { BackPoint(rect[0], rect[1]), BackPoint(rect[2], rect[3]) };
 }
 
 
