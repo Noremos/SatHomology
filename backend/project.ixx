@@ -5,6 +5,7 @@ module;
 #include <assert.h>
 #include <chrono>
 #include <thread>
+#include <algorithm>
 //#include <iostream>
 
 #include "../Bind/Common.h"
@@ -42,6 +43,18 @@ import CSBind;
 // using CurItemHolder = BaritemHolder;
 using CurItemHolder = BettyItemHolder;
 
+
+template<class T>
+constexpr T mmmin(T a, T b)
+{
+	return a > b ? b : a;
+}
+
+template<class T>
+constexpr T mmmax(const T a, const T b)
+{
+	return a > b ? a : b;
+}
 
 export struct InOutLayer
 {
@@ -1353,11 +1366,24 @@ public:
 		classifier.removeData(classId, localId);
 	}
 
-	RetLayers exeFilter(InOutLayer& iol, int algNum)
+	RetLayers exeFilter(InOutLayer& iol, bc::ProcType type, int algNum)
 	{
 		//if (u_displayFactor < 1.0)
 		//	throw std::exception();
 		IRasterLayer* input = getInRaster(iol);
+
+		switch (algNum)
+		{
+		case 0:
+			break;
+		case 1:
+			return exeQuadro(input, type);
+		case 2:
+			return exeEnergy(input, type);
+		case 3:
+			exe3d(input, type);
+			return {};
+		}
 
 		RetLayers ret;
 		RasterLayer* layer = addOrUpdateOut<RasterLayer>(iol, input->cs.getProjId());
@@ -1488,7 +1514,7 @@ public:
 				return VecTree();
 			}*/
 
-			
+
 			// Barscalar pointCol = RasterLineLayer::colors[rand() % RasterLineLayer::colors.size()];
 			//line->getChildsMatr(line->matr, true);
 			//line->getChildsMatr(line->matr, true);
@@ -1603,12 +1629,266 @@ public:
 
 		return ret;
 	}
+
+
+	void ResizeAspect(BackSize& size, const BackSize maxSize)
+	{
+		// Calculate the aspect ratio of the image
+		double aspect_ratio = static_cast<float>(size.wid) / size.hei;
+		double max_aspect_width = static_cast<float>(maxSize.hei) * aspect_ratio;
+		double max_aspect_height = static_cast<float>(maxSize.wid) / aspect_ratio;
+		size.wid = MIN(maxSize.wid, max_aspect_width);
+		size.hei = MIN(maxSize.hei, max_aspect_height);
+	}
+
+	static void getMod(BackPixelPoint& start, BackPixelPoint& end, BackPixelPoint p, BackSize size, float aspectX, float aspectY)
+	{
+		const float xa = static_cast<float>(p.x) * aspectX;
+		start.x = round(xa);
+		end.x = round(mmmin<float>(xa + aspectX + 1, size.wid) - xa);
+
+		const float ya = static_cast<float>(p.y) * aspectY;
+		start.y = round(ya);
+		end.y = mmmin<int>(round(ya + aspectY) + 1, size.hei);
+	}
+
+	RetLayers exeQuadro(IRasterLayer* input, bc::ProcType type)
+	{
+		RetLayers ret;
+		const BackImage& src = *(input->getCachedImage());
+
+		bc::BarConstructor constr;
+		constr.createBinaryMasks = true;
+		constr.createGraph = false;
+		constr.returnType = bc::ReturnType::barcode2d;
+
+
+		bc::BarcodeCreator bcc;
+
+		const BackSize srcsize(src.width(), src.height());
+		//BackSize b = srcsize;
+		int maskMin = 0;
+
+		BackSize b(4, 4);
+		BackSize imgSize(srcsize.wid, srcsize.hei);
+		ResizeAspect(imgSize, b);
+
+		BackImage mask(imgSize.wid, imgSize.hei, 4);
+		mask.reintAsInt();
+		mask.fill(0);
+
+
+
+		bc::barstruct bst(type, bc::ColorType::native, bc::ComponentType::Component);
+		bst.maskId = 0;
+		bst.mask = &mask;
+		constr.structure.push_back(bst);
+
+
+		while (true)
+		{
+			BackImage imgin = src;
+			imgin.resize(imgSize.wid, imgSize.hei);
+
+
+			RasterLayer* rasterSpot = addLayerData<RasterLayer>(input->cs.getProjId());
+			rasterSpot->initCSFrom(input->cs);
+			rasterSpot->init(srcsize.wid, srcsize.hei, 3);
+			ret.push_back(rasterSpot);
+			BackImage& out = rasterSpot->mat;
+			const float aspectX = static_cast<float>(srcsize.wid) / imgSize.wid;
+			const float aspectY = static_cast<float>(srcsize.hei) / imgSize.hei;
+
+
+			//constr.
+			//if (constr.structure.size() == 0)
+			//	break;
+			assert(imgin.length() == mask.length());
+			std::unique_ptr<bc::Barcontainer> containner(bcc.createBarcode(&imgin, constr));
+
+			constr.structure.clear();
+			maskMin = 0;
+
+			b.wid *= 4;
+			b.hei *= 4;
+			imgSize = BackSize(srcsize.wid, srcsize.hei);
+
+			if (b.wid > src.width() || b.hei > src.height())
+			{
+				b.wid = src.width();
+				b.hei = src.height();
+			}
+			else
+			{
+				ResizeAspect(imgSize, b);
+			}
+
+			mask.resize(imgSize.wid, imgSize.hei);
+			mask.fill(0);
+			const float maskAspectX = static_cast<float>(mask.width()) / imgin.width();
+			const float maskAspectY = static_cast<float>(mask.height()) / imgin.height();
+
+
+			for (size_t ci = 0; ci < containner->count(); ci++)
+			{
+				bc::Baritem* item = containner->getItem(0);
+
+				for (size_t i = 0; i < item->barlines.size(); ++i)
+				{
+					const auto& matr = item->barlines[i]->matr;
+
+					//if (matr.size() < 5)
+					//	continue;
+
+					bst.maskId = i;
+					constr.structure.push_back(bst);
+
+					// if (item->barlines[i]->len() < 10)
+					const auto randCol = BackColor::random();
+					const Barscalar rcol(randCol.r, randCol.g, randCol.b);
+					const Barscalar rid(i, BarType::INT32_1);
+
+					// BackSize maskSize = b;
+					for (const auto& pm : matr)
+					{
+						BackPixelPoint pix(pm.getX(), pm.getY());
+						BackPixelPoint start, end;
+						getMod(start, end, pix, srcsize, aspectX, aspectY);
+						for (size_t l = start.y; l < end.y; ++l)
+						{
+							// end.x is a length
+							out.setRow(start.x, l, end.x, rcol);
+						}
+
+						getMod(start, end, pix, imgSize, maskAspectX, maskAspectY);
+
+						for (size_t l = start.y; l < end.y; ++l)
+						{
+							mask.setRow(start.x, l, end.x, rid);
+						}
+					}
+				}
+			}
+
+
+			//if (b.wid < 8 && b.hei < 6)
+			//	break;
+			if (b.wid == src.width() && b.hei == src.height())
+				break;
+
+			////b.wid /= 2;
+			////b.hei /= 2;
+			//b.wid *= 2;
+			//b.hei *= 2;
+			//if (b.wid > src.width() || b.hei > src.height())
+			//{
+			//	b.wid = src.width();
+			//	b.hei = src.height();
+			//}
+		}
+
+		//std::reverse(ret.begin(), ret.end());
+		return ret;
+	}
+
+
+	// Linear interpolation function
+	Barscalar lerp(double t)
+	{
+		assert(t <= 1.0 && t >= 0);
+		const BackColor start(0, 0, 255);
+		const BackColor end(255, 0, 0);
+		uint8_t r = static_cast<uint8_t>(start.r + t * (end.r - start.r));
+		uint8_t g = static_cast<uint8_t>(start.g + t * (end.g - start.g));
+		uint8_t b = static_cast<uint8_t>(start.b + t * (end.b - start.b));
+		return Barscalar(r, g, b);
+	}
+
+	RetLayers exeEnergy(IRasterLayer* input, bc::ProcType type)
+	{
+		RetLayers ret;
+		const BackImage& src = *(input->getCachedImage());
+
+		bc::BarConstructor constr;
+		constr.createBinaryMasks = true;
+		constr.createGraph = false;
+		constr.returnType = bc::ReturnType::barcode2d;
+
+		bc::BarcodeCreator bcc;
+
+		const BackSize srcsize(src.width(), src.height());
+		//BackSize b = srcsize;
+		int maskMin = 0;
+
+
+		bc::barstruct bst(type, bc::ColorType::native, bc::ComponentType::Component);
+		constr.structure.push_back(bst);
+
+		RasterLayer* rasterSpot = addLayerData<RasterLayer>(input->cs.getProjId());
+		rasterSpot->initCSFrom(input->cs);
+		rasterSpot->init(srcsize.wid, srcsize.hei, 3);
+		ret.push_back(rasterSpot);
+
+
+		BackImage& out = rasterSpot->mat;
+		std::unique_ptr<bc::Barcontainer> containner(bcc.createBarcode(&src, constr));
+		bc::Baritem* item = containner->getItem(0);
+
+		for (size_t i = 0; i < item->barlines.size(); ++i)
+		{
+			const auto& matr = item->barlines[i]->matr;
+
+
+			// BackSize maskSize = b;
+			for (const auto& pm : matr)
+			{
+				out.set(pm.getX(), pm.getY(), lerp(pm.value.getAvgFloat()));
+			}
+		}
+		return ret;
+	}
+
+
+	void exe3d(IRasterLayer* input, bc::ProcType type)
+	{
+		const BackImage& src = *(input->getCachedImage());
+
+		bc::BarConstructor constr;
+		constr.createBinaryMasks = true;
+		constr.createGraph = false;
+		constr.returnType = bc::ReturnType::barcode3d;
+
+		bc::BarcodeCreator bcc;
+
+		bc::barstruct bst(type, bc::ColorType::native, bc::ComponentType::Component);
+		constr.structure.push_back(bst);
+
+		std::unique_ptr<bc::Barcontainer> containner(bcc.createBarcode(&src, constr));
+		bc::Baritem* item = containner->getItem(0);
+
+		std::string globout = "";
+		for (size_t i = 0; i < item->barlines.size(); ++i)
+		{
+			auto& counter = *item->barlines[i]->bar3d;
+			std::string outstr = "";
+			for (const auto& pm : counter)
+			{
+				outstr += std::to_string(pm.cx);
+				outstr += " ";
+				outstr += std::to_string(pm.cy);
+				outstr += " ";
+				outstr += std::to_string(pm.rat);
+				outstr += "|";
+			}
+			globout += outstr + "\r\n";
+		}
+		WriteFile("D:\\12.txt", globout);
+	}
 };
 
 
 bc::barlinevector geojson[3];
 
-using std::min;
 using std::vector;
 
 Project* Project::proj = nullptr;

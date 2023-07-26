@@ -370,6 +370,17 @@ class RasterToolsLayer : public TiledRasterGuiLayer<T>
 {
 	GuiFilter filtere;
 
+	// Proc Type
+	SelectableKeyValues<bc::ProcType> procCB =
+	{
+		{bc::ProcType::f0t255, "От 0 до 255"},
+		{bc::ProcType::f255t0, "От 255 до 0"},
+		{bc::ProcType::Radius, "По расстоянию"},
+		{bc::ProcType::invertf0, "Инвертировать"},
+		{bc::ProcType::experiment, "Радар"},
+		// {bc::ProcType::ValueRadius, "Тру расстояние"}
+	};
+
 public:
 	RasterToolsLayer(T* fromCore = nullptr) : TiledRasterGuiLayer<T>(fromCore)
 	{ }
@@ -378,11 +389,34 @@ public:
 	{
 		TiledRasterGuiLayer<T>::drawToolboxInner(context);
 
+		procCB.drawCombobox("Тип");
+
 		if (ImGui::Button("Функция активации"))
 		{
 			//auto rets = proj->exeFilter(context.iol, 0);
-			auto rets = backend.exeFilter(context.iol, 0);
+			auto rets = backend.exeFilter(context.iol, procCB.currentValue(), 0);
 			context.setLayers(rets, "filter");
+		}
+
+
+		if (ImGui::Button("Квадратичная"))
+		{
+			//auto rets = proj->exeFilter(context.iol, 0);
+			auto rets = backend.exeFilter(context.iol, procCB.currentValue(), 1);
+			context.setLayers(rets, "new bar");
+		}
+
+		if (ImGui::Button("Клеточная"))
+		{
+			//auto rets = proj->exeFilter(context.iol, 0);
+			auto rets = backend.exeFilter(context.iol, procCB.currentValue(), 2);
+			context.setLayers(rets, "new cells");
+		}
+
+		if (ImGui::Button("3d"))
+		{
+			//auto rets = proj->exeFilter(context.iol, 0);
+			backend.exeFilter(context.iol, procCB.currentValue(), 3);
 		}
 
 		if (ImGui::Button("GUI"))

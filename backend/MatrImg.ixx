@@ -144,6 +144,12 @@ public:
 		valInit();
 	}
 
+	void reintAsInt()
+	{
+		assert(TSize == 4);
+		type = BarType::INT32_1;
+	}
+
 	void assign(const MatrImg &copy) { assignCopyOf(copy); }
 
 	// move
@@ -337,6 +343,54 @@ public:
 		cachedMax.isCached = false;
 	}
 
+	struct m_rgbfill
+	{
+		uchar rgb[3];
+	};
+	struct m_rgbafill
+	{
+		uchar rgb[4];
+	};
+
+	inline void setRow(int x, int y, int xwid, const Barscalar& val)
+	{
+		//if (diagReverce)
+		//	values[x * _wid + y] = val;
+		//else
+		assert(x < _wid);
+		assert(y < _hei);
+		assert(x + xwid <= _wid);
+		assert(type == val.type);
+
+		uchar* off = data + (y * _wid + x) * TSize;
+		switch (type)
+		{
+		case BarType::BYTE8_1:
+			memset(off, val.data.b1, xwid * TSize);
+			break;
+		case BarType::BYTE8_3:
+			if (TSize == 4)
+			{
+				m_rgbafill valtof{ val.data.b3[0],  val.data.b3[1],  val.data.b3[2], 255 };
+				std::fill_n((m_rgbafill*)off, xwid, valtof);
+			}
+			else
+			{
+				m_rgbfill valtof{ val.data.b3[0],  val.data.b3[1],  val.data.b3[2] };
+				std::fill_n((m_rgbfill*)off, xwid, valtof);
+			}
+			break;
+		case BarType::INT32_1:
+			std::fill_n((int*)off, xwid, val.data.i);
+			break;
+		default:
+			assert(false);
+			break;
+		}
+
+		cachedMin.isCached = false;
+		cachedMax.isCached = false;
+	}
 
 	inline void add(int x, int y, const Barscalar& val)
 	{
@@ -461,8 +515,8 @@ public:
 
 	void resize(int new_width, int new_height)
 	{
-		float x_ratio = (float)width() / new_width;
-		float y_ratio = (float)height() / new_height;
+		const float x_ratio = (float)width() / new_width;
+		const float y_ratio = (float)height() / new_height;
 
 		unsigned char* new_image = new unsigned char[new_width * new_height * channels()];
 
@@ -477,19 +531,22 @@ public:
 				float x_weight = x * x_ratio - x_floor;
 				float y_weight = y * y_ratio - y_floor;
 
-				for (int c = 0; c < channels(); c++)
+				for (int c = 0; c < _channels; c++)
 				{
-					int new_index = (y * new_width + x) * channels() + c;
-					int old_index = (y_floor * width() + x_floor) * channels() + c;
-					float top = data[old_index] * (1 - x_weight) + data[old_index + channels()] * x_weight;
-					old_index = (y_ceil * width() + x_floor) * channels() + c;
-					float bottom = data[old_index] * (1 - x_weight) + data[old_index + channels()] * x_weight;
+					const int new_index = (y * new_width + x) * _channels + c;
+					int old_index = (y_floor * width() + x_floor) * _channels + c;
+					const float top = data[old_index] * (1 - x_weight) + data[old_index + _channels] * x_weight;
+					old_index = (y_ceil * width() + x_floor) * _channels + c;
+					assert(old_index < length() * _channels);
+					const float bottom = data[old_index] * (1 - x_weight) + data[old_index + _channels] * x_weight;
+					assert(new_index < new_height * new_width * _channels);
 					new_image[new_index] = (unsigned char)(top * (1 - y_weight) + bottom * y_weight);
 				}
 			}
 		}
 
-		delete[] data;
+		valDelete();
+		_deleteData = true;
 		data = new_image;
 		_wid = new_width;
 		_hei = new_height;

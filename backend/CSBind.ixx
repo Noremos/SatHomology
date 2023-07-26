@@ -132,7 +132,7 @@ public:
 
 	static sqlite3_stmt* prepareSelect(sqlite3* db, const char* name, const char* where = NULL)
 	{
-		auto rc = sqlite3_open_v2((Variables::metaPath / "proj.sqlite").string().c_str(), &db, SQLITE_OPEN_READONLY, NULL);
+	auto rc = sqlite3_open_v2((Variables::metaPath / "proj.sqlite").string().c_str(), &db, SQLITE_OPEN_READONLY, NULL);
 		if (rc != SQLITE_OK)
 		{
 			fprintf(stderr, "������ ��������/�������� ��: %s\n", sqlite3_errmsg(db));

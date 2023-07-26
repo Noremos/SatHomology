@@ -162,12 +162,12 @@ public:
 	}
 
 
-	RetLayers exeFilter(InOutLayer& layer, int algNum)
+	RetLayers exeFilter(InOutLayer& layer, bc::ProcType type, int algNum)
 	{
 		if (!isLoaded())
 			return RetLayers();
 
-		return proj->exeFilter(layer, algNum);
+		return proj->exeFilter(layer, type, algNum);
 	}
 
 	RetLayers exeGUI(InOutLayer& layer, const BarcodeProperies& propertices, IItemFilter* filter)

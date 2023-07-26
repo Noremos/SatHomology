@@ -27,6 +27,14 @@ using uchar = unsigned char;
 //using BackVector = std::vector<T>;
 //
 
+inline void WriteFile(std::string fileName, std::string content)
+{
+	BackFileWriter w;
+	w.open(fileName, std::ios::out | std::ios::trunc);
+	w.write(content.c_str(), content.length());
+	w.close();
+}
+
 const int DEFAULT_PROJECTION = 4326;
 const char* const DEFAULT_PROJECTION_STR = "4326";
 

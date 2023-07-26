@@ -184,6 +184,12 @@ public:
 	//	std::remove(path.string().c_str());
 	//}
 
+	void init(int wid, int hei, int chls, int mtileSize = DEF_TILE_SIZE)
+	{
+		mat.reinit(wid, hei, chls);
+		prov.init(wid, hei, wid, mtileSize);
+	}
+
 	void init(const BackImage& src, int mtileSize = DEF_TILE_SIZE)
 	{
 		mat.assignCopyOf(src);
@@ -306,6 +312,11 @@ public:
 
 			colors.push_back(Barscalar(255, 255, 255));
 		}
+	}
+
+	static const Barscalar& getRandColor(size_t id)
+	{
+		return colors[id % colors.size()];
 	}
 
 	BackPathStr getCacheFilePath(const MetadataProvider& metaFolder)
