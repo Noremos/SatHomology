@@ -179,6 +179,8 @@
     </ClCompile>
     <ClCompile Include="backend\Interfaces\ICluster.ixx" />
     <ClCompile Include="backend\Interfaces\IItem.ixx" />
+    <ClCompile Include="frontend\Layers\GuiRasterLayers.ixx" />
+    <ClCompile Include="frontend\Layers\GuiLuaLayers.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="side\imgui\imgui_internal.h">

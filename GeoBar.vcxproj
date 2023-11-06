@@ -144,6 +144,8 @@
     <ClCompile Include="backend\CSBind.ixx" />
     <ClCompile Include="Bind\Common.cpp" />
     <ClCompile Include="Bind\MHashMap.ixx" />
+    <ClCompile Include="frontend\Layers\GuiLuaLayers.ixx" />
+    <ClCompile Include="frontend\Layers\GuiRasterLayers.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\Barcode.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\Barline.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\ImageReader.ixx" />
