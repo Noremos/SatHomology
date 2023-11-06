@@ -11,6 +11,7 @@ module;
 export module Classifiers;
 
 import BarcodeModule;
+import ItemInterface;
 import ClassifierInterface;
 
 import IOCore;
@@ -504,7 +505,7 @@ public:
 		return data[i];
 	}
 
-	size_t count()
+	size_t count() const
 	{
 		return data.size();
 	}
@@ -605,8 +606,7 @@ public:
 };
 
 
-void registerClassic()
-{
-	ClassFactory::RegisterFactory<BarlineClass, BaritemHolder, barclassificator>(1);
-	ClassFactory::RegisterFactory<BettylineClass, BettyItemHolder, BettyClassificator>(2);
-}
+GlobalRegister<BarlineClass, BaritemHolder, barclassificator>;
+GlobalRegister<BettylineClass, BettyItemHolder, BettyClassificator>;
+//export int fyBettyClasssifier = GlobalRegister<BettylineClass, BettyItemHolder, BettyClassificator>().getId();
+

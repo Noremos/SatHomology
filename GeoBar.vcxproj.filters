@@ -172,6 +172,13 @@
     <ClCompile Include="side\fpng\fpng.cpp">
       <Filter>Side</Filter>
     </ClCompile>
+    <ClCompile Include="side\Barcode\PrjBarlib\modules\Barline.ixx" />
+    <ClCompile Include="side\Barcode\PrjBarlib\modules\ImageReader.ixx" />
+    <ClCompile Include="backend\Clusterizers\TreeClassifer.ixx">
+      <Filter>Backend\Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\Interfaces\ICluster.ixx" />
+    <ClCompile Include="backend\Interfaces\IItem.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="side\imgui\imgui_internal.h">
@@ -213,6 +220,9 @@
     </ClInclude>
     <ClInclude Include="Bind\Lua.h">
       <Filter>Backend\Bind</Filter>
+    </ClInclude>
+    <ClInclude Include="side\kde.h">
+      <Filter>Side</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

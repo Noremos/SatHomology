@@ -251,6 +251,7 @@ public:
 	}
 
 
+
 	size_t getClassCount(int classId)
 	{
 		BackString sql = "SELECT COUNT(*) FROM CLASS_DATA WHERE class_id = ?";

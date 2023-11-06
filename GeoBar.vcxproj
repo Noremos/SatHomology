@@ -138,6 +138,8 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="backend\Interfaces\ICluster.ixx" />
+    <ClCompile Include="backend\Interfaces\IItem.ixx" />
     <ClCompile Include="backend\Layers\VectorLayers.ixx" />
     <ClCompile Include="backend\CSBind.ixx" />
     <ClCompile Include="Bind\Common.cpp" />
@@ -186,6 +188,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="side\sago\platform_folders.cpp" />
+    <ClCompile Include="backend\Clusterizers\TreeClassifer.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Bind\Lua.h" />
@@ -205,6 +208,7 @@
     <ClInclude Include="frontend\Application.h" />
     <ClInclude Include="frontend\FrontTypes.h" />
     <ClInclude Include="side\IconsFontAwesome5.h" />
+    <ClInclude Include="side\kde.h" />
     <ClInclude Include="side\PortFileDialog.h" />
     <ClInclude Include="side\stb_image.h" />
   </ItemGroup>

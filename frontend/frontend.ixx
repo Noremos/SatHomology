@@ -18,7 +18,7 @@ import BarcodeModule;
 import RasterLayers;
 
 import GuiWidgets;
-import ClassifierInterface;
+import ItemInterface;
 import VectorLayers;
 import CSBind;
 

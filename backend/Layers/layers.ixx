@@ -14,7 +14,7 @@ import BarcodeModule;
 import IOCore;
 import Platform;
 import GeoprocessorModule;
-import ClassifierInterface;
+import ItemInterface;
 
 import MetadataIOCore;
 
