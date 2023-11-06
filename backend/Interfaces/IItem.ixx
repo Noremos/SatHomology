@@ -238,3 +238,66 @@ export struct RangeItemFilter : public IItemFilter
 	//		filter.depth.inRange(line->getDeath());
 	//}
 };
+
+// Ml for machine learning
+export template <typename IML>
+class ImlFactory
+{
+private:
+	template<class Interface>
+	using BaseCreator = std::function<std::unique_ptr<Interface>()>;
+
+	// using ItemCreator = BaseCreator<IClassItem>;
+	// using HolderCreator = BaseCreator<IClassItemHolder>;
+	// using ClassifierCreator = BaseCreator<IBarClassifier>;
+
+	template<class IF>
+	using FunctionHolder = std::vector<BaseCreator<IF>>;
+	FunctionHolder<IClassItem> itemCreators;
+	FunctionHolder<IClassItemHolder> holderCreators;
+	FunctionHolder<IML> mlCreators;
+
+	template<class IF>
+	std::unique_ptr<IF> CreateItem(int id, FunctionHolder<IF>& creators)
+	{
+		auto it = creators.find(id);
+		if (it != creators.end())
+			return it->second();
+		else
+			return nullptr;
+	}
+
+public:
+	std::unique_ptr<IClassItem> CreateItem(int id)
+	{
+		return CreateItem<IClassItem>(id, itemCreators);
+	}
+
+	int idCounter = 0;
+
+	template <typename Item, typename Holder, typename ML>
+	int Register()
+	{
+		itemCreators.push_back([]() { return std::make_unique<Item>(); });
+		holderCreators.push_back([]() { return std::make_unique<Holder>(); });
+		mlCreators.push_back([]() { return std::make_unique<ML>(); });
+		return idCounter++;
+	}
+};
+
+
+export template<class TClass, class TClassHolder, class TML>
+class GlobalRegister
+{
+	int id;
+public:
+	template<class TFactory>
+	GlobalRegister(TFactory& factory)
+	{
+		id = factory.Register<TClass, TClassHolder, TML>();
+	}
+	int getId() const
+	{
+		return id;
+	}
+};

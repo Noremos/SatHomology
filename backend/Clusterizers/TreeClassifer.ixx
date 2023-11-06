@@ -259,4 +259,4 @@ public:
 };
 
 
-//GlobalRegister<TreeClass, TreeSignatureCollection, TreeClassifier>;
+GlobalClusterRegister<TreeClass, TreeSignatureCollection, TreeClassifier>;

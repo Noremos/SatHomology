@@ -30,3 +30,18 @@ public:
 	{
 	}
 };
+
+
+
+using ClusterFactory = ImlFactory<IBarClusterizer>;
+
+export ClusterFactory clusterFactory;
+
+export template<class TClass, class TClassHolder, class TClassifier>
+class GlobalClusterRegister : public GlobalRegister<TClass, TClassHolder, TClassifier>
+{
+public:
+	GlobalClusterRegister() : GlobalRegister<ClusterFactory>(clusterFactory)
+	{ }
+};
+//using GlobalClusterRegister = GlobalRegister<TClass, TClassHolder, TClassifier, ClusterFactory>;

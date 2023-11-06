@@ -1,7 +1,6 @@
 module;
 
 #include <cassert>
-#include <functional>
 
 #include "../../Bind/Common.h"
 
@@ -212,81 +211,17 @@ public:
 };
 
 
-export class ClassFactory
-{
-private:
-	template<class Interface>
-	using BaseCreator = std::function<std::unique_ptr<Interface>()>;
+export using ClassFactory = ImlFactory<IBarClassifier>;
 
-	// using ItemCreator = BaseCreator<IClassItem>;
-	// using HolderCreator = BaseCreator<IClassItemHolder>;
-	// using ClassifierCreator = BaseCreator<IBarClassifier>;
-
-	template<class IF>
-	using FunctionHolder = MMMAP<int, BaseCreator<IF>>;
-
-	static FunctionHolder<IClassItem> itemCreators;
-	static FunctionHolder<IClassItemHolder> holderCreators;
-	static FunctionHolder<IBarClassifier> classifierCreators;
-
-	template<class IF>
-	static std::unique_ptr<IF> CreateItem(int id, FunctionHolder<IF>& creators)
-	{
-		auto it = creators.find(id);
-		if (it != creators.end())
-			return it->second();
-		else
-			return nullptr;
-	}
-
-public:
-	static std::unique_ptr<IClassItem> CreateItem(int id)
-	{
-		return CreateItem<IClassItem>(id, itemCreators);
-	}
-
-	static std::unique_ptr<IClassItemHolder> CreateItemHolder(int id)
-	{
-		return CreateItem<IClassItemHolder>(id, holderCreators);
-	}
-
-	static std::unique_ptr<IBarClassifier> CreateClassifier(int id)
-	{
-		return CreateItem<IBarClassifier>(id, classifierCreators);
-	}
-
-	static int idCounter;
-
-	template <typename Item, typename Holder, typename Classifier>
-	static int RegisterFactory()
-	{
-		int id = idCounter++;
-		itemCreators[id] = []() { return std::make_unique<Item>(); };
-		holderCreators[id] = []() { return std::make_unique<Holder>(); };
-		classifierCreators[id] = []() { return std::make_unique<Classifier>(); };
-
-		return idCounter;
-	}
-};
-
-int ClassFactory::idCounter = 0;
-
-ClassFactory::FunctionHolder<IClassItem> ClassFactory::itemCreators;
-ClassFactory::FunctionHolder<IClassItemHolder> ClassFactory::holderCreators;
-ClassFactory::FunctionHolder<IBarClassifier> ClassFactory::classifierCreators;
-
+export ClassFactory classFactory;
 
 export template<class TClass, class TClassHolder, class TClassifier>
-class GlobalRegister
+class GlobalClassRegister : public GlobalRegister<TClass, TClassHolder, TClassifier>
 {
-	int id;
 public:
-	GlobalRegister()
-	{
-		id = ClassFactory::RegisterFactory<TClass, TClassHolder, TClassifier>();
-	}
-	int getId()
-	{
-		return id;
-	}
+	GlobalClassRegister() : GlobalRegister<ClassFactory>(classFactory)
+	{ }
 };
+
+//export template<class TClass, class TClassHolder, class TClassifier>
+//using GlobalClassRegister = GlobalRegister<TClass, TClassHolder, TClassifier, ClassFactory>;

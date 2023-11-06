@@ -606,6 +606,6 @@ public:
 };
 
 
-GlobalRegister<BarlineClass, BaritemHolder, barclassificator>;
-GlobalRegister<BettylineClass, BettyItemHolder, BettyClassificator>;
+GlobalClassRegister<BarlineClass, BaritemHolder, barclassificator>;
+GlobalClassRegister<BettylineClass, BettyItemHolder, BettyClassificator>;
 //export int fyBettyClasssifier = GlobalRegister<BettylineClass, BettyItemHolder, BettyClassificator>().getId();
