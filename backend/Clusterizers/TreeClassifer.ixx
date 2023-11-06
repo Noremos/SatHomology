@@ -15,7 +15,7 @@ export module TreeClassifier;
 
 import BarcodeModule;
 import ClusterInterface;
-import ItemInterface;
+import IItemModule;
 
 import IOCore;
 import Platform;

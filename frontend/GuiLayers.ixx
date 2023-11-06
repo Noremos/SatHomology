@@ -3,7 +3,7 @@ module;
 
 #include <numeric>
 
-export module LayersGui;
+export module GuiLayers;
 
 import RasterLayers;
 import ProjectModule;
@@ -16,7 +16,7 @@ import CSBind;
 import Platform;
 //import LuaStates;
 
-//import ForntnedModule;
+//import FrontendBind;
 
 class LayersVals;
 class ILayerWorker;

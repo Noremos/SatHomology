@@ -4,7 +4,7 @@ module;
 export module ClusterInterface;
 
 import TrainIO;
-import ItemInterface;
+import IItemModule;
 
 
 

@@ -9,7 +9,7 @@ module;
 
 #include "../frontend/GuiCommon.h"
 
-export module ForntnedModule;
+export module FrontendBind;
 
 import ProjectModule;
 import Platform;
@@ -18,7 +18,7 @@ import BarcodeModule;
 import RasterLayers;
 
 import GuiWidgets;
-import ItemInterface;
+import IItemModule;
 import VectorLayers;
 import CSBind;
 

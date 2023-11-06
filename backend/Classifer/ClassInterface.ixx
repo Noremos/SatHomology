@@ -16,7 +16,7 @@ import BarcodeModule;
 import MetadataIOCore;
 import TrainIO;
 import MHashMap;
-import ItemInterface;
+import IItemModule;
 
 
 // Classifer
@@ -290,4 +290,3 @@ public:
 		return id;
 	}
 };
-

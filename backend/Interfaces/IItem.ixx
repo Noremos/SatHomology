@@ -3,7 +3,7 @@ module;
 #include <assert.h>
 #include <functional>
 
-export module ItemInterface;
+export module IItemModule;
 
 import BarcodeModule;
 import MetadataIOCore;

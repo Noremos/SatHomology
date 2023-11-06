@@ -4,11 +4,11 @@ module;
 #include <future>
 
 export module GuiRasterLayers;
-import ForntnedModule;
-import ItemInterface;
+import FrontendBind;
+import IItemModule;
 import GuiWidgets;
 import RasterLayers;
-import LayersGui;
+import GuiLayers;
 import GuiOverlap;
 
 
@@ -29,8 +29,8 @@ struct GuiFilter
 
 	SelectableKeyValues<int> typeCB =
 	{
-		{0, "Без фильтра"},
-		{1, "Простой"},
+		{0, "пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ"},
+		{1, "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ"},
 		{2, "Lua script"}
 	};
 
@@ -60,22 +60,22 @@ struct GuiFilter
 
 	void draw()
 	{
-		typeCB.drawCombobox("Тип");
+		typeCB.drawCombobox("пїЅпїЅпїЅ");
 		switch (typeCB.currentValue())
 		{
 		case 0:
 			break;
 		case 1:
-			ImGui::Text("Пороги отсеивания");
-			_drawPair("Мин. Начало", "Макс. Начало", valsFilter.start);
-			_drawPair("Мин. Длина", "Макс. Длина", valsFilter.len);
-			_drawPair("Мин. Размер матрицы в %", "Макс. размер матрицы в %", valsFilter.matrSizeProc, 100);
-			_drawPair("Мин. Глубина", "Макс. Глубина", valsFilter.depth, 200);
-			ImGui::InputInt("Мин. объем матрицы", &valsFilter.minPixelsSize); // matr size must be more then this
+			ImGui::Text("пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ");
+			_drawPair("пїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅпїЅ", "пїЅпїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅпїЅ", valsFilter.start);
+			_drawPair("пїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅ", "пїЅпїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅ", valsFilter.len);
+			_drawPair("пїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ %", "пїЅпїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ %", valsFilter.matrSizeProc, 100);
+			_drawPair("пїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅпїЅпїЅ", "пїЅпїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅпїЅпїЅ", valsFilter.depth, 200);
+			ImGui::InputInt("пїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ", &valsFilter.minPixelsSize); // matr size must be more then this
 
 			break;
 			//case 2:
-			//	ImGui::InputTextMultiline("Lua скрипт", text, 10000, ImVec2(500, 300));
+			//	ImGui::InputTextMultiline("Lua пїЅпїЅпїЅпїЅпїЅпїЅ", text, 10000, ImVec2(500, 300));
 			//	break;
 		default:
 			break;
@@ -141,33 +141,33 @@ public:
 	// Component
 	SelectableKeyValues<bc::ComponentType> componentCB =
 	{
-		{bc::ComponentType::Component, "Компонента"},
-		{bc::ComponentType::Hole, "Дыра"}
+		{bc::ComponentType::Component, "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"},
+		{bc::ComponentType::Hole, "пїЅпїЅпїЅпїЅ"}
 	};
 	// ---
 
 	// Proc Type
 	SelectableKeyValues<bc::ProcType> procCB =
 	{
-		{bc::ProcType::f0t255, "От 0 до 255"},
-		{bc::ProcType::f255t0, "От 255 до 0"},
-		{bc::ProcType::Radius, "По расстоянию"},
-		{bc::ProcType::invertf0, "Инвертировать"},
-		{bc::ProcType::experiment, "Радар"},
-		// {bc::ProcType::ValueRadius, "Тру расстояние"}
+		{bc::ProcType::f0t255, "пїЅпїЅ 0 пїЅпїЅ 255"},
+		{bc::ProcType::f255t0, "пїЅпїЅ 255 пїЅпїЅ 0"},
+		{bc::ProcType::Radius, "пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"},
+		{bc::ProcType::invertf0, "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"},
+		{bc::ProcType::experiment, "пїЅпїЅпїЅпїЅпїЅ"},
+		// {bc::ProcType::ValueRadius, "пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"}
 	};
 
 	SelectableKeyValues<bc::ColorType> colorCB =
 	{
-		{bc::ColorType::native, "Как в изображении"},
-		{bc::ColorType::gray, "Серый"},
-		{bc::ColorType::rgb, "Цветной"},
+		{bc::ColorType::native, "пїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"},
+		{bc::ColorType::gray, "пїЅпїЅпїЅпїЅпїЅ"},
+		{bc::ColorType::rgb, "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ"},
 	};
 
 	SelectableKeyValues<int> alg =
 	{
-		{0, "Растровый"},
-		{1, "Растр в точки"}
+		{0, "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"},
+		{1, "пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ"}
 	};
 	BarcodeProperies properties;
 	GuiFilter filterInfo;
@@ -194,7 +194,7 @@ public:
 
 	virtual void drawToolboxInner(ILayerWorker& context)
 	{
-		if (ImGui::Button("Построить баркод"))
+		if (ImGui::Button("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ"))
 		{
 			subImgs = GuiLayerData<T>::data->getSubImageInfos();
 			if (subImgs.size() != 0)
@@ -219,36 +219,36 @@ public:
 		if (ImGui::BeginPopupModal("SelectMax", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 		{
 			ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
-			if (ImGui::BeginTabBar("Настройки", tab_bar_flags))
+			if (ImGui::BeginTabBar("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", tab_bar_flags))
 			{
-				if (ImGui::BeginTabItem("Алгоритм"))
+				if (ImGui::BeginTabItem("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"))
 				{
 					if (alg.currentIndex == 0)
 					{
-						componentCB.drawCombobox("##Форма");
-						procCB.drawCombobox("##Обработка");
-						colorCB.drawCombobox("##Цвет");
+						componentCB.drawCombobox("##пїЅпїЅпїЅпїЅпїЅ");
+						procCB.drawCombobox("##пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ");
+						colorCB.drawCombobox("##пїЅпїЅпїЅпїЅ");
 
 					}
 					else
 					{
-						ImGui::Checkbox("Использовать дыры", &properties.alg1UseHoles);
-						ImGui::Checkbox("Игнорировать высоту", &properties.alg1IgnoreHeight);
+						ImGui::Checkbox("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ", &properties.alg1UseHoles);
+						ImGui::Checkbox("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ", &properties.alg1IgnoreHeight);
 					}
 
 					ImGui::EndTabItem();
 				}
-				if (ImGui::BeginTabItem("Пороги отсеивания"))
+				if (ImGui::BeginTabItem("пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"))
 				{
 					ImGui::Separator();
-					ImGui::Text("Пороги отсеивания");
+					ImGui::Text("пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ");
 					filterInfo.draw();
 					ImGui::EndTabItem();
 				}
 
-				if (ImGui::BeginTabItem("Оптимизация"))
+				if (ImGui::BeginTabItem("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"))
 				{
-					ImGui::Text("Лимит кэша");
+					ImGui::Text("пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ");
 
 					ImGui::SameLine();
 					ImGui::SetNextItemWidth(150);
@@ -258,7 +258,7 @@ public:
 
 					if (imgSubImages.getSize() > 1)
 					{
-						imgSubImages.drawListBox("Размеры");
+						imgSubImages.drawListBox("пїЅпїЅпїЅпїЅпїЅпїЅпїЅ");
 						if (imgSubImages.hasChanged())
 						{
 							GuiLayerData<T>::data->setSubImage(imgSubImages.currentIndex);
@@ -276,14 +276,14 @@ public:
 					{
 						SubImgInf& sub = subImgs[imgSubImages.currentIndex];
 						int maxSize = std::max(sub.wid, sub.hei);
-						ImGui::Text("Размер тайла");
+						ImGui::Text("пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ");
 						tileSizeSlider.draw("##Tile size", newTileSize, 10, maxSize, 10);
 
 						int maxOffset = newTileSize;
 						if (newTileSize + maxOffset > maxSize)
 							maxOffset = maxSize - newTileSize;
 
-						ImGui::Text("Доп. наложение тайла");
+						ImGui::Text("пїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ");
 						offsetSlider.draw("##Offset size", newOffsetSize, 0, maxOffset, 1);
 
 						ImGui::Separator();
@@ -296,7 +296,7 @@ public:
 			}
 
 			ImGui::Separator();
-			if (ImGui::Button("Запустить"))
+			if (ImGui::Button("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"))
 			{
 				GuiLayerData<T>::data->prov.tileSize = newTileSize;
 				GuiLayerData<T>::data->tileOffset = newOffsetSize;
@@ -310,7 +310,7 @@ public:
 			}
 
 			ImGui::SameLine();
-			if (ImGui::Button("Отмена"))
+			if (ImGui::Button("пїЅпїЅпїЅпїЅпїЅпїЅ"))
 			{
 				ImGui::CloseCurrentPopup();
 			}
@@ -332,7 +332,7 @@ public:
 	{
 		Base::drawProperty();
 		ImGui::Separator();
-		ImGui::SliderFloat("Прозрачность", &tempVal, 0.f, 1.f);
+		ImGui::SliderFloat("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", &tempVal, 0.f, 1.f);
 	}
 
 	virtual void applyPropertyChanges()
@@ -354,12 +354,12 @@ class RasterToolsLayer : public TiledRasterGuiLayer<T>
 	// Proc Type
 	SelectableKeyValues<bc::ProcType> procCB =
 	{
-		{bc::ProcType::f0t255, "От 0 до 255"},
-		{bc::ProcType::f255t0, "От 255 до 0"},
-		{bc::ProcType::Radius, "По расстоянию"},
-		{bc::ProcType::invertf0, "Инвертировать"},
-		{bc::ProcType::experiment, "Радар"},
-		// {bc::ProcType::ValueRadius, "Тру расстояние"}
+		{bc::ProcType::f0t255, "пїЅпїЅ 0 пїЅпїЅ 255"},
+		{bc::ProcType::f255t0, "пїЅпїЅ 255 пїЅпїЅ 0"},
+		{bc::ProcType::Radius, "пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"},
+		{bc::ProcType::invertf0, "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"},
+		{bc::ProcType::experiment, "пїЅпїЅпїЅпїЅпїЅ"},
+		// {bc::ProcType::ValueRadius, "пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"}
 	};
 
 public:
@@ -370,9 +370,9 @@ public:
 	{
 		TiledRasterGuiLayer<T>::drawToolboxInner(context);
 
-		procCB.drawCombobox("Тип");
+		procCB.drawCombobox("пїЅпїЅпїЅ");
 
-		if (ImGui::Button("Функция активации"))
+		if (ImGui::Button("пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"))
 		{
 			//auto rets = proj->exeFilter(context.iol, 0);
 			auto rets = backend.exeFilter(context.iol, procCB.currentValue(), 0);
@@ -380,7 +380,7 @@ public:
 		}
 
 
-		if (ImGui::Button("Квадратичная"))
+		if (ImGui::Button("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"))
 		{
 			//auto rets = proj->exeFilter(context.iol, 0);
 			auto rets = backend.exeFilter(context.iol, procCB.currentValue(), 1);
@@ -388,8 +388,8 @@ public:
 		}
 
 		static int startEnergy = 100;
-		ImGui::InputInt("Начальная энергия", &startEnergy, 1);
-		if (ImGui::Button("Клеточная"))
+		ImGui::InputInt("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ", &startEnergy, 1);
+		if (ImGui::Button("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"))
 		{
 			//auto rets = proj->exeFilter(context.iol, 0);
 			auto rets = backend.proj->exeEnergy(context.iol, procCB.currentValue(), startEnergy);
@@ -411,9 +411,9 @@ public:
 		{
 			filtere.draw();
 
-			TiledRasterGuiLayer<T>::componentCB.drawCombobox("##Форма");
-			TiledRasterGuiLayer<T>::procCB.drawCombobox("##Обработка");
-			TiledRasterGuiLayer<T>::colorCB.drawCombobox("##Цвет");
+			TiledRasterGuiLayer<T>::componentCB.drawCombobox("##пїЅпїЅпїЅпїЅпїЅ");
+			TiledRasterGuiLayer<T>::procCB.drawCombobox("##пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ");
+			TiledRasterGuiLayer<T>::colorCB.drawCombobox("##пїЅпїЅпїЅпїЅ");
 
 			if (ImGui::Button("Run"))
 			{
@@ -421,12 +421,12 @@ public:
 				auto rets = backend.exeGUI(context.iol, TiledRasterGuiLayer<T>::properties, filtere.getFilter());
 
 				ImGui::CloseCurrentPopup();
-				context.setLayers(rets, "Разложить");
+				context.setLayers(rets, "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ");
 			}
 			ImGui::EndPopup();
 		}
 		//ImGui::SameLine();
-		//ImGui::Checkbox("Переключить вид", &heimap.enable);
+		//ImGui::Checkbox("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ", &heimap.enable);
 		//if (heimap.enable && !heimap.isInit())
 		//{
 		//	heimap.init(main);
@@ -457,7 +457,7 @@ public:
 	{
 		RasterToolsLayer<RasterLayer>::drawToolboxInner(context);
 
-		if (ImGui::Button("Выгрузить"))
+		if (ImGui::Button("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"))
 		{
 			BackPathStr path = getSavePath({ "png", "*.png",
 								"jpg", "*.jpg" });
@@ -486,7 +486,7 @@ public:
 	{
 		Base::drawProperty();
 		ImGui::Separator();
-		ImGui::SliderFloat("Прозрачность", &tempVal, 0.f, 1.f);
+		ImGui::SliderFloat("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", &tempVal, 0.f, 1.f);
 	}
 	virtual void applyPropertyChanges()
 	{
@@ -773,4 +773,3 @@ public:
 		return data->getSubImageInfos();
 	}
 };
-

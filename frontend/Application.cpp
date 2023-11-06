@@ -14,9 +14,9 @@
 //#include <GLFW/glfw3.h>
 //#include "../libs/glew/include/GL/glew.h"
 
-import ForntnedModule;
+import FrontendBind;
 import Platform;
-import LayersGui;
+import GuiLayers;
 import BarcodeModule;
 import GuiOverlap;
 import GuiClassifierModule;

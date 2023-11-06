@@ -11,7 +11,7 @@ module;
 export module Classifiers;
 
 import BarcodeModule;
-import ItemInterface;
+import IItemModule;
 import ClassifierInterface;
 
 import IOCore;
@@ -609,4 +609,3 @@ public:
 GlobalRegister<BarlineClass, BaritemHolder, barclassificator>;
 GlobalRegister<BettylineClass, BettyItemHolder, BettyClassificator>;
 //export int fyBettyClasssifier = GlobalRegister<BettylineClass, BettyItemHolder, BettyClassificator>().getId();
-
