@@ -51,6 +51,7 @@ public:
 	using ItemCallback = std::function<void(IClassItem *item)>;
 
 	virtual void create(bc::DatagridProvider *img, const bc::BarConstructor &constr, const ItemCallback& callback) = 0;
+	virtual ~IClassItemHolder() {}
 };
 
 export template<typename T>

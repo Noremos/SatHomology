@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <cassert>
+#include <functional>
 //#include <iostream>
 
 export module TrainIO;

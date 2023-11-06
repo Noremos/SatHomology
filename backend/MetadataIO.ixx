@@ -2,6 +2,7 @@ module;
 
 #include "../Bind/Common.h"
 #include <memory>
+#include <functional>
 
 export module MetadataIOCore;
 

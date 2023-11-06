@@ -1378,8 +1378,8 @@ public:
 			break;
 		case 1:
 			return exeQuadro(input, type);
-		case 2:
-			return exeEnergy(input, type);
+		//case 2:
+			//return exeEnergy(input, type, 100);
 		case 3:
 			exe3d(input, type);
 			return {};
@@ -1796,7 +1796,8 @@ public:
 	Barscalar lerp(double t)
 	{
 		assert(t <= 1.0 && t >= 0);
-		const BackColor start(0, 0, 255);
+		//t = log(1 + t);
+		const BackColor start(0, 255, 255);
 		const BackColor end(255, 0, 0);
 		uint8_t r = static_cast<uint8_t>(start.r + t * (end.r - start.r));
 		uint8_t g = static_cast<uint8_t>(start.g + t * (end.g - start.g));
@@ -1804,15 +1805,19 @@ public:
 		return Barscalar(r, g, b);
 	}
 
-	RetLayers exeEnergy(IRasterLayer* input, bc::ProcType type)
+	RetLayers exeEnergy(InOutLayer& iol, bc::ProcType type, float energyStart)
 	{
+		IRasterLayer* input = getInRaster(iol);
+
 		RetLayers ret;
 		const BackImage& src = *(input->getCachedImage());
+
 
 		bc::BarConstructor constr;
 		constr.createBinaryMasks = true;
 		constr.createGraph = false;
 		constr.returnType = bc::ReturnType::barcode2d;
+		constr.energyStart = energyStart;
 
 		bc::BarcodeCreator bcc;
 

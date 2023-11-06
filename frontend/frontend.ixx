@@ -170,6 +170,7 @@ public:
 		return proj->exeFilter(layer, type, algNum);
 	}
 
+
 	RetLayers exeGUI(InOutLayer& layer, const BarcodeProperies& propertices, IItemFilter* filter)
 	{
 		if (!isLoaded())
