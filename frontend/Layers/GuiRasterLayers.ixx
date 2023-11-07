@@ -29,8 +29,8 @@ struct GuiFilter
 
 	SelectableKeyValues<int> typeCB =
 	{
-		{0, "��� �������"},
-		{1, "�������"},
+		{0, "Без фильтра"},
+		{1, "Простой"},
 		{2, "Lua script"}
 	};
 
@@ -49,34 +49,34 @@ struct GuiFilter
 			return nullptr;
 		case 1:
 			return &valsFilter;
-			//case 2:
-			//{
-			//	scriptFilter.setScript(text);
-			//	return &scriptFilter;
-			//}
+		//case 2:
+		//{
+		//	scriptFilter.setScript(text);
+		//	return &scriptFilter;
+		//}
 		}
 		return nullptr;
 	}
 
 	void draw()
 	{
-		typeCB.drawCombobox("���");
+		typeCB.drawCombobox("Тип");
 		switch (typeCB.currentValue())
 		{
 		case 0:
 			break;
 		case 1:
-			ImGui::Text("������ ����������");
-			_drawPair("���. ������", "����. ������", valsFilter.start);
-			_drawPair("���. �����", "����. �����", valsFilter.len);
-			_drawPair("���. ������ ������� � %", "����. ������ ������� � %", valsFilter.matrSizeProc, 100);
-			_drawPair("���. �������", "����. �������", valsFilter.depth, 200);
-			ImGui::InputInt("���. ����� �������", &valsFilter.minPixelsSize); // matr size must be more then this
+			ImGui::Text("Пороги отсеивания");
+			_drawPair("Мин. Начало", "Макс. Начало", valsFilter.start);
+			_drawPair("Мин. Длина", "Макс. Длина", valsFilter.len);
+			_drawPair("Мин. Размер матрицы в %", "Макс. размер матрицы в %", valsFilter.matrSizeProc, 100);
+			_drawPair("Мин. Глубина", "Макс. Глубина", valsFilter.depth, 200);
+			ImGui::InputInt("Мин. объем матрицы", &valsFilter.minPixelsSize); // matr size must be more then this
 
 			break;
-			//case 2:
-			//	ImGui::InputTextMultiline("Lua ������", text, 10000, ImVec2(500, 300));
-			//	break;
+		//case 2:
+		//	ImGui::InputTextMultiline("Lua скрипт", text, 10000, ImVec2(500, 300));
+		//	break;
 		default:
 			break;
 		}
@@ -141,33 +141,33 @@ public:
 	// Component
 	SelectableKeyValues<bc::ComponentType> componentCB =
 	{
-		{bc::ComponentType::Component, "����������"},
-		{bc::ComponentType::Hole, "����"}
+		{bc::ComponentType::Component, "Компонента"},
+		{bc::ComponentType::Hole, "Дыра"}
 	};
 	// ---
 
 	// Proc Type
 	SelectableKeyValues<bc::ProcType> procCB =
 	{
-		{bc::ProcType::f0t255, "�� 0 �� 255"},
-		{bc::ProcType::f255t0, "�� 255 �� 0"},
-		{bc::ProcType::Radius, "�� ����������"},
-		{bc::ProcType::invertf0, "�������������"},
-		{bc::ProcType::experiment, "�����"},
-		// {bc::ProcType::ValueRadius, "��� ����������"}
+		{bc::ProcType::f0t255, "От 0 до 255"},
+		{bc::ProcType::f255t0, "От 255 до 0"},
+		{bc::ProcType::Radius, "По расстоянию"},
+		{bc::ProcType::invertf0, "Инвертировать"},
+		{bc::ProcType::experiment, "Радар"},
+		// {bc::ProcType::ValueRadius, "Тру расстояние"}
 	};
 
 	SelectableKeyValues<bc::ColorType> colorCB =
 	{
-		{bc::ColorType::native, "��� � �����������"},
-		{bc::ColorType::gray, "�����"},
-		{bc::ColorType::rgb, "�������"},
+		{bc::ColorType::native, "Как в изображении"},
+		{bc::ColorType::gray, "Серый"},
+		{bc::ColorType::rgb, "Цветной"},
 	};
 
 	SelectableKeyValues<int> alg =
 	{
-		{0, "���������"},
-		{1, "����� � �����"}
+		{0, "Растровый"},
+		{1, "Растр в точки"}
 	};
 	BarcodeProperies properties;
 	GuiFilter filterInfo;
@@ -194,7 +194,7 @@ public:
 
 	virtual void drawToolboxInner(ILayerWorker& context)
 	{
-		if (ImGui::Button("��������� ������"))
+		if (ImGui::Button("Построить баркод"))
 		{
 			subImgs = GuiLayerData<T>::data->getSubImageInfos();
 			if (subImgs.size() != 0)
@@ -216,39 +216,39 @@ public:
 			ImGui::OpenPopup("SelectMax");
 		}
 
-		if (ImGui::BeginPopupModal("SelectMax", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+		if (ImGui::BeginPopupModal("SelectMax", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 		{
 			ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
-			if (ImGui::BeginTabBar("���������", tab_bar_flags))
+			if (ImGui::BeginTabBar("Настройки", tab_bar_flags))
 			{
-				if (ImGui::BeginTabItem("��������"))
+				if (ImGui::BeginTabItem("Алгоритм"))
 				{
 					if (alg.currentIndex == 0)
 					{
-						componentCB.drawCombobox("##�����");
-						procCB.drawCombobox("##���������");
-						colorCB.drawCombobox("##����");
+						componentCB.drawCombobox("##Форма");
+						procCB.drawCombobox("##Обработка");
+						colorCB.drawCombobox("##Цвет");
 
 					}
 					else
 					{
-						ImGui::Checkbox("������������ ����", &properties.alg1UseHoles);
-						ImGui::Checkbox("������������ ������", &properties.alg1IgnoreHeight);
+						ImGui::Checkbox("Использовать дыры", &properties.alg1UseHoles);
+						ImGui::Checkbox("Игнорировать высоту", &properties.alg1IgnoreHeight);
 					}
 
 					ImGui::EndTabItem();
 				}
-				if (ImGui::BeginTabItem("������ ����������"))
+				if (ImGui::BeginTabItem("Пороги отсеивания"))
 				{
 					ImGui::Separator();
-					ImGui::Text("������ ����������");
+					ImGui::Text("Пороги отсеивания");
 					filterInfo.draw();
 					ImGui::EndTabItem();
 				}
 
-				if (ImGui::BeginTabItem("�����������"))
+				if (ImGui::BeginTabItem("Оптимизация"))
 				{
-					ImGui::Text("����� ����");
+					ImGui::Text("Лимит кэша");
 
 					ImGui::SameLine();
 					ImGui::SetNextItemWidth(150);
@@ -258,7 +258,7 @@ public:
 
 					if (imgSubImages.getSize() > 1)
 					{
-						imgSubImages.drawListBox("�������");
+						imgSubImages.drawListBox("Размеры");
 						if (imgSubImages.hasChanged())
 						{
 							GuiLayerData<T>::data->setSubImage(imgSubImages.currentIndex);
@@ -276,14 +276,14 @@ public:
 					{
 						SubImgInf& sub = subImgs[imgSubImages.currentIndex];
 						int maxSize = std::max(sub.wid, sub.hei);
-						ImGui::Text("������ �����");
+						ImGui::Text("Размер тайла");
 						tileSizeSlider.draw("##Tile size", newTileSize, 10, maxSize, 10);
 
 						int maxOffset = newTileSize;
 						if (newTileSize + maxOffset > maxSize)
 							maxOffset = maxSize - newTileSize;
 
-						ImGui::Text("���. ��������� �����");
+						ImGui::Text("Доп. наложение тайла");
 						offsetSlider.draw("##Offset size", newOffsetSize, 0, maxOffset, 1);
 
 						ImGui::Separator();
@@ -296,7 +296,7 @@ public:
 			}
 
 			ImGui::Separator();
-			if (ImGui::Button("���������"))
+			if (ImGui::Button("Запустить"))
 			{
 				GuiLayerData<T>::data->prov.tileSize = newTileSize;
 				GuiLayerData<T>::data->tileOffset = newOffsetSize;
@@ -310,7 +310,7 @@ public:
 			}
 
 			ImGui::SameLine();
-			if (ImGui::Button("������"))
+			if (ImGui::Button("Отмена"))
 			{
 				ImGui::CloseCurrentPopup();
 			}
@@ -332,7 +332,7 @@ public:
 	{
 		Base::drawProperty();
 		ImGui::Separator();
-		ImGui::SliderFloat("������������", &tempVal, 0.f, 1.f);
+		ImGui::SliderFloat("Прозрачность", &tempVal, 0.f, 1.f);
 	}
 
 	virtual void applyPropertyChanges()
@@ -354,12 +354,12 @@ class RasterToolsLayer : public TiledRasterGuiLayer<T>
 	// Proc Type
 	SelectableKeyValues<bc::ProcType> procCB =
 	{
-		{bc::ProcType::f0t255, "�� 0 �� 255"},
-		{bc::ProcType::f255t0, "�� 255 �� 0"},
-		{bc::ProcType::Radius, "�� ����������"},
-		{bc::ProcType::invertf0, "�������������"},
-		{bc::ProcType::experiment, "�����"},
-		// {bc::ProcType::ValueRadius, "��� ����������"}
+		{bc::ProcType::f0t255, "От 0 до 255"},
+		{bc::ProcType::f255t0, "От 255 до 0"},
+		{bc::ProcType::Radius, "По расстоянию"},
+		{bc::ProcType::invertf0, "Инвертировать"},
+		{bc::ProcType::experiment, "Радар"},
+		// {bc::ProcType::ValueRadius, "Тру расстояние"}
 	};
 
 public:
@@ -370,9 +370,9 @@ public:
 	{
 		TiledRasterGuiLayer<T>::drawToolboxInner(context);
 
-		procCB.drawCombobox("���");
+		procCB.drawCombobox("Тип");
 
-		if (ImGui::Button("������� ���������"))
+		if (ImGui::Button("Функция активации"))
 		{
 			//auto rets = proj->exeFilter(context.iol, 0);
 			auto rets = backend.exeFilter(context.iol, procCB.currentValue(), 0);
@@ -380,7 +380,7 @@ public:
 		}
 
 
-		if (ImGui::Button("������������"))
+		if (ImGui::Button("Квадратичная"))
 		{
 			//auto rets = proj->exeFilter(context.iol, 0);
 			auto rets = backend.exeFilter(context.iol, procCB.currentValue(), 1);
@@ -388,8 +388,8 @@ public:
 		}
 
 		static int startEnergy = 100;
-		ImGui::InputInt("��������� �������", &startEnergy, 1);
-		if (ImGui::Button("���������"))
+		ImGui::InputInt("Начальная энергия", &startEnergy, 1);
+		if (ImGui::Button("Клеточная"))
 		{
 			//auto rets = proj->exeFilter(context.iol, 0);
 			auto rets = backend.proj->exeEnergy(context.iol, procCB.currentValue(), startEnergy);
@@ -407,13 +407,13 @@ public:
 			ImGui::OpenPopup("UpdateImage");
 		}
 
-		if (ImGui::BeginPopupModal("UpdateImage", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+		if (ImGui::BeginPopupModal("UpdateImage", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 		{
 			filtere.draw();
 
-			TiledRasterGuiLayer<T>::componentCB.drawCombobox("##�����");
-			TiledRasterGuiLayer<T>::procCB.drawCombobox("##���������");
-			TiledRasterGuiLayer<T>::colorCB.drawCombobox("##����");
+			TiledRasterGuiLayer<T>::componentCB.drawCombobox("##Форма");
+			TiledRasterGuiLayer<T>::procCB.drawCombobox("##Обработка");
+			TiledRasterGuiLayer<T>::colorCB.drawCombobox("##Цвет");
 
 			if (ImGui::Button("Run"))
 			{
@@ -421,12 +421,12 @@ public:
 				auto rets = backend.exeGUI(context.iol, TiledRasterGuiLayer<T>::properties, filtere.getFilter());
 
 				ImGui::CloseCurrentPopup();
-				context.setLayers(rets, "���������");
+				context.setLayers(rets, "Разложить");
 			}
 			ImGui::EndPopup();
 		}
 		//ImGui::SameLine();
-		//ImGui::Checkbox("����������� ���", &heimap.enable);
+		//ImGui::Checkbox("Переключить вид", &heimap.enable);
 		//if (heimap.enable && !heimap.isInit())
 		//{
 		//	heimap.init(main);
@@ -457,7 +457,7 @@ public:
 	{
 		RasterToolsLayer<RasterLayer>::drawToolboxInner(context);
 
-		if (ImGui::Button("���������"))
+		if (ImGui::Button("Выгрузить"))
 		{
 			BackPathStr path = getSavePath({ "png", "*.png",
 								"jpg", "*.jpg" });
@@ -486,7 +486,7 @@ public:
 	{
 		Base::drawProperty();
 		ImGui::Separator();
-		ImGui::SliderFloat("������������", &tempVal, 0.f, 1.f);
+		ImGui::SliderFloat("Прозрачность", &tempVal, 0.f, 1.f);
 	}
 	virtual void applyPropertyChanges()
 	{
@@ -511,13 +511,13 @@ public:
 			ImGui::OpenPopup("UpdateImage");
 		}
 
-		if (ImGui::BeginPopupModal("UpdateImage", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+		if (ImGui::BeginPopupModal("UpdateImage", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 		{
 			filtere.draw();
 
 			if (ImGui::Button("Update"))
 			{
-				selectedLine = nullptr;
+				selectedLine = NULL;
 
 				ImGui::CloseCurrentPopup();
 				auto rets = backend.processRaster(context.iol, filtere.getFilter());
@@ -710,7 +710,7 @@ public:
 			ImVec2 diplsyPos = selectedRect.offset;
 			ImVec2 diplsySize = ImVec2(zoomImg.width, zoomImg.height) * selectedRect.getZoom();
 
-			zoomImg.drawImage("Part", ImVec2(0, 30), win->Size, ImVec2(0, 0), diplsySize);
+			zoomImg.drawImage("Part", ImVec2(0,30), win->Size, ImVec2(0,0), diplsySize);
 			selectedRect.end(win->Pos, win->Size);
 		}
 
