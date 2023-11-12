@@ -4,6 +4,8 @@ module;
 #include <thread>
 #include <algorithm>
 #include <cassert>
+#include <memory>
+#include <utility>
 
 #ifdef __linux__
 #include <pthread.h>
@@ -30,11 +32,161 @@ import GeoprocessorModule;
 import Settings;
 import LayersCore;
 
+class CachedBaritemHolder;
 
-import Classifiers;
+export class CachedBarline : public IClassItem
+{
+	//static unsigned int idCounter;
+public:
+	ushort id;
+	ushort parentId;
+	std::unique_ptr<ushort[]> children;
+	Barscalar startl, endl;
+	bc::barvector matrix;
+	unsigned char depth;
 
-using CurItemHolder = BettyItemHolder;
-export using IdGrater = MMMAP<size_t, std::shared_ptr<SimpleLine>>;
+	CachedBaritemHolder* root;
+
+	CachedBarline() : IClassItem(),
+		id(0), parentId(0), children(nullptr), startl(0), endl(0), matrix(), depth(0), root(nullptr)
+	{ }
+
+	CachedBarline(const CachedBarline& other)
+	{
+	}
+
+	CachedBarline(ushort id, bc::barline* line, CachedBaritemHolder* root) : IClassItem()
+	{
+		update(id, line, root);
+	}
+
+	~CachedBarline()
+	{} 
+
+	void update(ushort id, bc::barline* line, CachedBaritemHolder* root)
+	{
+		this->id = id;
+		parentId = 0;
+		assert(line);
+		startl = line->start;
+		endl = line->end();
+		//matrix = std::move(line->mart);
+		depth = line->getDeath();
+
+		this->root = root;
+	}
+
+	virtual size_t getId() const
+	{
+		return id;
+	}
+
+	virtual size_t getParentId() const
+	{
+		return parentId;
+	}
+
+	virtual int getDeath() const override
+	{
+		return (int)depth;
+	}
+
+	virtual Barscalar start() const override
+	{
+		return startl;
+	}
+
+	virtual Barscalar end() const override
+	{
+		return endl;
+	}
+
+	virtual const bc::barvector& getMatrix() const
+	{
+		return matrix;
+	}
+
+	virtual const size_t getMatrixSize() const
+	{
+		return matrix.size();
+	}
+
+
+	virtual void saveLoadState(StateBinFile::BinState* state) override
+	{
+		state->beginItem();
+
+		startl = state->pBarscalar(startl);
+		endl = state->pBarscalar(endl);
+		depth = state->pInt(depth);
+
+		int matrSize = matrix.size();
+		matrSize = state->pInt(matrSize);
+		state->beginArray(matrix, matrSize);
+		for (size_t i = 0; i < matrSize; i++)
+		{
+			auto& barvalue = matrix[i];
+
+			barvalue.x = state->pInt(barvalue.x);
+			barvalue.y = state->pInt(barvalue.y);
+			barvalue.value = state->pBarscalar(barvalue.value);
+		}
+	}
+};
+
+
+class CachedBaritemHolder : public IDataClassItemValueHolder<CachedBarline>
+{
+	using Base = IDataClassItemValueHolder<CachedBarline>;
+	int root = 0;
+public:
+	void create(bc::DatagridProvider* img, const bc::BarConstructor& constr, const Base::ItemCallback& callback)
+	{
+		bc::BarcodeCreator creator;
+		std::unique_ptr<bc::Barcontainer> ret(creator.createBarcode(img, constr));
+
+		auto* item = ret->getItem(0);
+		int size = (int)item->barlines.size();
+		MMMAP<size_t, int> ids;
+		for (int i = 0; i < size; i++)
+		{
+			ids.insert(std::make_pair((size_t)item->barlines[i], i));
+		}
+		
+		root = ids[(size_t)item->getRootNode()];
+		for (int i = 0; i < size; i++)
+		{
+			bc::barline* line = item->barlines[i];
+			Base::items.push_back({});
+			CachedBarline& id = Base::items.back();
+
+			id.update((ushort)i, line, this);
+			id.parentId = line->parent ? ids[(size_t)line->parent] : -1;
+			int k = 0;
+			id.children.reset(new ushort[line->children.size()]);
+			for (auto* child : line->children)
+			{
+				id.children[k++] = ids[(size_t)child];
+			}
+			callback(&id);
+		}
+	}
+
+	virtual void saveLoadState(StateBinFile::BinState* state) override
+	{
+		// Begin
+		root = state->pInt(root);
+
+		int count = Base::items.size();
+
+		count = state->pInt(count);
+		state->beginArray(Base::items, count);
+		for (size_t i = 0; i < count; ++i)
+		{
+			Base::items[i].saveLoadState(state);
+		}
+	}
+};
 
 export class BarLineWorker
 {
@@ -551,7 +703,7 @@ public:
 		// -------------
 
 		printf("Start run for tile %d\n", tileProv.index);
-		CurItemHolder creator;
+		CachedBaritemHolder creator;
 		creator.create(&rect, constr, cacheClass);
 
 		{
@@ -598,9 +750,10 @@ class ProcessCacheBarThreadWorker : public BarLineWorker
 	//Project* proj;
 
 	TileProvider tileProv;
-	CurItemHolder holder;
 
 public:
+	CachedBaritemHolder holder;
+
 	ProcessCacheBarThreadWorker(int& counter, RasterLineLayer* outLayer, const IItemFilter* filter/*, Project* proj*/) :
 		BarLineWorker(counter), outLayer(outLayer), filter(filter),// proj(proj),
 		tileProv(0, 0)
@@ -612,10 +765,9 @@ public:
 	}
 
 
-	void updateTask(CurItemHolder& iholder, const TileProvider& itileProv)
+	void updateTask(const TileProvider& itileProv)
 	{
 		tileProv = itileProv;
-		holder = std::move(iholder);
 	}
 
 	void runSync()
@@ -627,16 +779,16 @@ public:
 		// -------------
 
 		printf("Start run for tile %d\n", tileProv.index);
-		outLayer->addHolder(holder, tileProv, filter);
-		//for (size_t i = 0; i < holder.getItemsCount(); ++i)
-		//{
-		//	auto item = holder.getItem(i);
-		//	if (outLayer->passLine(item, filter))
-		//	{
-		//		proj->predictForLayer(item, tileProv, outLayer->subToRealFactor);
-		//		outLayer->addLine(parentne, (int)i, item, tileProv);
-		//	}
-		//}
+		//outLayer->addHolder(*holder, tileProv, filter);
+		for (size_t i = 0; i < holder.getItemsCount(); ++i)
+		{
+			auto item = holder.getItem(i);
+			if (outLayer->passLine(item, filter))
+			{
+				//proj->predictForLayer(item, tileProv, outLayer->subToRealFactor);
+				outLayer->addLine(parentne, (int)i, item, tileProv);
+			}
+		}
 
 		const auto end = std::chrono::steady_clock::now();
 		const auto diff = end - start;
@@ -869,14 +1021,14 @@ RetLayers RasterLineLayer::processCachedBarcode(IItemFilter* filter)
 		int tileIndex = 0;
 		while (cacher.canRead())
 		{
-			CurItemHolder holder;
-			cacher.load(tileIndex, &holder);
+			bool isAsync;
+			auto* worker = wpool.getFreeWorker(isAsync);
+
+			cacher.load(tileIndex, &worker->holder);
 
 			TileProvider tileProv = prov.tileByIndex(tileIndex);
 
-			bool isAsync;
-			auto* worker = wpool.getFreeWorker(isAsync);
-			worker->updateTask(holder, tileProv);
+			worker->updateTask(tileProv);
 
 			if (isAsync)
 				worker->runTask();
@@ -891,13 +1043,12 @@ RetLayers RasterLineLayer::processCachedBarcode(IItemFilter* filter)
 		int tileIndex = 0;
 		while (cacher.canRead())
 		{
-			CurItemHolder holder;
-			cacher.load(tileIndex, &holder);
+			ProcessCacheBarThreadWorker* worker = wpool.getSyncWorker();
+			cacher.load(tileIndex, &worker->holder);
 
 			TileProvider tileProv = inLayer->prov.tileByIndex(tileIndex);
 
-			ProcessCacheBarThreadWorker* worker = wpool.getSyncWorker();
-			worker->updateTask(holder, tileProv);
+			worker->updateTask(tileProv);
 			worker->runSync();
 		}
 	}

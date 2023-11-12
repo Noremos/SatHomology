@@ -7,6 +7,11 @@ import TrainIO;
 import IItemModule;
 
 
+//export class IClasterItem
+//{
+//	IClasterItem(IClassItem*);
+//	{}
+//};
 
 export class IBarClusterizer
 {

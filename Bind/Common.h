@@ -22,7 +22,7 @@ using BackFileWriter = std::ofstream;
 
 using uint = unsigned int;
 using uchar = unsigned char;
-
+using ushort = unsigned short;
 //template<class T>
 //using BackVector = std::vector<T>;
 //

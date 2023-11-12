@@ -26,11 +26,10 @@ import MHashMap;
 class TreeClass : public IClassItem
 {
 public:
-	// int id;
 	std::vector<short> signature;
 
 	// IClassItem* parent;
-	TreeClass(bc::barline* line = nullptr)
+	TreeClass(bc::barline* line = nullptr) //: id(id)
 	{
 		if (line)
 		{

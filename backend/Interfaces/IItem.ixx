@@ -71,6 +71,34 @@ public:
 };
 
 
+export template<typename T>
+class IDataClassItemValueHolder : public IClassItemHolder
+{
+protected:
+	std::vector<T> items;
+
+public:
+
+	IClassItem* getItem(size_t id)
+	{
+		return &items[id];
+	}
+
+	const IClassItem* getItem(size_t id) const
+	{
+		return &items[id];
+	}
+
+	size_t getItemsCount() const
+	{
+		return items.size();
+	}
+
+	virtual ~IDataClassItemValueHolder()
+	{ }
+};
+
+
 export class ItemHolderCache
 {
 protected:
