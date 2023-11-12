@@ -20,7 +20,7 @@ public:
 
 	virtual const BackString name() const = 0;
 
-	virtual void loadData(const BarCategories& categs) = 0;
+	//virtual void loadData(const BarCategories& categs) = 0;
 	virtual void setClassesCount(int size) = 0;
 
 	virtual void predict(const IClassItemHolder& allItems) = 0;
@@ -35,13 +35,17 @@ public:
 
 using ClusterFactory = ImlFactory<IBarClusterizer>;
 
-export ClusterFactory clusterFactory;
+export ClusterFactory& getClusterFactory()
+{
+	static ClusterFactory clusterFactory;
+	return clusterFactory;
+}
 
 export template<class TClass, class TClassHolder, class TClassifier>
-class GlobalClusterRegister : public GlobalRegister<TClass, TClassHolder, TClassifier>
+class GlobalClusterRegister : public GlobalRegister<ClusterFactory, TClass, TClassHolder, TClassifier>
 {
 public:
-	GlobalClusterRegister() : GlobalRegister<ClusterFactory>(clusterFactory)
+	GlobalClusterRegister(std::string_view name = "") : GlobalRegister<ClusterFactory, TClass, TClassHolder, TClassifier>(getClusterFactory(), name)
 	{ }
 };
 //using GlobalClusterRegister = GlobalRegister<TClass, TClassHolder, TClassifier, ClusterFactory>;

@@ -216,10 +216,10 @@ export using ClassFactory = ImlFactory<IBarClassifier>;
 export ClassFactory classFactory;
 
 export template<class TClass, class TClassHolder, class TClassifier>
-class GlobalClassRegister : public GlobalRegister<TClass, TClassHolder, TClassifier>
+class GlobalClassRegister : public GlobalRegister<ClassFactory, TClass, TClassHolder, TClassifier>
 {
 public:
-	GlobalClassRegister() : GlobalRegister<ClassFactory>(classFactory)
+	GlobalClassRegister(std::string_view name = "") : GlobalRegister<ClassFactory, TClass, TClassHolder, TClassifier>(classFactory, name)
 	{ }
 };
 

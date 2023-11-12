@@ -256,45 +256,68 @@ private:
 	FunctionHolder<IClassItem> itemCreators;
 	FunctionHolder<IClassItemHolder> holderCreators;
 	FunctionHolder<IML> mlCreators;
+	std::vector<BackString> names;
 
 	template<class IF>
-	std::unique_ptr<IF> CreateItem(int id, FunctionHolder<IF>& creators)
+	std::unique_ptr<IF> Create(int id, FunctionHolder<IF>& creators)
 	{
-		auto it = creators.find(id);
-		if (it != creators.end())
-			return it->second();
-		else
-			return nullptr;
+		//auto it = creators.find(id);
+		//if (it != creators.end())
+		//	return it->second();
+		//else
+		//	return nullptr;
+		assert(id >= 0 && id < creators.size());
+		return creators[id]();
 	}
 
 public:
+	const std::vector<BackString>& getNames() const
+	{
+		return names;
+	}
+
+	size_t getCount() const
+	{
+		return idCounter;
+	}
+
 	std::unique_ptr<IClassItem> CreateItem(int id)
 	{
-		return CreateItem<IClassItem>(id, itemCreators);
+		return Create<IClassItem>(id, itemCreators);
+	}
+
+	std::unique_ptr<IClassItemHolder> CreateHolder(int id)
+	{
+		return Create<IClassItemHolder>(id, holderCreators);
+	}
+
+	std::unique_ptr<IML> CreateML(int id)
+	{
+		return Create<IML>(id, mlCreators);
 	}
 
 	int idCounter = 0;
 
 	template <typename Item, typename Holder, typename ML>
-	int Register()
+	int Register(std::string_view name)
 	{
 		itemCreators.push_back([]() { return std::make_unique<Item>(); });
 		holderCreators.push_back([]() { return std::make_unique<Holder>(); });
 		mlCreators.push_back([]() { return std::make_unique<ML>(); });
+		names.push_back(BackString(name.data(), name.length()));
 		return idCounter++;
 	}
 };
 
 
-export template<class TClass, class TClassHolder, class TML>
+export template<class TFactory, class TClass, class TClassHolder, class TML>
 class GlobalRegister
 {
 	int id;
 public:
-	template<class TFactory>
-	GlobalRegister(TFactory& factory)
+	GlobalRegister(TFactory& factory, std::string_view name)
 	{
-		id = factory.Register<TClass, TClassHolder, TML>();
+		id = factory.Register<TClass, TClassHolder, TML>(name);
 	}
 	int getId() const
 	{

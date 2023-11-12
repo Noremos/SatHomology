@@ -1,7 +1,5 @@
-//module;
+module;
 #include <memory>
-#include <random>
-#include <iostream>
 #include <functional>
 #include <vector>
 #include <assert.h>
@@ -184,30 +182,30 @@ public:
 	}
 
 
-	void loadData(const BarCategories& categs)
-	{
-		//ClassDataIO io;
-		//io.open(IBarClusterizer::dbPath);
-		//clusters = categs;
-		//ClassDataIO::TrainCallback cla = [this](int clId, vbuffer& buf, BackImage, size_t dbLocalId)
-		//{
-		//	std::stringstream stream;
-		//	stream.write(reinterpret_cast<const char*>(buf.data()), buf.size());
-		//	stream.seekg(0, std::ios::beg);
-		//	// std::istringstream stream(buf.data(), buf.size());
+	//void loadData()
+	//{
+	//	//ClassDataIO io;
+	//	//io.open(IBarClusterizer::dbPath);
+	//	//clusters = categs;
+	//	//ClassDataIO::TrainCallback cla = [this](int clId, vbuffer& buf, BackImage, size_t dbLocalId)
+	//	//{
+	//	//	std::stringstream stream;
+	//	//	stream.write(reinterpret_cast<const char*>(buf.data()), buf.size());
+	//	//	stream.seekg(0, std::ios::beg);
+	//	//	// std::istringstream stream(buf.data(), buf.size());
 
-		//	TItem raw{};
-		//	raw.read(stream); // Already Prepared
-		//	addDataInner(clId, &raw, dbLocalId);
-		//};
+	//	//	TItem raw{};
+	//	//	raw.read(stream); // Already Prepared
+	//	//	addDataInner(clId, &raw, dbLocalId);
+	//	//};
 
-		//io.loadAll(cla, -1, ClassDataIO::LF_ALL);
-	}
+	//	//io.loadAll(cla, -1, ClassDataIO::LF_ALL);
+	//}
 
-	void loadClassData(ClassDataIO& io)
-	{
+	//void loadClassData(ClassDataIO& io)
+	//{
 
-	}
+	//}
 
 	//int addClass(const BackString& name)
 	//{
@@ -259,4 +257,4 @@ public:
 };
 
 
-GlobalClusterRegister<TreeClass, TreeSignatureCollection, TreeClassifier>;
+GlobalClusterRegister<TreeClass, TreeSignatureCollection, TreeClassifier> c("Сигнатура по дереву");
