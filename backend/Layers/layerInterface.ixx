@@ -603,3 +603,28 @@ public:
 
 
 };
+
+
+
+export struct LCoreItems
+{
+	ILayer* core;
+	BackString name;
+
+	LCoreItems(ILayer* core) : core(core)
+	{ }
+
+	LCoreItems(ILayer* core, const BackString name) :
+		core(core), name(name)
+	{ }
+
+	const BackString& getName(const BackString& def) const
+	{
+		if (name.length() == 0)
+			return def;
+		else
+			return name;
+	}
+};
+
+export using RetLayers = std::vector<LCoreItems>;

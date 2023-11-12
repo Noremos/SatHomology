@@ -10,13 +10,6 @@ module;
 
 #include "../Bind/Common.h"
 
-#ifdef __linux__
-#include <pthread.h>
-#endif
-
-#ifdef _WIN32
-#include <windows.h>
-#endif
 
 //#include "../side/Barcode/PrjBarlib/include/CellEater.h"
 
@@ -38,6 +31,8 @@ import MetadataIOCore;
 import VectorLayers;
 import MHashMap;
 import CSBind;
+import RasterBarHolderRLayer;
+import Settings;
 
 
 // using CurItemHolder = BaritemHolder;
@@ -74,38 +69,6 @@ export struct InOutLayer
 	}
 };
 
-export struct BarcodeProperies
-{
-	bc::barstruct barstruct;
-	int alg = 0; // 0 - raster; 1 - cloud
-	bool alg1UseHoles = false;
-	bool alg1IgnoreHeight = false;
-};
-
-
-struct LCoreItems
-{
-	ILayer* core;
-	BackString name;
-
-	LCoreItems(ILayer* core) : core(core)
-	{ }
-
-	LCoreItems(ILayer* core, const BackString name) :
-		core(core), name(name)
-	{ }
-
-	const BackString& getName(const BackString& def) const
-	{
-		if (name.length() == 0)
-			return def;
-		else
-			return name;
-	}
-};
-
-export using RetLayers = std::vector<LCoreItems>;
-
 enum MarkersShowState { found = 0, ather, barcodeNotPassed, circleNotPassed, boundyNotPassed, holmNotPassed, allExceptRed, all, none };
 
 export enum class BackPath
@@ -132,45 +95,12 @@ int getCon(int total, int part)
 	return total / part + (total % part == 0 ? 0 : 1);
 }
 
-
-
-const char* const jsn_displayFacto = "step";
-const char* const jsn_imgMinVal = "imgMinVal";
-const char* const jsn_imgMaxVal = "imgMaxVal";
-const char* const jsn_geojsonPath = "geojsonPath";
-const char* const jsn_imgPath = "imgPath";
-const char* const jsn_classfiles = "barfiles";
-const char* const jsn_dispalyImg = "subImageIndex";
-const char* const jsn_alg = "algIndex";
-const char* const jsn_tileSize = "tileSize";
-const char* const jsn_tileOffset = "tileOffset";
-
 export class Project
 {
-	SettingsIO settings =
-	{
-		//{jsn_displayFacto, u_displayFactor},
-		//{jsn_imgMaxVal, u_imgMaxVal},
-		//{jsn_imgMinVal, u_imgMinVal},
-		{"metacounter", metaCounter},
-		{"threadsCount", threadsCount},
-		{"runAsync", runAsync},
-		{"layerCounter", layerCounter}
-
-
-		//{jsn_imgPath, u_imgPath},
-		//{jsn_geojsonPath, this->u_geojsonPath},
-		//{jsn_classfiles, this->u_classCache},
-		//{jsn_dispalyImg, this->u_subImageIndex},
-		//{jsn_alg, this->u_algorithm},
-		//{jsn_tileSize, this->tileSize},
-		//{jsn_tileOffset, this->tileOffset}
-	};
-
+	ProjectSettings& settings;
 	DisplaySystem ds;
 
 	int metaCounter = 0;
-	std::unique_ptr<MetadataProvider> metaprov;
 
 	void extraRead(const BackJson& json)
 	{
@@ -204,7 +134,7 @@ export class Project
 		for (int i = 0; i < size; i++)
 		{
 			JsonObjectIOState* obj = arrst->objectBegin(i);
-			MetadataProvider sub = *metaprov;// Do not reffer!
+			MetadataProvider sub = *settings.metaprov;// Do not reffer!
 
 			int factoryId;
 			ILayer* lay;
@@ -267,12 +197,12 @@ public:
 	//	Q_PROPERTY(SeachingSettings searchSetts MEMBER searchSetts)
 	//	SeachingSettings* getSerchSetts(){return &searchSetts;}
 
-	Project()
+	Project() : settings(getSettings())
 	{
 		projectPath = "";
 		// "D:\\Programs\\Barcode\\_bar\\_p2\\";
-		settings.extraRead = [this](const BackJson& json) {extraRead(json);};
-		settings.extraWrite = [this](BackJson& json) {extraWrite(json);};
+		settings.getIO().extraRead = [this](const BackJson& json) {extraRead(json);};
+		settings.getIO().extraWrite = [this](BackJson& json) {extraWrite(json);};
 
 		ds.csPos = BackPoint(0, 0);
 		ds.csScale = 1.0;//BackPoint(1000, 1000);
@@ -313,7 +243,6 @@ public:
 	BackDirStr u_classCache;
 	int u_algorithm = 0;
 
-	int layerCounter = 0;
 	template<class LDATA>
 	LDATA* addLayerData(int projId = -1)
 	{
@@ -322,7 +251,7 @@ public:
 			d->cs.init(projId);
 
 		//d->prov.init(u_displayFactor, tileSize, reader->width());
-		d->id = layerCounter++;
+		d->id = settings.layerCounter++;
 		return d;
 	}
 
@@ -507,7 +436,7 @@ public:
 
 	MetadataProvider& getMeta()
 	{
-		return *metaprov.get();
+		return *settings.metaprov.get();
 	}
 
 	BackPathStr getMetaPath(const BackString& item) const
@@ -534,7 +463,7 @@ public:
 		else
 			mkdir(path);
 
-		metaprov.reset(new MetadataProvider(path, metaCounter));
+		settings.metaprov.reset(new MetadataProvider(path, metaCounter));
 		classifier.open(path);
 	}
 
@@ -557,7 +486,7 @@ public:
 		setProjectPath(prjFilepath);
 
 		BackJson loadDoc = jsonFromFile(prjFilepath);
-		settings.read(loadDoc);
+		settings.getIO().read(loadDoc);
 		prjCreate = true;
 
 		classCategs = BarCategories::loadCategories(getPath(BackPath::classifier));
@@ -572,7 +501,7 @@ public:
 			return false;
 
 		JsonObject sets;
-		settings.write(sets);
+		settings.getIO().write(sets);
 		jsonToFile(sets, getPath(BackPath::project));
 
 		// mkDirIfNotExists(getPath(BackPath::classfiles));
@@ -591,608 +520,16 @@ public:
 		return classType;
 	}
 
-	class BarLineWorker
-	{
-	protected:
-		std::unique_ptr<std::jthread> thread;
-		int& counter;
-		IdGrater parentne;
-
-
-		bool stopThreadFlag = false;
-		bool taskUpdated = false;
-		std::atomic<bool> busy = false;
-
-	public:
-		BarLineWorker(int& counter) : counter(counter)
-		{ }
-
-		void runTask()
-		{
-			busy = true;
-#ifdef _WIN32
-			SetThreadPriority(thread->native_handle(), THREAD_PRIORITY_ABOVE_NORMAL);
-#elif __linux__
-			sched_param params;
-			params.sched_priority = 75;
-			pthread_setschedparam(thread->native_handle(), SCHED_FIFO, &params);
-#endif
-			taskUpdated = true;
-		}
-
-		void join()
-		{
-			if (thread && busy)
-				thread->join();
-		}
-
-		bool isBusy() const
-		{
-			return busy;
-		}
-
-		void stop()
-		{
-			stopThreadFlag = true;
-		}
-	};
-
-
-	class CreateBarThreadWorker : public BarLineWorker
-	{
-		std::mutex &cacherMutex;
-
-		const bc::BarConstructor& constr;
-		IRasterLayer* inLayer;
-		ItemHolderCache& cacher;
-
-		IClassItemHolder::ItemCallback cacheClass;
-		int inde;
-
-		BackImage rect;
-		TileProvider tileProv;
-	public:
-		CreateBarThreadWorker(std::mutex& cacherMutex,
-							const bc::BarConstructor& constr,
-							IRasterLayer* inLayer,
-							ItemHolderCache& cacher,
-							int& counter)
-			: BarLineWorker(counter),
-			cacherMutex(cacherMutex),
-			constr(constr),
-			inLayer(inLayer),
-			cacher(cacher),
-			tileProv(0,0)
-		{
-		}
-
-		void setCallback(Project* proj, RasterLineLayer* layer, const IItemFilter* filter)
-		{
-			cacheClass = [this, proj, layer, filter](IClassItem* item)
-			{
-				if (layer->passLine(item, filter))
-				{
-					proj->predictForLayer(item, tileProv, layer->subToRealFactor);
-					layer->addLine(parentne, inde++, item, tileProv);
-				}
-			};
-		}
-
-		void updateTask(BackImage& rrect, const TileProvider& tileProvider)
-		{
-			this->rect = std::move(rrect);
-			this->tileProv = tileProvider;
-		}
-
-
-		void runAsync()
-		{
-			thread.reset(new std::jthread([this]{this->runLoop();}));
-		}
-
-		void runSync()
-		{
-			const auto start = std::chrono::steady_clock::now();
-
-			// Keep this! See lyambda
-			inde = 0;
-			parentne.clear();
-			// -------------
-
-			printf("Start run for tile %d\n", tileProv.index);
-			CurItemHolder creator;
-			creator.create(&rect, constr, cacheClass);
-
-			{
-				std::lock_guard<std::mutex> guard(cacherMutex);
-				cacher.save(&creator, tileProv.index);
-			}
-
-
-			const auto end = std::chrono::steady_clock::now();
-			const auto diff = end - start;
-			const double len = std::chrono::duration<double, std::milli> (diff).count();
-			printf("End run for tile %d; Time: %dms\n", tileProv.index, (int)len);
-
-			++counter;
-			busy = false;
-		}
-
-		void runLoop()
-		{
-			while (!stopThreadFlag)
-			{
-				if (!taskUpdated)
-					continue;
-
-				taskUpdated = false;
-				runSync();
-
-#ifdef _WIN32
-				SetThreadPriority(thread->native_handle(), THREAD_PRIORITY_BELOW_NORMAL);
-#elif __linux__
-				sched_param params;
-				params.sched_priority = 20;
-				pthread_setschedparam(thread->native_handle(), SCHED_FIFO, &params);
-#endif
-			}
-		}
-	};
-
-	class TileImgIterator
-	{
-		TileIterator stW, stH;
-
-		uint lastHei;
-		bool peakEnd = false;
-
-	public:
-		TileImgIterator(int tileSize, int tileOffset, int rwid, int rhei) :
-			stW(0, tileSize, tileOffset, rwid),
-			stH(0, tileSize, tileOffset, rhei)
-		{
-			lastHei = 0;
-			stH.shouldSkip(lastHei);
-		}
-
-		void reset()
-		{
-			stW.reset(0);
-			stH.reset(0);
-
-			lastHei = 0;
-			stH.shouldSkip(lastHei);
-
-			peakEnd = false;
-		}
-
-		bool iter(bc::point& offset, uint& wid, uint& hei)
-		{
-			while (stW.shouldSkip(wid))
-			{
-				stW.reset(0);
-				stH.accum();
-				if (stH.shouldSkip(lastHei))
-				{
-					return false;
-				}
-			}
-
-			offset.x = stW.pos();
-			offset.y = stH.pos();
-			hei = lastHei;
-
-			stW.accum();
-			return true;
-		}
-
-		// get 2x2 local index
-		int getLocRectIndex() const
-		{
-			return 2 * (stH.locIndex % 2) + (stW.locIndex % 2);
-		}
-
-		bool notFintInLocal() const
-		{
-			return stW.tilesInLine() > 2 || stH.tilesInLine() > 2;
-		}
-	};
-
-	template<typename TWorker>
-	class WorkerPool
-	{
-		std::vector<std::unique_ptr<TWorker>> workers;
-		std::unique_ptr<TWorker> syncWorker;
-
-	public:
-		void add(TWorker* worker, bool allowSync)
-		{
-			if (allowSync && !syncWorker)
-			{
-				syncWorker.reset(worker);
-				return;
-			}
-
-			worker->runAsync();
-			workers.push_back(std::unique_ptr<TWorker>(worker));
-		}
-
-		void addSync(TWorker* worker)
-		{
-			syncWorker.reset(worker);
-		}
-
-		TWorker* getSyncWorker()
-		{
-			return syncWorker.get();
-		}
-
-		TWorker* getFreeWorker(bool& isAsync)
-		{
-			//while(true)
-			{
-				for (auto& worker : workers)
-				{
-					if (!worker->isBusy())
-					{
-						isAsync = true;
-						return worker.get();
-					}
-				}
-			}
-
-			isAsync = false;
-			return syncWorker.get();
-		}
-
-		void waitForAll(const bool stop)
-		{
-			using namespace std::chrono_literals;
-			bool hasRunning = false;
-			do
-			{
-				hasRunning = false;
-				for (auto& worker : workers)
-				{
-					if (worker->isBusy())
-					{
-						hasRunning = true;
-						std::this_thread::sleep_for(500ms);
-						break;
-					}
-					else if (stop)
-					{
-						worker->stop();
-						worker->join();
-					}
-				}
-			} while (hasRunning);
-		}
-	};
-
 	RetLayers createCacheBarcode(InOutLayer& iol, const BarcodeProperies& propertices, IItemFilter* filter = nullptr)
 	{
-		RetLayers ret;
-		if (block) return ret;
-
-		// Setup
-		bc::BarConstructor constr;
-		constr.createBinaryMasks = true;
-		constr.createGraph = true;
-		constr.attachMode = bc::AttachMode::morePointsEatLow;
-		constr.returnType = bc::ReturnType::barcode2d;
-		constr.structure.push_back(propertices.barstruct);
-		//	constr.setStep(stepSB);
-		// -------
-
-		// Input Layer prepatons
+		if (block) return {};
 		IRasterLayer* inLayer = getInRaster(iol);
-		int tileSize = inLayer->prov.tileSize;
-		int tileOffset = inLayer->tileOffset;
-		SubImgInf curSize = inLayer->getSubImgInf(); // Cursubimg
 
-		if (filter)
-		{
-			const uint fullTile = tileSize + tileOffset;
-			filter->imgLen = fullTile * fullTile;
-		}
-		// End Input Layer
-
-		// Setup output layers
-		//
-		// Line layer
 		RasterLineLayer* layer = addOrUpdateOut<RasterLineLayer>(iol, inLayer->cs.getProjId());
-		layer->init(inLayer, getMeta());
-		layer->initCSFrom(inLayer->cs);
-		layer->tileOffset = tileOffset;
-
-		LayerProvider& prov = layer->prov;
-		prov.init(curSize.wid, curSize.hei, inLayer->displayWidth(), tileSize);
-
-		if (layer->cacheId == -1)
-			layer->cacheId = metaprov->getUniqueId();
-
-		ret.push_back(layer);
-		//
-		// Classes layers
-		for (auto& i : classLayers)
-		{
-			ret.push_back(i.second);
-			i.second->clear();
-			i.second->color = classCategs.get(i.first)->color;
-			i.second->initCSFrom(inLayer->cs);
-		}
-		// -------------------
-
-		// Cacher
-		ItemHolderCache cacher;
-		cacher.openWrite(layer->getCacheFilePath(getMeta()));
-		// ------
-
-
-		// Setup tileIterators
-		TileImgIterator tileIter(tileSize, tileOffset, curSize.wid, curSize.hei);
-
-		// Threads
-		std::mutex cacherMutex;
-
-		const bool curRunAsync = runAsync;
-		int curthreadsCount = curRunAsync ? threadsCount : 1;
-		int counter = 0;
-		if (curRunAsync)
-		{
-			printf("Run in async mode with %d threads\n", curthreadsCount);
-		}
-		else
-		{
-			printf("Run in sync mode\n");
-		}
-
-		const bool allowSyncInAsync = true;
-		WorkerPool<CreateBarThreadWorker> wpool;
-		for (unsigned short i = 0; i < curthreadsCount; i++)
-		{
-			CreateBarThreadWorker* worker = new CreateBarThreadWorker(cacherMutex, constr, inLayer, cacher, counter);
-			worker->setCallback(this, layer, filter);
-			wpool.add(worker, allowSyncInAsync);
-		}
-
-		// Run
-		uint iwid, ihei;
-		bc::point offset;
-
-		const auto start = std::chrono::steady_clock::now();
-		if (curRunAsync)
-		{
-			// How much tiles the offset covers; We skip the conflict tiles;
-			// const int maxSteps = 1 + static_cast<int>((tileSize + tileOffset) / tileSize);
-			tileIter.reset();
-			while (tileIter.iter(offset, iwid, ihei))
-			{
-				TileProvider tileProv = prov.tileByOffset(offset.x, offset.y);
-				auto rect = inLayer->getRect(offset.x, offset.y, iwid, ihei);
-
-				bool isAsyncl;
-				auto* worker = wpool.getFreeWorker(isAsyncl);
-				worker->updateTask(rect, tileProv);
-
-				if (isAsyncl)
-					worker->runTask();
-				else
-					worker->runSync();
-			}
-			wpool.waitForAll(true);
-		}
-		else
-		{
-			while (tileIter.iter(offset, iwid, ihei))
-			{
-				TileProvider tileProv = prov.tileByOffset(offset.x, offset.y);
-				auto rect = inLayer->getRect(offset.x, offset.y, iwid, ihei);
-
-				auto* worker = wpool.getSyncWorker();
-				worker->updateTask(rect, tileProv);
-				worker->runSync();
-			}
-		}
-
-		const auto end = std::chrono::steady_clock::now();
-		const auto diff = end - start;
-		const double len = std::chrono::duration<double, std::milli> (diff).count();
-		printf("All work ended in %dms\n", (int)len);
+		auto ret = layer->createCacheBarcode(inLayer, propertices, filter);
 
 		u_algorithm = propertices.alg;
 		saveProject();
-
-		return ret;
-	}
-
-
-	class ProcessCacheBarThreadWorker : public BarLineWorker
-	{
-		RasterLineLayer* outLayer;
-		const IItemFilter* filter;
-		Project* proj;
-
-		TileProvider tileProv;
-		CurItemHolder holder;
-
-	public:
-		ProcessCacheBarThreadWorker(int& counter, RasterLineLayer* outLayer, const IItemFilter* filter, Project* proj) :
-			BarLineWorker(counter), outLayer(outLayer), filter(filter), proj(proj),
-			tileProv(0,0)
-		{ }
-
-		void runAsync()
-		{
-			thread.reset(new std::jthread([this] {this->runLoop(); }));
-		}
-
-
-		void updateTask(CurItemHolder& iholder, const TileProvider& itileProv)
-		{
-			tileProv = itileProv;
-			holder = std::move(iholder);
-		}
-
-		void runSync()
-		{
-			const auto start = std::chrono::steady_clock::now();
-
-			// Keep this! See lyambda
-			parentne.clear();
-			// -------------
-
-			printf("Start run for tile %d\n", tileProv.index);
-
-			for (size_t i = 0; i < holder.getItemsCount(); ++i)
-			{
-				auto item = holder.getItem(i);
-				if (outLayer->passLine(item, filter))
-				{
-					proj->predictForLayer(item, tileProv, outLayer->subToRealFactor);
-					outLayer->addLine(parentne, (int)i, item, tileProv);
-				}
-			}
-
-			const auto end = std::chrono::steady_clock::now();
-			const auto diff = end - start;
-			const double len = std::chrono::duration<double, std::milli> (diff).count();
-			printf("End run for tile %d; Time: %dms\n", tileProv.index, (int)len);
-
-			++counter;
-			busy = false;
-		}
-
-		void runLoop()
-		{
-			while (!stopThreadFlag)
-			{
-				if (!taskUpdated)
-					continue;
-
-				taskUpdated = false;
-				runSync();
-
-#ifdef _WIN32
-				SetThreadPriority(thread->native_handle(), THREAD_PRIORITY_BELOW_NORMAL);
-#elif __linux__
-				sched_param params;
-				params.sched_priority = 20;
-				pthread_setschedparam(thread->native_handle(), SCHED_FIFO, &params);
-#endif
-			}
-		}
-	};
-
-
-	RetLayers processCachedBarcode(InOutLayer& iol, IItemFilter* filter)
-	{
-		//if (u_displayFactor < 1.0)
-		//	throw std::exception();
-
-		RasterLineLayer* inLayer = getInTRaster<RasterLineLayer>(iol);
-		if (!inLayer)
-			return RetLayers();
-
-		int tileSize = inLayer->prov.tileSize;
-		int tileOffset = inLayer->tileOffset;
-
-		if (filter)
-		{
-			const uint fullTile = tileSize + tileOffset;
-			filter->imgLen = fullTile * fullTile;
-		}
-
-		// -------
-		RetLayers ret;
-		for (auto& i : classLayers)
-		{
-			ret.push_back(i.second);
-			i.second->clear();
-			i.second->color = classCategs.get(i.first)->color;
-			i.second->initCSFrom(inLayer->cs);
-		}
-
-		// RasterLineLayer* outLayer = addOrUpdateOut<RasterLineLayer>(iol);
-		// if (outLayer->cacheId == -1)
-		// 	outLayer->cacheId = metaprov->getUniqueId();
-		// ret.push_back(outLayer);
-		RasterLineLayer* outLayer = inLayer;
-		outLayer->clearResponser();
-		//ret.push_back(outLayer); // Do not recreate this node
-
-		// Cacher
-		ItemHolderCache cacher;
-		cacher.openRead(inLayer->getCacheFilePath(getMeta()));
-
-
-		// Thread
-		auto& prov = inLayer->prov;
-
-		const bool curRunAsync = runAsync;
-		int curthreadsCount = curRunAsync ? threadsCount : 1;
-		int counter = 0;
-		if (curRunAsync)
-		{
-			printf("Run in async mode with %d threads\n", curthreadsCount);
-		}
-		else
-		{
-			printf("Run in sync mode\n");
-		}
-
-		const bool allowSyncInAsync = true;
-		WorkerPool<ProcessCacheBarThreadWorker> wpool;
-		for (unsigned short i = 0; i < curthreadsCount; i++)
-		{
-			ProcessCacheBarThreadWorker* worker = new ProcessCacheBarThreadWorker(counter, outLayer, filter, this);
-			wpool.add(worker, allowSyncInAsync);
-		}
-
-		const auto start = std::chrono::steady_clock::now();
-		if (curRunAsync)
-		{
-			int tileIndex = 0;
-			while (cacher.canRead())
-			{
-				CurItemHolder holder;
-				cacher.load(tileIndex, &holder);
-
-				TileProvider tileProv = prov.tileByIndex(tileIndex);
-
-				bool isAsync;
-				auto* worker = wpool.getFreeWorker(isAsync);
-				worker->updateTask(holder, tileProv);
-
-				if (isAsync)
-					worker->runTask();
-				else
-					worker->runSync();
-			}
-
-			wpool.waitForAll(true);
-		}
-		else // Sync
-		{
-			int tileIndex = 0;
-			while (cacher.canRead())
-			{
-				CurItemHolder holder;
-				cacher.load(tileIndex, &holder);
-
-				TileProvider tileProv = inLayer->prov.tileByIndex(tileIndex);
-
-				ProcessCacheBarThreadWorker* worker = wpool.getSyncWorker();
-				worker->updateTask(holder, tileProv);
-				worker->runSync();
-			}
-		}
-
-		const auto end = std::chrono::steady_clock::now();
-		const auto diff = end - start;
-		const double len = std::chrono::duration<double, std::milli> (diff).count();
-		printf("All work ended in %dms\n", (int)len);
 
 		return ret;
 	}
@@ -1543,7 +880,7 @@ public:
 				//BackPoint iglob(static_cast<float>(op.x) + 0.5f, static_cast<float>(op.y) + 0.5f);
 				BackPoint iglob(static_cast<float>(op.x), static_cast<float>(op.y));
 
-				iglob = layer->cs.toGlobal(iglob.x, iglob.y); // To real
+				iglob = layer->cs.toGlobal((float)iglob.x, (float)iglob.y); // To real
 				p->addPoint(iglob);
 			}
 
@@ -1637,19 +974,19 @@ public:
 		double aspect_ratio = static_cast<float>(size.wid) / size.hei;
 		double max_aspect_width = static_cast<float>(maxSize.hei) * aspect_ratio;
 		double max_aspect_height = static_cast<float>(maxSize.wid) / aspect_ratio;
-		size.wid = MIN(maxSize.wid, max_aspect_width);
-		size.hei = MIN(maxSize.hei, max_aspect_height);
+		size.wid = (int)MIN(maxSize.wid, max_aspect_width);
+		size.hei = (int)MIN(maxSize.hei, max_aspect_height);
 	}
 
 	static void getMod(BackPixelPoint& start, BackPixelPoint& end, BackPixelPoint p, BackSize size, float aspectX, float aspectY)
 	{
 		const float xa = static_cast<float>(p.x) * aspectX;
-		start.x = round(xa);
-		end.x = round(mmmin<float>(xa + aspectX + 1, size.wid) - xa);
+		start.x = (int)round(xa);
+		end.x = (int)round(mmmin<float>(xa + aspectX + 1, size.wid) - xa);
 
 		const float ya = static_cast<float>(p.y) * aspectY;
-		start.y = round(ya);
-		end.y = mmmin<int>(round(ya + aspectY) + 1, size.hei);
+		start.y = (int)round(ya);
+		end.y = (int)mmmin<int>(round(ya + aspectY) + 1, size.hei);
 	}
 
 	RetLayers exeQuadro(IRasterLayer* input, bc::ProcType type)

@@ -182,6 +182,10 @@
     <ClCompile Include="frontend\Layers\GuiRasterLayers.ixx" />
     <ClCompile Include="frontend\Layers\GuiLuaLayers.ixx" />
     <ClCompile Include="frontend\Widgets\GuiClusterization.ixx" />
+    <ClCompile Include="frontend\Templates\GuiRLayerTemplates.ixx" />
+    <ClCompile Include="frontend\Layers\GuiBarHolderRLayers.ixx" />
+    <ClCompile Include="backend\Layers\RasterBarHolderRLeyer.ixx" />
+    <ClCompile Include="backend\Settings.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="side\imgui\imgui_internal.h">

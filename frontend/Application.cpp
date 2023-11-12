@@ -25,7 +25,7 @@ import IOCore;
 import VectorLayers;
 import ProjectModule;
 import GuiRasterLayers;
-import GuiClusterization;
+import GuiBarHolderLayer;
 //import Lua;
 
 
@@ -116,7 +116,6 @@ namespace MyApp
 	//};
 
 	GuiClassifer classerVals;
-	GuiClusterizationWindow clusterVals;
 	bool useAsync = false;// true;
 	// Structs
 
@@ -594,12 +593,6 @@ namespace MyApp
 				classerVals.show = true;
 			}
 
-			ImGui::SameLine(0, 30);
-			if (ImGui::Button("Кластеризация"))
-			{
-				clusterVals.show = true;
-			}
-
 			// ImGui::Text(bottomVals.debug.c_str());
 
 			// Current cursor pos
@@ -858,7 +851,6 @@ namespace MyApp
 		ImGui::EndDisabled();
 
 		classerVals.drawClassifierWindow();
-		clusterVals.draw();
 		//drawClassifierMenu();
 
 		// Subs
@@ -979,7 +971,6 @@ namespace MyApp
 			debugVals.debugPlygon.push_back(std::move(p1));
 		};
 
-		clusterVals.init();
 		if (useAsync)
 		{
 			//bc::CloudPointsBarcode::drawLine = drawLine;

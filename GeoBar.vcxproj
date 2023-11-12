@@ -140,10 +140,14 @@
   <ItemGroup>
     <ClCompile Include="backend\Interfaces\ICluster.ixx" />
     <ClCompile Include="backend\Interfaces\IItem.ixx" />
+    <ClCompile Include="backend\Layers\RasterBarHolderRLeyer.ixx" />
     <ClCompile Include="backend\Layers\VectorLayers.ixx" />
     <ClCompile Include="backend\CSBind.ixx" />
+    <ClCompile Include="backend\Settings.ixx" />
     <ClCompile Include="Bind\Common.cpp" />
     <ClCompile Include="Bind\MHashMap.ixx" />
+    <ClCompile Include="frontend\Layers\GuiBarHolderRLayers.ixx" />
+    <ClCompile Include="frontend\Templates\GuiRLayerTemplates.ixx" />
     <ClCompile Include="frontend\Layers\GuiLuaLayers.ixx" />
     <ClCompile Include="frontend\Layers\GuiRasterLayers.ixx" />
     <ClCompile Include="frontend\Widgets\GuiClusterization.ixx" />

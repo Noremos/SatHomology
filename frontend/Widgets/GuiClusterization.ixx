@@ -10,6 +10,7 @@ import GuiWidgets;
 import TrainIO;
 import ClusterInterface;
 import TreeClassifier;
+import RasterBarHolderRLayer;
 
 struct StringBuffer
 {
@@ -106,7 +107,7 @@ public:
 	}
 
 	BackString nameBuffer;
-	void init()
+	void init(RasterLineLayer* line)
 	{
 		//classes.clear();
 		//clusterizer->loadData();
@@ -242,10 +243,10 @@ public:
 
 			//ImGui::BeginDisabled(!selceted.hasData());
 
-			if (ImGui::Button("Запустить"))
+			if (ImGui::Button("Запустить "))
 			{
 				clusterizer->setClassesCount(classesLB.getSize());
-				clusterizer->predict();
+				//clusterizer->predict();
 			}
 
 			//ImGui::EndDisabled();

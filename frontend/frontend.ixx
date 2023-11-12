@@ -21,7 +21,7 @@ import GuiWidgets;
 import IItemModule;
 import VectorLayers;
 import CSBind;
-
+import LayersCore;
 // Todo.
 // 2 режима
 export class GuiBackend
@@ -153,13 +153,13 @@ public:
 	}
 
 
-	RetLayers processRaster(InOutLayer& layer, IItemFilter* filter)
-	{
-		if (!created)
-			return RetLayers();
+	//RetLayers processRaster(InOutLayer& layer, IItemFilter* filter)
+	//{
+	//	if (!created)
+	//		return RetLayers();
 
-		return proj->processCachedBarcode(layer, filter);
-	}
+	//	return proj->processCachedBarcode(layer, filter);
+	//}
 
 
 	RetLayers exeFilter(InOutLayer& layer, bc::ProcType type, int algNum)
