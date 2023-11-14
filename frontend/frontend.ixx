@@ -27,11 +27,7 @@ import LayersCore;
 export class GuiBackend
 {
 	static int opens;
-	enum class GuiState
-	{
-		Empty = 0,
-		Loaded
-	};
+
 public:
 	Project* proj = nullptr;
 
@@ -55,7 +51,7 @@ public:
 
 	bool isLoaded() const
 	{
-		return state >= GuiState::Loaded;
+		return proj->state >= GuiState::Loaded;
 	}
 
 	MetadataProvider& getMeta()
@@ -135,7 +131,7 @@ public:
 		dropDirIfExists(proj->getPath(BackPath::metadata));
 		proj->loadImage(imgPath, 1);
 		endLoaded();
-		state = GuiState::Loaded;
+		proj->state = GuiState::Loaded;
 	}
 
 	RetLayers createBarcode(InOutLayer& iol, const BarcodeProperies& propertices, IItemFilter* info)
@@ -192,7 +188,7 @@ public:
 	RasterFromDiskLayer* loadImageOrProject(const BackPathStr& path)
 	{
 		RasterFromDiskLayer* layer = nullptr;
-		GuiState newState = state;
+		GuiState newState = proj->state;
 		bool setProc = false;
 		if (path.extension() == ".qwr")
 		{
@@ -224,7 +220,7 @@ public:
 			created = false;
 		}
 
-		state = newState;
+		proj->state = newState;
 		return layer;
 	}
 
@@ -244,21 +240,6 @@ public:
 	void showResultPics(bool show);
 
 	int addClassType(const BackString& name);
-
-	int& getThreadsCount()
-	{
-		return proj->threadsCount;
-	}
-
-	void setAsync(bool runAsync)
-	{
-		proj->runAsync = runAsync;
-	}
-
-	bool getAsync() const
-	{
-		return proj->runAsync;
-	}
 
 private:
 	void resetSource();

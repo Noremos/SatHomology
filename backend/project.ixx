@@ -4,7 +4,6 @@ module;
 #include <random>
 #include <assert.h>
 #include <chrono>
-#include <thread>
 #include <algorithm>
 //#include <iostream>
 
@@ -88,6 +87,13 @@ export enum class BackPath
 	metadata,
 	layers
 	//classImages,
+};
+
+
+export enum class GuiState
+{
+	Empty = 0,
+	Loaded
 };
 
 int getCon(int total, int part)
@@ -206,9 +212,6 @@ public:
 
 		ds.csPos = BackPoint(0, 0);
 		ds.csScale = 1.0;//BackPoint(1000, 1000);
-
-		threadsCount = std::thread::hardware_concurrency();
-
 		// mkDirIfNotExists(u_classCache);
 	}
 
@@ -229,8 +232,7 @@ public:
 
 	bool prjCreate = false;
 public:
-	int threadsCount = 4;
-	bool runAsync = true;
+	GuiState state = GuiState::Empty;
 
 	BarCategories classCategs;
 	BettyClassificator classifier;

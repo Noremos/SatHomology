@@ -33,7 +33,7 @@ public:
 	{
 		Base::drawProperty();
 		ImGui::Separator();
-		ImGui::SliderFloat("Прозрачность", &tempVal, 0.f, 1.f);
+		ImGui::SliderFloat("РџСЂРѕР·СЂР°С‡РЅРѕСЃС‚СЊ", &tempVal, 0.f, 1.f);
 	}
 	virtual void applyPropertyChanges()
 	{
@@ -59,6 +59,13 @@ public:
 			ImGui::OpenPopup("UpdateImage");
 		}
 
+		ImGui::SameLine(0, 30);
+		if (ImGui::Button("РљР»Р°СЃС‚РµСЂР·Р°С†РёСЏ"))
+		{
+			clusterVals.show = true;
+		}
+		clusterVals.draw();
+
 
 		if (ImGui::BeginPopupModal("UpdateImage", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 		{
@@ -70,7 +77,7 @@ public:
 
 				ImGui::CloseCurrentPopup();
 				//auto rets = backend.processRaster(context.iol, filtere.getFilter());
-				auto rets = Base::data->processCachedBarcode(filtere.getFilter());
+				auto rets = Base::data->processCachedBarcode(filtere.getFilter(), true);
 				this->toGuiData();
 				context.setLayers(rets, "barcode");
 				//commonValus.onAir = true;
@@ -82,15 +89,6 @@ public:
 			{
 				ImGui::CloseCurrentPopup();
 			}
-			ImGui::SameLine(0, 30);
-			if (ImGui::Button("Кластеризация"))
-			{
-				clusterVals.show = true;
-			}
-
-			clusterVals.draw();
-
-
 
 			ImGui::EndPopup();
 		}
@@ -212,4 +210,3 @@ public:
 	}
 private:
 };
-

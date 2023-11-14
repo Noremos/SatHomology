@@ -5,13 +5,13 @@ export module ClusterInterface;
 
 import TrainIO;
 import IItemModule;
+import CachedBarcode;
 
-
-//export class IClasterItem
-//{
-//	IClasterItem(IClassItem*);
-//	{}
-//};
+export class IClasterItem
+{
+	IClasterItem(CachedBarline*)
+	{}
+};
 
 export class IBarClusterizer
 {

@@ -138,6 +138,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="backend\CachedBarcode.ixx" />
     <ClCompile Include="backend\Interfaces\ICluster.ixx" />
     <ClCompile Include="backend\Interfaces\IItem.ixx" />
     <ClCompile Include="backend\Layers\RasterBarHolderRLeyer.ixx" />

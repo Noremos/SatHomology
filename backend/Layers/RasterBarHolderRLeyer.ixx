@@ -31,162 +31,7 @@ import IItemModule;
 import GeoprocessorModule;
 import Settings;
 import LayersCore;
-
-class CachedBaritemHolder;
-
-export class CachedBarline : public IClassItem
-{
-	//static unsigned int idCounter;
-public:
-	ushort id;
-	ushort parentId;
-	std::unique_ptr<ushort[]> children;
-	Barscalar startl, endl;
-	bc::barvector matrix;
-	unsigned char depth;
-
-	CachedBaritemHolder* root;
-
-	CachedBarline() : IClassItem(),
-		id(0), parentId(0), children(nullptr), startl(0), endl(0), matrix(), depth(0), root(nullptr)
-	{ }
-
-	CachedBarline(const CachedBarline& other)
-	{
-	}
-
-	CachedBarline(ushort id, bc::barline* line, CachedBaritemHolder* root) : IClassItem()
-	{
-		update(id, line, root);
-	}
-
-	~CachedBarline()
-	{} 
-
-	void update(ushort id, bc::barline* line, CachedBaritemHolder* root)
-	{
-		this->id = id;
-		parentId = 0;
-		assert(line);
-		startl = line->start;
-		endl = line->end();
-		//matrix = std::move(line->mart);
-		depth = line->getDeath();
-
-		this->root = root;
-	}
-
-	virtual size_t getId() const
-	{
-		return id;
-	}
-
-	virtual size_t getParentId() const
-	{
-		return parentId;
-	}
-
-	virtual int getDeath() const override
-	{
-		return (int)depth;
-	}
-
-	virtual Barscalar start() const override
-	{
-		return startl;
-	}
-
-	virtual Barscalar end() const override
-	{
-		return endl;
-	}
-
-	virtual const bc::barvector& getMatrix() const
-	{
-		return matrix;
-	}
-
-	virtual const size_t getMatrixSize() const
-	{
-		return matrix.size();
-	}
-
-
-	virtual void saveLoadState(StateBinFile::BinState* state) override
-	{
-		state->beginItem();
-
-		startl = state->pBarscalar(startl);
-		endl = state->pBarscalar(endl);
-		depth = state->pInt(depth);
-
-		int matrSize = matrix.size();
-		matrSize = state->pInt(matrSize);
-		state->beginArray(matrix, matrSize);
-		for (size_t i = 0; i < matrSize; i++)
-		{
-			auto& barvalue = matrix[i];
-
-			barvalue.x = state->pInt(barvalue.x);
-			barvalue.y = state->pInt(barvalue.y);
-			barvalue.value = state->pBarscalar(barvalue.value);
-		}
-	}
-};
-
-
-class CachedBaritemHolder : public IDataClassItemValueHolder<CachedBarline>
-{
-	using Base = IDataClassItemValueHolder<CachedBarline>;
-	int root = 0;
-public:
-	void create(bc::DatagridProvider* img, const bc::BarConstructor& constr, const Base::ItemCallback& callback)
-	{
-		bc::BarcodeCreator creator;
-		std::unique_ptr<bc::Barcontainer> ret(creator.createBarcode(img, constr));
-
-		auto* item = ret->getItem(0);
-		int size = (int)item->barlines.size();
-		MMMAP<size_t, int> ids;
-		for (int i = 0; i < size; i++)
-		{
-			ids.insert(std::make_pair((size_t)item->barlines[i], i));
-		}
-		
-		root = ids[(size_t)item->getRootNode()];
-		for (int i = 0; i < size; i++)
-		{
-			bc::barline* line = item->barlines[i];
-			Base::items.push_back({});
-			CachedBarline& id = Base::items.back();
-
-			id.update((ushort)i, line, this);
-			id.parentId = line->parent ? ids[(size_t)line->parent] : -1;
-			int k = 0;
-			id.children.reset(new ushort[line->children.size()]);
-			for (auto* child : line->children)
-			{
-				id.children[k++] = ids[(size_t)child];
-			}
-			callback(&id);
-		}
-	}
-
-	virtual void saveLoadState(StateBinFile::BinState* state) override
-	{
-		// Begin
-		root = state->pInt(root);
-
-		int count = Base::items.size();
-
-		count = state->pInt(count);
-		state->beginArray(Base::items, count);
-		for (size_t i = 0; i < count; ++i)
-		{
-			Base::items[i].saveLoadState(state);
-		}
-	}
-};
+import CachedBarcode;
 
 export class BarLineWorker
 {
@@ -372,6 +217,8 @@ public:
 export class RasterLineLayer : public RasterLayer
 {
 public:
+	std::unique_ptr<IClassItemHolder> collectionToPredict = nullptr;
+
 	static std::vector<Barscalar> colors;
 	std::vector<std::shared_ptr<SimpleLine>> clickResponser;
 	int cacheId = -1;
@@ -398,7 +245,7 @@ public:
 
 
 	RetLayers createCacheBarcode(IRasterLayer* inLayer, const BarcodeProperies& propertices, IItemFilter* filter = nullptr);
-	RetLayers processCachedBarcode(IItemFilter* filter);
+	RetLayers processCachedBarcode(IItemFilter* filter, bool addLineMode);
 
 	static const Barscalar& getRandColor(size_t id)
 	{
@@ -769,7 +616,7 @@ public:
 	{
 		tileProv = itileProv;
 	}
-
+	bool addLine = true;
 	void runSync()
 	{
 		const auto start = std::chrono::steady_clock::now();
@@ -782,11 +629,19 @@ public:
 		//outLayer->addHolder(*holder, tileProv, filter);
 		for (size_t i = 0; i < holder.getItemsCount(); ++i)
 		{
-			auto item = holder.getItem(i);
+			auto* item = holder.getItem(i);
 			if (outLayer->passLine(item, filter))
 			{
-				//proj->predictForLayer(item, tileProv, outLayer->subToRealFactor);
-				outLayer->addLine(parentne, (int)i, item, tileProv);
+				if (addLine)
+				{
+					outLayer->addLine(parentne, (int)i, item, tileProv);
+				}
+				else
+				{
+					if (outLayer->collectionToPredict)
+						outLayer->collectionToPredict->addItem(*item);
+					//proj->predictForLayer(item, tileProv, outLayer->subToRealFactor);
+				}
 			}
 		}
 
@@ -954,7 +809,7 @@ RetLayers RasterLineLayer::createCacheBarcode(IRasterLayer* inLayer, const Barco
 	return ret;
 }
 
-RetLayers RasterLineLayer::processCachedBarcode(IItemFilter* filter)
+RetLayers RasterLineLayer::processCachedBarcode(IItemFilter* filter, bool addLineMode)
 {
 	//if (u_displayFactor < 1.0)
 	//	throw std::exception();
@@ -996,10 +851,11 @@ RetLayers RasterLineLayer::processCachedBarcode(IItemFilter* filter)
 	auto& prov = inLayer->prov;
 
 	const bool curRunAsync = getSettings().runAsync;
-	int curthreadsCount = curRunAsync ? getSettings().threadsCount : 1;
+	int curthreadsCount = 1;
 	int counter = 0;
 	if (curRunAsync)
 	{
+		curthreadsCount = getSettings().threadsCount;
 		printf("Run in async mode with %d threads\n", curthreadsCount);
 	}
 	else
@@ -1012,6 +868,7 @@ RetLayers RasterLineLayer::processCachedBarcode(IItemFilter* filter)
 	for (unsigned short i = 0; i < curthreadsCount; i++)
 	{
 		ProcessCacheBarThreadWorker* worker = new ProcessCacheBarThreadWorker(counter, outLayer, filter);
+		worker->addLine = addLineMode;
 		wpool.add(worker, allowSyncInAsync);
 	}
 

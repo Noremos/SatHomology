@@ -106,6 +106,7 @@ public:
 
 	}
 
+	RasterLineLayer* line;
 	BackString nameBuffer;
 	void init(RasterLineLayer* line)
 	{
@@ -129,8 +130,7 @@ public:
 			clsuterMethods.add(name, { i, name });
 		}
 		clsuterMethods.endAdding();
-
-		clusterizer = getClusterFactory().CreateML(clsuterMethods.currentValue().methodId);
+		this->line = line;
 	}
 
 	BackColor& getCurColor()
@@ -243,10 +243,32 @@ public:
 
 			//ImGui::BeginDisabled(!selceted.hasData());
 
-			if (ImGui::Button("Запустить "))
+			if (ImGui::Button("Запустить"))
 			{
+				auto methodId = clsuterMethods.currentValue().methodId;
+				clusterizer = getClusterFactory().CreateML(methodId);
+				line->collectionToPredict = getClusterFactory().CreateHolder(methodId);
+				line->processCachedBarcode(nullptr, false);
 				clusterizer->setClassesCount(classesLB.getSize());
-				//clusterizer->predict();
+				if (line->collectionToPredict->getItemsCount() == 0)
+				{
+					ImGui::OpenPopup("NoDataToCluster");
+				}
+				else
+				{
+					clusterizer->predict(*line->collectionToPredict);
+				}
+			}
+
+			if (ImGui::BeginPopupModal("NoDataToCluster", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+			{
+				ImGui::Text("There are no data to cluster");
+
+				if (ImGui::Button("ОК"))
+				{
+					ImGui::CloseCurrentPopup();
+				}
+				ImGui::EndPopup();
 			}
 
 			//ImGui::EndDisabled();

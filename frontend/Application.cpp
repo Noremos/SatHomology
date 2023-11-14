@@ -26,6 +26,7 @@ import VectorLayers;
 import ProjectModule;
 import GuiRasterLayers;
 import GuiBarHolderLayer;
+import Settings;
 //import Lua;
 
 
@@ -218,8 +219,8 @@ namespace MyApp
 		if (ImGui::Button("Настройки проекта"))
 		{
 			ImGui::OpenPopup("ProjectSetts");
-			tempThreads = backend.getThreadsCount();
-			runAsync = backend.getAsync();
+			tempThreads = getSettings().threadsCount;
+			runAsync = getSettings().runAsync;
 		}
 
 		if (ImGui::BeginPopupModal("ProjectSetts", NULL, ImGuiWindowFlags_AlwaysAutoResize))
@@ -240,8 +241,8 @@ namespace MyApp
 			ImGui::Separator();
 			if (ImGui::Button("OK", ImVec2(120, 0)))
 			{
-				backend.getThreadsCount() = tempThreads;
-				backend.setAsync(runAsync);
+				getSettings().threadsCount = tempThreads;
+				getSettings().runAsync = runAsync;
 
 				ImGui::CloseCurrentPopup();
 			}

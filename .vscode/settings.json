@@ -77,6 +77,9 @@
         "variant": "cpp",
         "filesystem": "cpp",
         "xstring": "cpp",
-        "xutility": "cpp"
+        "xutility": "cpp",
+        "xhash": "cpp",
+        "xtree": "cpp",
+        "rope": "cpp"
     }
 }

@@ -186,6 +186,7 @@
     <ClCompile Include="frontend\Layers\GuiBarHolderRLayers.ixx" />
     <ClCompile Include="backend\Layers\RasterBarHolderRLeyer.ixx" />
     <ClCompile Include="backend\Settings.ixx" />
+    <ClCompile Include="backend\CachedBarcode.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="side\imgui\imgui_internal.h">

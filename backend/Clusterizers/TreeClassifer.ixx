@@ -2,7 +2,7 @@ module;
 #include <memory>
 #include <functional>
 #include <vector>
-#include <assert.h>
+#include <cassert>
 
 #include "../../Bind/Common.h"
 #include "../../side/kde.h"
@@ -20,6 +20,7 @@ import Platform;
 
 import TrainIO;
 import MHashMap;
+import CachedBarcode;
 
 
 
@@ -29,12 +30,31 @@ public:
 	std::vector<short> signature;
 
 	// IClassItem* parent;
-	TreeClass(bc::barline* line = nullptr) //: id(id)
+	//TreeClass(CachedBarline* line = nullptr) //: id(id)
+	//{
+	//	if (line)
+	//	{
+	//		walk(line, 0);
+	//	}
+	//}
+
+
+	explicit TreeClass(const IClassItem* line = nullptr) //: id(id)
 	{
 		if (line)
 		{
-			walk(line, 0);
+			walk(static_cast<const CachedBarline*>(line), 0);
 		}
+	}
+
+	explicit TreeClass(const TreeClass& other ) //: id(id)
+	{
+		signature = other.signature;
+	}
+
+	explicit TreeClass(TreeClass&& other) //: id(id)
+	{
+		signature = std::move(other.signature);
 	}
 
 	virtual size_t getId() const
@@ -84,7 +104,7 @@ public:
 	}
 
 private:
-	void walk(bc::barline* line, int depth)
+	void walk(const CachedBarline* line, int depth)
 	{
 		if (line->getChildrenCount() == 0)
 		{
@@ -105,16 +125,18 @@ private:
 };
 //
 
-class TreeSignatureCollection: public IDataClassItemHolder<TreeClass>
+class TreeSignatureCollection: public IDataClassItemValueHolder<TreeClass>
 {
-	using Base = IDataClassItemHolder<TreeClass>;
+	using Base = IDataClassItemValueHolder<TreeClass>;
 protected:
 
 public:
 
 	void create(bc::DatagridProvider* img, const bc::BarConstructor& constr, const Base::ItemCallback& callback)
 	{
-		bc::BarcodeCreator creator;
+		assert(false);
+		throw;
+	/*	bc::BarcodeCreator creator;
 		std::unique_ptr<bc::Barcontainer> ret(creator.createBarcode(img, constr));
 		auto* item = ret->getItem(0);
 		int size = (int)item->barlines.size();
@@ -123,40 +145,29 @@ public:
 			TreeClass* id = new TreeClass(item->barlines[i]);
 			callback(id);
 			Base::items.push_back(id);
-		}
+		}*/
 	}
 
 	virtual void saveLoadState(StateBinFile::BinState* state) override
 	{
 		// Begin
-		size_t linesCount;
+		size_t linesCount = 0;
 		state->beginArray(Base::items, linesCount);
 		for (size_t i = 0; i < linesCount; ++i)
 		{
-			Base::items[i]->saveLoadState(state);
+			Base::items[i].saveLoadState(state);
 		}
 	}
 
-	void add(TreeClass* sign)
-	{
-		Base::items.push_back(sign);
-	}
-
-	IClassItem* getItem(size_t id)
-	{
-		return items[id];
-	}
+	//void add(const TreeClass& sign)
+	//{
+	//	Base::items.push_back(sign);
+	//}
 
 	IClassItem* exractItem(size_t id)
 	{
-		auto* temp = items[id];
-		items[id] = nullptr;
-		return temp;
-	}
-
-	const IClassItem* getItem(size_t id) const
-	{
-		return items[id];
+		assert(false);
+		return nullptr;
 	}
 
 	size_t count()

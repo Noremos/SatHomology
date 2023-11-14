@@ -1,5 +1,6 @@
 module;
 #include <memory>
+#include <thread>
 
 export module Settings;
 
@@ -20,11 +21,14 @@ const char* const jsn_tileOffset = "tileOffset";
 export struct ProjectSettings
 {
 	int metaCounter = 0;
-	int threadsCount = 4;
+	int threadsCount;
 	bool runAsync = true;
 	int layerCounter = 0;
 	std::unique_ptr<MetadataProvider> metaprov;
-
+	ProjectSettings()
+	{
+		threadsCount = std::thread::hardware_concurrency();
+	}
 
 	SettingsIO& getIO()
 	{
