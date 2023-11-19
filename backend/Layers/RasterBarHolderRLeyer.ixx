@@ -6,6 +6,7 @@ module;
 #include <cassert>
 #include <memory>
 #include <utility>
+#include <mutex>
 
 #ifdef __linux__
 #include <pthread.h>
@@ -32,6 +33,7 @@ import GeoprocessorModule;
 import Settings;
 import LayersCore;
 import CachedBarcode;
+import VectorLayers;
 
 export class BarLineWorker
 {
@@ -218,7 +220,6 @@ export class RasterLineLayer : public RasterLayer
 {
 public:
 	std::unique_ptr<IClassItemHolder> collectionToPredict = nullptr;
-
 	static std::vector<Barscalar> colors;
 	std::vector<std::shared_ptr<SimpleLine>> clickResponser;
 	int cacheId = -1;
@@ -226,6 +227,9 @@ public:
 
 	// Sub to display factor
 	float subToRealFactor = 1.f;
+
+	//int layerCounter = 0;
+
 
 	RasterLineLayer()
 	{
@@ -341,7 +345,7 @@ public:
 		clickResponser.clear();
 		mat.reinit(wid, hei, 4);
 		clickResponser.resize(mat.length());
-		printf("alloced for preview: %d\n", clickResponser.size());
+		printf("alloced for preview: %zd\n", clickResponser.size());
 	}
 
 

@@ -84,9 +84,9 @@ protected:
 
 public:
 
-	void addItem(const IClassItem& item)
+	virtual void addItem(const IClassItem& item)
 	{
-		items.push_back(T(&item));
+		items.push_back(std::move(T(&item)));
 	}
 
 	IClassItem* getItem(size_t id)

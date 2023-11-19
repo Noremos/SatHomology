@@ -25,7 +25,7 @@ public:
 
 	virtual const BackString name() const = 0;
 
-	//virtual void loadData(const BarCategories& categs) = 0;
+	//virtual void loadData() = 0;
 	virtual void setClassesCount(int size) = 0;
 
 	virtual void predict(const IClassItemHolder& allItems) = 0;

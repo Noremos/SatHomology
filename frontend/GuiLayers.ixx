@@ -723,6 +723,14 @@ public:
 		Base::data->color.r = std::min(static_cast<int>(propColor.x * 255), 255);
 		Base::data->color.g = std::min(static_cast<int>(propColor.y * 255), 255);
 		Base::data->color.b = std::min(static_cast<int>(propColor.z * 255), 255);
+
+		//if (applyForPrimitives)
+		{
+			for (DrawPrimitive* d : Base::data->primitives)
+			{
+				d->color = Base::data->color;
+			}
+		}
 	}
 };
 
@@ -780,6 +788,90 @@ public:
 	// 	iol.out = -1;
 	// 	return val;
 	// }
+
+
+
+	//void drawSubLayer(ILayer* lay, int j, int& delId)
+	//{
+	//	ImGui::PushID(j);
+
+	//	auto curID = lay->id;
+
+	//	ImGui::SameLine();
+	//	ImGui::Checkbox("##visible", &lay->visible);
+
+	//	ImGui::SameLine();
+	//	ImGui::Image((void*)(intptr_t)icon.getTextureId(), ImVec2(selHei, selHei));
+
+	//	if (toMove)
+	//	{
+	//		ImGui::SameLine();
+	//		auto posBef = ImGui::GetCursorPos();
+	//		ImGui::BeginDisabled(fistLayer);
+	//		if (ImGui::Button(ICON_FA_ANGLE_UP "", iconSize))
+	//		{
+	//			toMove[0] = prevId;
+	//			toMove[1] = curID;
+	//		}
+	//		ImGui::EndDisabled();
+
+	//		ImGui::SetCursorPos({ posBef.x, posBef.y + iconSize.y });
+	//		ImGui::BeginDisabled(lastLayer);
+	//		if (ImGui::Button(ICON_FA_ANGLE_DOWN "", iconSize))
+	//		{
+	//			toMove[0] = curID;
+	//			catchNext = true;
+	//		}
+	//		ImGui::EndDisabled();
+
+	//	}
+	//	ImGui::SetCursorPos({ posBef.x + iconSize.x, posBef.y });
+	//	if (ImGui::Button(ICON_FA_TRASH "", ImVec2(selHei, selHei)))
+	//	{
+	//		delId = curID;
+	//		lay->getCore()->release(proj->getMeta());
+	//	}
+
+	//	ImGui::SameLine();
+	//	bool seled = ImGui::Selectable(lay->getName(), curID == iol.in, ImGuiSelectableFlags_AllowDoubleClick, ImVec2(winsize.x - 50, selHei));
+	//	prevId = curID;
+
+	//	if (seled)
+	//	{
+	//		iol.in = lay->getSysId();
+	//		if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+	//		{
+	//			lay->lockAtThis(lastRealSize);
+	//		}
+	//	}
+	//	if (temporaly)
+	//	{
+	//		if (j == 0)
+	//			iol.out = -1;
+	//		else
+	//			iol.out = lay->getSysId();
+
+	//		displayRadioId = lay->getSysId();
+	//		temporaly = false;
+	//	}
+	//	for (auto* l : lay->getCore()->subLayers)
+	//	{
+	//		bool catchNext = false;
+	//		int prevId = -1;
+	//		int delId = -1;
+	//		drawLayer(l, -1, catchNext, prevId, delId, nullptr);
+	//		if (delId != -1)
+	//		{
+	//			lay->subLayers.remove(delId);
+	//		}
+	//	}
+	//	//if (j == iol.out)
+	//	//{
+	//	//	ImGui::PopFont();
+	//	//}
+	//	// ImVec4 color(1.0f, 0.0f, 0.0f, 1.0f); // RGBA color (red in this case)
+	//	ImGui::PopID();
+	//}
 
 	void drawLayersWindow()
 	{

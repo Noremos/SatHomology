@@ -196,241 +196,6 @@ int getCon(int total, int part)
 
 export using LFID = unsigned int;
 
-export class ILayer : public IJsonIO
-{
-protected:
-	enum class Type
-	{
-		Raster = 1,
-		Vector = 2,
-		Compinted = Raster | Vector
-	};
-
-public:
-	static LFID counter;
-	static LFID getCountId()
-	{
-		return counter++;
-	}
-
-	BackString getMetaLayerName()
-	{
-		BackString name = intToStr(id);
-		return name + "_layer";
-	}
-
-	MetadataProvider getLayerMeta(const MetadataProvider& metaFolder)
-	{
-		BackString lname = getMetaLayerName();
-		return metaFolder.getSubMeta(lname);
-	}
-
-public:
-	int id = -1;
-	BackString name;
-	CSBinding cs;
-	bool isSystem = false;
-
-	void init(int proj)
-	{
-		cs.init(proj);
-	}
-
-	void initCSFrom(const CSBinding& csf)
-	{
-		assert(cs.proj.isInited());
-		cs.globOrigin = csf.globOrigin;
-		std::copy(csf.img_transform, csf.img_transform + 6, cs.img_transform);
-	}
-
-	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder)
-	{
-		state->scInt("coreId", id);
-		state->scStr("name", name);
-
-		int d = isSystem ? 1 : 0;
-		state->scInt("isSystem", d);
-		isSystem = d == 1;
-
-		cs.saveLoadState(state, metaFolder);
-	}
-
-	virtual Type getType() const = 0;
-	virtual const LFID getFactoryId() const = 0;
-	virtual void release(const MetadataProvider&)
-	{
-		// BackString lname = getMetaLayerName();
-		// metaFolder.update(metaFolder.getSubMeta(lname));
-	}
-
-	virtual float displayWidth() const = 0;
-	virtual float displayHeight() const = 0;
-
-	BackPoint getDisplaySize() const
-	{
-		return BackPoint(displayWidth(), displayHeight());
-	}
-
-	BackPoint getRealSize() const
-	{
-		return BackPoint(realWidth(), realHeight());
-	}
-
-	virtual int realWidth() const = 0;
-	virtual int realHeight() const = 0;
-
-	int getSysId() const
-	{
-		return id;
-	}
-
-	bool hasCS() const
-	{
-		return cs.proj.isInited();
-	}
-
-	BackPoint getNormGlobStart() const
-	{
-		BackPoint st = getGlobStart();
-		BackPoint ed = getGlobEnd();
-
-		if (st.x > ed.x)
-		{
-			std::swap(st.x, ed.x);
-		}
-
-		if (st.y > ed.y)
-		{
-			std::swap(st.y, ed.y);
-		}
-
-		return st;
-	}
-
-	BackPoint getNormGlobSize() const
-	{
-		return cs.getScaled(getRealSize()).abs();
-	}
-
-	BackPoint getGlobStart() const
-	{
-		return cs.globOrigin;
-	}
-
-	BackPoint getGlobEnd() const
-	{
-		return getGlobStart() + getGlobSize();
-	}
-
-	BackPoint getGlobSize() const
-	{
-		return cs.getScaled(getDisplaySize());
-	}
-
-	virtual ~ILayer()
-	{ }
-};
-
-LFID ILayer::counter = 0;
-export const LFID RASTER_LAYER_FID = 0;
-export const LFID RASTER_LINE_LAYER_FID = 1;
-export const LFID RASTER_DISK_LAYER_FID = 2;
-export const LFID VECTOR_LAYER_FID = 3;
-export const LFID MULTIPOLY_VECTOR_LAYER_FID = 4;// ILayer::getCountId();
-export const LFID TREE_VECTOR_LAYER_FID = 5;
-
-export class CoreLayerFactory
-{
-protected:
-	template<class IF>
-	using FunctionCoreHolder = MMMAP<LFID, std::function<IF*()> >;
-
-	template<class IF>
-	using FunctionGuiHolder = MMMAP<LFID, std::function<IF*(ILayer* core)> >;
-
-	static FunctionCoreHolder<ILayer> coreLayersCreators;
-
-public:
-	static ILayer* CreateCoreLayer(int id)
-	{
-		auto it = coreLayersCreators.find(id);
-		if (it != coreLayersCreators.end())
-			return it->second();
-		else
-			return nullptr;
-	}
-};
-
-CoreLayerFactory::FunctionCoreHolder<ILayer> CoreLayerFactory::coreLayersCreators;
-
-
-
-export using SubImgInf = BackSize;
-
-export class IRasterLayer : public ILayer
-{
-public:
-	LayerProvider prov;
-	int tileOffset = DEF_TILE_OFFSET;
-
-	Type getType() const
-	{
-		return Type::Raster;
-	}
-
-	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder)
-	{
-		ILayer::saveLoadState(state, metaFolder);
-		JsonObjectIOState* jobj = state->objectBegin("provider");
-
-		jobj->scInt("width", prov.width);
-		jobj->scInt("height", prov.height);
-		jobj->scInt("tileSize", prov.tileSize);
-		jobj->scFloat("displayFactor", prov.displayFactor);
-		jobj->scInt("layerOffsetX", prov.layerOffset.x);
-		jobj->scInt("layerOffsetY", prov.layerOffset.y);
-		state->objectEnd();
-	}
-
-	virtual BackImage getRect(int stX, int stRow, int wid, int hei) = 0;
-
-	virtual BackImage getImage(const int max) const = 0;
-	virtual const BackImage* getCachedImage() const = 0;
-
-	virtual void setCache(size_t) = 0;
-	virtual void setSubImage(int imgIndex, bool overrideCs = false) = 0;
-	virtual int getSubImage() = 0;
-	virtual SubImgInf getSubImgInf() = 0;
-
-	virtual int getFirstSmallIndex(const int maxSize = 2000) = 0;
-	virtual std::vector<SubImgInf> getSubImageInfos() = 0;
-};
-
-
-export class IVectorLayer : public ILayer
-{
-public:
-	Type getType() const
-	{
-		return Type::Vector;
-	}
-
-	virtual float displayWidth() const
-	{
-		return 0;
-	}
-
-	virtual float displayHeight() const
-	{
-		return 0;
-	}
-
-	virtual void release()
-	{
-
-	}
-};
-
 
 export template <class T>
 class LayersList
@@ -600,9 +365,280 @@ public:
 	//	layers.push_back(std::move(t));
 	//	return tptr;
 	//}
-
-
 };
+
+
+export class ILayer : public IJsonIO
+{
+protected:
+	enum class Type
+	{
+		Raster = 1,
+		Vector = 2,
+		Compinted = Raster | Vector
+	};
+
+public:
+	static LFID counter;
+	static LFID getCountId()
+	{
+		return counter++;
+	}
+
+	BackString getMetaLayerName()
+	{
+		BackString name = intToStr(id);
+		return name + "_layer";
+	}
+
+	MetadataProvider getLayerMeta(const MetadataProvider& metaFolder)
+	{
+		BackString lname = getMetaLayerName();
+		return metaFolder.getSubMeta(lname);
+	}
+
+public:
+	int id = -1;
+	BackString name;
+	CSBinding cs;
+	bool isSystem = false;
+	int layerCounter = 0;
+	LayersList<ILayer> subLayers;
+
+	void init(int proj)
+	{
+		cs.init(proj);
+	}
+
+	void initCSFrom(const CSBinding& csf)
+	{
+		assert(cs.proj.isInited());
+		cs.globOrigin = csf.globOrigin;
+		std::copy(csf.img_transform, csf.img_transform + 6, cs.img_transform);
+	}
+
+	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder);
+	virtual Type getType() const = 0;
+	virtual const LFID getFactoryId() const = 0;
+	virtual void release(const MetadataProvider&)
+	{
+		// BackString lname = getMetaLayerName();
+		// metaFolder.update(metaFolder.getSubMeta(lname));
+	}
+
+	virtual float displayWidth() const = 0;
+	virtual float displayHeight() const = 0;
+
+	BackPoint getDisplaySize() const
+	{
+		return BackPoint(displayWidth(), displayHeight());
+	}
+
+	BackPoint getRealSize() const
+	{
+		return BackPoint(realWidth(), realHeight());
+	}
+
+	virtual int realWidth() const = 0;
+	virtual int realHeight() const = 0;
+
+	int getSysId() const
+	{
+		return id;
+	}
+
+	bool hasCS() const
+	{
+		return cs.proj.isInited();
+	}
+
+	BackPoint getNormGlobStart() const
+	{
+		BackPoint st = getGlobStart();
+		BackPoint ed = getGlobEnd();
+
+		if (st.x > ed.x)
+		{
+			std::swap(st.x, ed.x);
+		}
+
+		if (st.y > ed.y)
+		{
+			std::swap(st.y, ed.y);
+		}
+
+		return st;
+	}
+
+	BackPoint getNormGlobSize() const
+	{
+		return cs.getScaled(getRealSize()).abs();
+	}
+
+	BackPoint getGlobStart() const
+	{
+		return cs.globOrigin;
+	}
+
+	BackPoint getGlobEnd() const
+	{
+		return getGlobStart() + getGlobSize();
+	}
+
+	BackPoint getGlobSize() const
+	{
+		return cs.getScaled(getDisplaySize());
+	}
+
+	virtual ~ILayer()
+	{ }
+};
+
+LFID ILayer::counter = 0;
+export const LFID RASTER_LAYER_FID = 0;
+export const LFID RASTER_LINE_LAYER_FID = 1;
+export const LFID RASTER_DISK_LAYER_FID = 2;
+export const LFID VECTOR_LAYER_FID = 3;
+export const LFID MULTIPOLY_VECTOR_LAYER_FID = 4;// ILayer::getCountId();
+export const LFID TREE_VECTOR_LAYER_FID = 5;
+
+export class CoreLayerFactory
+{
+protected:
+	template<class IF>
+	using FunctionCoreHolder = MMMAP<LFID, std::function<IF*()> >;
+
+	template<class IF>
+	using FunctionGuiHolder = MMMAP<LFID, std::function<IF*(ILayer* core)> >;
+
+	static FunctionCoreHolder<ILayer> coreLayersCreators;
+
+public:
+	static ILayer* CreateCoreLayer(int id)
+	{
+		auto it = coreLayersCreators.find(id);
+		if (it != coreLayersCreators.end())
+			return it->second();
+		else
+			return nullptr;
+	}
+};
+
+CoreLayerFactory::FunctionCoreHolder<ILayer> CoreLayerFactory::coreLayersCreators;
+
+
+void ILayer::saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder)
+{
+	state->scInt("coreId", id);
+	state->scStr("name", name);
+
+	int d = isSystem ? 1 : 0;
+	state->scInt("isSystem", d);
+	isSystem = d == 1;
+
+	cs.saveLoadState(state, metaFolder);
+
+	//state->scInt("layerCounter", layerCounter);
+
+	// const bool isReading = state->isReading();
+	// int size = subLayers.size();
+
+	// JsonArrayIOState* arrst = state->arrayBegin("extraLayers", size);
+	// auto iter = subLayers.begin();
+
+	// for (int i = 0; i < size; i++)
+	// {
+	// 	JsonObjectIOState* obj = arrst->objectBegin(i);
+	// 	int factoryId;
+	// 	ILayer* lay;
+	// 	if (isReading)
+	// 	{
+	// 		obj->scInt("factoryId", factoryId);
+	// 		lay = CoreLayerFactory::CreateCoreLayer(factoryId);
+	// 		subLayers.addMove(lay);
+	// 	}
+	// 	else
+	// 	{
+	// 		lay = iter->get();
+	// 		factoryId = lay->getFactoryId();
+	// 		obj->scInt("factoryId", factoryId);
+	// 		iter++;
+	// 	}
+
+	// 	lay->saveLoadState(obj, metaFolder);
+	// 	arrst->objectEnd();
+	// }
+	// state->arrayEnd();
+}
+
+
+
+export using SubImgInf = BackSize;
+
+export class IRasterLayer : public ILayer
+{
+public:
+	LayerProvider prov;
+	int tileOffset = DEF_TILE_OFFSET;
+
+	Type getType() const
+	{
+		return Type::Raster;
+	}
+
+	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder)
+	{
+		ILayer::saveLoadState(state, metaFolder);
+		JsonObjectIOState* jobj = state->objectBegin("provider");
+
+		jobj->scInt("width", prov.width);
+		jobj->scInt("height", prov.height);
+		jobj->scInt("tileSize", prov.tileSize);
+		jobj->scFloat("displayFactor", prov.displayFactor);
+		jobj->scInt("layerOffsetX", prov.layerOffset.x);
+		jobj->scInt("layerOffsetY", prov.layerOffset.y);
+		state->objectEnd();
+	}
+
+	virtual BackImage getRect(int stX, int stRow, int wid, int hei) = 0;
+
+	virtual BackImage getImage(const int max) const = 0;
+	virtual const BackImage* getCachedImage() const = 0;
+
+	virtual void setCache(size_t) = 0;
+	virtual void setSubImage(int imgIndex, bool overrideCs = false) = 0;
+	virtual int getSubImage() = 0;
+	virtual SubImgInf getSubImgInf() = 0;
+
+	virtual int getFirstSmallIndex(const int maxSize = 2000) = 0;
+	virtual std::vector<SubImgInf> getSubImageInfos() = 0;
+};
+
+
+export class IVectorLayer : public ILayer
+{
+public:
+	Type getType() const
+	{
+		return Type::Vector;
+	}
+
+	virtual float displayWidth() const
+	{
+		return 0;
+	}
+
+	virtual float displayHeight() const
+	{
+		return 0;
+	}
+
+	virtual void release()
+	{
+
+	}
+};
+
 
 
 

@@ -5,6 +5,7 @@ module;
 #include <assert.h>
 #include <chrono>
 #include <algorithm>
+#include <mutex>
 //#include <iostream>
 
 #include "../Bind/Common.h"
@@ -628,14 +629,18 @@ public:
 		return classId;
 	}
 
-	VectorLayer* addClassLayer(int classId)
+	VectorLayer* addClassLayer(int classId, bool addToList = true)
 	{
 		auto* layer = addLayerData<VectorLayer>(ds.sysProj.getId());
 		layer->color = BackColor::random();
 		//layer->vecType = VectorLayer::VecType::circles;
 		layer->vecType = VectorLayer::VecType::polygons;
-		layer->isSystem = true;
-		classLayers[classId] = layer;
+		if (addToList)
+		{
+			layer->isSystem = true;
+			classLayers[classId] = layer;
+		}
+
 		return layer;
 	}
 

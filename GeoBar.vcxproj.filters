@@ -187,6 +187,7 @@
     <ClCompile Include="backend\Layers\RasterBarHolderRLeyer.ixx" />
     <ClCompile Include="backend\Settings.ixx" />
     <ClCompile Include="backend\CachedBarcode.ixx" />
+    <ClCompile Include="backend\Interfaces\MLClasses.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="side\imgui\imgui_internal.h">

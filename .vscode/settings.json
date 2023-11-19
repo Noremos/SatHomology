@@ -80,6 +80,8 @@
         "xutility": "cpp",
         "xhash": "cpp",
         "xtree": "cpp",
-        "rope": "cpp"
+        "rope": "cpp",
+        "xmemory": "cpp",
+        "format": "cpp"
     }
 }

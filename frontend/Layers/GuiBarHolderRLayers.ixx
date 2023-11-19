@@ -64,7 +64,7 @@ public:
 		{
 			clusterVals.show = true;
 		}
-		clusterVals.draw();
+		clusterVals.draw(context);
 
 
 		if (ImGui::BeginPopupModal("UpdateImage", nullptr, ImGuiWindowFlags_AlwaysAutoResize))

@@ -148,6 +148,19 @@ public:
 			barvalue.y = state->pInt(barvalue.y);
 			barvalue.value = state->pBarscalar(barvalue.value);
 		}
+
+		id = state->pInt(id);
+		parentId = state->pInt(parentId);
+
+		childrenCount = state->pShort(childrenCount);
+		if (childrenCount > 0 && state->isReading())
+			children.reset(new ushort[childrenCount]);
+
+		for (ushort i = 0; i < childrenCount; i++)
+		{
+			children[i] = state->pShort(children[i]);
+		}
+
 	}
 };
 
@@ -193,6 +206,12 @@ public:
 		}
 	}
 
+	//void addItem(const IClassItem& item)
+	//{
+	//	items.push_back(CachedBarline(&item));
+	//	items.back().root = this;
+	//}
+
 	CachedBarline* getRItem(int cid)
 	{
 		return &Base::items[cid];
@@ -210,6 +229,7 @@ public:
 		for (int i = 0; i < count; ++i)
 		{
 			Base::items[i].saveLoadState(state);
+			Base::items[i].root = this;
 		}
 	}
 };

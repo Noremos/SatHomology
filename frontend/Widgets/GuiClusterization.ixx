@@ -3,7 +3,6 @@ module;
 
 export module GuiClusterization;
 
-import ProjectModule;
 import IOCore;
 import Platform;
 import GuiWidgets;
@@ -11,6 +10,12 @@ import TrainIO;
 import ClusterInterface;
 import TreeClassifier;
 import RasterBarHolderRLayer;
+import FrontendBind;
+import GeoprocessorModule;
+import GuiLayers;
+
+
+GuiBackend backend;
 
 struct StringBuffer
 {
@@ -38,7 +43,7 @@ struct StringBuffer
 export class GuiClusterizationWindow
 {
 	std::unique_ptr<IBarClusterizer> clusterizer;
-	BarCategories clusterCategs;
+	BarCategories& clusterCategs;
 
 public:
 
@@ -76,8 +81,10 @@ public:
 		}
 	};
 
+	//MMMAP<int, VectorLayer*> classLayers;
+
 	SelPair selectedPrevied;
-	GuiClusterizationWindow() : clusterizer(nullptr)
+	GuiClusterizationWindow() : clusterizer(nullptr), clusterCategs(backend.proj->classCategs)
 	{
 		curColor = ImVec4(1.0, 1.f, 1.f, 1.f);
 		//c;
@@ -110,15 +117,15 @@ public:
 	BackString nameBuffer;
 	void init(RasterLineLayer* line)
 	{
-		//classes.clear();
+		classesLB.clear();
 		//clusterizer->loadData();
 
-		//for (auto&& c : proj->classCategs.categs)
-		//{/
-		//	classesLB.add(c.name, { c.id });
-		//	loadClassImages(io, classesLB.back());
-		//}
-		//classesLB.endAdding();
+		for (auto& c : clusterCategs.categs)
+		{
+			classesLB.add(c.name, { c.id });
+			//loadClassImages(io, classesLB.back());
+		}
+		classesLB.endAdding();
 
 		//if (classesLB.getSize() > 0)
 		//	setCurrentClassName();
@@ -139,7 +146,7 @@ public:
 		return clusterCategs.get(claId)->color;
 	}
 
-	void draw()
+	void draw(ILayerWorker& context)
 	{
 		if (!show)
 			return;
@@ -257,6 +264,48 @@ public:
 				else
 				{
 					clusterizer->predict(*line->collectionToPredict);
+					//clusterizer->
+					// backend.proj
+					std::vector<VectorLayer*> layers(classesLB.getSize());
+					for (int i = 0; i < classesLB.getSize(); i++)
+					{
+						//auto* layer = addClassLayer(classId);
+
+						VectorLayer* layer = backend.proj->addClassLayer(-1, false);
+						layer->name = "Class: ";
+						layer->name += classesLB.getItems()[i];
+						layer->color = clusterCategs.get(i)->color;
+						layer->vecType = VectorLayer::VecType::polygons;
+						layer->isSystem = true;
+						// clusterCategs.
+						//layer->vecType = VectorLayer::VecType::circles;
+						layers[i] = layer;
+					}
+
+					for (int i = 0; i < line->collectionToPredict->getItemsCount(); i++)
+					{
+						const int classTypeOfItem = clusterizer->test(i);
+						auto* classLayer = layers[classTypeOfItem];
+						DrawPrimitive* prim = classLayer->addPrimitive(classLayer->color);
+
+						std::vector<uint> out;
+						auto* item = line->collectionToPredict->getItem(i);
+						auto rect = getCountourOder(item->getMatrix(), out, true);
+						for (const auto& pm : out)
+						{
+							auto op = bc::barvalue::getStatPoint(pm);
+							//BackPoint iglob(static_cast<float>(op.x) + 0.5f, static_cast<float>(op.y) + 0.5f);
+							BackPoint iglob(static_cast<float>(op.x), static_cast<float>(op.y));
+
+							iglob = classLayer->cs.toGlobal((float)iglob.x, (float)iglob.y); // To real
+							prim->addPoint(iglob);
+						}
+					}
+
+					for (VectorLayer* layer : layers)
+					{
+						context.addLayer<VectorGuiLayer, VectorLayer>(layer->name, layer);
+					}
 				}
 			}
 

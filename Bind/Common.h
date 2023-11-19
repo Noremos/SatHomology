@@ -54,6 +54,13 @@ struct BackColor
 	uchar r = 0;
 	uchar g = 0;
 	uchar b = 0;
+	BackColor operator=(BackColor other)
+	{
+		r = other.r;
+		g = other.g;
+		b = other.b;
+		return *this;
+	}
 
 	static BackColor random()
 	{
