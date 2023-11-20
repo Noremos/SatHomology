@@ -11,113 +11,15 @@ module;
 
 export module TreeClassifier;
 
-import BarcodeModule;
 import ClusterInterface;
-import IItemModule;
 
-import IOCore;
 import Platform;
 
 import TrainIO;
 import MHashMap;
 import CachedBarcode;
+import MLSettings;
 
-
-
-class ICluster : public IClassItem
-{
-	virtual size_t getId() const
-	{
-		throw;
-	}
-
-	virtual size_t getParentId() const
-	{
-		throw;
-	}
-
-	virtual int getDeath() const override
-	{
-		throw;
-	}
-
-	virtual Barscalar start() const override
-	{
-		throw;
-	}
-
-	virtual Barscalar end() const override
-	{
-		throw;
-	}
-
-	virtual const bc::barvector& getMatrix() const
-	{
-		return matrix;
-	}
-
-	virtual const size_t getMatrixSize() const
-	{
-		throw;
-	}
-
-	virtual void saveLoadState(StateBinFile::BinState* state) override
-	{
-		// Throw
-		throw;
-	}
-};
-
-
-
-template<class T>
-class IClusterCollection : public IDataClassItemValueHolder<T>
-{
-
-	void create(bc::DatagridProvider* img, const bc::BarConstructor& constr, const Base::ItemCallback& callback)
-	{
-		assert(false);
-		throw;
-		/*	bc::BarcodeCreator creator;
-			std::unique_ptr<bc::Barcontainer> ret(creator.createBarcode(img, constr));
-			auto* item = ret->getItem(0);
-			int size = (int)item->barlines.size();
-			for (int i = 0; i < size; i++)
-			{
-				TreeClass* id = new TreeClass(item->barlines[i]);
-				callback(id);
-				Base::items.push_back(id);
-			}*/
-	}
-
-	//virtual void saveLoadState(StateBinFile::BinState* state) override
-	//{
-	//	throw;
-	//	// Begin
-	//	size_t linesCount = 0;
-	//	state->beginArray(Base::items, linesCount);
-	//	for (size_t i = 0; i < linesCount; ++i)
-	//	{
-	//		Base::items[i].saveLoadState(state);
-	//	}
-	//}
-
-	//void add(const TreeClass& sign)
-	//{
-	//	Base::items.push_back(sign);
-	//}
-
-	IClassItem* exractItem(size_t id)
-	{
-		assert(false);
-		return nullptr;
-	}
-
-	size_t count()
-	{
-		return items.size();
-	}
-};
 
 
 class TreeClass : public ICluster
@@ -125,6 +27,7 @@ class TreeClass : public ICluster
 public:
 	std::vector<short> signature;
 	bc::barvector matrix;
+	bool addMiddleDepth;
 
 	// IClassItem* parent;
 	//TreeClass(CachedBarline* line = nullptr) //: id(id)
@@ -135,14 +38,19 @@ public:
 	//	}
 	//}
 
-
-	explicit TreeClass(const IClassItem* line = nullptr) //: id(id)
+	const bc::barvector& getMatrix() const
 	{
-		if (line)
-		{
-			walk(static_cast<const CachedBarline*>(line), 0);
-			matrix = line->getMatrix();
-		}
+		return matrix;
+	}
+
+	TreeClass()
+	{ }
+
+	explicit TreeClass(MLSettings& options, const CachedBarline& line) //: id(id)
+	{
+		addMiddleDepth = options.getInt("addMiddleDepth");
+		walk(&line, 0);
+		matrix = line.getMatrix();
 	}
 
 	explicit TreeClass(const TreeClass& other) //: id(id)
@@ -177,8 +85,10 @@ private:
 		}
 		else
 		{
-			signature.push_back(depth);
-			int half = line->getChildrenCount() / 2;
+			if (addMiddleDepth)
+				signature.push_back(depth);
+
+			//int half = line->getChildrenCount() / 2;
 			for (size_t i = 0, total = line->getChildrenCount(); i < total; i++)
 			{
 				//if (i == half)
@@ -191,18 +101,27 @@ private:
 };
 //
 
-class TreeSignatureCollection: public IClusterCollection<TreeClass>
+class TreeSignatureCollection: public IClusterItemValuesHolder<TreeClass>
 {
-	using Base = IClusterCollection<TreeClass>;
+	using Base = IClusterItemValuesHolder<TreeClass>;
 protected:
 
 public:
-	virtual void addItem(const IClassItem& item)
+	TreeSignatureCollection()
 	{
-		TreeClass clusterItem(&item);
-		if (clusterItem.signature.size() > 2)
+		Base::settings =
 		{
-			items.push_back(std::move(clusterItem));
+			{"addMiddleDepth", false},
+			{"minSignatureSize", 2}
+		};
+	}
+
+	virtual void addItem(const CachedBarline& item)
+	{
+		TreeClass clusterItem(Base::settings, item);
+		if (clusterItem.signature.size() > *Base::settings.getInt("minSignatureSize"))
+		{
+			Base::items.push_back(std::move(clusterItem));
 		}
 	}
 };
@@ -258,7 +177,7 @@ public:
 	//	clusters.remove(id);
 	//}
 
-	void predict(const IClassItemHolder& allItems)
+	void predict(const IClusterItemHolder& allItems)
 	{
 		using namespace dlib;
 
@@ -297,143 +216,24 @@ public:
 		cachedAssignments = spectral_cluster(kernel_type(0.1), samples, n);
 	}
 
-	virtual int test(size_t itemId)
+	int test(size_t itemId)
 	{
 		return cachedAssignments[itemId];
 	}
-
 };
 
 
 GlobalClusterRegister<TreeClass, TreeSignatureCollection, TreeClassifier> c("Сигнатура по дереву");
 
 
-
-class TreeV2Class : public ICluster
-{
-public:
-	std::vector<short> signature;
-	bc::barvector matrix;
-
-	explicit TreeV2Class(const IClassItem* line = nullptr) //: id(id)
-	{
-		if (line)
-		{
-			walk(static_cast<const CachedBarline*>(line), 0);
-			matrix = line->getMatrix();
-		}
-	}
-
-	explicit TreeV2Class(const TreeV2Class& other) //: id(id)
-	{
-		signature = other.signature;
-		matrix = other.matrix;
-	}
-
-	explicit TreeV2Class(TreeV2Class&& other) //: id(id)
-	{
-		signature = std::move(other.signature);
-		matrix = std::move(other.matrix);
-	}
-
-private:
-	void walk(const CachedBarline* line, int depth)
-	{
-		if (line->getChildrenCount() == 0)
-		{
-			signature.push_back(depth);
-		}
-		else
-		{
-			for (size_t i = 0, total = line->getChildrenCount(); i < total; i++)
-			{
-				//if (i == half)
-				//	signature.push_back(depth);
-
-				walk(line->getChild(i), depth + 1);
-			}
-		}
-	}
-};
-//
-
-GlobalClusterRegister<TreeV2Class, TreeSignatureCollection, TreeClassifier> c("Сигнатура по дереву только конечные точки");
-
-
-
-
-class TreeV2Class : public ICluster
-{
-public:
-	std::vector<short> signature;
-	bc::barvector matrix;
-
-	explicit TreeV2Class(const IClassItem* line = nullptr) //: id(id)
-	{
-		if (line)
-		{
-			walk(static_cast<const CachedBarline*>(line), 0);
-			matrix = line->getMatrix();
-		}
-	}
-
-	explicit TreeV2Class(const TreeV2Class& other) //: id(id)
-	{
-		signature = other.signature;
-		matrix = other.matrix;
-	}
-
-	explicit TreeV2Class(TreeV2Class&& other) //: id(id)
-	{
-		signature = std::move(other.signature);
-		matrix = std::move(other.matrix);
-	}
-
-private:
-	void walk(const CachedBarline* line, int depth)
-	{
-		if (line->getChildrenCount() == 0)
-		{
-			signature.push_back(depth);
-		}
-		else
-		{
-			for (size_t i = 0, total = line->getChildrenCount(); i < total; i++)
-			{
-				//if (i == half)
-				//	signature.push_back(depth);
-
-				walk(line->getChild(i), depth + 1);
-			}
-		}
-	}
-};
-//
-
-class TreeSignatureCollection : public IClusterCollection<TreeClass>
-{
-	using Base = IClusterCollection<TreeClass>;
-protected:
-
-public:
-	virtual void addItem(const IClassItem& item)
-	{
-		TreeClass clusterItem(&item);
-		if (clusterItem.signature.size() > 2)
-		{
-			items.push_back(std::move(clusterItem));
-		}
-	}
-};
-
-export class TreeClassifier : public IBarClusterizer
+export class TreeSizeClassifier : public IBarClusterizer
 {
 	int n;
 	std::vector<unsigned long> cachedAssignments;
 public:
 	const BackString name() const
 	{
-		return "TREE_SIGNATURE_V2";
+		return "TREE_SIZE_SIGNATURE";
 	}
 
 	void setClassesCount(int size)
@@ -441,16 +241,13 @@ public:
 		n = size;
 	}
 
-	void predict(const IClassItemHolder& allItems)
+	void predict(const IClusterItemHolder& allItems)
 	{
 		using namespace dlib;
 
-		//typedef std::vector<short> sample_type;
 		typedef matrix<double, 1, 1> sample_type;
 		sample_type m;
-		// Now we are making a typedef for the kind of kernel we want to use.  I picked the
-		// radial basis kernel because it only has one parameter and generally gives good
-		// results without much fiddling.
+
 		typedef radial_basis_kernel<sample_type> kernel_type;
 
 		kcentroid<kernel_type> kc(kernel_type(0.1), 0.01, 8);
@@ -458,18 +255,10 @@ public:
 
 		std::vector<sample_type> samples;
 		std::vector<sample_type> initial_centers;
-
 		for (size_t i = 0; i < allItems.getItemsCount(); i++)
 		{
 			auto& sign = static_cast<const TreeClass*>(allItems.getItem(i))->signature;
-			//if (sign.size() > 1)
-			{
-				kdepp::Kde1d<short> kernel(sign);
-				auto result = kernel.eval(0.5);
-				m(0) = result;
-			}
-			//else
-			//	m(0) = sign.front();
+			m(0) = sign.size();
 
 			samples.push_back(m);
 		}
@@ -480,12 +269,11 @@ public:
 		cachedAssignments = spectral_cluster(kernel_type(0.1), samples, n);
 	}
 
-	virtual int test(size_t itemId)
+	int test(size_t itemId)
 	{
 		return cachedAssignments[itemId];
 	}
-
 };
 
 
-GlobalClusterRegister<TreeV2Class, TreeSignatureCollection, TreeClassifier> c("Сигнатура по дереву только конечные точки");
+GlobalClusterRegister<TreeClass, TreeSignatureCollection, TreeSizeClassifier> c0("Длина сигнатуры");

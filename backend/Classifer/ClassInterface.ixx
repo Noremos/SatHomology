@@ -211,7 +211,7 @@ public:
 };
 
 
-export using ClassFactory = ImlFactory<IBarClassifier>;
+export using ClassFactory = ImlFactory<IClassItem, IClassItemHolder, IBarClassifier>;
 
 export ClassFactory classFactory;
 

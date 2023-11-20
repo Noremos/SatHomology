@@ -218,7 +218,6 @@ public:
 	std::function<void(BackJson& json)> extraWrite;
 	std::function<void(const BackJson& json)> extraRead;
 
-
 	SettingsIO(std::initializer_list<SettingValue> l) : settings(l)
 	{ }
 

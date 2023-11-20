@@ -13,6 +13,7 @@ import RasterBarHolderRLayer;
 import FrontendBind;
 import GeoprocessorModule;
 import GuiLayers;
+import DynamicSettings;
 
 
 GuiBackend backend;
@@ -64,6 +65,7 @@ public:
 
 	SelectableKeyValues<GuiClusterMethod> clsuterMethods;
 	SelectableKeyValues<GuiClass> classesLB;
+	std::unique_ptr<IClusterItemHolder> collectionToPredict = nullptr;
 
 	bool show = false;
 	//InOutLayer* ioLayer;
@@ -137,6 +139,8 @@ public:
 			clsuterMethods.add(name, { i, name });
 		}
 		clsuterMethods.endAdding();
+		auto methodId = clsuterMethods.currentValue().methodId;
+		collectionToPredict = getClusterFactory().CreateHolder(methodId);
 		this->line = line;
 	}
 
@@ -157,7 +161,14 @@ public:
 			return;
 		}
 		clsuterMethods.drawCombobox("Метод кластеризации");
-		//clsuterMethods.
+		if (clsuterMethods.hasChanged())
+		{
+			auto methodId = clsuterMethods.currentValue().methodId;
+			collectionToPredict = getClusterFactory().CreateHolder(methodId);
+		}
+
+		drawDynamicSettings(collectionToPredict->settings);
+
 
 		char nameCharBuffer[200]{};
 		memcpy(nameCharBuffer, nameBuffer.c_str(), nameBuffer.length());
@@ -254,7 +265,7 @@ public:
 			{
 				auto methodId = clsuterMethods.currentValue().methodId;
 				clusterizer = getClusterFactory().CreateML(methodId);
-				line->collectionToPredict = getClusterFactory().CreateHolder(methodId);
+				line->collectionToPredict = collectionToPredict.get();
 				line->processCachedBarcode(nullptr, false);
 				clusterizer->setClassesCount(classesLB.getSize());
 				if (line->collectionToPredict->getItemsCount() == 0)

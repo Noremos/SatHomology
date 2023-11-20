@@ -278,7 +278,7 @@ export struct RangeItemFilter : public IItemFilter
 };
 
 // Ml for machine learning
-export template <typename IML>
+export template <typename ICItem, typename ICHolder, typename IML>
 class ImlFactory
 {
 private:
@@ -291,8 +291,8 @@ private:
 
 	template<class IF>
 	using FunctionHolder = std::vector<BaseCreator<IF>>;
-	FunctionHolder<IClassItem> itemCreators;
-	FunctionHolder<IClassItemHolder> holderCreators;
+	FunctionHolder<ICItem> itemCreators;
+	FunctionHolder<ICHolder> holderCreators;
 	FunctionHolder<IML> mlCreators;
 	std::vector<BackString> names;
 
@@ -319,14 +319,14 @@ public:
 		return idCounter;
 	}
 
-	std::unique_ptr<IClassItem> CreateItem(int id)
+	std::unique_ptr<ICItem> CreateItem(int id)
 	{
-		return Create<IClassItem>(id, itemCreators);
+		return Create<ICItem>(id, itemCreators);
 	}
 
-	std::unique_ptr<IClassItemHolder> CreateHolder(int id)
+	std::unique_ptr<ICHolder> CreateHolder(int id)
 	{
-		return Create<IClassItemHolder>(id, holderCreators);
+		return Create<ICHolder>(id, holderCreators);
 	}
 
 	std::unique_ptr<IML> CreateML(int id)

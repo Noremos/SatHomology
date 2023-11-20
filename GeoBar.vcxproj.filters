@@ -188,6 +188,8 @@
     <ClCompile Include="backend\Settings.ixx" />
     <ClCompile Include="backend\CachedBarcode.ixx" />
     <ClCompile Include="backend\Interfaces\MLClasses.ixx" />
+    <ClCompile Include="backend\Clusterizers\MLSettings.ixx" />
+    <ClCompile Include="frontend\Widgets\DynamicSettings.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="side\imgui\imgui_internal.h">

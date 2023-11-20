@@ -6,12 +6,71 @@ export module ClusterInterface;
 import TrainIO;
 import IItemModule;
 import CachedBarcode;
+import BarcodeModule;
+import MLSettings;
+//export class IClasterItem
+//{
+//	IClasterItem(CachedBarline*)
+//	{}
+//};
 
-export class IClasterItem
+
+export class ICluster // : public IBffIO
 {
-	IClasterItem(CachedBarline*)
+public:
+	virtual const bc::barvector& getMatrix() const = 0;
+	virtual ~ICluster()
 	{}
 };
+
+// Holder - a container to store items
+export class IClusterItemHolder// : public IBffIO
+{
+public:
+	IClusterItemHolder()
+	{ }
+
+	MLSettings settings;
+
+	//virtual ICluster* getItem(size_t id) = 0;
+	virtual const ICluster* getItem(size_t id) const = 0;
+	virtual size_t getItemsCount() const = 0;
+	virtual void addItem(const CachedBarline& item) = 0;
+
+	virtual ~IClusterItemHolder() {}
+};
+
+
+export template<typename T>
+class IClusterItemValuesHolder : public IClusterItemHolder
+{
+protected:
+	std::vector<T> items;
+
+public:
+
+	IClusterItemValuesHolder() : IClusterItemHolder()
+	{ }
+
+	ICluster* getItem(size_t id)
+	{
+		return &items[id];
+	}
+
+	const ICluster* getItem(size_t id) const
+	{
+		return &items[id];
+	}
+
+	size_t getItemsCount() const
+	{
+		return items.size();
+	}
+
+	virtual ~IClusterItemValuesHolder()
+	{ }
+};
+
 
 export class IBarClusterizer
 {
@@ -28,7 +87,7 @@ public:
 	//virtual void loadData() = 0;
 	virtual void setClassesCount(int size) = 0;
 
-	virtual void predict(const IClassItemHolder& allItems) = 0;
+	virtual void predict(const IClusterItemHolder& allItems) = 0;
 
 	virtual int test(size_t itemId) = 0;
 	virtual ~IBarClusterizer()
@@ -38,7 +97,7 @@ public:
 
 
 
-using ClusterFactory = ImlFactory<IBarClusterizer>;
+using ClusterFactory = ImlFactory<ICluster, IClusterItemHolder, IBarClusterizer>;
 
 export ClusterFactory& getClusterFactory()
 {

@@ -34,6 +34,7 @@ import Settings;
 import LayersCore;
 import CachedBarcode;
 import VectorLayers;
+import ClusterInterface;
 
 export class BarLineWorker
 {
@@ -219,7 +220,7 @@ public:
 export class RasterLineLayer : public RasterLayer
 {
 public:
-	std::unique_ptr<IClassItemHolder> collectionToPredict = nullptr;
+	IClusterItemHolder* collectionToPredict = nullptr;
 	static std::vector<Barscalar> colors;
 	std::vector<std::shared_ptr<SimpleLine>> clickResponser;
 	int cacheId = -1;
@@ -633,7 +634,7 @@ public:
 		//outLayer->addHolder(*holder, tileProv, filter);
 		for (size_t i = 0; i < holder.getItemsCount(); ++i)
 		{
-			auto* item = holder.getItem(i);
+			auto* item = holder.getRItem(i);
 			if (outLayer->passLine(item, filter))
 			{
 				if (addLine)

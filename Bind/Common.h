@@ -14,6 +14,7 @@
 #define MAX(a,b) ((a)>(b)?(a):(b))
 #endif
 
+using BackStringView = std::string_view;
 using BackString = std::string;
 using BackDirStr = std::filesystem::path;
 using BackPathStr = std::filesystem::path;

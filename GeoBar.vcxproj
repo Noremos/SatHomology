@@ -139,6 +139,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="backend\CachedBarcode.ixx" />
+    <ClCompile Include="backend\Clusterizers\MLSettings.ixx" />
     <ClCompile Include="backend\Interfaces\ICluster.ixx" />
     <ClCompile Include="backend\Interfaces\IItem.ixx" />
     <ClCompile Include="backend\Interfaces\MLClasses.ixx" />
@@ -152,6 +153,7 @@
     <ClCompile Include="frontend\Templates\GuiRLayerTemplates.ixx" />
     <ClCompile Include="frontend\Layers\GuiLuaLayers.ixx" />
     <ClCompile Include="frontend\Layers\GuiRasterLayers.ixx" />
+    <ClCompile Include="frontend\Widgets\DynamicSettings.ixx" />
     <ClCompile Include="frontend\Widgets\GuiClusterization.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\Barcode.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\Barline.ixx" />
