@@ -171,6 +171,7 @@ public:
 		iss >> n;
 		printf("%d\n", n);
 		int number;
+		cachedAssignments.clear();
 		while (iss >> number)
 			cachedAssignments.push_back(number);
 

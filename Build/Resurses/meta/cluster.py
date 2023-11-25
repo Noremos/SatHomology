@@ -57,7 +57,7 @@ def apply_spectral_clustering(X, params): #(X, n_clusters):
     clustering = SpectralClustering(n_clusters=params["n_clusters"]).fit(X)
     return clustering.labels_
 
-def apply_spectral_biclustering(X, n_clusters):
+def apply_spectral_biclustering(X, params):
     clustering = SpectralBiclustering(n_clusters=params["n_clusters"]).fit(X)
     return clustering.row_labels_
 
@@ -117,7 +117,7 @@ def main(method, jsonAsString, data_file):
     elif method == 'MiniBatchKMeans':
         labels = apply_mini_batch_kmeans(X, params)
     elif method == 'MeanShift':
-        labels = apply_mean_shift(X)
+        labels = apply_mean_shift(X, params)
     elif method == 'SpectralClustering':
         labels = apply_spectral_clustering(X, params)
     elif method == 'SpectralBiclustering':
