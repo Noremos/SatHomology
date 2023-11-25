@@ -46,6 +46,21 @@ export void drawDynamicSettings(MLSettings& settings)
 		case OptionValue::sv_str:
 			MyInputText(label, set.data.s);
 			break;
+		case OptionValue::sv_enum:
+			if (ImGui::BeginCombo(label, set.data.e->getSelected().data()))
+			{
+				for (size_t i = 0; i < set.data.e->values.size(); i++)
+				{
+					bool is_selected = (set.data.e->selected == i); // You can store your selection however you want, outside or inside your objects
+					if (ImGui::Selectable(set.data.e->values[i].c_str(), is_selected))
+						set.data.e->selected = i;
+
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+				}
+				ImGui::EndCombo();
+			}
+			break;
 		case OptionValue::sv_path:
 			break;
 		}

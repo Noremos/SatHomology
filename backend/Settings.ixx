@@ -22,7 +22,7 @@ export struct ProjectSettings
 {
 	int metaCounter = 0;
 	int threadsCount;
-	bool runAsync = true;
+	bool runAsync = false;
 	int layerCounter = 0;
 	std::unique_ptr<MetadataProvider> metaprov;
 	ProjectSettings()

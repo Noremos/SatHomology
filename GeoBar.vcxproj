@@ -87,7 +87,7 @@
       <IgnoreEmbeddedIDL>true</IgnoreEmbeddedIDL>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(SolutionDir)Build\Resurses" "$(SolutionDir)Build\$(Configuration)" /d /y /s</Command>
+      <Command>$(SolutionDir)postbuild.bat $(SolutionDir) $(Configuration)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -134,12 +134,14 @@
       </IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(SolutionDir)Build\Resurses" "$(SolutionDir)Build\$(Configuration)" /d /y /s</Command>
+      <Command>$(SolutionDir)postbuild.bat $(SolutionDir) $(Configuration)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="backend\CachedBarcode.ixx" />
     <ClCompile Include="backend\Clusterizers\MLSettings.ixx" />
+    <ClCompile Include="backend\Clusterizers\SKLearn.ixx" />
+    <ClCompile Include="backend\Clusterizers\TreeSignClass.ixx" />
     <ClCompile Include="backend\Interfaces\ICluster.ixx" />
     <ClCompile Include="backend\Interfaces\IItem.ixx" />
     <ClCompile Include="backend\Interfaces\MLClasses.ixx" />
@@ -199,7 +201,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="side\sago\platform_folders.cpp" />
-    <ClCompile Include="backend\Clusterizers\TreeClassifer.ixx" />
+    <ClCompile Include="backend\Clusterizers\KmeansClassifer.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Bind\Lua.h" />

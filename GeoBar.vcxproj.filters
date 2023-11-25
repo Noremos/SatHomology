@@ -174,7 +174,7 @@
     </ClCompile>
     <ClCompile Include="side\Barcode\PrjBarlib\modules\Barline.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\ImageReader.ixx" />
-    <ClCompile Include="backend\Clusterizers\TreeClassifer.ixx">
+    <ClCompile Include="backend\Clusterizers\KmeansClassifer.ixx">
       <Filter>Backend\Impl</Filter>
     </ClCompile>
     <ClCompile Include="backend\Interfaces\ICluster.ixx" />
@@ -190,6 +190,8 @@
     <ClCompile Include="backend\Interfaces\MLClasses.ixx" />
     <ClCompile Include="backend\Clusterizers\MLSettings.ixx" />
     <ClCompile Include="frontend\Widgets\DynamicSettings.ixx" />
+    <ClCompile Include="backend\Clusterizers\TreeSignClass.ixx" />
+    <ClCompile Include="backend\Clusterizers\SKLearn.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="side\imgui\imgui_internal.h">

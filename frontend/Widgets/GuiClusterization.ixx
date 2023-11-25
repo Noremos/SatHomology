@@ -1,5 +1,6 @@
 module;
 #include "../GuiCommon.h"
+#include <iostream>
 
 export module GuiClusterization;
 
@@ -141,6 +142,7 @@ public:
 		clsuterMethods.endAdding();
 		auto methodId = clsuterMethods.currentValue().methodId;
 		collectionToPredict = getClusterFactory().CreateHolder(methodId);
+		clusterizer = getClusterFactory().CreateML(methodId);
 		this->line = line;
 	}
 
@@ -165,68 +167,72 @@ public:
 		{
 			auto methodId = clsuterMethods.currentValue().methodId;
 			collectionToPredict = getClusterFactory().CreateHolder(methodId);
+			clusterizer = getClusterFactory().CreateML(methodId);
 		}
 
+		ImGui::Text("Настройки классификатора");
+		drawDynamicSettings(clusterizer->settings);
+
+		ImGui::Text("Препроцессинг");
 		drawDynamicSettings(collectionToPredict->settings);
 
+		//char nameCharBuffer[200]{};
+		//memcpy(nameCharBuffer, nameBuffer.c_str(), nameBuffer.length());
+		//nameCharBuffer[nameBuffer.length()] = '\0';
+		//ImGui::InputText("Имя", (char*)nameCharBuffer, 200);
+		//nameBuffer = nameCharBuffer;
 
-		char nameCharBuffer[200]{};
-		memcpy(nameCharBuffer, nameBuffer.c_str(), nameBuffer.length());
-		nameCharBuffer[nameBuffer.length()] = '\0';
-		ImGui::InputText("Имя", (char*)nameCharBuffer, 200);
-		nameBuffer = nameCharBuffer;
+		//const bool emptyName = nameBuffer.length() == 0;
+		//ImGui::BeginDisabled(emptyName);
+		//if (ImGui::Button("Добавить"))
+		//{
+		//	const int classId = clusterCategs.addValue(nameBuffer);
 
-		const bool emptyName = nameBuffer.length() == 0;
-		ImGui::BeginDisabled(emptyName);
-		if (ImGui::Button("Добавить"))
-		{
-			const int classId = clusterCategs.addValue(nameBuffer);
+		//	classesLB.add(nameBuffer, { classId });
+		//	classesLB.endAdding();
 
-			classesLB.add(nameBuffer, { classId });
-			classesLB.endAdding();
+		//	if (classesLB.getSize() == 1)
+		//	{
+		//		setCurrentClassName();
+		//	}
+		//}
+		//ImGui::EndDisabled();
 
-			if (classesLB.getSize() == 1)
-			{
-				setCurrentClassName();
-			}
-		}
-		ImGui::EndDisabled();
+		//bool hasClasses = classesLB.getSize() != 0;
+		//ImGui::BeginDisabled(!hasClasses);
 
-		bool hasClasses = classesLB.getSize() != 0;
-		ImGui::BeginDisabled(!hasClasses);
+		//ImGui::SameLine();
 
-		ImGui::SameLine();
+		//ImGui::BeginDisabled(emptyName);
+		//if (ImGui::Button("Изменить"))
+		//{
+		//	int selectedClass = classesLB.currentValue().classId;
+		//	classesLB.updateName(classesLB.currentIndex, nameBuffer);
+		//	clusterCategs.changeName(classesLB.currentIndex, nameBuffer);
+		//	//proj->changeClassName(selectedClass, nameBuffer);
+		//}
+		//ImGui::EndDisabled();
 
-		ImGui::BeginDisabled(emptyName);
-		if (ImGui::Button("Изменить"))
-		{
-			int selectedClass = classesLB.currentValue().classId;
-			classesLB.updateName(classesLB.currentIndex, nameBuffer);
-			clusterCategs.changeName(classesLB.currentIndex, nameBuffer);
-			//proj->changeClassName(selectedClass, nameBuffer);
-		}
-		ImGui::EndDisabled();
+		//ImGui::SameLine();
+		//if (ImGui::Button("Удалить"))
+		//{
+		//	int selClassID = classesLB.currentValue().classId;
+		//	classesLB.remove(classesLB.currentIndex);
+		//	clusterCategs.remove(selClassID);
+		//}
+		//ImGui::EndDisabled();
 
-		ImGui::SameLine();
-		if (ImGui::Button("Удалить"))
-		{
-			int selClassID = classesLB.currentValue().classId;
-			classesLB.remove(classesLB.currentIndex);
-			clusterCategs.remove(selClassID);
-		}
-		ImGui::EndDisabled();
+		//hasClasses = classesLB.getSize() != 0; // Check it again after the dropping
 
-		hasClasses = classesLB.getSize() != 0; // Check it again after the dropping
-
-		classesLB.drawListBox("Категории");
-		if (classesLB.hasChanged())
-		{
-			setCurrentClassName();
-			const auto& col = getCurColor();
-			curColor.x = static_cast<float>(col.r) / 255.f;
-			curColor.y = static_cast<float>(col.g) / 255.f;
-			curColor.z = static_cast<float>(col.r) / 255.f;
-		}
+		//classesLB.drawListBox("Категории");
+		//if (classesLB.hasChanged())
+		//{
+		//	setCurrentClassName();
+		//	const auto& col = getCurColor();
+		//	curColor.x = static_cast<float>(col.r) / 255.f;
+		//	curColor.y = static_cast<float>(col.g) / 255.f;
+		//	curColor.z = static_cast<float>(col.r) / 255.f;
+		//}
 
 		//if (ImGui::Button("Load from image"))
 		//{
@@ -235,22 +241,22 @@ public:
 		//}
 
 
-		if (hasClasses)
+		//if (hasClasses)
 		{
-			ImGui::Checkbox("Изменить цвет", &changeColor);
-			if (changeColor)
-			{
-				ImGui::SameLine();
-				if (ImGui::Button("Применить"))
-				{
-					auto& col = getCurColor();
-					col.r = std::min(static_cast<int>(curColor.x * 255), 255);
-					col.g = std::min(static_cast<int>(curColor.y * 255), 255);
-					col.b = std::min(static_cast<int>(curColor.z * 255), 255);
-				}
+			//ImGui::Checkbox("Изменить цвет", &changeColor);
+			//if (changeColor)
+			//{
+			//	ImGui::SameLine();
+			//	if (ImGui::Button("Применить"))
+			//	{
+			//		auto& col = getCurColor();
+			//		col.r = std::min(static_cast<int>(curColor.x * 255), 255);
+			//		col.g = std::min(static_cast<int>(curColor.y * 255), 255);
+			//		col.b = std::min(static_cast<int>(curColor.z * 255), 255);
+			//	}
 
-				ImGui::ColorPicker4("Цвет", (float*)&curColor, ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoInputs);
-			}
+			//	ImGui::ColorPicker4("Цвет", (float*)&curColor, ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoInputs);
+			//}
 
 			//if (ImGui::Button("Show graph"))
 			//{
@@ -263,8 +269,8 @@ public:
 
 			if (ImGui::Button("Запустить"))
 			{
+				collectionToPredict->clear();
 				auto methodId = clsuterMethods.currentValue().methodId;
-				clusterizer = getClusterFactory().CreateML(methodId);
 				line->collectionToPredict = collectionToPredict.get();
 				line->processCachedBarcode(nullptr, false);
 				clusterizer->setClassesCount(classesLB.getSize());
@@ -272,22 +278,31 @@ public:
 				{
 					ImGui::OpenPopup("NoDataToCluster");
 				}
-				else
+				else if (clusterizer->predict(*line->collectionToPredict))
 				{
-					clusterizer->predict(*line->collectionToPredict);
+					const int n = clusterizer->getClusters();
+					std::cout << "Number of clasters is " << n << std::endl;
+
+					classesLB.clear();
+					for (int i = 0, total = n; i < total; i++)
+					{
+						classesLB.add(std::to_string(i), {i});
+						classesLB.endAdding();
+					}
+
 					//clusterizer->
 					// backend.proj
-					std::vector<VectorLayer*> layers(classesLB.getSize());
-					for (int i = 0; i < classesLB.getSize(); i++)
+					std::vector<VectorLayer*> layers(n);
+					for (int i = 0; i < n; i++)
 					{
 						//auto* layer = addClassLayer(classId);
 
 						VectorLayer* layer = backend.proj->addClassLayer(-1, false);
 						layer->name = "Class: ";
 						layer->name += classesLB.getItems()[i];
-						layer->color = clusterCategs.get(i)->color;
+						layer->color = BackColor::random(); //clusterCategs.get(i)->color;
 						layer->vecType = VectorLayer::VecType::polygons;
-						layer->isSystem = true;
+						//layer->isSystem = true;
 						// clusterCategs.
 						//layer->vecType = VectorLayer::VecType::circles;
 						layers[i] = layer;
@@ -296,6 +311,12 @@ public:
 					for (int i = 0; i < line->collectionToPredict->getItemsCount(); i++)
 					{
 						const int classTypeOfItem = clusterizer->test(i);
+						if (classTypeOfItem == -1)
+							continue;
+						else if (classTypeOfItem > classesLB.getSize())
+						{
+							std::cout << "Out of range for i = " << i << std::endl;
+						}
 						auto* classLayer = layers[classTypeOfItem];
 						DrawPrimitive* prim = classLayer->addPrimitive(classLayer->color);
 

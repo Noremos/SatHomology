@@ -5,6 +5,23 @@ export module MLSettings;
 
 import JsonCore;
 
+struct OptionEnum
+{
+	OptionEnum(std::initializer_list<BackString> val)
+	{
+		values = val;
+	}
+
+	BackStringView getSelected() const
+	{
+		return values[selected];
+	}
+
+
+	std::vector<BackString> values;
+	int selected = 0;
+	int64_t filter = INT64_MAX;
+};
 
 export union OptionVariant
 {
@@ -13,6 +30,7 @@ export union OptionVariant
 	double d;
 	BackString* s;
 	BackPathStr* p;
+	OptionEnum* e;
 };
 
 
@@ -27,10 +45,55 @@ export struct OptionValue
 		sv_int,
 		sv_double,
 		sv_str,
-		sv_path
+		sv_path,
+		sv_enum
 	} type;
 
 public:
+	void operator =(OptionValue&& other)
+	{
+		name = std::exchange(other.name, "");
+		type = std::exchange(other.type, sv_bool);
+		data = std::move(other.data);
+		other.data.b = false;
+	}
+
+	OptionValue(OptionValue&& other)
+	{
+		*this = std::move(other);
+	}
+
+	OptionValue& operator =(const OptionValue& other)
+	{
+		name = other.name;
+		type = other.type;
+		switch (type)
+		{
+		case OptionValue::sv_str:
+			data.s = new BackString(*other.data.s);
+			break;
+		case OptionValue::sv_path:
+			data.p = new BackPathStr(*other.data.p);
+			break;
+		case OptionValue::sv_enum:
+			data.e = new OptionEnum({});
+			data.e->values = other.data.e->values;
+			data.e->selected = other.data.e->selected;
+			break;
+		default:
+			data = other.data;
+			break;
+		}
+
+		return *this;
+	}
+
+	OptionValue(const OptionValue& other)
+	{
+		*this = other;
+	}
+
+
 	OptionValue(const BackString& name, bool val)
 	{
 		this->name = name;
@@ -58,11 +121,18 @@ public:
 		data.s = new BackString(val);
 		type = sv_str;
 	}
-	OptionValue(const BackString& name, BackPathStr val)
+	//OptionValue(const BackString& name, BackPathStr val)
+	//{
+	//	this->name = name;
+	//	data.p = &val;
+	//	type = sv_path;
+	//}
+
+	OptionValue(const BackString& name, std::initializer_list<BackString> val)
 	{
 		this->name = name;
-		data.p = &val;
-		type = sv_path;
+		data.e = new OptionEnum(val);
+		type = sv_enum;
 	}
 	~OptionValue()
 	{
@@ -73,6 +143,9 @@ public:
 			break;
 		case OptionValue::sv_path:
 			delete data.p;
+			break;
+		case OptionValue::sv_enum:
+			delete data.e;
 			break;
 		default:
 			break;
@@ -97,8 +170,18 @@ public:
 			break;
 		case sv_path:
 			json[name] = data.p->string();
+		case sv_enum:
+		{
+			JsonArray arr(Json::arrayValue);
+			arr.append(data.e->selected);
+			for (const auto& i : data.e->values)
+			{
+				arr.append(i);
+			}
+			json[name] = arr;
 			break;
 		}
+		} //! switch
 	}
 
 	void readData(const BackJson& json)
@@ -115,11 +198,23 @@ public:
 			data.d = json[name].asDouble();
 			break;
 		case sv_str:
-			*data.s = json[name].asString();
+			data.s = new BackString(json[name].asString());
 			break;
 		case sv_path:
-			*data.p = json[name].asString();
+			//*data.p = json[name].asString();
+			throw;
 			break;
+		case sv_enum:
+		{
+			JsonArray arr = json[name];
+			data.e = new OptionEnum({});
+			data.e->selected = arr[0].asInt();
+			for (int i = 1; i < arr.size(); i++)
+			{
+				data.e->values.push_back(arr[i].asString());
+			}
+			break;
+		}
 		}
 	}
 };
@@ -179,6 +274,18 @@ public:
 		}
 
 		return nullptr;
+	}
+	BackStringView getEnum(const BackString& name) const
+	{
+		for (auto& value : values)
+		{
+			if (value.name == name)
+			{
+				return value.data.e->getSelected();
+			}
+		}
+
+		throw;
 	}
 
 	MLSettings(std::initializer_list<OptionValue> l = {}) : values(l)
