@@ -887,20 +887,23 @@ public:
 		winsize.y -= 50;
 
 		bool temporaly = false;
-		int displayRadioId = iol.out;
+		int& displayRadioId = iol.out;
 		if (layers.size() > 0 && iol.out == -1)
 			displayRadioId = (*layers.begin())->getSysId();
 
 		float selHei = 40;
 		ImVec2 iconSize(40, selHei / 2);
 
-		bool catchNext = false;
+		bool catchNext = false, incrementCurrent = false, incrementWorkingLayer = false;
 		int toMove[2]{ -1, -1 };
 		int prevId = -1;
 		int delId = -1;
 
 		if (ImGui::BeginListBox("##LayersList", winsize))
 		{
+			if (displayRadioId == -1)
+				displayRadioId = 0;
+
 			uint j = 0;
 			for (auto& lay : layers)
 			{
@@ -918,6 +921,18 @@ public:
 				{
 					toMove[1] = curID;
 					catchNext = false;
+				}
+
+				if (incrementCurrent)
+				{
+					incrementCurrent = false;
+					iol.in = curID;
+				}
+
+				if (incrementWorkingLayer)
+				{
+					incrementWorkingLayer = false;
+					displayRadioId = curID;
 				}
 
 				auto& icon = *lay->getIcon();
@@ -955,6 +970,21 @@ public:
 				{
 					delId = curID;
 					lay->getCore()->release(proj->getMeta());
+					if (curRadio)
+					{
+						if (lastLayer)
+							displayRadioId = prevId;
+						else
+							incrementWorkingLayer = true;
+					}
+
+					if (iol.in == curID)
+					{
+						if (lastLayer)
+							iol.in = prevId;
+						else
+							incrementCurrent = true;
+					}
 				}
 
 				ImGui::SameLine();
@@ -972,11 +1002,10 @@ public:
 				if (temporaly)
 				{
 					if (j == 0)
-						iol.out = -1;
+						displayRadioId = -1;
 					else
-						iol.out = lay->getSysId();
+						displayRadioId  = lay->getSysId();
 
-					displayRadioId = lay->getSysId();
 					temporaly = false;
 				}
 
