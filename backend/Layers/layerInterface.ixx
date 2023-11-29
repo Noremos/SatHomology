@@ -375,7 +375,8 @@ protected:
 	{
 		Raster = 1,
 		Vector = 2,
-		Compinted = Raster | Vector
+		Compinted = Raster | Vector,
+		Group
 	};
 
 public:
@@ -402,8 +403,8 @@ public:
 	BackString name;
 	CSBinding cs;
 	bool isSystem = false;
+	bool isGroup = false;
 	int layerCounter = 0;
-	LayersList<ILayer> subLayers;
 
 	void init(int proj)
 	{
@@ -501,6 +502,7 @@ export const LFID RASTER_DISK_LAYER_FID = 2;
 export const LFID VECTOR_LAYER_FID = 3;
 export const LFID MULTIPOLY_VECTOR_LAYER_FID = 4;// ILayer::getCountId();
 export const LFID TREE_VECTOR_LAYER_FID = 5;
+export const LFID GROUP_LAYER = 6;
 
 export class CoreLayerFactory
 {

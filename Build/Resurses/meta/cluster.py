@@ -6,6 +6,8 @@ from sklearn.cluster import KMeans, DBSCAN, OPTICS
 import json
 import numpy as np
 import sys
+
+import io
 # import argparse
 # import pandas as pd
 from sklearn.cluster import (
@@ -78,35 +80,7 @@ def apply_bisecting_kmeans(X, params): #(X, n_clusters):
     clustering = BisectingKMeans(n_clusters=params["n_clusters"]).fit(X)
     return clustering.labels_
 
-def read_array_from_file(file_path):
-    collection = []
-    try:
-        with open(file_path, 'r') as file:
-            # Чтение строки из файла и разделение чисел по пробелам
-            for line in file:
-                array_str = line.strip()
-               # Преобразование строковых чисел в фактические числа
-                collection.append([float(num) for num in array_str.split()])
-    except FileNotFoundError:
-        print(f"ERROR: Файл '{file_path}' не найден.")
-        return None
-    except Exception as e:
-        print(f"ERROR: Произошла ошибка при чтении файла: {e}")
-        return None
-
-    if len(collection[-1]) == 0:
-        collection.pop()
-    return np.array(collection)
-
-def main(method, jsonAsString, data_file):
-    # Загрузка данных из файла
-    X = read_array_from_file(data_file)
-    try:
-        jsonAsString = jsonAsString[1:-1]
-        params = json.loads(jsonAsString)
-    except Exception as e:
-        print(f"ERROR: Str: {jsonAsString}\n {e}")
-        return;
+def main(method, X, params):
     # Инициализация и обучение модели
     if method == 'AffinityPropagation':
         labels = apply_affinity_propagation(X)
@@ -157,9 +131,8 @@ def main(method, jsonAsString, data_file):
 
 if __name__ == "__main__":
     # Вызов основной функции
-    dataFile = sys.argv[1]
-    method = sys.argv[2]
-    params = sys.argv[3]
     # print("ERR: " + params)
     # print(params)
-    main(method, params, dataFile)
+    method, X, params = io.read(sys.argv)
+    labels = main(method, X, params)
+    io.writeResult(labels)

@@ -192,6 +192,7 @@
     <ClCompile Include="frontend\Widgets\DynamicSettings.ixx" />
     <ClCompile Include="backend\Clusterizers\TreeSignClass.ixx" />
     <ClCompile Include="backend\Clusterizers\SKLearn.ixx" />
+    <ClCompile Include="backend\Layers\GroupLayer.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="side\imgui\imgui_internal.h">

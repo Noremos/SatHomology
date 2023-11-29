@@ -15,7 +15,7 @@ import FrontendBind;
 import GeoprocessorModule;
 import GuiLayers;
 import DynamicSettings;
-
+import GroupLayer;
 
 GuiBackend backend;
 
@@ -40,8 +40,34 @@ struct StringBuffer
 	}
 };
 
-//
-//
+
+
+class GuiGrouplayer: public GuiLayerData<GroupLayer>
+{
+public:
+
+	GuiGrouplayer(GroupLayer* fromCore) : GuiLayerData<GroupLayer>(fromCore)
+	{ }
+
+	virtual ~GuiGrouplayer()
+	{ }
+
+	virtual void toGuiData()
+	{
+		GuiLayerData<GroupLayer>::toGuiData();
+	}
+
+	virtual void draw(const GuiDisplaySystem& ds)
+	{
+		if (!IGuiLayer::visible)
+			return;
+	}
+	virtual void drawToolboxInner(ILayerWorker& context)
+	{
+	}
+};
+
+
 export class GuiClusterizationWindow
 {
 	std::unique_ptr<IBarClusterizer> clusterizer;
@@ -292,6 +318,7 @@ public:
 
 					//clusterizer->
 					// backend.proj
+					GroupLayer* group = backend.proj->addLayerData<GroupLayer>();
 					std::vector<VectorLayer*> layers(n);
 					for (int i = 0; i < n; i++)
 					{
@@ -306,6 +333,7 @@ public:
 						// clusterCategs.
 						//layer->vecType = VectorLayer::VecType::circles;
 						layers[i] = layer;
+						group->subLayers.push_back(layer->getSysId());
 					}
 
 					for (int i = 0; i < line->collectionToPredict->getItemsCount(); i++)

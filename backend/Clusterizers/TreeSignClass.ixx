@@ -92,6 +92,21 @@ public:
 			const int n = *options.getInt("linerInterSize");
 			signature = resizeVectorWithApproximation(signature, n);
 		}
+		else if (options.getEnum("compress") == "zeros")
+		{
+			const int n = *options.getInt("linerInterSize");
+			if (signature.size() > n)
+			{
+				signature = resizeVectorWithApproximation(signature, n);
+			}
+			else
+			{
+				for (int i = signature.size(); i < n; ++i)
+				{
+					signature.push_back(0);
+				}
+			}
+		}
 	}
 
 	explicit TreeClass(const TreeClass& other) //: id(id)
@@ -154,7 +169,7 @@ public:
 		{
 			{"addMiddleDepth", true},
 			//{"minSignatureSize", 2},
-			{"compress", {"kde", "size", "linearInterpolation"}},
+			{"compress", {"kde", "size", "linearInterpolation", "zeros", "asIs"}},
 			{"linerInterSize", 100},
 			{"kdeEps", 0.5}
 		};

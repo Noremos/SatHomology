@@ -791,87 +791,150 @@ public:
 
 
 
-	//void drawSubLayer(ILayer* lay, int j, int& delId)
+	//void drawSubLayers(int& itemCounter, bool allowChange)
 	//{
-	//	ImGui::PushID(j);
+	//	bool catchNext = false, incrementCurrent = false, incrementWorkingLayer = false;
+	//	int toMove[2]{ -1, -1 };
+	//	int prevId = -1;
+	//	int delId = -1;
 
-	//	auto curID = lay->id;
+	//	if (displayRadioId == -1)
+	//		displayRadioId = 0;
 
-	//	ImGui::SameLine();
-	//	ImGui::Checkbox("##visible", &lay->visible);
-
-	//	ImGui::SameLine();
-	//	ImGui::Image((void*)(intptr_t)icon.getTextureId(), ImVec2(selHei, selHei));
-
-	//	if (toMove)
+	//	uint j = 0;
+	//	for (auto& lay : layers)
 	//	{
+	//		bool fistLayer = j == 0;
+	//		bool lastLayer = j == layers.size() - 1;
+	//		//if (lay->getSysId()s == iol.out)
+	//		//{
+	//		//	ImFont* italicFont = ImGui::GetIO().Fonts->Fonts[1];  // Assuming the second font in the ImFontAtlas is italic
+	//		//	ImGui::PushFont(italicFont);
+	//		//}
+	//		ImGui::PushID(itemCounter++);
+
+	//		auto curID = lay->getSysId();
+	//		if (catchNext)
+	//		{
+	//			toMove[1] = curID;
+	//			catchNext = false;
+	//		}
+
+	//		if (incrementCurrent)
+	//		{
+	//			incrementCurrent = false;
+	//			iol.in = curID;
+	//		}
+
+	//		if (incrementWorkingLayer)
+	//		{
+	//			incrementWorkingLayer = false;
+	//			displayRadioId = curID;
+	//		}
+
+	//		auto& icon = *lay->getIcon();
+
+	//		bool curRadio = (displayRadioId == lay->getSysId());
+	//		updateWorkingImage = ImGui::RadioButton("##Work", curRadio);//, curRadio);
+
+	//		ImGui::SameLine();
+	//		ImGui::Checkbox("##visible", &lay->visible);
+
+	//		ImGui::SameLine();
+	//		ImGui::Image((void*)(intptr_t)icon.getTextureId(), ImVec2(selHei, selHei));
+
 	//		ImGui::SameLine();
 	//		auto posBef = ImGui::GetCursorPos();
-	//		ImGui::BeginDisabled(fistLayer);
-	//		if (ImGui::Button(ICON_FA_ANGLE_UP "", iconSize))
+
+
+	//		if (allowChange)
 	//		{
-	//			toMove[0] = prevId;
-	//			toMove[1] = curID;
-	//		}
-	//		ImGui::EndDisabled();
+	//			ImGui::BeginDisabled(fistLayer);
+	//			if (ImGui::Button(ICON_FA_ANGLE_UP "", iconSize))
+	//			{
+	//				toMove[0] = prevId;
+	//				toMove[1] = curID;
+	//			}
+	//			ImGui::EndDisabled();
 
-	//		ImGui::SetCursorPos({ posBef.x, posBef.y + iconSize.y });
-	//		ImGui::BeginDisabled(lastLayer);
-	//		if (ImGui::Button(ICON_FA_ANGLE_DOWN "", iconSize))
+	//			ImGui::SetCursorPos({ posBef.x, posBef.y + iconSize.y });
+	//			ImGui::BeginDisabled(lastLayer);
+	//			if (ImGui::Button(ICON_FA_ANGLE_DOWN "", iconSize))
+	//			{
+	//				toMove[0] = curID;
+	//				catchNext = true;
+	//			}
+	//			ImGui::EndDisabled();
+
+	//			ImGui::SetCursorPos({ posBef.x + iconSize.x, posBef.y });
+	//			if (ImGui::Button(ICON_FA_TRASH "", ImVec2(selHei, selHei)))
+	//			{
+	//				delId = curID;
+	//				lay->getCore()->release(proj->getMeta());
+	//				if (curRadio)
+	//				{
+	//					if (lastLayer)
+	//						displayRadioId = prevId;
+	//					else
+	//						incrementWorkingLayer = true;
+	//				}
+
+	//				if (iol.in == curID)
+	//				{
+	//					if (lastLayer)
+	//						iol.in = prevId;
+	//					else
+	//						incrementCurrent = true;
+	//				}
+	//			}
+	//			ImGui::SameLine();
+	//		}
+
+	//		bool seled = ImGui::Selectable(lay->getName(), curID == iol.in, ImGuiSelectableFlags_AllowDoubleClick, ImVec2(winsize.x - 50, selHei));
+	//		prevId = curID;
+
+	//		if (seled)
 	//		{
-	//			toMove[0] = curID;
-	//			catchNext = true;
+	//			iol.in = lay->getSysId();
+	//			if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+	//			{
+	//				lay->lockAtThis(lastRealSize);
+	//			}
 	//		}
-	//		ImGui::EndDisabled();
-
-	//	}
-	//	ImGui::SetCursorPos({ posBef.x + iconSize.x, posBef.y });
-	//	if (ImGui::Button(ICON_FA_TRASH "", ImVec2(selHei, selHei)))
-	//	{
-	//		delId = curID;
-	//		lay->getCore()->release(proj->getMeta());
-	//	}
-
-	//	ImGui::SameLine();
-	//	bool seled = ImGui::Selectable(lay->getName(), curID == iol.in, ImGuiSelectableFlags_AllowDoubleClick, ImVec2(winsize.x - 50, selHei));
-	//	prevId = curID;
-
-	//	if (seled)
-	//	{
-	//		iol.in = lay->getSysId();
-	//		if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+	//		if (updateWorkingImage)
 	//		{
-	//			lay->lockAtThis(lastRealSize);
-	//		}
-	//	}
-	//	if (temporaly)
-	//	{
-	//		if (j == 0)
-	//			iol.out = -1;
-	//		else
-	//			iol.out = lay->getSysId();
+	//			if (j == 0)
+	//				displayRadioId = -1;
+	//			else
+	//				displayRadioId = lay->getSysId();
 
-	//		displayRadioId = lay->getSysId();
-	//		temporaly = false;
-	//	}
-	//	for (auto* l : lay->getCore()->subLayers)
-	//	{
-	//		bool catchNext = false;
-	//		int prevId = -1;
-	//		int delId = -1;
-	//		drawLayer(l, -1, catchNext, prevId, delId, nullptr);
-	//		if (delId != -1)
-	//		{
-	//			lay->subLayers.remove(delId);
+	//			updateWorkingImage = false;
 	//		}
+
+	//		//if (j == iol.out)
+	//		//{
+	//		//	ImGui::PopFont();
+	//		//}
+	//		// ImVec4 color(1.0f, 0.0f, 0.0f, 1.0f); // RGBA color (red in this case)
+	//		ImGui::PopID();
+	//		++itemCounter;
 	//	}
-	//	//if (j == iol.out)
+
+	//	//if (delId != -1)
 	//	//{
-	//	//	ImGui::PopFont();
+	//	//	layers.remove(delId);
+	//	//	proj->removeLayer(delId);
 	//	//}
-	//	// ImVec4 color(1.0f, 0.0f, 0.0f, 1.0f); // RGBA color (red in this case)
-	//	ImGui::PopID();
+
+	//	//ImGui::EndGroup();
+
+	///*	if (toMove[0] != -1 && toMove[1] != -1)
+	//	{
+	//		proj->layers.move(toMove[0], toMove[1]);
+	//		layers.move(toMove[0], toMove[1]);
+	//	}*/
 	//}
+	//
 
 	void drawLayersWindow()
 	{
@@ -886,7 +949,7 @@ public:
 		auto winsize = ImGui::GetWindowSize();
 		winsize.y -= 50;
 
-		bool temporaly = false;
+		bool updateWorkingImage = false;
 		int& displayRadioId = iol.out;
 		if (layers.size() > 0 && iol.out == -1)
 			displayRadioId = (*layers.begin())->getSysId();
@@ -938,7 +1001,7 @@ public:
 				auto& icon = *lay->getIcon();
 
 				bool curRadio = (displayRadioId == lay->getSysId());
-				temporaly = ImGui::RadioButton("##Work", curRadio);//, curRadio);
+				updateWorkingImage = ImGui::RadioButton("##Work", curRadio);//, curRadio);
 
 				ImGui::SameLine();
 				ImGui::Checkbox("##visible", &lay->visible);
@@ -999,14 +1062,14 @@ public:
 						lay->lockAtThis(lastRealSize);
 					}
 				}
-				if (temporaly)
+				if (updateWorkingImage)
 				{
 					if (j == 0)
 						displayRadioId = -1;
 					else
 						displayRadioId  = lay->getSysId();
 
-					temporaly = false;
+					updateWorkingImage = false;
 				}
 
 				//if (j == iol.out)
@@ -1028,12 +1091,12 @@ public:
 
 		//ImGui::EndGroup();
 
-		ImGui::End();
 		if (toMove[0] != -1 && toMove[1] != -1)
 		{
 			proj->layers.move(toMove[0], toMove[1]);
 			layers.move(toMove[0], toMove[1]);
 		}
+		ImGui::End();
 	}
 };
 
