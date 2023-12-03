@@ -26,3 +26,4 @@ Build/Release
 Build/Temp
 .vs
 Build/Release.zip
+imgui.ini
