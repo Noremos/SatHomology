@@ -318,7 +318,7 @@ public:
 
 					//clusterizer->
 					// backend.proj
-					GroupLayer* group = backend.proj->addLayerData<GroupLayer>();
+					//GroupLayer* group = backend.proj->addLayerData<GroupLayer>();
 					std::vector<VectorLayer*> layers(n);
 					for (int i = 0; i < n; i++)
 					{
@@ -333,7 +333,7 @@ public:
 						// clusterCategs.
 						//layer->vecType = VectorLayer::VecType::circles;
 						layers[i] = layer;
-						group->subLayers.push_back(layer->getSysId());
+						//group->subLayers.push_back(layer->getSysId());
 					}
 
 					for (int i = 0; i < line->collectionToPredict->getItemsCount(); i++)
