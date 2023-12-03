@@ -1,3 +1,5 @@
+import numpy as np
+import json
 
 def read_array_from_file(file_path):
     collection = []

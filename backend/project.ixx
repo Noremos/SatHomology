@@ -149,6 +149,9 @@ export class Project
 			{
 				obj->scInt("factoryId", factoryId);
 				lay = CoreLayerFactory::CreateCoreLayer(factoryId);
+				if (lay == nullptr)
+					continue; // Factory does not exist
+
 				layers.addMove(lay);
 			}
 			else

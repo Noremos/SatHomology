@@ -5,6 +5,15 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": ["C:\\Users\\slash\\AppData\\Local\\Temp\\temp_array.txt", "DBSCAN", "{\"n_clusters\":2,\"eps\":0.5,\"min_samples\":3,\"threshold\":0.500000}"],
+            "justMyCode": true
+        },
+        {
             "name": "Debug",
             "type": "cppvsdbg",
             "request": "launch",
@@ -27,7 +36,5 @@
             "environment": [],
             "console": "integratedTerminal"
         }
-
-
     ]
 }

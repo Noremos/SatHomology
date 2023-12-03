@@ -3,11 +3,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.cluster import KMeans, DBSCAN, OPTICS
 
-import json
 import numpy as np
 import sys
 
-import io
+import cpio
 # import argparse
 # import pandas as pd
 from sklearn.cluster import (
@@ -112,27 +111,12 @@ def main(method, X, params):
         print(f"ERROR: Метод классификации '{method}' не поддерживается.")
         return
 
-
-    # Вывод предсказанных меток в stdout
-    # print("Predicted Labels:")
-    n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
-    # np.set_printoptions(threshold=sys.maxsize)
-    # print(str(n_clusters_) + ' ')
-    import tempfile
-    import os
-    fileName = os.path.join(tempfile.gettempdir(), "out_array.txt")
-    # Open the file for writing.
-    with open(fileName, mode='w') as f:
-        f.write(str(n_clusters_) + ' ')
-        for l in labels:
-            f.write(' ' + str(l))
-
-    print(fileName)
+    return labels
 
 if __name__ == "__main__":
     # Вызов основной функции
     # print("ERR: " + params)
     # print(params)
-    method, X, params = io.read(sys.argv)
-    labels = main(method, X, params)
-    io.writeResult(labels)
+    method, X, params = cpio.parseArgs(sys.argv)
+    labels = main(method, np.array(X), params)
+    cpio.writeResult(labels)

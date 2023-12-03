@@ -30,8 +30,8 @@ def read_array_from_file(file_path):
 
 
 # Assuming 'collection' is a list of NumPy arrays
-collection = read_array_from_file(r'd:\Education\BAR\input_with_middle.txt')
-# collection = read_array_from_file(r'd:\Education\BAR\input_without_middle.txt')
+# collection = read_array_from_file(r'd:\Education\BAR\input_with_middle.txt')
+collection = read_array_from_file(r'd:\Education\BAR\input_without_middle.txt')
 
 # Assuming 'collection' is a list of NumPy arrays
 def displayArrays():

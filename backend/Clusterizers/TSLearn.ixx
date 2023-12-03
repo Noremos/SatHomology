@@ -1,5 +1,4 @@
 module;
-
 #include <memory>
 #include <functional>
 #include <vector>
@@ -8,18 +7,20 @@ module;
 
 #include "../../Bind/Common.h"
 
-export module Sklearn;
+
+
+export module TSLearn;
 
 import ClusterInterface;
 import TreeSignClass;
 import ExteranlReader;
 
-export class SklearnClassifier : public IBarClusterizer
+export class TSlearnClassifier : public IBarClusterizer
 {
 	int n;
 	std::vector<unsigned long> cachedAssignments;
 public:
-	SklearnClassifier()
+	TSlearnClassifier()
 	{
 		IBarClusterizer::settings =
 		{
@@ -27,30 +28,18 @@ public:
 				"method",
 				{
 				//"AffinityPropagation",
-				"OPTICS",
-				"KMeans",
-				"DBSCAN",
-				"AgglomerativeClustering",
-				"Birch",
-				"MiniBatchKMeans",
-				"MeanShift",
-				"SpectralClustering",
-				"SpectralBiclustering",
-				"SpectralCoclustering",
-				"FeatureAgglomeration",
-				"BisectingKMeans"
+				"kmeans",
+				"tskmeans_dtw",
+				"tskmeans_softdtw",
+				"silhouette_score",
 			}
 		},
-		{"n_clusters", 2},
-		{"eps", 0.5},
-		{"min_samples", 3},
-		{"threshold", 0.5}
+		{"n_clusters", 3}
 		};
 	}
-
 	const BackString name() const
 	{
-		return "SKLEARN";
+		return "TSLEARN";
 	}
 
 	void setClassesCount(int size)
@@ -88,18 +77,13 @@ public:
 		tempFile.close();
 
 		BackString execCmd = "python.exe ";
-		execCmd += (Variables::metaPath / "cluster.py").string() + " ";
+		execCmd += (Variables::metaPath / "tslearn.py").string() + " ";
 		execCmd += filePath + " ";
 		execCmd += settings.getEnum("method");
 		execCmd += " '";
 		execCmd += getPythonSettings(settings);
 		execCmd += "'";
 		return exec(execCmd, cachedAssignments, n);
-
-		//test.set_number_of_centers(n);
-		//pick_initial_centers(n, initial_centers, samples, test.get_kernel());
-		//test.train(samples, initial_centers);
-		//cachedAssignments = spectral_cluster(kernel_type(0.1), samples, n);
 	}
 
 	int test(size_t itemId)
@@ -109,4 +93,4 @@ public:
 };
 
 
-GlobalClusterRegister<TreeClass, TreeSignatureCollection, SklearnClassifier> c("SKLearn");
+GlobalClusterRegister<TreeClass, TreeSignatureCollection, TSlearnClassifier> c("TSLearn");

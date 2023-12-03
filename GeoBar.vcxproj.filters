@@ -193,6 +193,8 @@
     <ClCompile Include="backend\Clusterizers\TreeSignClass.ixx" />
     <ClCompile Include="backend\Clusterizers\SKLearn.ixx" />
     <ClCompile Include="backend\Layers\GroupLayer.ixx" />
+    <ClCompile Include="backend\Clusterizers\TSLearn.ixx" />
+    <ClCompile Include="backend\Clusterizers\ExteranlReader.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="side\imgui\imgui_internal.h">

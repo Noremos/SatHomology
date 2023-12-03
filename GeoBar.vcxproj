@@ -139,9 +139,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="backend\CachedBarcode.ixx" />
+    <ClCompile Include="backend\Clusterizers\ExteranlReader.ixx" />
     <ClCompile Include="backend\Clusterizers\MLSettings.ixx" />
     <ClCompile Include="backend\Clusterizers\SKLearn.ixx" />
     <ClCompile Include="backend\Clusterizers\TreeSignClass.ixx" />
+    <ClCompile Include="backend\Clusterizers\TSLearn.ixx" />
     <ClCompile Include="backend\Interfaces\ICluster.ixx" />
     <ClCompile Include="backend\Interfaces\IItem.ixx" />
     <ClCompile Include="backend\Interfaces\MLClasses.ixx" />
