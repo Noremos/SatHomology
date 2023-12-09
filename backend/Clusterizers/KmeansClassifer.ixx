@@ -1,14 +1,14 @@
 module;
+/*
 #include <memory>
 #include <functional>
 #include <vector>
 #include <cassert>
-
 #include "../../Bind/Common.h"
 #include <dlib/clustering.h>
-
+*/
 export module TreeClassifier;
-
+/*
 import ClusterInterface;
 
 import Platform;
@@ -86,3 +86,4 @@ public:
 
 GlobalClusterRegister<TreeClass, TreeSignatureCollection, KmeansClassifier> c0("kmean -cpp");
 
+*/
