@@ -59,7 +59,7 @@ public:
 
 	virtual void draw(const GuiDisplaySystem& ds)
 	{
-		if (!IGuiLayer::visible)
+		if (!getCore()->visible)
 			return;
 	}
 	virtual void drawToolboxInner(ILayerWorker& context)
