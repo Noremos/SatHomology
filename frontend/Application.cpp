@@ -510,6 +510,7 @@ namespace MyApp
 
 		guiDisplay.drawPos = {0,0};
 		guiDisplay.drawSize = BackPoint(drawSize.x, drawSize.y);
+		guiDisplay.cursorPos = centerVals.resizble.currentPos;
 		if (centerVals.resizble.Begin("ImagePreview"))
 		{
 			layersVals.draw(guiDisplay);
