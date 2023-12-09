@@ -1,6 +1,8 @@
 module;
 #include <cassert>
+#ifdef GEOPROJ
 #include <proj.h>
+#endif
 
 #include "../Bind/Common.h"
 #include <sqlite3.h>
@@ -9,6 +11,8 @@ export module CSBind;
 
 import MetadataIOCore;
 import IOCore;
+
+#ifdef GEOPROJ
 
 template<typename T>
 PJ_COORD getPjCoord(T x, T y)
@@ -27,6 +31,7 @@ PJ_COORD getPjCoord(const T& p)
 	cd.xy.y = p.y;
 	return cd;
 }
+#endif
 
 
 template<class P>
@@ -39,32 +44,15 @@ static void ioPoint(JsonObjectIOState* state, BackString name, P& p)
 export class BackProj
 {
 private:
+
+#ifdef GEOPROJ
 	PJ* proj = nullptr;
-	friend class CSBinding;
 	PJ_CONTEXT* ctx = nullptr;
+#endif
+	friend class CSBinding;
+
 	int id = -1;
 public:
-	bool isInited() const
-	{
-		return proj != nullptr;
-	}
-
-	bool reinit(int ind)
-	{
-		if (proj)
-		{
-			proj = proj_destroy(proj);
-			proj = nullptr;
-		}
-
-		if (ctx)
-		{
-			proj_context_destroy(ctx);
-			ctx = nullptr;
-		}
-
-		return init(ind);
-	}
 
 	bool init(int nid)
 	{
@@ -94,9 +82,11 @@ public:
 
 		const char* cpath = Variables::prodDbPath.c_str();
 
+#ifdef GEOPROJ
 		ctx = proj_context_create();
 		proj_context_set_search_paths(ctx, 1, &cpath);
 		proj = proj_create_from_wkt(ctx, (const char*)wtkContext, nullptr, nullptr, nullptr);
+#endif
 
 		sqlite3_finalize(stmt); // Do not close before wtkContext is using
 		sqlite3_close(db);
@@ -105,16 +95,33 @@ public:
 		return true;
 	}
 
+
+#ifdef GEOPROJ
+	bool isInited() const
+	{
+		return proj != nullptr;
+	}
+
+	bool reinit(int ind)
+	{
+		if (proj)
+		{
+			proj = proj_destroy(proj);
+			proj = nullptr;
+		}
+
+		if (ctx)
+		{
+			proj_context_destroy(ctx);
+			ctx = nullptr;
+		}
+
+		return init(ind);
+	}
 	const char* getName() const
 	{
 		return proj_get_name(proj);
 	}
-
-	int getId() const
-	{
-		return id;
-	}
-
 	BackPoint getThisProj(const BackProj& item, BackPoint itemPos, const bool normalize) const
 	{
 		if (item.getId() == getId())
@@ -128,6 +135,31 @@ public:
 
 		PJ_COORD real = proj_trans(ctc_proj, PJ_IDENT, getPjCoord(itemPos));
 		return BackPoint(real.xy.x, real.xy.y);
+	}
+#else
+	bool isInited() const
+	{
+		return id != -1;
+	}
+
+	bool reinit(int ind)
+	{
+		id = ind;
+		return true;
+	}
+	BackPoint getThisProj(const BackProj& item, BackPoint itemPos, const bool normalize) const
+	{
+		if (item.getId() == getId())
+			return itemPos;
+
+		return itemPos;
+	}
+#endif
+
+
+	int getId() const
+	{
+		return id;
 	}
 
 	static sqlite3_stmt* prepareSelect(sqlite3* db, const char* name, const char* where = NULL)
@@ -174,6 +206,7 @@ public:
 		return names;
 	}
 
+#ifdef GEOPROJ
 	~BackProj()
 	{
 		if (proj)
@@ -188,7 +221,7 @@ public:
 			ctx = nullptr;
 		}
 	}
-
+#endif
 };
 
 

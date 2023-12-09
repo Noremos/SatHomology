@@ -3,9 +3,6 @@
     "version": "1.0.0",
     "dependencies": [
         {
-            "name": "proj"
-        },
-        {
             "name": "jsoncpp"
         },
         {
@@ -16,9 +13,6 @@
         },
         {
             "name": "glfw3"
-        },
-        {
-            "name" :"dlib"
         }
     ]
 }
