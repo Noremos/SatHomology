@@ -253,6 +253,7 @@ export class JsonObjectIOState
 {
 public:
 	virtual bool isReading() const = 0;
+	virtual void scBool(const BackString& name, bool& val) = 0;
 	virtual void scInt(const BackString& name, int& val) = 0;
 	virtual void scFloat(const BackString& name, float& val) = 0;
 	virtual void scDouble(const BackString& name, double& val) = 0;
@@ -291,6 +292,11 @@ public:
 	bool isReading() const
 	{
 		return true;
+	}
+
+	void scBool(const BackString& name, bool& val)
+	{
+		val = json[name].asBool();
 	}
 
 	void scInt(const BackString& name, int& val)
@@ -347,6 +353,12 @@ public:
 	{
 		json[name] = val;
 	}
+
+	void scBool(const BackString& name, bool& val)
+	{
+		json[name] = val;
+	}
+
 	void scFloat(const BackString& name, float& val)
 	{
 		json[name] = val;
@@ -390,6 +402,11 @@ public:
 	void scUchar(int ind, uchar& val)
 	{
 		val = static_cast<uchar>(json[ind].asUInt());
+	}
+
+	void scBool(int ind, bool& val)
+	{
+		val = json[ind].isBool();
 	}
 
 	void scInt(int ind, int& val)
@@ -449,6 +466,11 @@ public:
 	{}
 
 	void scUchar(int ind, uchar& val)
+	{
+		json[ind] = val;
+	}
+
+	void scBool(int ind, bool& val)
 	{
 		json[ind] = val;
 	}

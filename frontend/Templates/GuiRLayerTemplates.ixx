@@ -111,10 +111,11 @@ public:
 
 	virtual void draw(const GuiDisplaySystem& ds)
 	{
-		if (!IGuiLayer::visible)
+		auto* core = GuiLayerData<T>::data;
+
+		if (!core->visible)
 			return;
 
-		auto* core = GuiLayerData<T>::data;
 		BackPixelPoint realSize(core->realWidth(), core->realHeight());
 
 		auto wpos = ds.getWinPos();

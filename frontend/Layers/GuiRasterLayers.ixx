@@ -85,7 +85,7 @@ public:
 	GuiDrawImage zoomImg;
 	virtual void draw(const GuiDisplaySystem& ds)
 	{
-		if (!visible)
+		if (!getCore()->visible)
 			return;
 
 		TiledRasterGuiLayer::draw(ds);

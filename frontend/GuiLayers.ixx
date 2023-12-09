@@ -2,6 +2,7 @@ module;
 #include "GuiCommon.h"
 
 #include <numeric>
+#include <iostream>
 
 export module GuiLayers;
 
@@ -30,8 +31,6 @@ protected:
 	BackString strId;
 	int copiedId = -1; // We need to cpy Id to avoid cases when core was destroid
 public:
-	bool visible = true;
-
 	virtual void draw(const GuiDisplaySystem& ds) = 0;
 	virtual const char* getName() const = 0;
 	virtual void setName(const BackString& name, bool updateOnlyEmpty = false) = 0;
@@ -449,7 +448,7 @@ public:
 
 	virtual void draw(const GuiDisplaySystem& ds)
 	{
-		if (!IGuiLayer::visible)
+		if (!Base::data->visible)
 			return;
 
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
@@ -527,6 +526,62 @@ public:
 		}
 	}
 
+	//bool areIntersecting(
+	//	float v1x1, float v1y1, float v1x2, float v1y2,
+	//	float v2x1, float v2y1, float v2x2, float v2y2)
+	//{
+	//	float d1, d2;
+	//	float a1, a2, b1, b2, c1, c2;
+
+	//	// Convert vector 1 to a line (line 1) of infinite length.
+	//	// We want the line in linear equation standard form: A*x + B*y + C = 0
+	//	// See: http://en.wikipedia.org/wiki/Linear_equation
+	//	a1 = v1y2 - v1y1;
+	//	b1 = v1x1 - v1x2;
+	//	c1 = (v1x2 * v1y1) - (v1x1 * v1y2);
+
+	//	// Every point (x,y), that solves the equation above, is on the line,
+	//	// every point that does not solve it, is not. The equation will have a
+	//	// positive result if it is on one side of the line and a negative one
+	//	// if is on the other side of it. We insert (x1,y1) and (x2,y2) of vector
+	//	// 2 into the equation above.
+	//	d1 = (a1 * v2x1) + (b1 * v2y1) + c1;
+	//	d2 = (a1 * v2x2) + (b1 * v2y2) + c1;
+
+	//	// If d1 and d2 both have the same sign, they are both on the same side
+	//	// of our line 1 and in that case no intersection is possible. Careful,
+	//	// 0 is a special case, that's why we don't test ">=" and "<=",
+	//	// but "<" and ">".
+	//	if (d1 > 0 && d2 > 0) return false;
+	//	if (d1 < 0 && d2 < 0) return false;
+
+	//	// The fact that vector 2 intersected the infinite line 1 above doesn't
+	//	// mean it also intersects the vector 1. Vector 1 is only a subset of that
+	//	// infinite line 1, so it may have intersected that line before the vector
+	//	// started or after it ended. To know for sure, we have to repeat the
+	//	// the same test the other way round. We start by calculating the
+	//	// infinite line 2 in linear equation standard form.
+	//	a2 = v2y2 - v2y1;
+	//	b2 = v2x1 - v2x2;
+	//	c2 = (v2x2 * v2y1) - (v2x1 * v2y2);
+
+	//	// Calculate d1 and d2 again, this time using points of vector 1.
+	//	d1 = (a2 * v1x1) + (b2 * v1y1) + c2;
+	//	d2 = (a2 * v1x2) + (b2 * v1y2) + c2;
+
+	//	// Again, if both have the same sign (and neither one is 0),
+	//	// no intersection is possible.
+	//	if (d1 > 0 && d2 > 0) return false;
+	//	if (d1 < 0 && d2 < 0) return false;
+
+	//	// If we get here, only two possibilities are left. Either the two
+	//	// vectors intersect in exactly one point or they are collinear, which
+	//	// means they intersect in any number of points from zero to infinite.
+	//	if ((a1 * b2) - (a2 * b1) == 0.0f) return true;
+
+	//	// If they are not collinear, they must intersect in exactly one point.
+	//	return false;
+	//}
 
 	void drawPolygon(const DrawPrimitive* d, const GuiDisplaySystem& ds, float tick = 3.0)
 	{
@@ -550,33 +605,39 @@ public:
 		BackPoint point = ds.cursorPos;
 		ImU32 cursorColor = ImColor(255 - cscol.r, 255 - cscol.g, 255 - cscol.b);
 
-		int visible = 0;
+		if (point.x != 0)
+			std::cout << point.x << " " << point.y << std::endl;
+
+		int pointsVisible = 0;
 		bool inside = false;
 		std::vector<ImVec2> displayPoints;
 		int n = points.size();
 		for (int i = 0, j = n - 1; i < n; j = i++)
 		{
-			const BackPoint& p = points[i];
-			const BackPoint& pj = points[j];
+			const BackPoint& a = points[i];
+			const BackPoint& c = points[j];
 
-			if (((p.y > point.y) != (pj.y > point.y)) &&
-				(point.x < (pj.x - p.x) * (point.y - p.y) / (pj.y - p.y) + p.x))
+			if (((a.y > point.y) != (c.y > point.y)) &&
+				(point.x < (c.x - a.x) * (point.y - a.y) / (c.y - a.y) + a.x))
 			{
 				inside = !inside;
 			}
+			//if (areIntersecting(a.x, a.y, c.x, c.y, p.x, point.y))
+				//inside = !inside;
 
-			if (GuiDisplaySystem::inRange(start, end, p))
+
+			if (GuiDisplaySystem::inRange(start, end, a))
 			{
-				++visible;
+				++pointsVisible;
 			}
 
-			ImVec2 pi = ds.projItemGlobToDisplay(dsc, p) + offset;
+			ImVec2 pi = ds.projItemGlobToDisplay(dsc, a) + offset;
 			displayPoints.push_back(pi);
-			// if (inside) // Spot on cursor
-			// 	list->AddCircleFilled(pi, 3, cursorColor);
+			 //if (inside) // Spot on cursor
+			 //	list->AddCircleFilled(pi, 3, cursorColor);
 		}
 
-		if (visible >= 1)
+		if (pointsVisible >= 1)
 		{
 			displayPoints.push_back(displayPoints[0]);
 
@@ -585,10 +646,10 @@ public:
 			// list->AddPolyline(displayPoints.data(), displayPoints.size(), colbl, 0, 2.0);
 			list->AddPolyline(displayPoints.data(), displayPoints.size(), col, 0, tick);
 
-			//if (inside)
-			//{
-			//	list->AddPolyline(displayPoints.data(), displayPoints.size(), colRev, 0, tick);
-			//}
+			if (inside)
+			{
+				list->AddPolyline(displayPoints.data(), displayPoints.size(), colRev, 0, tick);
+			}
 		}
 		displayPoints.clear();
 	}
@@ -1004,7 +1065,7 @@ public:
 				updateWorkingImage = ImGui::RadioButton("##Work", curRadio);//, curRadio);
 
 				ImGui::SameLine();
-				ImGui::Checkbox("##visible", &lay->visible);
+				ImGui::Checkbox("##visible", &lay->getCore()->visible);
 
 				ImGui::SameLine();
 				ImGui::Image((void*)(intptr_t)icon.getTextureId(), ImVec2(selHei, selHei));
@@ -1113,7 +1174,7 @@ public:
 
 	virtual void draw(const GuiDisplaySystem& ds)
 	{
-		if (!IGuiLayer::visible)
+		if (!getCore()->visible)
 			return;
 
 		VectorBaseLayer<TreeVectorLayer>::draw(ds);

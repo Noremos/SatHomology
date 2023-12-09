@@ -405,6 +405,7 @@ public:
 	bool isSystem = false;
 	bool isGroup = false;
 	int layerCounter = 0;
+	bool visible = true;
 
 	void init(int proj)
 	{
@@ -534,9 +535,8 @@ void ILayer::saveLoadState(JsonObjectIOState* state, const MetadataProvider& met
 	state->scInt("coreId", id);
 	state->scStr("name", name);
 
-	int d = isSystem ? 1 : 0;
-	state->scInt("isSystem", d);
-	isSystem = d == 1;
+	state->scBool("isSystem", isSystem);
+	state->scBool("visible", visible);
 
 	cs.saveLoadState(state, metaFolder);
 

@@ -67,17 +67,17 @@ public:
 
 	ImVec2 getWinPos() const
 	{
-		return ImVec2(drawPos.x, drawPos.y);
+		return ImVec2(static_cast<float>(drawPos.x), static_cast<float>(drawPos.y));
 	}
 
 	ImVec2 getDrawPos() const
 	{
-		return ImVec2(drawPos.x, drawPos.y);
+		return ImVec2(static_cast<float>(drawPos.x), static_cast<float>(drawPos.y));
 	}
 
 	ImVec2 getDrawSize() const
 	{
-		return ImVec2(drawSize.x, drawSize.y);
+		return ImVec2(static_cast<float>(drawSize.x), static_cast<float>(drawSize.y));
 	}
 
 	ImVec2 projItemGlobToDisplay(const CSBinding& itemCs, ImVec2 itemPos) const
@@ -702,7 +702,7 @@ public:
 
 		//if (ImGui::BeginChild(parentId))
 		{
-			int y = getAddnl(imgSize.x, tileSize) * getAddnl(imgSize.y, tileSize);
+			int y = getAddnl(imgSize.x, tileSize) * getAddnl(static_cast<int>(imgSize.y), tileSize);
 			ImGui::Text("The image will be splitted into %d tiles", y);
 
 			ImVec2 localStartPos = ImGui::GetCursorPos();
@@ -711,7 +711,7 @@ public:
 			ImVec2 maxPos;
 			maxPos.x = win->Size.x;
 			maxPos.y = 200;
-			int drawWid = imgSize.x, drawHei = imgSize.y;
+			int drawWid = imgSize.x, drawHei = static_cast<int>(imgSize.y);
 			ResizeImage(drawWid, drawHei, maxPos.x, maxPos.y);
 			float scale = imgSize.x / drawWid;
 
@@ -793,7 +793,7 @@ public:
 			// int x = getDisplayX(p.getX());
 			// int y = getDisplayY(p.getY());
 
-			BackPoint pix = cs.toGlobal(p.getX(), p.getY());
+			BackPoint pix = cs.toGlobal(static_cast<float>(p.getX()), static_cast<float>(p.getY()));
 			pointsToDraw.push_back(pix);
 		}
 	}
@@ -810,7 +810,7 @@ public:
 			return;
 
 		// TODO: replce it with toDisplay(0.5); Can be with minus
-		ImVec2 pixelSize = displaySize / ImVec2(width, height);
+		ImVec2 pixelSize = displaySize / ImVec2(static_cast<float>(width), static_cast<float>(height));
 
 		//const ImVec2 p0 = ImGui::GetItemRectMin();
 		//const ImVec2 p1 = ImGui::GetItemRectMax();
