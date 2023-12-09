@@ -2,7 +2,6 @@ module;
 #include "GuiCommon.h"
 
 #include <numeric>
-#include <iostream>
 
 export module GuiLayers;
 
@@ -605,9 +604,6 @@ public:
 		BackPoint point = ds.cursorPos;
 		ImU32 cursorColor = ImColor(255 - cscol.r, 255 - cscol.g, 255 - cscol.b);
 
-		if (point.x != 0)
-			std::cout << point.x << " " << point.y << std::endl;
-
 		int pointsVisible = 0;
 		bool inside = false;
 		std::vector<ImVec2> displayPoints;
@@ -622,8 +618,6 @@ public:
 			{
 				inside = !inside;
 			}
-			//if (areIntersecting(a.x, a.y, c.x, c.y, p.x, point.y))
-				//inside = !inside;
 
 
 			if (GuiDisplaySystem::inRange(start, end, a))
@@ -648,7 +642,7 @@ public:
 
 			if (inside)
 			{
-				list->AddPolyline(displayPoints.data(), displayPoints.size(), colRev, 0, tick);
+				list->AddPolyline(displayPoints.data(), displayPoints.size(), colRev, 0, tick * 1.3);
 			}
 		}
 		displayPoints.clear();
