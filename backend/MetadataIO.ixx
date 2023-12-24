@@ -7,7 +7,7 @@ module;
 export module MetadataIOCore;
 
 import JsonCore;
-import BarcodeModule;
+import StateBinIO;
 import IOCore;
 
 
