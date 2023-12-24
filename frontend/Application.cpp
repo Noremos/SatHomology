@@ -398,10 +398,10 @@ namespace MyApp
 
 			if (ImGui::BeginPopupModal("Система координат", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 			{
-				tbVals.projset.draw();
+				//tbVals.projset.draw();
 
 				ImGui::Separator();
-				if (ImGui::Button("OK", ImVec2(120, 0)))
+				//if (ImGui::Button("OK", ImVec2(120, 0)))
 				{
 					tbVals.projset.apply(layer->cs);
 					layer->cache(backend.getMeta());
