@@ -27,16 +27,19 @@ public:
 export class IClusterItemHolder// : public IBffIO
 {
 public:
-	IClusterItemHolder()
+	IClusterItemHolder(bool isRootBased) : settings(), rootBased(isRootBased)
 	{ }
 
 	MLSettings settings; // Prepare
+	bool rootBased;
 
 	//virtual ICluster* getItem(size_t id) = 0;
 	virtual const ICluster* getItem(size_t id) const = 0;
 	virtual size_t getItemsCount() const = 0;
 	virtual void addItem(const CachedBarline& item) = 0;
 	virtual void clear() = 0;
+	virtual void perform()
+	{ }
 
 	virtual ~IClusterItemHolder() {}
 };
@@ -50,15 +53,15 @@ protected:
 
 public:
 
-	IClusterItemValuesHolder() : IClusterItemHolder()
+	IClusterItemValuesHolder(bool isRootBased) : IClusterItemHolder(isRootBased)
 	{ }
 
-	ICluster* getItem(size_t id)
+	T* getItem(size_t id)
 	{
 		return &items[id];
 	}
 
-	const ICluster* getItem(size_t id) const
+	const T* getItem(size_t id) const
 	{
 		return &items[id];
 	}

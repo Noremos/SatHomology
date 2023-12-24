@@ -89,10 +89,16 @@ public:
 		items.push_back(std::move(T(&item)));
 	}
 
-	IClassItem* getItem(size_t id)
+	T* getItem(size_t id)
 	{
 		return &items[id];
 	}
+
+	const T& getLastItem() const
+	{
+		return items.back();
+	}
+
 
 	const IClassItem* getItem(size_t id) const
 	{

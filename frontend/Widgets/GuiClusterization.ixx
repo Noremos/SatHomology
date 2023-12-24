@@ -300,6 +300,8 @@ public:
 				line->collectionToPredict = collectionToPredict.get();
 				line->processCachedBarcode(nullptr, false);
 				clusterizer->setClassesCount(classesLB.getSize());
+				line->collectionToPredict->perform();
+
 				if (line->collectionToPredict->getItemsCount() == 0)
 				{
 					ImGui::OpenPopup("NoDataToCluster");
