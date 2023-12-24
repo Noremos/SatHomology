@@ -321,23 +321,48 @@ public:
 
 	inline void set(int x, int y, const Barscalar& val)
 	{
-		//if (diagReverce)
-		//	values[x * _wid + y] = val;
-		//else
+		uchar* off = data + (y * _wid + x) * TSize;
 		if (type == BarType::BYTE8_1)
 		{
-			data[(y * _wid + x) * TSize] = val.data.b1;
+			*off = val.getAvgUchar();
 		}
 		else
 		{
-			uchar* off = data + (y * _wid + x) * TSize;
-
-			off[0] = val.data.b3[0];
-			off[1] = val.data.b3[1];
-			off[2] = val.data.b3[2];
-
 			if (TSize == 4)
 				off[3] = 255;
+
+			switch (val.type)
+			{
+			case BarType::BYTE8_1:
+				off[0] = val.data.b1;
+				off[1] = val.data.b1;
+				off[2] = val.data.b1;
+				break;
+			case BarType::BYTE8_4:
+				if (TSize == 4)
+					off[3] = val.data.b3[3];
+
+			case BarType::BYTE8_3:
+				off[0] = val.data.b3[0];
+				off[1] = val.data.b3[1];
+				off[2] = val.data.b3[2];
+				break;
+			case BarType::FLOAT32_1:
+				off[0] = val.data.f;
+				off[1] = val.data.f;
+				off[2] = val.data.f;
+				break;
+			case BarType::INT32_1:
+				off[0] = val.data.i;
+				off[1] = val.data.i;
+				off[2] = val.data.i;
+				break;
+				//			assert(false);
+			default:
+				assert(false);
+				break;
+			}
+
 		}
 		cachedMin.isCached = false;
 		cachedMax.isCached = false;
