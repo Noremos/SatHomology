@@ -13,7 +13,7 @@ import IOCore;
 import Platform;
 
 import MetadataIOCore;
-import BarcodeModule;
+import StateBinIO;
 
 using LayerMetaProvider = MetadataProvider;
 
