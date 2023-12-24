@@ -41,6 +41,15 @@
     <Filter Include="GUI\imgui">
       <UniqueIdentifier>{ba81dd01-1cfe-4bbb-b8e0-e9b39aed6240}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Backend\Cluster">
+      <UniqueIdentifier>{9f8812a2-211a-4047-b1d6-d1189e7bb8f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GUI\layers">
+      <UniqueIdentifier>{3f28cf28-99f6-4038-9564-1b42395ff0f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Backend\ML">
+      <UniqueIdentifier>{ad2b4ae3-0f46-45d8-bf2d-52050efd7303}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="side\imgui\imgui.cpp">
@@ -172,29 +181,70 @@
     <ClCompile Include="side\fpng\fpng.cpp">
       <Filter>Side</Filter>
     </ClCompile>
-    <ClCompile Include="side\Barcode\PrjBarlib\modules\Barline.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\ImageReader.ixx" />
     <ClCompile Include="backend\Clusterizers\KmeansClassifer.ixx">
       <Filter>Backend\Impl</Filter>
     </ClCompile>
-    <ClCompile Include="backend\Interfaces\ICluster.ixx" />
-    <ClCompile Include="backend\Interfaces\IItem.ixx" />
-    <ClCompile Include="frontend\Layers\GuiRasterLayers.ixx" />
-    <ClCompile Include="frontend\Layers\GuiLuaLayers.ixx" />
-    <ClCompile Include="frontend\Widgets\GuiClusterization.ixx" />
-    <ClCompile Include="frontend\Templates\GuiRLayerTemplates.ixx" />
-    <ClCompile Include="frontend\Layers\GuiBarHolderRLayers.ixx" />
     <ClCompile Include="backend\Layers\RasterBarHolderRLeyer.ixx" />
     <ClCompile Include="backend\Settings.ixx" />
-    <ClCompile Include="backend\CachedBarcode.ixx" />
-    <ClCompile Include="backend\Interfaces\MLClasses.ixx" />
-    <ClCompile Include="backend\Clusterizers\MLSettings.ixx" />
     <ClCompile Include="frontend\Widgets\DynamicSettings.ixx" />
-    <ClCompile Include="backend\Clusterizers\TreeSignClass.ixx" />
-    <ClCompile Include="backend\Clusterizers\SKLearn.ixx" />
-    <ClCompile Include="backend\Layers\GroupLayer.ixx" />
-    <ClCompile Include="backend\Clusterizers\TSLearn.ixx" />
-    <ClCompile Include="backend\Clusterizers\ExteranlReader.ixx" />
+    <ClCompile Include="side\Barcode\PrjBarlib\modules\StateBinFile.ixx">
+      <Filter>Barcode\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\Clusterizers\TSLearn.ixx">
+      <Filter>Backend\Cluster</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\Clusterizers\SKLearn.ixx">
+      <Filter>Backend\Cluster</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\Clusterizers\TreeSignClass.ixx">
+      <Filter>Backend\Cluster</Filter>
+    </ClCompile>
+    <ClCompile Include="frontend\Widgets\GuiClusterization.ixx">
+      <Filter>GUI\WindowWidgets</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\Interfaces\ICluster.ixx">
+      <Filter>Backend\Interfaces</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\Interfaces\IItem.ixx">
+      <Filter>Backend\Interfaces</Filter>
+    </ClCompile>
+    <ClCompile Include="frontend\Templates\GuiRLayerTemplates.ixx">
+      <Filter>GUI\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="frontend\Layers\GuiBarHolderRLayers.ixx">
+      <Filter>GUI\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="frontend\Layers\GuiLuaLayers.ixx">
+      <Filter>GUI\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="frontend\Layers\GuiRasterLayers.ixx">
+      <Filter>GUI\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\CachedBarcode.ixx">
+      <Filter>Backend\Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="side\Barcode\PrjBarlib\modules\Barline.ixx">
+      <Filter>Backend\Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\Layers\GroupLayer.ixx">
+      <Filter>Backend\Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\Clusterizers\ExteranlReader.ixx">
+      <Filter>Backend</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\Clusterizers\MLSettings.ixx">
+      <Filter>Backend\ML</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\Interfaces\MLClasses.ixx">
+      <Filter>Backend\ML</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\Clusterizers\ConverctItem.ixx">
+      <Filter>Backend\ML</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\Clusterizers\SortItem.ixx">
+      <Filter>Backend\ML</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="side\imgui\imgui_internal.h">
