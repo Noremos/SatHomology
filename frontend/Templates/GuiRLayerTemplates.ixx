@@ -390,14 +390,16 @@ public:
 			context.setLayers(rets, "new bar");
 		}
 
+		ImGui::Separator();
 		static int startEnergy = 100;
 		ImGui::InputInt("Начальная энергия", &startEnergy, 1);
-		if (ImGui::Button("Клеточная"))
+		if (ImGui::Button("Энергия"))
 		{
 			//auto rets = proj->exeFilter(context.iol, 0);
 			auto rets = backend.proj->exeEnergy(context.iol, procCB.currentValue(), startEnergy);
 			context.setLayers(rets, "new cells");
 		}
+		ImGui::Separator();
 
 		if (ImGui::Button("3d"))
 		{
