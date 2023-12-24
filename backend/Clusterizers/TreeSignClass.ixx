@@ -70,11 +70,12 @@ public:
 		addMiddleDepth = *options.getBool("addMiddleDepth");
 		walk(&line, 0);
 		matrix = line.getMatrix();
-		if (options.getEnum("compress") == "size")
+		std::string_view enu = options.getEnum("compress");
+		if (enu == "size")
 		{
 			signature = { (float)signature.size() };
 		}
-		else if (options.getEnum("compress") == "kde")
+		else if (enu == "kde")
 		{
 			short first = signature.front();
 			if (std::all_of(signature.begin(), signature.end(), [first](float x) { return x == first; }))
@@ -87,12 +88,12 @@ public:
 			auto result = kernel.eval(*options.getDouble("kdeEps"));
 			signature = { result };
 		}
-		else if (options.getEnum("compress") == "linearInterpolation")
+		else if (enu == "linearInterpolation")
 		{
 			const int n = *options.getInt("linerInterSize");
 			signature = resizeVectorWithApproximation(signature, n);
 		}
-		else if (options.getEnum("compress") == "zeros")
+		else if (enu == "zeros")
 		{
 			const int n = *options.getInt("linerInterSize");
 			if (signature.size() > n)
@@ -163,13 +164,13 @@ export class TreeSignatureCollection : public IClusterItemValuesHolder<TreeClass
 protected:
 
 public:
-	TreeSignatureCollection()
+	TreeSignatureCollection() : Base(false)
 	{
 		Base::settings =
 		{
 			{"addMiddleDepth", true},
 			//{"minSignatureSize", 2},
-			{"compress", {"kde", "size", "linearInterpolation", "zeros", "asIs"}},
+			{"compress", {"zeros", "size", "linearInterpolation", "kde", "landscapes", "asIs"}},
 			{"linerInterSize", 100},
 			{"kdeEps", 0.5}
 		};
