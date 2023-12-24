@@ -30,11 +30,26 @@ public:
 
 	CachedBarline(const CachedBarline& other)
 	{
+		copyFrom(other);
+	}
+
+	CachedBarline& operator=(const CachedBarline& other)
+	{
+		copyFrom(other);
+		return *this;
+	}
+
+
+	void copyFrom(const CachedBarline& other)
+	{
 		id = other.id;
 		parentId = other.parentId;
 		childrenCount = other.childrenCount;
-		children.reset(new ushort[childrenCount]);
-		std::copy_n(other.children.get(), childrenCount, children.get());
+		if (childrenCount)
+		{
+			children.reset(new ushort[childrenCount]);
+			std::copy_n(other.children.get(), childrenCount, children.get());
+		}
 		startl = other.startl;
 		endl = other.endl;
 		matrix = other.matrix;
@@ -44,10 +59,21 @@ public:
 
 	CachedBarline(CachedBarline&& other)
 	{
+		moveFrom(std::forward<CachedBarline>(other));
+	}
+
+	CachedBarline& operator=(CachedBarline&& other)
+	{
+		moveFrom(std::forward<CachedBarline>(other));
+		return *this;
+	}
+
+	void moveFrom(CachedBarline&& other)
+	{
 		id = other.id;
 		parentId = other.parentId;
 		childrenCount = std::exchange(other.childrenCount, 0);
-		children.reset(children.release());
+		children.reset(other.children.release());
 		startl = other.startl;
 		endl = other.endl;
 		matrix = other.matrix;
@@ -211,6 +237,12 @@ public:
 	//	items.push_back(CachedBarline(&item));
 	//	items.back().root = this;
 	//}
+	void addUpdateRoot(const CachedBarline& line)
+	{
+		CachedBarline nl(line);
+		nl.root = this;
+		Base::items.push_back(nl);
+	}
 
 	CachedBarline* getRItem(int cid)
 	{
