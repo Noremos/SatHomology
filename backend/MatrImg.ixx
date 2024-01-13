@@ -6,7 +6,8 @@ module;
 
 export module MatrModule;
 
-import BarcodeModule;
+import BarTypes;
+import BarScalarModule;
 
 using uchar = unsigned char;
 
@@ -48,26 +49,58 @@ public:
 	inline int getLineIndex(int x, int y) const { return y * _wid + x; }
 
 protected:
-	void setMetadata(int width, int height, int chnls)
+	void setMetadata(int width, int height, int chnls, BarType btype = BarType::NONE)
 	{
 		this->_wid = width;
 		this->_hei = height;
 		this->_channels = chnls;
-		if (chnls == 3)
+		if (btype == BarType::NONE)
 		{
-			type = BarType::BYTE8_3;
-			TSize = 3;
-		}
-		else if (chnls == 4)
-		{
-			type = BarType::BYTE8_3;
-			TSize = 4;
+			if (chnls == 3)
+			{
+				type = BarType::BYTE8_3;
+				TSize = 3;
+			}
+			else if (chnls == 4)
+			{
+				type = BarType::BYTE8_3;
+				TSize = 4;
+			}
+			else
+			{
+				type = BarType::BYTE8_1;
+				TSize = 1;
+			}
 		}
 		else
 		{
-			type = BarType::BYTE8_1;
-			TSize = 1;
+			type = btype;
+			switch (btype)
+			{
+			case BarType::INT32_1:
+			case BarType::FLOAT32_1:
+				TSize = 4;
+				assert(_channels == 1);
+				break;
+			case BarType::BYTE8_4:
+				type = BarType::BYTE8_3;
+				TSize = 4;
+				assert(_channels == 4);
+				break;
+			case BarType::BYTE8_3:
+				TSize = 3;
+				assert(_channels == 3);
+				break;
+			case BarType::BYTE8_1:
+				TSize = 1;
+				assert(_channels == 1);
+				break;
+			default:
+				assert(false);
+				break;
+			}
 		}
+
 		diagReverce = false;
 	}
 
@@ -122,9 +155,34 @@ protected:
 
 
 public:
-	MatrImg(int width = 1, int height = 1, int chnls = 1)
+	MatrImg(int width = 1, int height = 1, int chnls = 1, BarType btype = BarType::NONE)
 	{
-		reinit(width, height, chnls);
+		reinit(width, height, chnls, btype);
+	}
+
+	MatrImg(int width, int height, BarType btype)
+	{
+		int chnls = 1;
+		switch (btype)
+		{
+		case BarType::INT32_1:
+		case BarType::FLOAT32_1:
+			chnls = 1;
+			break;
+		case BarType::BYTE8_4:
+			chnls = 4;
+			break;
+		case BarType::BYTE8_3:
+			chnls = 3;
+			break;
+		case BarType::BYTE8_1:
+			chnls = 1;
+			break;
+		default:
+			assert(false);
+			break;
+		}
+		reinit(width, height, chnls, btype);
 	}
 
 	MatrImg(int width, int height, int chnls, uchar *_data, bool copy = true, bool deleteData = true)
@@ -138,9 +196,20 @@ public:
 	}
 
 
-	void reinit(int width = 1, int height = 1, int chnls = 1)
+	MatrImg(int width, int height, int chnls, BarType type, uchar *_data, bool copy = true, bool deleteData = true)
 	{
-		setMetadata(width, height, chnls);
+		if (copy)
+		{
+			copyFromRawData(width, height, chnls, _data, type);
+		}
+		else
+			assignRawData(width, height, chnls, _data, deleteData, type);
+	}
+
+
+	void reinit(int width = 1, int height = 1, int chnls = 1, BarType btype = BarType::NONE)
+	{
+		setMetadata(width, height, chnls, btype);
 		valInit();
 	}
 
@@ -278,15 +347,15 @@ public:
 		return _max - _min;
 	}
 
-	void copyFromRawData(int width, int height, int chnls, uchar *rawData)
+	void copyFromRawData(int width, int height, int chnls, uchar *rawData, BarType type = BarType::NONE)
 	{
-		setMetadata(width, height, chnls);
+		setMetadata(width, height, chnls, type);
 		valAssignCopyOf(rawData);
 	}
 
-	void assignRawData(int width, int height, int chnls, uchar *rawData, bool deleteData = true)
+	void assignRawData(int width, int height, int chnls, uchar *rawData, bool deleteData = true, BarType type = BarType::NONE)
 	{
-		setMetadata(width, height, chnls);
+		setMetadata(width, height, chnls, type);
 
 		valAssignInstanceOf(rawData, deleteData);
 	}
@@ -298,14 +367,21 @@ public:
 
 	inline Barscalar get(int x, int y) const override
 	{
-		if (type == BarType::BYTE8_1)
+		uchar* off = data + (y * _wid + x) * TSize;
+		switch (type)
 		{
-			return Barscalar(data[(y * _wid + x) * TSize]);
-		}
-		else
-		{
-			uchar *off = data + (y * _wid + x) * TSize;
+		case BarType::INT32_1:
+			return Barscalar(*reinterpret_cast<int*>(off), type);
+		case BarType::FLOAT32_1:
+			return Barscalar(*reinterpret_cast<float*>(off), type);
+		case BarType::BYTE8_1:
+			return Barscalar(off[0]);
+		case BarType::BYTE8_3:
 			return Barscalar(off[0], off[1], off[2]);
+		case BarType::BYTE8_4:
+			return Barscalar(off[0], off[1], off[2], off[3]);
+		default:
+			throw;
 		}
 	}
 
@@ -583,7 +659,7 @@ public:
 		const int typeSize = TSize; // channels * scalar size
 		const int destBytesSize = wid * typeSize;
 
-		MatrImg r(wid, hei, _channels);
+		MatrImg r(wid, hei, _channels, type);
 		for (int y = 0; y < hei; y++)
 		{
 			const int srcRowOffset = ((y + stRow) * _wid + stX) * typeSize;
