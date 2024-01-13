@@ -5,7 +5,8 @@ module;
 
 export module IItemModule;
 
-import BarcodeModule;
+import BarScalarModule;
+import BarTypes;
 import MetadataIOCore;
 
 export class IClassItem : public IBffIO

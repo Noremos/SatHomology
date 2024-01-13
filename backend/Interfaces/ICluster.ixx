@@ -6,8 +6,8 @@ export module ClusterInterface;
 import TrainIO;
 import IItemModule;
 import CachedBarcode;
-import BarcodeModule;
 import MLSettings;
+import BarTypes;
 //export class IClasterItem
 //{
 //	IClasterItem(CachedBarline*)

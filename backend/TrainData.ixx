@@ -1,6 +1,5 @@
 ﻿module;
 
-
 #include "../Bind/Common.h"
 #include <sqlite3.h>
 
@@ -11,7 +10,6 @@
 
 export module TrainIO;
 
-import BarcodeModule;
 import IOCore;
 import BackTypes;
 import MetadataIOCore;
