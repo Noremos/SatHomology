@@ -5,6 +5,7 @@ export module CachedBarcode;
 
 import IItemModule;
 import MHashMap;
+import BarcodeModule;
 
 class CachedBaritemHolder;
 
@@ -12,10 +13,10 @@ export class CachedBarline : public IClassItem
 {
 	//static unsigned int idCounter;
 public:
-	ushort id;
-	ushort parentId;
-	std::unique_ptr<ushort[]> children;
-	ushort childrenCount;
+	uint id;
+	uint parentId;
+	std::unique_ptr<uint[]> children;
+	uint childrenCount;
 	Barscalar startl, endl;
 	bc::barvector matrix;
 	//int matrix;
@@ -47,7 +48,7 @@ public:
 		childrenCount = other.childrenCount;
 		if (childrenCount)
 		{
-			children.reset(new ushort[childrenCount]);
+			children.reset(new uint[childrenCount]);
 			std::copy_n(other.children.get(), childrenCount, children.get());
 		}
 		startl = other.startl;
@@ -180,11 +181,11 @@ public:
 
 		childrenCount = state->pShort(childrenCount);
 		if (childrenCount > 0 && state->isReading())
-			children.reset(new ushort[childrenCount]);
+			children.reset(new uint[childrenCount]);
 
-		for (ushort i = 0; i < childrenCount; i++)
+		for (uint i = 0; i < childrenCount; i++)
 		{
-			children[i] = state->pShort(children[i]);
+			children[i] = state->pInt(children[i]);
 		}
 
 	}
@@ -203,7 +204,7 @@ public:
 
 		auto* item = ret->getItem(0);
 		int size = (int)item->barlines.size();
-		MMMAP<size_t, int> ids;
+		MMMAP<size_t, uint> ids;
 		for (int i = 0; i < size; i++)
 		{
 			ids.insert(std::make_pair((size_t)item->barlines[i], i));
@@ -218,11 +219,11 @@ public:
 
 			id.update((ushort)i, line, this);
 			id.parentId = line->parent ? ids[(size_t)line->parent] : -1;
-			int k = 0;
 			id.childrenCount = line->children.size();
 			if (id.childrenCount)
 			{
-				id.children.reset(new ushort[id.childrenCount]);
+				int k = 0;
+				id.children.reset(new uint[id.childrenCount]);
 				for (auto* child : line->children)
 				{
 					id.children[k++] = ids[(size_t)child];
