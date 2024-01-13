@@ -10,7 +10,7 @@ module;
 export module LayersCore;
 
 import IOCore;
-import BarcodeModule;
+import BarTypes;
 import Platform;
 import JsonCore;
 import MetadataIOCore;
@@ -48,6 +48,65 @@ public:
 		index = other.index;
 		offset = other.offset;
 		return *this;
+	}
+};
+
+export class TileImgIterator
+{
+	TileIterator stW, stH;
+
+	uint lastHei;
+	bool peakEnd = false;
+
+public:
+	TileImgIterator(int tileSize, int tileOffset, int rwid, int rhei) :
+		stW(0, tileSize, tileOffset, rwid),
+		stH(0, tileSize, tileOffset, rhei)
+	{
+		lastHei = 0;
+		stH.shouldSkip(lastHei);
+	}
+
+	void reset()
+	{
+		stW.reset(0);
+		stH.reset(0);
+
+		lastHei = 0;
+		stH.shouldSkip(lastHei);
+
+		peakEnd = false;
+	}
+
+	bool iter(bc::point& offset, uint& wid, uint& hei)
+	{
+		while (stW.shouldSkip(wid))
+		{
+			stW.reset(0);
+			stH.accum();
+			if (stH.shouldSkip(lastHei))
+			{
+				return false;
+			}
+		}
+
+		offset.x = stW.pos();
+		offset.y = stH.pos();
+		hei = lastHei;
+
+		stW.accum();
+		return true;
+	}
+
+	// get 2x2 local index
+	int getLocRectIndex() const
+	{
+		return 2 * (stH.locIndex % 2) + (stW.locIndex % 2);
+	}
+
+	bool notFintInLocal() const
+	{
+		return stW.tilesInLine() > 2 || stH.tilesInLine() > 2;
 	}
 };
 
@@ -107,8 +166,12 @@ public:
 		this->displayFactor = realWid == displayWid ? 1.0f : static_cast<float>(realWid) / displayWid;
 		this->width = realWid;
 		this->height = realHei;
-		if (tileSize > width)
-			tileSize = width;
+
+		{
+			const int maxx = std::max(width, height);
+			if (tileSize > maxx)
+				tileSize = maxx;
+		}
 	}
 
 	float getDisplayWidth()

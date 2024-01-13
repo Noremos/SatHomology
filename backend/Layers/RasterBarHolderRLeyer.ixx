@@ -23,7 +23,7 @@ import Platform;
 
 import IOCore;
 import LayersCore;
-import BarcodeModule;
+import BarTypes;
 import RasterLayers;
 import MetadataIOCore;
 import MHashMap;
@@ -35,6 +35,7 @@ import LayersCore;
 import CachedBarcode;
 import VectorLayers;
 import ClusterInterface;
+import EnergyModule;
 
 export class BarLineWorker
 {
@@ -80,67 +81,36 @@ public:
 	{
 		stopThreadFlag = true;
 	}
-};
 
-
-class TileImgIterator
-{
-	TileIterator stW, stH;
-
-	uint lastHei;
-	bool peakEnd = false;
-
-public:
-	TileImgIterator(int tileSize, int tileOffset, int rwid, int rhei) :
-		stW(0, tileSize, tileOffset, rwid),
-		stH(0, tileSize, tileOffset, rhei)
+	void runAsync()
 	{
-		lastHei = 0;
-		stH.shouldSkip(lastHei);
+		thread.reset(new std::jthread([this] {this->runLoop(); }));
 	}
 
-	void reset()
+	virtual void runSync() = 0;
+
+	void runLoop()
 	{
-		stW.reset(0);
-		stH.reset(0);
-
-		lastHei = 0;
-		stH.shouldSkip(lastHei);
-
-		peakEnd = false;
-	}
-
-	bool iter(bc::point& offset, uint& wid, uint& hei)
-	{
-		while (stW.shouldSkip(wid))
+		while (!stopThreadFlag)
 		{
-			stW.reset(0);
-			stH.accum();
-			if (stH.shouldSkip(lastHei))
-			{
-				return false;
-			}
+			if (!taskUpdated)
+				continue;
+
+			taskUpdated = false;
+			runSync();
+
+#ifdef _WIN32
+			SetThreadPriority(thread->native_handle(), THREAD_PRIORITY_BELOW_NORMAL);
+#elif __linux__
+			sched_param params;
+			params.sched_priority = 20;
+			pthread_setschedparam(thread->native_handle(), SCHED_FIFO, &params);
+#endif
 		}
-
-		offset.x = stW.pos();
-		offset.y = stH.pos();
-		hei = lastHei;
-
-		stW.accum();
-		return true;
-	}
-
-	// get 2x2 local index
-	int getLocRectIndex() const
-	{
-		return 2 * (stH.locIndex % 2) + (stW.locIndex % 2);
-	}
-
-	bool notFintInLocal() const
-	{
-		return stW.tilesInLine() > 2 || stH.tilesInLine() > 2;
 	}
 };
+
+
 
 
 template<typename TWorker>
@@ -520,6 +490,7 @@ public:
 		tileProv(0, 0)
 	{
 	}
+	int algMode;
 
 	void setCallback(/*Project* proj, */RasterLineLayer* layer, const IItemFilter* filter)
 	{
@@ -540,11 +511,6 @@ public:
 	}
 
 
-	void runAsync()
-	{
-		thread.reset(new std::jthread([this] {this->runLoop(); }));
-	}
-
 	void runSync()
 	{
 		const auto start = std::chrono::steady_clock::now();
@@ -555,6 +521,7 @@ public:
 		// -------------
 
 		printf("Start run for tile %d\n", tileProv.index);
+
 		CachedBaritemHolder creator;
 		creator.create(&rect, constr, cacheClass);
 
@@ -571,26 +538,6 @@ public:
 
 		++counter;
 		busy = false;
-	}
-
-	void runLoop()
-	{
-		while (!stopThreadFlag)
-		{
-			if (!taskUpdated)
-				continue;
-
-			taskUpdated = false;
-			runSync();
-
-#ifdef _WIN32
-			SetThreadPriority(thread->native_handle(), THREAD_PRIORITY_BELOW_NORMAL);
-#elif __linux__
-			sched_param params;
-			params.sched_priority = 20;
-			pthread_setschedparam(thread->native_handle(), SCHED_FIFO, &params);
-#endif
-		}
 	}
 };
 
@@ -610,12 +557,6 @@ public:
 		BarLineWorker(counter), outLayer(outLayer), filter(filter),// proj(proj),
 		tileProv(0, 0)
 	{ }
-
-	void runAsync()
-	{
-		thread.reset(new std::jthread([this] {this->runLoop(); }));
-	}
-
 
 	void updateTask(const TileProvider& itileProv)
 	{
@@ -659,25 +600,6 @@ public:
 		busy = false;
 	}
 
-	void runLoop()
-	{
-		while (!stopThreadFlag)
-		{
-			if (!taskUpdated)
-				continue;
-
-			taskUpdated = false;
-			runSync();
-
-#ifdef _WIN32
-			SetThreadPriority(thread->native_handle(), THREAD_PRIORITY_BELOW_NORMAL);
-#elif __linux__
-			sched_param params;
-			params.sched_priority = 20;
-			pthread_setschedparam(thread->native_handle(), SCHED_FIFO, &params);
-#endif
-		}
-	}
 };
 
 
@@ -689,6 +611,7 @@ RetLayers RasterLineLayer::createCacheBarcode(IRasterLayer* inLayer, const Barco
 	constr.createBinaryMasks = true;
 	constr.createGraph = true;
 	constr.attachMode = bc::AttachMode::morePointsEatLow;
+	// constr.attachMode = bc::AttachMode::closer;
 	constr.returnType = bc::ReturnType::barcode2d;
 	constr.structure.push_back(propertices.barstruct);
 	//	constr.setStep(stepSB);

@@ -102,12 +102,12 @@ BackImage tiffToImg(ImageReader* reader, const BackPathStr& path, int fctor = 10
 		BackImage outr(widf, heif, 3);
 
 		float NAN_VALUE = reader->getNullValue();
-		for (int h = 0, hr = 0; h < reader->height(); h += fctor, ++hr)
+		for (int h = 0, hr = 0; hr < heif; h += fctor, ++hr)
 		{
 			const rowptr& rp = reader->getRowData(h);
 			if (rgb)
 			{
-				for (int w = 0, wr = 0; w < rwid; w += fctor, ++wr)
+				for (int w = 0, wr = 0; wr < widf; w += fctor, ++wr)
 				{
 					auto value = rp.getValueV(w);
 					if (value.avg() == NAN_VALUE)
@@ -123,7 +123,7 @@ BackImage tiffToImg(ImageReader* reader, const BackPathStr& path, int fctor = 10
 			}
 			else
 			{
-				for (int w = 0, wr = 0; w < rwid; w += fctor, ++wr)
+				for (int w = 0, wr = 0; wr < widf; w += fctor, ++wr)
 				{
 					float value = rp.getFloat(w);
 					if (value == NAN_VALUE)
@@ -163,6 +163,7 @@ export class RasterLayer : public IRasterLayer
 {
 public:
 	BackImage mat;
+	float aspect = 1.f;
 
 	virtual const LFID getFactoryId() const
 	{
@@ -202,7 +203,7 @@ public:
 	void init(const BackImage& src, int mtileSize = DEF_TILE_SIZE)
 	{
 		mat.assignCopyOf(src);
-		prov.init(src.width(), src.height(), src.width(), mtileSize);
+		prov.init(src.width(), src.height(), src.width() * aspect, mtileSize);
 	}
 
 	void init(IRasterLayer* layer)
@@ -226,11 +227,11 @@ public:
 
 	virtual int realWidth() const override
 	{
-		return mat.width();
+		return mat.width() * aspect;
 	}
 	virtual int realHeight() const override
 	{
-		return mat.height();
+		return mat.height() * aspect;
 	}
 
 	virtual float displayWidth() const override
@@ -412,9 +413,12 @@ public:
 		prov.update(realSize.x, realSize.y, iwid); // restor it when images will be dropped
 
 		// prov.update(realWidth, realHeight, reader->width()); // restor it when images will be dropped
-		if (prov.tileSize + tileOffset > prov.width)
+		int mmax = std::max(prov.width, prov.height);
+		if (prov.tileSize + tileOffset > mmax)
 		{
-			tileOffset = prov.width - prov.tileSize;
+			tileOffset = mmax - prov.tileSize;
+			if (tileOffset < 0)
+				tileOffset = 0;
 		}
 	}
 
@@ -607,7 +611,8 @@ public:
 	virtual BackImage getRect(int stX, int stRow, int wid, int hei) override
 	{
 		DataRect r = reader->getRect(stX, stRow, wid, hei);
-		return BackImage(r.wid, r.hei, r.samples(), r.getData());
+		BarType btype = DataRectBarWrapper::imageTypeToBar(r.data.type, r.samples());
+		return BackImage(r.wid, r.hei, r.samples(), btype,  r.getData());
 	}
 	virtual BackImage getImage(const int) const override
 	{
