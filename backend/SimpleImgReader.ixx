@@ -214,20 +214,42 @@ public:
 
 	static BarType imageTypeToBar(const ImageType type, int samples)
 	{
-		if (samples > 1)
+		switch (samples)
 		{
+		case 1:
+			switch (type)
+			{
+			case ImageType::int8:
+				return BarType::BYTE8_1;
+			case ImageType::float32:
+				return BarType::FLOAT32_1;
+			default:
+				throw;
+			}
+			break;
+
+		case 3:
 			switch (type)
 			{
 			case ImageType::int8:
 				return BarType::BYTE8_3;
+			case ImageType::float32:
+				return BarType::FLOAT32_3;
 			default:
 				throw;
 			}
-		}
-		switch (type)
-		{
-		case ImageType::int8:
-			return BarType::BYTE8_1;
+			break;
+
+		case 4:
+			switch (type)
+			{
+			case ImageType::int8:
+				return BarType::BYTE8_4;
+			default:
+				throw;
+			}
+			break;
+
 		default:
 			throw;
 		}
