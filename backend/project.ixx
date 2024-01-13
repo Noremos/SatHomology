@@ -33,7 +33,7 @@ import MHashMap;
 import CSBind;
 import RasterBarHolderRLayer;
 import Settings;
-
+import EnergyModule;
 
 // using CurItemHolder = BaritemHolder;
 using CurItemHolder = BettyItemHolder;
@@ -1142,6 +1142,9 @@ public:
 	// Linear interpolation function
 	Barscalar lerp(double t)
 	{
+		if (t < 0)
+			t = 0;
+
 		assert(t <= 1.0 && t >= 0);
 		//t = log(1 + t);
 		const BackColor start(0, 255, 255);
@@ -1152,140 +1155,29 @@ public:
 		return Barscalar(r, g, b);
 	}
 
-	class EnetrgyBarcode : public bc::BarcodeCreator
-	{
-	public:
-		float* run(const bc::DatagridProvider* src, bc::barstruct& str, float& startEnergy)
-		{
-			init(src, str.proctype, str);
-			switch (str.proctype)
-			{
-			case bc::ProcType::Radius:
-				return runGeo(startEnergy);
-				break;
-			default:
-				return runClassic(startEnergy);
-			}
-		}
-
-	private:
-		float* runGeo(float& startEnergy)
-		{
-			float* energy = new float[workingImg->length()];
-			memset(energy, 0, workingImg->length() * sizeof(float));
-
-			auto* get = geometrySortedArr.get();
-			int iwid = workingImg->wid();
-			for (curIndexInSortedArr = 0; curIndexInSortedArr < processCount; ++curIndexInSortedArr)
-			{
-				const bc::indexCov& val = get[curIndexInSortedArr];
-				auto curpoindex = val.offset;
-				float& left = energy[curpoindex];
-
-				auto curpix = getPoint(curpoindex);
-				bc::point NextPoint = val.getNextPoint(curpix);
-				auto NextPindex = NextPoint.getLiner(iwid);
-				float& right = energy[NextPindex];
-
-				if (left == 0)
-				{
-					if (right == 0)
-					{
-						left = startEnergy;
-						right = startEnergy;
-					}
-					else
-					{
-						// 1
-						//left = right / 2;
-						//right /= 2;
-
-						// 2
-						left = right / 2;
-
-					}
-				}
-				else
-				{
-					right = left / 2;
-					//left /= 2;
-				}
-			}
-
-			return energy;
-		}
-
-		float* runClassic(float& startEnergy)
-		{
-			float* energy = new float[workingImg->length()];
-			memset(energy, 0, workingImg->length() * sizeof(float));
-
-			// 3
-			startEnergy = 0;
-
-
-			int iwid = workingImg->wid();
-			bc::poidex* indexarr = sortedArr.get();
-			for (curIndexInSortedArr = 0; curIndexInSortedArr < processCount; ++curIndexInSortedArr)
-			{
-				auto  curpoindex = indexarr[curIndexInSortedArr];
-
-				auto curpix = getPoint(curpoindex);
-
-				bool found = false;
-				float& cur = energy[curpoindex];
-				static char poss[9][2] = { { -1,0 },{ -1,-1 },{ 0,-1 },{ 1,-1 },{ 1,0 },{ 1,1 },{ 0,1 },{ -1,1 },{ -1,0 } };
-				for (uchar i = 0; i < 8; ++i)
-				{
-					const bc::point IcurPoint(curpix + poss[i]);
-
-					if (IS_OUT_OF_REG(IcurPoint.x, IcurPoint.y))
-						continue;
-
-					const bc::poidex IcurPindex = IcurPoint.getLiner(iwid);
-					float& side = energy[IcurPindex];
-					if (side != 0)
-					{
-						found = true;
-						// 1
-						//cur = side / 2;
-						//side /= 2;
-
-						// 2 
-						//cur = side / 2;
-						
-						// 3
-						//cur = side + 1;
-
-						// 4
-						//++side;
-						++cur;
-						if (cur > startEnergy)
-							startEnergy = cur;
-
-						//if (cur == 9)
-						//	cur = 1;
-
-						if (side > startEnergy)
-							startEnergy = side;
-					}
-				}
-
-				if (!found)
-					cur = 1;
-			}
-			
-			return energy;
-		}
-	};
-
-	RetLayers exeEnergy(InOutLayer& iol, bc::ProcType type, float energyStart)
+	RetLayers exeEnergy(InOutLayer& iol, bc::ProcType type, float energyStart, bool useCells = false)
 	{
 		IRasterLayer* input = getInRaster(iol);
 
 		RetLayers ret;
-		const BackImage& src = *(input->getCachedImage());
+		const BackImage& srcl = *(input->getCachedImage());
+		const BackSize srcsize(srcl.width(), srcl.height());
+		float aspect = 1.f;
 
+		BackImage src(srcsize.wid, srcsize.hei, input->getRect(0, 0, 1, 1).get(0, 0).type);
+		if (input->realWidth() != srcsize.wid)
+		{
+			aspect = static_cast<float>(input->realWidth()) / srcsize.wid;
+			for (int h = 0; h < srcsize.hei; ++h)
+			{
+				for (int i = 0; i < srcsize.wid; ++i)
+				{
+					src.set(i, h, input->getRect(i * aspect, h * aspect, 1, 1).get(0, 0));
+				}
+			}
+		}
+		else
+			src = srcl;
 
 		bc::BarConstructor constr;
 		constr.createBinaryMasks = true;
@@ -1297,7 +1189,6 @@ public:
 
 		bc::BarcodeCreator bcc;
 
-		const BackSize srcsize(src.width(), src.height());
 		//BackSize b = srcsize;
 		int maskMin = 0;
 
@@ -1307,34 +1198,38 @@ public:
 
 		RasterLayer* rasterSpot = addLayerData<RasterLayer>(input->cs.getProjId());
 		rasterSpot->initCSFrom(input->cs);
+		rasterSpot->aspect = aspect;
 		rasterSpot->init(srcsize.wid, srcsize.hei, 3);
 		ret.push_back(rasterSpot);
 
-		bool useEmbeded = true;
+		//bool useEmbeded = false;
 
 		BackImage& out = rasterSpot->mat;
-		if (useEmbeded)
+		if (useCells)
 		{
-			bcc.maxe = energyStart;
+		/*	bcc.maxe = energyStart;
 			std::unique_ptr<bc::Barcontainer> containner(bcc.createBarcode(&src, constr));
-			
+
 			for (size_t i = 0; i < src.length(); i++)
 			{
 				out.setLiner(i, lerp(static_cast<float>(bcc.energy[i]) / static_cast<float>(bcc.maxe)));
+			}*/
+
+			CellBarcode bce;
+			std::unique_ptr<bc::Baritem> containner(bce.run(&src, bst, energyStart));
+
+			bc::Baritem* item = containner.get();
+			for (size_t i = 0; i < item->barlines.size(); ++i)
+			{
+				const auto& matr = item->barlines[i]->matr;
+
+				// BackSize maskSize = b;
+				for (const auto& pm : matr)
+				{
+					out.set(pm.getX(), pm.getY(), lerp(pm.value.getAvgFloat()));
+					//out.set(pm.getX(), pm.getY(), pm.value.getAvgUchar());
+				}
 			}
-			//bc::Baritem* item = containner->getItem(0);
-			//for (size_t i = 0; i < item->barlines.size(); ++i)
-			//{
-			//	const auto& matr = item->barlines[i]->matr;
-
-
-			//	// BackSize maskSize = b;
-			//	for (const auto& pm : matr)
-			//	{
-			//		out.set(pm.getX(), pm.getY(), lerp(pm.value.getAvgFloat()));
-			//		//out.set(pm.getX(), pm.getY(), pm.value.getAvgUchar());
-			//	}
-			//}
 		}
 		else
 		{
