@@ -50,6 +50,9 @@
     <Filter Include="Backend\ML">
       <UniqueIdentifier>{ad2b4ae3-0f46-45d8-bf2d-52050efd7303}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Backend\Algs">
+      <UniqueIdentifier>{15b99d3b-4e80-4757-855a-04fee3c4c59e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="side\imgui\imgui.cpp">
@@ -224,9 +227,6 @@
     <ClCompile Include="backend\CachedBarcode.ixx">
       <Filter>Backend\Impl</Filter>
     </ClCompile>
-    <ClCompile Include="side\Barcode\PrjBarlib\modules\Barline.ixx">
-      <Filter>Backend\Impl</Filter>
-    </ClCompile>
     <ClCompile Include="backend\Layers\GroupLayer.ixx">
       <Filter>Backend\Impl</Filter>
     </ClCompile>
@@ -244,6 +244,24 @@
     </ClCompile>
     <ClCompile Include="backend\Clusterizers\SortItem.ixx">
       <Filter>Backend\ML</Filter>
+    </ClCompile>
+    <ClCompile Include="side\Barcode\PrjBarlib\modules\BarImg.ixx">
+      <Filter>Barcode\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="side\Barcode\PrjBarlib\modules\Barscalar.ixx">
+      <Filter>Barcode\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="side\Barcode\PrjBarlib\modules\BarTypes.ixx">
+      <Filter>Barcode\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\Interfaces\IAlg.ixx">
+      <Filter>Backend\Interfaces</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\Algs\Energy.ixx">
+      <Filter>Backend\Algs</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\Algs\CachedBarcodeAlg.ixx">
+      <Filter>Backend\Algs</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

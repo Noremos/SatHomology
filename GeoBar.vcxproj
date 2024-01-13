@@ -99,6 +99,8 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="backend\Algs\CachedBarcodeAlg.ixx" />
+    <ClCompile Include="backend\Algs\Energy.ixx" />
     <ClCompile Include="backend\CachedBarcode.ixx" />
     <ClCompile Include="backend\Clusterizers\ConverctItem.ixx" />
     <ClCompile Include="backend\Clusterizers\ExteranlReader.ixx" />
@@ -107,6 +109,7 @@
     <ClCompile Include="backend\Clusterizers\SortItem.ixx" />
     <ClCompile Include="backend\Clusterizers\TreeSignClass.ixx" />
     <ClCompile Include="backend\Clusterizers\TSLearn.ixx" />
+    <ClCompile Include="backend\Interfaces\IAlg.ixx" />
     <ClCompile Include="backend\Interfaces\ICluster.ixx" />
     <ClCompile Include="backend\Interfaces\IItem.ixx" />
     <ClCompile Include="backend\Interfaces\MLClasses.ixx" />
@@ -124,7 +127,9 @@
     <ClCompile Include="frontend\Widgets\DynamicSettings.ixx" />
     <ClCompile Include="frontend\Widgets\GuiClusterization.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\Barcode.ixx" />
-    <ClCompile Include="side\Barcode\PrjBarlib\modules\Barline.ixx" />
+    <ClCompile Include="side\Barcode\PrjBarlib\modules\BarImg.ixx" />
+    <ClCompile Include="side\Barcode\PrjBarlib\modules\BarTypes.ixx" />
+    <ClCompile Include="side\Barcode\PrjBarlib\modules\Barscalar.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\ImageReader.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\StateBinFile.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\TiffReader.ixx" />
