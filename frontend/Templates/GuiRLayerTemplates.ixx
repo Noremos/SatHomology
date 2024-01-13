@@ -275,24 +275,32 @@ public:
 						ImGui::SameLine();
 					}
 
-					if (ImGui::BeginChild("Tile size", ImVec2(300, 360)))
+					SubImgInf& sub = subImgs[imgSubImages.currentIndex];
+					const int maxSize = std::max(sub.wid, sub.hei);
+					if (maxSize >= 10)
 					{
-						SubImgInf& sub = subImgs[imgSubImages.currentIndex];
-						int maxSize = std::max(sub.wid, sub.hei);
-						ImGui::Text("Размер тайла");
-						tileSizeSlider.draw("##Tile size", newTileSize, 10, maxSize, 10);
+						if (ImGui::BeginChild("Tile size", ImVec2(300, 360)))
+						{
+							ImGui::Text("Размер тайла");
+							tileSizeSlider.draw("##Tile size", newTileSize, 10, maxSize, 10);
 
-						int maxOffset = newTileSize;
-						if (newTileSize + maxOffset > maxSize)
-							maxOffset = maxSize - newTileSize;
+							int maxOffset = newTileSize;
+							if (newTileSize + maxOffset > maxSize)
+								maxOffset = maxSize - newTileSize;
 
-						ImGui::Text("Доп. наложение тайла");
-						offsetSlider.draw("##Offset size", newOffsetSize, 0, maxOffset, 1);
+							ImGui::Text("Доп. наложение тайла");
+							offsetSlider.draw("##Offset size", newOffsetSize, 0, maxOffset, 1);
 
-						ImGui::Separator();
-						tilePrview.draw(newTileSize, newOffsetSize, ImVec2(sub.wid, sub.hei));
+							ImGui::Separator();
+							tilePrview.draw(newTileSize, newOffsetSize, ImVec2(sub.wid, sub.hei));
+						}
+						ImGui::EndChild();
 					}
-					ImGui::EndChild();
+					//else
+					//{
+					//	newTileSize = maxSize;
+					//	newOffsetSize = 0;
+					//}
 					ImGui::EndTabItem();
 				}
 				ImGui::EndTabBar();
@@ -396,7 +404,13 @@ public:
 		if (ImGui::Button("Энергия"))
 		{
 			//auto rets = proj->exeFilter(context.iol, 0);
-			auto rets = backend.proj->exeEnergy(context.iol, procCB.currentValue(), startEnergy);
+			auto rets = backend.proj->exeEnergy(context.iol, procCB.currentValue(), startEnergy, true);
+			context.setLayers(rets, "new cells");
+		}
+		if (ImGui::Button("Энергия2"))
+		{
+			//auto rets = proj->exeFilter(context.iol, 0);
+			auto rets = backend.proj->exeEnergy(context.iol, procCB.currentValue(), startEnergy, false);
 			context.setLayers(rets, "new cells");
 		}
 		ImGui::Separator();
