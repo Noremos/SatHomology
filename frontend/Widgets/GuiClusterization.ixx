@@ -13,9 +13,11 @@ import TreeClassifier;
 import RasterBarHolderRLayer;
 import FrontendBind;
 import GeoprocessorModule;
-import GuiLayers;
+import GuiVectorLayers;
 import DynamicSettings;
 import GroupLayer;
+import GuiLayers;
+import VectorLayers;
 
 GuiBackend backend;
 

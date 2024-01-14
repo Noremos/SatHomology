@@ -23,6 +23,7 @@ import GuiClassifierModule;
 import GuiWidgets;
 import IOCore;
 import VectorLayers;
+import GuiVectorLayers;
 import ProjectModule;
 import GuiRasterLayers;
 import GuiBarHolderLayer;

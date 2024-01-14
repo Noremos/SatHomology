@@ -121,6 +121,7 @@
     <ClCompile Include="Bind\Common.cpp" />
     <ClCompile Include="Bind\MHashMap.ixx" />
     <ClCompile Include="frontend\Layers\GuiBarHolderRLayers.ixx" />
+    <ClCompile Include="frontend\Layers\GuiVectorLayers.ixx" />
     <ClCompile Include="frontend\Templates\GuiRLayerTemplates.ixx" />
     <ClCompile Include="frontend\Layers\GuiLuaLayers.ixx" />
     <ClCompile Include="frontend\Layers\GuiRasterLayers.ixx" />
