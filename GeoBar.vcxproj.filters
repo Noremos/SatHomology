@@ -79,7 +79,7 @@
     <ClCompile Include="side\sago\platform_folders.cpp">
       <Filter>Side</Filter>
     </ClCompile>
-    <ClCompile Include="frontend\GuiCommon.h">
+    <ClCompile Include="frontend\DrawCommon.h">
       <Filter>GUI</Filter>
     </ClCompile>
     <ClCompile Include="backend\SimpleImgReader.ixx">

@@ -162,7 +162,7 @@
     <ClCompile Include="frontend\frontend.ixx" />
     <ClCompile Include="frontend\GuiClassifier.ixx" />
     <ClCompile Include="frontend\GuiCommon.cpp" />
-    <ClCompile Include="frontend\GuiCommon.h" />
+    <ClCompile Include="frontend\DrawCommon.h" />
     <ClCompile Include="frontend\GuiOverlap.ixx" />
     <ClCompile Include="frontend\GuiLayers.ixx" />
     <ClCompile Include="frontend\GuiWidgets.ixx" />

@@ -1,5 +1,5 @@
 module;
-#include "GuiCommon.h"
+#include "DrawCommon.h"
 
 export module StatChart;
 

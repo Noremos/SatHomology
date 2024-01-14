@@ -7,7 +7,7 @@ module;
 #include "PortFileDialog.h"
 #include "sago/platform_folders.h"
 
-#include "../frontend/GuiCommon.h"
+#include "../frontend/DrawCommon.h"
 
 export module FrontendBind;
 
