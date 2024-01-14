@@ -9,6 +9,7 @@ export module GuiWidgets;
 
 import CSBind;
 import ProjectModule;
+import DrawUtils;
 
 Project* proj = Project::getProject();
 

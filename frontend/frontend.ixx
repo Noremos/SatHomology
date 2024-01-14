@@ -22,6 +22,10 @@ import IItemModule;
 import VectorLayers;
 import CSBind;
 import LayersCore;
+import MetadataIOCore;
+import BarTypes;
+import BarScalarModule;
+
 // Todo.
 // 2 режима
 export class GuiBackend

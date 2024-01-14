@@ -14,6 +14,7 @@ import IOCore;
 import VectorLayers;
 import CSBind;
 import Platform;
+import DrawUtils;
 //import LuaStates;
 
 //import FrontendBind;

@@ -9,6 +9,7 @@ import Platform;
 import GuiWidgets;
 import TrainIO;
 import StatChart;
+import DrawUtils;
 
 Project* proj = Project::getProject();
 

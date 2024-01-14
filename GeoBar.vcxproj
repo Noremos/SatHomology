@@ -161,7 +161,7 @@
     <ClCompile Include="frontend\BarChart.ixx" />
     <ClCompile Include="frontend\frontend.ixx" />
     <ClCompile Include="frontend\GuiClassifier.ixx" />
-    <ClCompile Include="frontend\GuiCommon.cpp" />
+    <ClCompile Include="frontend\DrawUtils.ixx" />
     <ClCompile Include="frontend\DrawCommon.h" />
     <ClCompile Include="frontend\GuiOverlap.ixx" />
     <ClCompile Include="frontend\GuiLayers.ixx" />

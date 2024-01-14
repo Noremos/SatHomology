@@ -6,6 +6,7 @@ export module GuiOverlap;
 import IOCore;
 import LayersCore;
 import GuiWidgets;
+import BarScalarModule;
 
 struct vec3
 {

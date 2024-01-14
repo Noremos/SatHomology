@@ -97,7 +97,7 @@
     <ClCompile Include="side\Barcode\PrjBarlib\modules\TiffReader.ixx">
       <Filter>Barcode\modules</Filter>
     </ClCompile>
-    <ClCompile Include="frontend\GuiCommon.cpp">
+    <ClCompile Include="frontend\DrawUtils.ixx">
       <Filter>GUI</Filter>
     </ClCompile>
     <ClCompile Include="frontend\Application.cpp">
