@@ -872,6 +872,10 @@ namespace MyApp
 		// !!!!!!!!!!!!!!!!!!!!!!!!!!1
 	}
 
+	constexpr ImVec2 toDVec2(const bc::point& p)
+	{
+		return ImVec2(static_cast<float>(p.x), static_cast<float>(p.y));
+	}
 
 	void MyApp::Init(const char* root)
 	{
@@ -960,7 +964,7 @@ namespace MyApp
 			if (finale)
 			{
 				debugVals.debugLine.clear();
-				debugVals.debugLine.push_back({ ImVec2(p1.x, p1.y), ImVec2(p2.x, p2.y) });
+				debugVals.debugLine.push_back({ toDVec2(p1), toDVec2(p2) });
 			}
 			debugVals.debugDraw.push_back(p1);
 			debugVals.debugDraw.push_back(p2);

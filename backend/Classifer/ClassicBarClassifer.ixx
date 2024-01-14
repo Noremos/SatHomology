@@ -168,7 +168,7 @@ public:
 
 		// index = state->pInt(index); // Index
 		item->setType((BarType)state->pType(item->getType())); // BarType
-		size_t linesCount = state->pArray(vec.size());
+		size_t linesCount = state->pArray(static_cast<uint>(vec.size()));
 
 		// Parent read/write stuff
 		uint counterId = 0;

@@ -126,7 +126,7 @@ struct SelectableKeyValues
 	{
 		int oldId = currentIndex;
 		const char** itemsl = getItems();
-		ImGui::SetNextItemWidth(width);
+		ImGui::SetNextItemWidth(static_cast<float>(width));
 		ImGui::Combo(name, &currentIndex, itemsl, size); //IM_ARRAYSIZE(items)
 
 		hasChange = oldId != currentIndex;

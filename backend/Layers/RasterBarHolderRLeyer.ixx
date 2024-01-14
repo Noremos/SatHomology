@@ -19,23 +19,14 @@ module;
 
 export module RasterBarHolderRLayer;
 
-import Platform;
-
-import IOCore;
 import LayersCore;
-import BarTypes;
 import RasterLayers;
 import MetadataIOCore;
-import MHashMap;
-import CSBind;
 import IItemModule;
 import GeoprocessorModule;
 import Settings;
-import LayersCore;
 import CachedBarcode;
-import VectorLayers;
 import ClusterInterface;
-import EnergyModule;
 
 export class BarLineWorker
 {
