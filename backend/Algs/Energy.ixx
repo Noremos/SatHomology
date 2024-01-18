@@ -207,6 +207,7 @@ public:
 				continue;
 
 			auto* line = new bc::barline(workingImg->get(c->pixels[0]), workingImg->get(c->pixels.back()));
+			line->initRoot(itm);
 			itm->barlines.push_back(line);
 			for (auto& p : c->pixels)
 			{

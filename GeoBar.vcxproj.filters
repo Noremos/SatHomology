@@ -188,7 +188,6 @@
     <ClCompile Include="backend\Clusterizers\KmeansClassifer.ixx">
       <Filter>Backend\Impl</Filter>
     </ClCompile>
-    <ClCompile Include="backend\Layers\RasterBarHolderRLeyer.ixx" />
     <ClCompile Include="backend\Settings.ixx" />
     <ClCompile Include="frontend\Widgets\DynamicSettings.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\StateBinFile.ixx">
@@ -262,6 +261,14 @@
     </ClCompile>
     <ClCompile Include="backend\Algs\CachedBarcodeAlg.ixx">
       <Filter>Backend\Algs</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\Layers\SimpleLineDisplay.ixx" />
+    <ClCompile Include="frontend\Layers\GuiVectorLayers.ixx" />
+    <ClCompile Include="frontend\Widgets\DrawBarcode.ixx">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\Layers\RasterBarHolderRLeyer.ixx">
+      <Filter>Backend\Impl</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -115,6 +115,7 @@
     <ClCompile Include="backend\Interfaces\MLClasses.ixx" />
     <ClCompile Include="backend\Layers\GroupLayer.ixx" />
     <ClCompile Include="backend\Layers\RasterBarHolderRLeyer.ixx" />
+    <ClCompile Include="backend\Layers\SimpleLineDisplay.ixx" />
     <ClCompile Include="backend\Layers\VectorLayers.ixx" />
     <ClCompile Include="backend\CSBind.ixx" />
     <ClCompile Include="backend\Settings.ixx" />
@@ -125,6 +126,7 @@
     <ClCompile Include="frontend\Templates\GuiRLayerTemplates.ixx" />
     <ClCompile Include="frontend\Layers\GuiLuaLayers.ixx" />
     <ClCompile Include="frontend\Layers\GuiRasterLayers.ixx" />
+    <ClCompile Include="frontend\Widgets\DrawBarcode.ixx" />
     <ClCompile Include="frontend\Widgets\DynamicSettings.ixx" />
     <ClCompile Include="frontend\Widgets\GuiClusterization.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\Barcode.ixx" />

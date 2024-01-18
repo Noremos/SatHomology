@@ -11,6 +11,8 @@ import GuiOverlap;
 import RasterBarHolderRLayer;
 import GuiRLayersTemplates;
 import GuiClusterization;
+//import SimpleLine;
+import BarcodeChart;
 
 //GuiBackend backend;
 
@@ -92,8 +94,15 @@ public:
 
 			ImGui::EndPopup();
 		}
+
+		if (ImGui::Button("Показать баркод"))
+		{
+			chart.show = true;
+		}
+		clusterVals.draw(context);
 	}
 
+	GuiBarcodeChart chart;
 	virtual void draw(const GuiDisplaySystem& ds)
 	{
 		if (!getCore()->visible)
@@ -104,6 +113,8 @@ public:
 		ImVec2 realSize(data->displayWidth(), data->displayHeight());
 		main.drawPoints(ds, getCore()->cs, realSize);
 		drawLineInfoWin(ds);
+		if (selectedLine)
+			chart.drawBarlines(*selectedLine);
 	}
 
 	virtual void onClick(const GuiDisplaySystem& ds, BackPoint pos)
@@ -147,11 +158,11 @@ public:
 
 		//std::cout << x << " : " << y << std::endl;
 		int index = data->mat.getLineIndex(x, y);
-		SimpleLine* line = data->clickResponser[index].get();
+		SimpleLine* line = data->clickResponser[index];
 		if (line)
 		{
 			if (selectedLine == line && line->parent)
-				line = line->parent.get();
+				line = line->parent;
 
 			selectedLine = line;
 			return &(selectedLine->matr);
@@ -163,8 +174,9 @@ public:
 
 	SimpleLine* moveToParenr()
 	{
-		return selectedLine = selectedLine->parent.get();
+		return selectedLine = selectedLine->parent;
 	}
+
 
 	void drawLineInfoWin(const GuiDisplaySystem& ds)
 	{
@@ -173,6 +185,17 @@ public:
 		{
 			return;
 		}
+
+
+		int counter = 0;
+		if (!ImGui::Begin("Tree"))
+		{
+			ImGui::End();
+			return;
+		}
+		drawTree(ds, line, counter);
+		ImGui::End();
+
 
 		if (!ImGui::Begin("Propertis"))
 		{
@@ -208,5 +231,49 @@ public:
 
 		ImGui::End();
 	}
+
+
+	void drawTree(const GuiDisplaySystem& ds, SimpleLine* line, int& counter)
+	{
+		//if (tree.size == -1 && tree.children.size() == 0)
+		//	return;
+
+		++counter;
+
+		static int node_clicked = 0;
+		ImGuiTreeNodeFlags node_flags = 0;
+		if (counter == node_clicked)
+		{
+			node_flags |= ImGuiTreeNodeFlags_Selected; // ImGuiTreeNodeFlags_Bullet
+		}
+
+		int size = line->children.size();
+		if (size == 0)
+		{
+			node_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+			ImGui::TreeNodeEx((void*)(intptr_t)counter, node_flags, "%d [%s:%s]", size, line->start.text<BackString, toStdStr>().c_str(), line->end.text<BackString, toStdStr>().c_str());
+			if (ImGui::IsItemClicked())
+				node_clicked = counter;
+		}
+		else
+		{
+			node_flags |= ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+			bool isOpen = ImGui::TreeNodeEx((void*)(intptr_t)counter, node_flags, "%d [%s:%s]", size, line->start.text<BackString, toStdStr>().c_str(), line->end.text<BackString, toStdStr>().c_str());
+			if (isOpen)
+			{
+				if (ImGui::IsItemClicked())
+					node_clicked = counter;
+
+				for (auto* child : line->children)
+				{
+					drawTree(ds, child, counter);
+				}
+				ImGui::TreePop();
+			}
+			else if (ImGui::IsItemClicked())
+				node_clicked = counter;
+		}
+	}
+
 private:
 };

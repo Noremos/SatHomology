@@ -183,7 +183,8 @@ export class RasterLineLayer : public RasterLayer
 public:
 	IClusterItemHolder* collectionToPredict = nullptr;
 	static std::vector<Barscalar> colors;
-	std::vector<std::shared_ptr<SimpleLine>> clickResponser;
+	std::vector<SimpleLine*> clickResponser;
+	std::vector<std::unique_ptr<SimpleLine>> holder;
 	int cacheId = -1;
 	int parentlayerId = -1;
 
@@ -304,27 +305,30 @@ public:
 
 	void resetResponser(int wid, int hei)
 	{
-		clickResponser.clear();
 		mat.reinit(wid, hei, 4);
+
+		clickResponser.clear();
 		clickResponser.resize(mat.length());
 		printf("alloced for preview: %zd\n", clickResponser.size());
+
+		holder.clear();
 	}
 
 
 	std::mutex addToMapMutex;
-	void setMatrPoint(int x, int y, std::shared_ptr<SimpleLine>& newLine, const Barscalar& color)
+	void setMatrPoint(int x, int y, SimpleLine* newLine, const Barscalar& color)
 	{
 		std::lock_guard<std::mutex> guard(addToMapMutex);
 
 		int indLocal = mat.getLineIndex(x, y);
-		SimpleLine* existLine = clickResponser[indLocal].get();
+		SimpleLine* existLine = clickResponser[indLocal];
 
 		if (existLine == nullptr)
 		{
 			mat.set(x, y, color);
 			clickResponser[indLocal] = newLine;
 		}
-		else if (existLine == newLine.get()) // Might be due to clickResponser[indLocal2] = newLin
+		else if (existLine == newLine) // Might be due to clickResponser[indLocal2] = newLin
 		{
 			mat.set(x, y, color);
 		}
@@ -350,7 +354,7 @@ public:
 
 	void addLine(IdGrater& parentne, int i, const IClassItem* curLine, const TileProvider& tileProv)
 	{
-		std::shared_ptr<SimpleLine> sl;
+		SimpleLine* sl;
 		auto curIdKey = curLine->getId();
 		auto p = parentne.find(curIdKey);
 		if (p != parentne.end())
@@ -360,22 +364,31 @@ public:
 		}
 		else
 		{
-			sl.reset(new SimpleLine(tileProv.index, i));
+			sl = new SimpleLine(tileProv.index, i);
+			holder.push_back(std::unique_ptr<SimpleLine>(sl));
 			parentne.insert(std::make_pair(curIdKey, sl));
 		}
 
 		curIdKey = curLine->getParentId();
-		p = parentne.find(curIdKey);
-		if (p != parentne.end())
+		if (curIdKey != -1)
 		{
-			sl->parent = p->second;
+			p = parentne.find(curIdKey);
+			if (p != parentne.end())
+			{
+				sl->parent = p->second;
+			}
+			else
+			{
+				sl->parent = new SimpleLine(tileProv.index, -1);
+				holder.push_back(std::unique_ptr<SimpleLine>(sl->parent));
+				parentne.insert(std::make_pair(curIdKey, sl->parent));
+				//sl->parent->matr = curLine->parent->matr;
+			}
+			assert(sl->parent != sl);
+			sl->parent->children.push_back(sl);
 		}
 		else
-		{
-			sl->parent.reset(new SimpleLine(tileProv.index, -1));
-			parentne.insert(std::make_pair(curIdKey, sl->parent));
-			//sl->parent->matr = curLine->parent->matr;
-		}
+			sl->parent = nullptr;
 
 		const auto& matr = curLine->getMatrix();
 		int depth = curLine->getDeath();
@@ -601,7 +614,8 @@ RetLayers RasterLineLayer::createCacheBarcode(IRasterLayer* inLayer, const Barco
 	bc::BarConstructor constr;
 	constr.createBinaryMasks = true;
 	constr.createGraph = true;
-	constr.attachMode = bc::AttachMode::morePointsEatLow;
+	constr.attachMode = bc::AttachMode::firstEatSecond;
+	//constr.maxRadius = 255;
 	// constr.attachMode = bc::AttachMode::closer;
 	constr.returnType = bc::ReturnType::barcode2d;
 	constr.structure.push_back(propertices.barstruct);

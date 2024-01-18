@@ -3,6 +3,7 @@ module;
 #include <algorithm>
 #include <vector>
 #include "../../Bind/Common.h"
+#include <iostream>
 
 export module SortItem;
 
@@ -14,46 +15,49 @@ import CachedBarcode;
 import MLSettings;
 //
 //
+//using SortClass = CachedBarline;
 export class SortClass : public ICluster
 {
 public:
+	const CachedBarline* bar;
+	
 	float sqr(int a) const
 	{
 		return a * a;
 	}
-	SortClass() : bar()
+
+	SortClass() : bar(nullptr)
 	{ }
 
-	SortClass(const CachedBarline* bar) : bar(*bar)
+	SortClass(const CachedBarline* bar) : bar(bar)
 	{
 	}
 
-	SortClass(const SortClass& sm) : bar(sm.bar)
-	{
-	}
+	//SortClass(const SortClass& sm) : bar(sm.bar)
+	//{
+	//}
 
-	SortClass(SortClass&& sm) : bar(std::move(sm.bar))
-	{
-		//sm.bar = nullptr;
-	}
+	//SortClass(SortClass&& sm) : bar(std::move(sm.bar))
+	//{
+	//	//sm.bar = nullptr;
+	//}
 
-	SortClass& operator=(const SortClass& sm)
-	{
-		bar = sm.bar;
-		return *this;
-	}
+	//SortClass& operator=(const SortClass& sm)
+	//{
+	//	bar = sm.bar;
+	//	return *this;
+	//}
 
-	SortClass& operator=(SortClass&& sm)
-	{
-		bar = std::move(sm.bar);
-		//sm.bar = nullptr;
-		return *this;
-	}
+	//SortClass& operator=(SortClass&& sm)
+	//{
+	//	bar = std::move(sm.bar);
+	//	//sm.bar = nullptr;
+	//	return *this;
+	//}
 
-	CachedBarline bar;
 	const CachedBarline& getBar() const
 	{
-		return bar;
+		return *bar;
 	}
 	float getDiff(const SortClass* other) const
 	{
@@ -71,11 +75,11 @@ public:
 	}
 };
 
-export class SortCollection : public IClusterItemValuesHolder<SortClass>
+export class SortCollection : public IClusterItemHolder
 {
-	using Base = IClusterItemValuesHolder<SortClass>;
+	using Base = IClusterItemHolder;
 protected:
-
+	CachedBaritemHolder holder;
 public:
 	SortCollection() : Base(false)
 	{
@@ -84,22 +88,40 @@ public:
 		};
 	}
 
-	CachedBaritemHolder lines;
+	static int compareTree(const CachedBarline& a, const CachedBarline& b)
+	{
+		int ac = a.getChildrenCount();
+		int bc = b.getChildrenCount();
+		if (ac == bc)
+		{
+			for (int i = 0; i < ac; i++)
+			{
+				int ret = compareTree(*a.getChild(i), *b.getChild(i));
+				if (ret != 0)
+					return ret;
+			}
+
+			// Do not compare depths here beacus of recusive child cmp
+			return 0;
+		}
+
+		return ac > bc ? 1 : -1;
+	};
+
 	virtual void perform()
 	{
-		std::sort(Base::items.begin(), Base::items.end(), [](const SortClass& a, const SortClass& b)
+		std::sort(holder.getItems().begin(), holder.getItems().end(), [](const CachedBarline& a, const CachedBarline& b)
 			{
-				int ac = a.getBar().getChildrenCount();
-				int bc = b.getBar().getChildrenCount();
-				if (ac == bc)
+				const int ret = compareTree(a, b);
+				if (ret == 0)
 				{
-					return a.getBar().getDeath() > b.getBar().getDeath();
+					return a.getDeath() > b.getDeath();
 				}
 
-				return a.getBar().getChildrenCount() > b.getBar().getChildrenCount();
+				return ret > 0;
 			});
 
-		assert(Base::items[0].getBar().getChildrenCount() > 0);
+		assert(holder.getItem(0)->getChildrenCount() > 0);
 	}
 
 
@@ -107,8 +129,29 @@ public:
 	{
 		//lines.addUpdateRoot(line);
 		//lines.getLastItem().root = &lines;
-		Base::items.push_back({});
-		Base::items.back().bar = line;
+		holder.getItems().push_back(line);
+		holder.getLastItem().root = &holder;
+	}
+	const ICluster& getItem(size_t id) const
+	{
+		static SortClass a(nullptr);
+		a.bar = &holder.getItems()[id];
+		return a;
+	}
+
+	const CachedBarline* getRItem(size_t id) const
+	{
+		return &holder.getItems()[id];
+	}
+
+	virtual size_t getItemsCount() const
+	{
+		return holder.getItemsCount();
+	}
+
+	virtual void clear()
+	{
+		holder.getItems().clear();
 	}
 };
 
@@ -140,23 +183,38 @@ public:
 	{
 		return n;
 	}
+	static float sqr(int a)
+	{
+		return a * a;
+	}
+
+	static float getDiff(const CachedBarline* a, const CachedBarline* b)
+	{
+		int a1 = a->getChildrenCount();
+		int a2 = b->getChildrenCount();
+
+		int b1 = a->getDeath();
+		int b2 = b->getDeath();
+		return sqrt(sqr(a1 - a2) + sqr(b1 - b2));
+	}
 
 	bool predict(const IClusterItemHolder& allItems)
 	{
+		const SortCollection* col = dynamic_cast<const SortCollection*>(&allItems);
 		float avgDiff = 0; int diffc = 0;
 		std::vector<std::pair<int, int>> biggestRadius;
 		size_t end = allItems.getItemsCount() - 1;
 		for (size_t i = 1; i < allItems.getItemsCount() - 1; i++)
 		{
-			const SortClass* item = static_cast<const SortClass*>(allItems.getItem(i));
-			if (item->getBar().getChildrenCount() < 2)
+			const CachedBarline* item = col->getRItem(i);
+			if (item->getChildrenCount() < 2)
 			{
 				end = i;
 				break;
 			}
 
-			const SortClass* next = static_cast<const SortClass*>(allItems.getItem(i + 1));
-			float d = item->getDiff(next);
+			const CachedBarline* next = col->getRItem(i + 1);
+			float d = getDiff(item, next);
 			if (d > 0)
 			{
 				avgDiff += d;
@@ -175,6 +233,7 @@ public:
 		{
 			float radius = *IBarClusterizer::settings.getInt("radius");
 			avgDiff /= diffc;
+			std::cout << "Avg diff: " << avgDiff << std::endl;
 			for (int i = 0; i < biggestRadius.size(); i++)
 			{
 				if (biggestRadius[i].second < avgDiff)
@@ -184,6 +243,7 @@ public:
 				}
 			}
 			n = biggestRadius.size() + 1;
+			std::cout << "Classes count: " << n << std::endl;
 			if (n <= 0)
 			{
 				for (size_t i = 0; i < allItems.getItemsCount(); i++)

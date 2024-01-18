@@ -353,8 +353,8 @@ public:
 						DrawPrimitive* prim = classLayer->addPrimitive(classLayer->color);
 
 						std::vector<uint> out;
-						auto* item = line->collectionToPredict->getItem(i);
-						auto rect = getCountourOder(item->getMatrix(), out, true);
+						auto& item = line->collectionToPredict->getItem(i);
+						auto rect = getCountourOder(item.getMatrix(), out, true);
 						for (const auto& pm : out)
 						{
 							auto op = bc::barvalue::getStatPoint(pm);

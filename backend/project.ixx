@@ -844,10 +844,10 @@ public:
 				imgout.set(p.x, p.y, barclo);
 			}
 
-			const int childrenSize = line->children.size();
+			const int childrenSize = line->getChildrenCount();
 			for (int i = 0; i < childrenSize; i++)
 			{
-				VecTree t = addTree(line->children[i]);
+				VecTree t = addTree(line->getChild(i));
 				const bool passed = t.inited();
 				if (passed)
 				{
@@ -971,8 +971,8 @@ public:
 		helper.layerRect = layerRect;
 		helper.rasterSpot = rasterSpot;
 		helper.filter = filter;
-		assert(root->children.size() == 1);
-		layer->tree = helper.addTree(root->children[0]);
+		assert(root->childrenId.size() == 1);
+		layer->tree = helper.addTree(root->getChild(0));
 
 		return ret;
 	}

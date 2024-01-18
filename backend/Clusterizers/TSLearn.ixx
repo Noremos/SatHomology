@@ -52,8 +52,9 @@ public:
 		return n;
 	}
 
-	bool predict(const IClusterItemHolder& allItems)
+	bool predict(const IClusterItemHolder& iallItems)
 	{
+		const TreeSignatureCollection& allItems = dynamic_cast<const TreeSignatureCollection&>(iallItems);
 		BackString filePath = get_temp_file_path();
 		std::ofstream tempFile(filePath, std::ofstream::out | std::ofstream::trunc);
 		if (!tempFile.is_open())
@@ -64,7 +65,7 @@ public:
 
 		for (size_t i = 0; i < allItems.getItemsCount(); i++)
 		{
-			auto& sign = static_cast<const TreeClass*>(allItems.getItem(i))->signature;
+			auto& sign = allItems.getItem(i).signature;
 
 			for (const auto& num : sign)
 			{

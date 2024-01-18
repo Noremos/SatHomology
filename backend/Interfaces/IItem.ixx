@@ -85,6 +85,16 @@ protected:
 
 public:
 
+	std::vector<T>& getItems()
+	{
+		return items;
+	}
+
+	const std::vector<T>& getItems() const
+	{
+		return items;
+	}
+
 	virtual void addItem(const IClassItem& item)
 	{
 		items.push_back(std::move(T(&item)));
@@ -96,6 +106,11 @@ public:
 	}
 
 	const T& getLastItem() const
+	{
+		return items.back();
+	}
+
+	T& getLastItem()
 	{
 		return items.back();
 	}

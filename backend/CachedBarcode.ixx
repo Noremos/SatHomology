@@ -25,7 +25,7 @@ public:
 	CachedBaritemHolder* root;
 
 	CachedBarline() : IClassItem(),
-		id(0), parentId(0), children(nullptr), childrenCount(0),
+		id(0), parentId(-1), children(nullptr), childrenCount(0),
 		startl(0), endl(0), matrix(), depth(0), root(nullptr)
 	{ }
 
@@ -87,7 +87,7 @@ public:
 		assert(false);
 	}
 
-	CachedBarline(ushort id, bc::barline* line, CachedBaritemHolder* root) : IClassItem()
+	CachedBarline(uint id, bc::barline* line, CachedBaritemHolder* root) : IClassItem()
 	{
 		update(id, line, root);
 	}
@@ -95,10 +95,10 @@ public:
 	~CachedBarline()
 	{}
 
-	void update(ushort id, bc::barline* line, CachedBaritemHolder* root)
+	void update(uint id, bc::barline* line, CachedBaritemHolder* root)
 	{
 		this->id = id;
-		parentId = 0;
+		parentId = -1;
 		assert(line);
 		startl = line->start;
 		endl = line->end();
@@ -204,34 +204,34 @@ public:
 
 		auto* item = ret->getItem(0);
 		int size = (int)item->barlines.size();
-		MMMAP<size_t, uint> ids;
-		for (int i = 0; i < size; i++)
-		{
-			ids.insert(std::make_pair((size_t)item->barlines[i], i));
-		}
 
-		root = ids[(size_t)item->getRootNode()];
+		root = item->getRootNode() ? item->getRootNode()->id : -1;
 		for (int i = 0; i < size; i++)
 		{
 			bc::barline* line = item->barlines[i];
+			assert(line->id == i);
+
 			Base::items.push_back({});
 			CachedBarline& id = Base::items.back();
 
-			id.update((ushort)i, line, this);
-			id.parentId = line->parent ? ids[(size_t)line->parent] : -1;
-			id.childrenCount = line->children.size();
+			id.update(i, line, this);
+			id.parentId = line->parentId;
+			assert(id.parentId != id.id);
+
+			id.childrenCount = line->childrenId.size();
 			if (id.childrenCount)
 			{
 				int k = 0;
 				id.children.reset(new uint[id.childrenCount]);
-				for (auto* child : line->children)
+				for (auto child : line->childrenId)
 				{
-					id.children[k++] = ids[(size_t)child];
+					id.children[k++] = child;
 				}
 			}
 			callback(&id);
 		}
 	}
+
 
 	//void addItem(const IClassItem& item)
 	//{

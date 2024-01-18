@@ -285,7 +285,8 @@ export struct SimpleLine
 	int depth;
 	int matrSrcSize;
 
-	std::shared_ptr<SimpleLine> parent;
+	SimpleLine* parent;
+	std::vector<SimpleLine*> children;
 
 	bc::barvector matr;
 
@@ -295,7 +296,7 @@ export struct SimpleLine
 	}
 };
 
-export using IdGrater = MMMAP<size_t, std::shared_ptr<SimpleLine>>;
+export using IdGrater = MMMAP<size_t, SimpleLine*>;
 export class RasterFromDiskLayer : public IRasterLayer
 {
 public:

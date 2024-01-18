@@ -43,12 +43,12 @@ public:
 
 	virtual size_t getId() const
 	{
-		return (size_t)line;
+		return line->id;
 	}
 
 	virtual size_t getParentId() const
 	{
-		return (size_t)line->parent;
+		return line->parentId;
 	}
 
 	virtual int getDeath() const override
@@ -172,15 +172,13 @@ public:
 
 		// Parent read/write stuff
 		uint counterId = 0;
-		std::vector<bc::barline*> ids;
-		ids.resize(linesCount * 2);
-		std::fill(ids.begin(), ids.end(), nullptr);
-		MMMAP<size_t, uint> writeIds;
 
 		const bool use32index = state->pInt(sizeof(bc::BIndex) == 4 ? 1 : 0) == 1;
 
 		// Begin
 		state->beginArray(vec, linesCount);
+		vec.resize(linesCount);
+
 		for (size_t i = 0; i < linesCount; ++i)
 		{
 			bc::barline* line;
@@ -189,33 +187,9 @@ public:
 				// Write
 				line = vec[i];
 
-				uint couId;
-				auto p = writeIds.find((size_t)line);
-				if (p != writeIds.end())
-				{
-					couId = p->second;
-				}
-				else
-				{
-					couId = counterId++;
-					writeIds.insert({ (size_t)line, couId });
-				}
-
-				state->pInt(couId);
-
-				uint parId;
-				p = writeIds.find((size_t)line->parent);
-				if (p != writeIds.end())
-				{
-					parId = p->second;
-				}
-				else
-				{
-					parId = counterId++;
-					writeIds.insert({ (size_t)line->parent, parId });
-				}
-
-				state->pInt(parId);
+				uint couId = line->id;
+				state->pInt(line->id);
+				state->pInt(line->parentId);
 			}
 			else
 			{
@@ -223,24 +197,20 @@ public:
 
 				// Main line
 				uint couId = state->pInt(0);
-				line = ids[couId];
-				if (line == nullptr)
-				{
-					line = new bc::barline();
-					ids[couId] = line;
-				}
-				vec[i] = line;
+				line = new bc::barline();
+				line->id = couId;
+				line->root = item.get();
 
-				// Parent
-				uint parId = state->pInt(0);
-				bc::barline* par = ids[parId];
-				if (par == nullptr)
+				uint parentId = state->pInt(0);
+
+				if (vec[line->parentId] == nullptr)
 				{
-					par = new bc::barline();
-					ids[parId] = par;
+					auto parline = new bc::barline();
+					vec[line->parentId] = parline;
+					parline->id = parentId;
 				}
 
-				line->setparent(par);
+				line->setparent(vec[line->parentId]);
 			}
 
 			line->start = state->pBarscalar(line->start);
@@ -373,12 +343,12 @@ public:
 
 	virtual size_t getId() const
 	{
-		return (size_t)line;
+		return line->id;
 	}
 
 	virtual size_t getParentId() const
 	{
-		return (size_t)line->parent;
+		return line->parentId;
 	}
 
 	virtual int getDeath() const override

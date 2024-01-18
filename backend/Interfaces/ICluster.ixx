@@ -34,7 +34,7 @@ public:
 	bool rootBased;
 
 	//virtual ICluster* getItem(size_t id) = 0;
-	virtual const ICluster* getItem(size_t id) const = 0;
+	virtual const ICluster& getItem(size_t id) const = 0;
 	virtual size_t getItemsCount() const = 0;
 	virtual void addItem(const CachedBarline& item) = 0;
 	virtual void clear() = 0;
@@ -61,9 +61,9 @@ public:
 		return &items[id];
 	}
 
-	const T* getItem(size_t id) const
+	const T& getItem(size_t id) const
 	{
-		return &items[id];
+		return items[id];
 	}
 
 	size_t getItemsCount() const
