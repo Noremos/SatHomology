@@ -202,15 +202,15 @@ public:
 				line->root = item.get();
 
 				uint parentId = state->pInt(0);
-
-				if (vec[line->parentId] == nullptr)
+				auto* parentLine = vec[line->parentId];
+				if (parentLine == nullptr)
 				{
 					auto parline = new bc::barline();
-					vec[line->parentId] = parline;
+					parentLine = parline;
 					parline->id = parentId;
 				}
 
-				line->setparent(vec[line->parentId]);
+				parentLine->addChild(line);
 			}
 
 			line->start = state->pBarscalar(line->start);

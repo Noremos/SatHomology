@@ -167,6 +167,16 @@ public:
 		{bc::ColorType::rgb, "Цветной"},
 	};
 
+	SelectableKeyValues<bc::AttachMode> attachCB =
+	{
+		{bc::AttachMode::firstEatSecond, "firstEatSecond"},
+		{bc::AttachMode::secondEatFirst, "secondEatFirst"},
+		{bc::AttachMode::createNew, "createNew"},
+		{bc::AttachMode::dontTouch, "dontTouch"},
+		{bc::AttachMode::morePointsEatLow, "morePointsEatLow"},
+		{bc::AttachMode::closer, "closer"}
+	};
+
 	SelectableKeyValues<int> alg =
 	{
 		{0, "Растровый"},
@@ -182,6 +192,7 @@ public:
 		properties.barstruct.proctype = procCB.currentValue();
 		properties.barstruct.coltype = colorCB.currentValue();
 		properties.barstruct.comtype = componentCB.currentValue();
+		properties.attachMode = attachCB.currentValue();
 		properties.alg = alg.currentIndex;
 	}
 
@@ -231,7 +242,7 @@ public:
 						componentCB.drawCombobox("##Форма");
 						procCB.drawCombobox("##Обработка");
 						colorCB.drawCombobox("##Цвет");
-
+						attachCB.drawCombobox("##Attach");
 					}
 					else
 					{

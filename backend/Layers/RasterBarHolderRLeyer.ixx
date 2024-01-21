@@ -614,7 +614,7 @@ RetLayers RasterLineLayer::createCacheBarcode(IRasterLayer* inLayer, const Barco
 	bc::BarConstructor constr;
 	constr.createBinaryMasks = true;
 	constr.createGraph = true;
-	constr.attachMode = bc::AttachMode::firstEatSecond;
+	constr.attachMode = propertices.attachMode;
 	//constr.maxRadius = 255;
 	// constr.attachMode = bc::AttachMode::closer;
 	constr.returnType = bc::ReturnType::barcode2d;

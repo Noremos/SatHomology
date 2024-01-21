@@ -156,6 +156,7 @@ export struct BarcodeProperies
 	int alg = 0; // 0 - raster; 1 - cloud
 	bool alg1UseHoles = false;
 	bool alg1IgnoreHeight = false;
+	bc::AttachMode attachMode;
 };
 
 
