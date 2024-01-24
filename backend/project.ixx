@@ -942,19 +942,16 @@ public:
 
 		BackImage src = *(input->getCachedImage());
 
-		bc::BarConstructor constr;
+		bc::barstruct constr = propertices.barstruct;
 		constr.createBinaryMasks = true;
 		constr.createGraph = true;
 		constr.attachMode = bc::AttachMode::morePointsEatLow;
 		constr.returnType = bc::ReturnType::barcode2d;
 		// constr.maxRadius = 10;
 		//constr.maxLen.set(15);
-		constr.structure.push_back(propertices.barstruct);
 
 		 bc::BarcodeCreator bc;
-		 auto containner = bc.createBarcode(&src, constr);
-		 std::unique_ptr<bc::Baritem> item(containner->exractItem(0));
-		 delete containner;
+		 std::unique_ptr<bc::Baritem> item(bc.createBarcode(&src, constr));
 
 		//std::unique_ptr<bc::Baritem> item(bc::Eater::createBarcode(&src));
 
@@ -1004,7 +1001,7 @@ public:
 		RetLayers ret;
 		const BackImage& src = *(input->getCachedImage());
 
-		bc::BarConstructor constr;
+		bc::barstruct constr;
 		constr.createBinaryMasks = true;
 		constr.createGraph = false;
 		constr.returnType = bc::ReturnType::barcode2d;
@@ -1025,12 +1022,12 @@ public:
 		mask.fill(0);
 
 
+		constr.addStructure(type, bc::ColorType::native, bc::ComponentType::Component);
+		constr.maskId = 0;
+		constr.mask = &mask;
 
-		bc::barstruct bst(type, bc::ColorType::native, bc::ComponentType::Component);
-		bst.maskId = 0;
-		bst.mask = &mask;
-		constr.structure.push_back(bst);
-
+		bc::BarConstructor constHolder;
+		constHolder.structs.push_back(constr);
 
 		while (true)
 		{
@@ -1051,9 +1048,9 @@ public:
 			//if (constr.structure.size() == 0)
 			//	break;
 			assert(imgin.length() == mask.length());
-			std::unique_ptr<bc::Barcontainer> containner(bcc.createBarcode(&imgin, constr));
+			std::unique_ptr<bc::Barcontainer> containner(bcc.createBarcode(&imgin, constHolder));
 
-			constr.structure.clear();
+			constHolder.structs.clear();
 			maskMin = 0;
 
 			b.wid *= 4;
@@ -1087,8 +1084,9 @@ public:
 					//if (matr.size() < 5)
 					//	continue;
 
+					bc::barstruct bst = constr;
 					bst.maskId = i;
-					constr.structure.push_back(bst);
+					constHolder.structs.push_back(bst);
 
 					// if (item->barlines[i]->len() < 10)
 					const auto randCol = BackColor::random();
@@ -1179,7 +1177,7 @@ public:
 		else
 			src = srcl;
 
-		bc::BarConstructor constr;
+		bc::barstruct constr;
 		constr.createBinaryMasks = true;
 		constr.createGraph = false;
 		constr.attachMode = bc::AttachMode::morePointsEatLow;
@@ -1192,9 +1190,7 @@ public:
 		//BackSize b = srcsize;
 		int maskMin = 0;
 
-
-		bc::barstruct bst(type, bc::ColorType::native, bc::ComponentType::Component);
-		constr.structure.push_back(bst);
+		constr.addStructure(type, bc::ColorType::native, bc::ComponentType::Component);
 
 		RasterLayer* rasterSpot = addLayerData<RasterLayer>(input->cs.getProjId());
 		rasterSpot->initCSFrom(input->cs);
@@ -1216,7 +1212,7 @@ public:
 			}*/
 
 			CellBarcode bce;
-			std::unique_ptr<bc::Baritem> containner(bce.run(&src, bst, energyStart));
+			std::unique_ptr<bc::Baritem> containner(bce.run(&src, constr, energyStart));
 
 			bc::Baritem* item = containner.get();
 			for (size_t i = 0; i < item->barlines.size(); ++i)
@@ -1234,7 +1230,7 @@ public:
 		else
 		{
 			EnetrgyBarcode eb;
-			float* outenergy = eb.run(&src, bst, energyStart);
+			float* outenergy = eb.run(&src, constr, energyStart);
 			for (size_t i = 0; i < src.length(); i++)
 			{
 				out.setLiner(i, lerp(outenergy[i] / static_cast<float>(energyStart)));
@@ -1250,18 +1246,16 @@ public:
 	{
 		const BackImage& src = *(input->getCachedImage());
 
-		bc::BarConstructor constr;
+		bc::barstruct constr;
 		constr.createBinaryMasks = true;
 		constr.createGraph = false;
 		constr.returnType = bc::ReturnType::barcode3d;
 
 		bc::BarcodeCreator bcc;
 
-		bc::barstruct bst(type, bc::ColorType::native, bc::ComponentType::Component);
-		constr.structure.push_back(bst);
+		constr.addStructure(type, bc::ColorType::native, bc::ComponentType::Component);
 
-		std::unique_ptr<bc::Barcontainer> containner(bcc.createBarcode(&src, constr));
-		bc::Baritem* item = containner->getItem(0);
+		std::unique_ptr<bc::Baritem> item(bcc.createBarcode(&src, constr));
 
 		std::string globout = "";
 		for (size_t i = 0; i < item->barlines.size(); ++i)
@@ -1284,7 +1278,7 @@ public:
 };
 
 
-bc::barlinevector geojson[3];
+//bc::barlinevector geojson[3];
 
 using std::vector;
 

@@ -80,7 +80,7 @@ public:
 
 	void drawGrapch(ImVec2 start, int width)
 	{
-		width = std::max(width, 200);
+		width = std::min(std::min(width, 200), (int)maxEnd);
 		ImVec2 end(start.x + width, start.y + width);
 		float ratio = static_cast<float>(width) / 255.f;
 		ImDrawList* list = ImGui::GetWindowDrawList();
@@ -125,7 +125,7 @@ public:
 		ImVec2 start = pos;
 		short asd = (options & ShortForm) ? (maxDepth - minDepth + 1) : ldepts;
 
-		ImVec2 end = { start.x + width, start.y + asd * (hei + 1) + paddingY };
+		ImVec2 end = { start.x + width, start.y+ asd * (hei + 1) + paddingY };
 
 		ImGui::BeginDisabled(disableDelete);
 		ImGui::SetCursorScreenPos(ImVec2(3, start.y));

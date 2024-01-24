@@ -235,6 +235,7 @@ public:
 			ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
 			if (ImGui::BeginTabBar("Настройки", tab_bar_flags))
 			{
+				//drawDynamicSettings(properties);
 				if (ImGui::BeginTabItem("Алгоритм"))
 				{
 					if (alg.currentIndex == 0)

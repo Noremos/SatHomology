@@ -128,12 +128,11 @@ protected:
 	std::shared_ptr<bc::Baritem> item;
 public:
 
-	void create(bc::DatagridProvider* img, const bc::BarConstructor& constr, const Base::ItemCallback& callback)
+	void create(bc::DatagridProvider* img, const bc::barstruct& constr, const Base::ItemCallback& callback)
 	{
 		bc::BarcodeCreator creator;
-		std::unique_ptr<bc::Barcontainer> ret(creator.createBarcode(img, constr));
+		item.reset(creator.createBarcode(img, constr));
 
-		item.reset(ret->exractItem(0));
 		int size = (int)item->barlines.size();
 		for (int i = 0; i < size; i++)
 		{

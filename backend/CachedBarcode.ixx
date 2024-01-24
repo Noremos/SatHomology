@@ -197,12 +197,12 @@ export class CachedBaritemHolder : public IDataClassItemValueHolder<CachedBarlin
 	using Base = IDataClassItemValueHolder<CachedBarline>;
 	int root = 0;
 public:
-	void create(bc::DatagridProvider* img, const bc::BarConstructor& constr, const Base::ItemCallback& callback)
+	void create(bc::DatagridProvider* img, const bc::barstruct& constr, const Base::ItemCallback& callback)
 	{
 		bc::BarcodeCreator creator;
-		std::unique_ptr<bc::Barcontainer> ret(creator.createBarcode(img, constr));
+		std::unique_ptr<bc::Baritem> citem(creator.createBarcode(img, constr));
 
-		auto* item = ret->getItem(0);
+		auto* item = citem.get();
 		int size = (int)item->barlines.size();
 
 		root = item->getRootNode() ? item->getRootNode()->id : -1;

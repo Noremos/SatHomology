@@ -5,20 +5,42 @@ export module MLSettings;
 
 import JsonCore;
 
-struct OptionEnum
+export struct OptionEnum
 {
 	OptionEnum(std::initializer_list<BackString> val)
 	{
-		values = val;
+		names = val;
+		for (size_t i = 0; i < names.size(); i++)
+		{
+			values.push_back(i);
+		}
 	}
 
-	BackStringView getSelected() const
+	template<class T>
+	void add(const BackString& name, T value)
+	{
+		names.push_back(name);
+		values.push_back((int)value);
+	}
+
+	BackStringView getSelectedName() const
+	{
+		return names[selected];
+	}
+
+	int getSelectedValue() const
 	{
 		return values[selected];
 	}
+	void clear()
+	{
+		values.clear();
+		names.clear();
+	}
 
 
-	std::vector<BackString> values;
+	std::vector<BackString> names;
+	std::vector<int> values;
 	int selected = 0;
 	int64_t filter = INT64_MAX;
 };
@@ -174,9 +196,10 @@ public:
 		{
 			JsonArray arr(Json::arrayValue);
 			arr.append(data.e->selected);
-			for (const auto& i : data.e->values)
+			for (size_t i = 0; i < data.e->values.size(); i++)
 			{
-				arr.append(i);
+				arr.append(data.e->names[i]);
+				arr.append(data.e->values[i]);
 			}
 			json[name] = arr;
 			break;
@@ -209,9 +232,10 @@ public:
 			JsonArray arr = json[name];
 			data.e = new OptionEnum({});
 			data.e->selected = arr[0].asInt();
-			for (int i = 1; i < arr.size(); i++)
+			for (int i = 1; i < arr.size(); i+=2)
 			{
-				data.e->values.push_back(arr[i].asString());
+				data.e->names.push_back(arr[i].asString());
+				data.e->values.push_back(arr[i+ 1].asInt());
 			}
 			break;
 		}
@@ -275,13 +299,27 @@ public:
 
 		return nullptr;
 	}
-	BackStringView getEnum(const BackString& name) const
+	BackStringView getEnum(BackStringView name) const
 	{
 		for (auto& value : values)
 		{
 			if (value.name == name)
 			{
-				return value.data.e->getSelected();
+				return value.data.e->getSelectedName();
+			}
+		}
+
+		throw;
+	}
+
+	template<class T>
+	T getEnumValue(BackStringView name) const
+	{
+		for (auto& value : values)
+		{
+			if (value.name == name)
+			{
+				return static_cast<T>(value.data.e->getSelectedValue());
 			}
 		}
 

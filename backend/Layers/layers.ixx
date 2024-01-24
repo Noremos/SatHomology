@@ -21,7 +21,7 @@ import MetadataIOCore;
 import ImgReader;
 import SimpleImgReaderModule;
 import MHashMap;
-
+import MLSettings;
 
 using LayerMetaProvider = MetadataProvider;
 
@@ -150,13 +150,76 @@ BackImage tiffToImg(ImageReader* reader, const BackPathStr& path, int fctor = 10
 }
 
 
-export struct BarcodeProperies
+export struct BarcodeProperies : public MLSettings
 {
+	bc::ComponentType comtype;
+	bc::ProcType proctype;
+	bc::ColorType coltype;
+
 	bc::barstruct barstruct;
+	bc::AttachMode attachMode;
+	BarcodeProperies() : MLSettings({})
+	{
+		OptionValue comp("Тип", {});
+		comp.data.e->add("Компонента", bc::ComponentType::Component);
+		comp.data.e->add("Дыра", bc::ComponentType::Hole);
+		values.push_back(comp);
+
+		comp.data.e->clear();
+		comp.name = "Сортировка";
+		comp.data.e->add("От 0 до 255", bc::ProcType::f0t255);
+		comp.data.e->add("От 255 до 0", bc::ProcType::f255t0);
+		comp.data.e->add("По расстоянию", bc::ProcType::Radius);
+		values.push_back(comp);
+
+		comp.data.e->clear();
+		comp.name = "Цвет";
+		comp.data.e->add("Как в изображении", bc::ColorType::native);
+		comp.data.e->add("Серый", bc::ColorType::gray);
+		comp.data.e->add("Цветной", bc::ColorType::rgb);
+		values.push_back(comp);
+
+		comp.data.e->clear();
+		comp.name = "Присоединение";
+		comp.data.e->add("firstEatSecond", bc::AttachMode::firstEatSecond);
+		comp.data.e->add("secondEatFirst", bc::AttachMode::secondEatFirst);
+		comp.data.e->add("createNew", bc::AttachMode::createNew);
+		comp.data.e->add("dontTouch", bc::AttachMode::dontTouch);
+		comp.data.e->add("morePointsEatLow", bc::AttachMode::morePointsEatLow);
+		comp.data.e->add("closer", bc::AttachMode::closer);
+		values.push_back(comp);
+
+		//comp.data.e->clear();
+		//comp.name = "Алг";
+		//comp.data.e->add("Растровый", 0);
+		//comp.data.e->add("Растр в точки", 1);
+
+		values.push_back(comp);
+		values.push_back({ "trueSort", false });
+	}
+
+	bc::barstruct get()
+	{
+		bc::barstruct st;
+		st.comtype = getEnumValue<bc::ComponentType>("Тип");
+		st.proctype = getEnumValue<bc::ProcType>("Сортировка");
+		st.coltype = getEnumValue<bc::ColorType>("Цвет");
+		st.attachMode = getEnumValue<bc::AttachMode>("Присоединение");
+
+		return st;
+	}
+	// ---
+
+
+	//SelectableKeyValues<int> alg =
+	//{
+	//	{0, "Растровый"},
+	//	{1, "Растр в точки"}
+	//};
 	int alg = 0; // 0 - raster; 1 - cloud
 	bool alg1UseHoles = false;
 	bool alg1IgnoreHeight = false;
-	bc::AttachMode attachMode;
+	bool trueSort = false;
 };
 
 

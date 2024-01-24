@@ -7,11 +7,6 @@ module;
 #include <ranges>
 #include <unordered_set>
 
-// Lib
-#define IMGUI_DEFINE_MATH_OPERATORS
-#include "imgui.h"
-#include <imgui_internal.h>
-
 // My
 #include "../Bind/Common.h"
 
@@ -19,7 +14,7 @@ export module GeoprocessorModule;
 
 import Platform;
 import IOCore;
-import BarcodeModule;
+import BarTypes;
 import MHashMap;
 
 
@@ -61,14 +56,7 @@ export struct CounturRect
 };
 
 
-export void getMaskRes(const BackImage& matres, std::vector<Cound*>& veas, Cound** resmap);
-
-//export void parseGeojson();
-export double getPsa(const bc::barvector& matr);
-export void getMaskRes(const BackImage& mat, BackImage& maskMat);
 export using mcountor = std::vector<uint>;
-export void saveAsGeojson(const bc::barlinevector& lines, const BackPathStr& savePath, ProcPoint startOffset, double coof);
-export void saveJson(const std::string& text, int st);
 
 export CounturRect getCountour(const bc::barvector& points, mcountor& contur, bool aproximate = false);
 
@@ -123,7 +111,7 @@ inline void testC()
 
 
 
-double getPsa(const bc::barvector& matr)
+export double getPsa(const bc::barvector& matr)
 {
 	MMMAP<uint, bool> map;
 
@@ -188,7 +176,7 @@ double getPsa(const bc::barvector& matr)
 
 
 
-void getMaskRes(const BackImage& matres, std::vector<Cound*>& veas, Cound** resmap)
+export void getMaskRes(const BackImage& matres, std::vector<Cound*>& veas, Cound** resmap)
 {
 	if (veas.size() == 0)
 		return;
@@ -237,7 +225,7 @@ void getMaskRes(const BackImage& matres, std::vector<Cound*>& veas, Cound** resm
 	std::cout << "Res bad: " << proc - ew << std::endl;
 }
 
-void getMaskRes(const BackImage& mat, BackImage& maskMat)
+export void getMaskRes(const BackImage& mat, BackImage& maskMat)
 {
 	if (maskMat.wid() == 1)
 		return;

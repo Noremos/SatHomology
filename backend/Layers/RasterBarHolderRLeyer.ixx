@@ -471,7 +471,7 @@ class CreateBarThreadWorker : public BarLineWorker
 {
 	std::mutex& cacherMutex;
 
-	const bc::BarConstructor& constr;
+	bc::barstruct constr;
 	IRasterLayer* inLayer;
 	ItemHolderCache& cacher;
 
@@ -482,7 +482,7 @@ class CreateBarThreadWorker : public BarLineWorker
 	TileProvider tileProv;
 public:
 	CreateBarThreadWorker(std::mutex& cacherMutex,
-		const bc::BarConstructor& constr,
+		const bc::barstruct& constr,
 		IRasterLayer* inLayer,
 		ItemHolderCache& cacher,
 		int& counter) :
@@ -611,14 +611,14 @@ public:
 RetLayers RasterLineLayer::createCacheBarcode(IRasterLayer* inLayer, const BarcodeProperies& propertices, IItemFilter* filter)
 {
 	// Setup
-	bc::BarConstructor constr;
+	bc::barstruct constr;
 	constr.createBinaryMasks = true;
 	constr.createGraph = true;
 	constr.attachMode = propertices.attachMode;
 	//constr.maxRadius = 255;
 	// constr.attachMode = bc::AttachMode::closer;
 	constr.returnType = bc::ReturnType::barcode2d;
-	constr.structure.push_back(propertices.barstruct);
+	//constr.addStructure(propertices.barstruct);
 	//	constr.setStep(stepSB);
 	// -------
 

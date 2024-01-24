@@ -1,26 +1,29 @@
-//module;
+module;
 //#include "../../side/kde.h"
+#include <vector>
+#include <algorithm>
+#include <cassert>
+
+export module ConvertItem;
 //
-//export module ConvertItem;
+import ClusterInterface;
+import Platform;
 //
-//import ClusterInterface;
-//import Platform;
-//
-//import CachedBarcode;
-//import MLSettings;
+import CachedBarcode;
+import MLSettings;
 //
 //
-//export class ConvertClass : public ICluster
-//{
-//public:
-//	std::vector<float> signature;
-//	bc::barvector matrix;
+export class ConvertClass : public ICluster
+{
+public:
+	std::vector<float> signature;
+	bc::barvector matrix;
 //	bool addMiddleDepth;
 //
-//	const bc::barvector& getMatrix() const
-//	{
-//		return matrix;
-//	}
+	const bc::barvector& getMatrix() const
+	{
+		return matrix;
+	}
 //
 //	ConvertClass()
 //	{ }
@@ -81,17 +84,7 @@
 //		signature = std::move(other.signature);
 //		matrix = std::move(other.matrix);
 //	}
-//	//virtual void saveLoadState(StateBinFile::BinState* state) override
-//	//{
-//	//	// Throw
-//	//	state->beginItem();
-//	//	size_t arraySize = 0;
-//	//	state->beginArray(signature, arraySize);
-//	//	for (size_t i = 0; i < arraySize; i++)
-//	//	{
-//	//		signature[i] = state->pShort(signature[i]);
-//	//	}
-//	//}
+
 //
 //private:
 //	void walk(const CachedBarline* line, int depth)
@@ -115,49 +108,68 @@
 //			}
 //		}
 //	}
-//};
-////
-//struct landscape
-//{
-//	int start;
-//	int end;
-//};
+};
+
+struct landscape
+{
+	int start;
+	int end;
+};
+
+struct lanred
+{
+	std::vector<landscape*> lands;
+};
 //
-//struct lanred
-//{
-//	std::vector< landscape*> lands;
-//};
+export class ConvertCollection : public IClusterItemValuesHolder<ConvertClass>
+{
+	using Base = IClusterItemValuesHolder<ConvertClass>;
+protected:
+	CachedBaritemHolder holder;
 //
-//export class ConvertCollection : public IClusterItemValuesHolder<ConvertClass>
-//{
-//	using Base = IClusterItemValuesHolder<ConvertClass>;
-//protected:
-//
-//public:
-//	ConvertCollection() : Base(false)
-//	{
-//		Base::settings =
-//		{
-//			{"addMiddleDepth", true},
-//			//{"minSignatureSize", 2},
-//			{"compress", {"zeros", "size", "linearInterpolation", "kde", "landscapes", "asIs"}},
-//			{"linerInterSize", 100},
-//			{"kdeEps", 0.5}
-//		};
-//	}
-//	lanred land[256];
-//
-//	virtual void addItem(const CachedBarline& line)
-//	{
-//		//int st = land[line.start().getAvgUchar()];
-//		//int ed = land[line.end().getAvgUchar()];
-//		//for (int i = st; i < ed; i++)
-//		//{
-//		//	if (land[i].lands.size())
-//		//	{
-//
-//		//	}
-//		//}
-//
-//	}
-//};
+public:
+	ConvertCollection() : Base(false)
+	{
+		Base::settings =
+		{
+			{"addMiddleDepth", true},
+			//{"minSignatureSize", 2},
+			{"compress", {"zeros", "size", "linearInterpolation", "kde", "landscapes", "asIs"}},
+			{"linerInterSize", 100},
+			{"kdeEps", 0.5}
+		};
+	}
+	lanred land[256];
+
+    virtual void perform()
+	{
+
+
+		assert(holder.getItem(0)->getChildrenCount() > 0);
+	}
+
+
+	virtual void addItem(const CachedBarline& line)
+	{
+		//lines.addUpdateRoot(line);
+		//lines.getLastItem().root = &lines;
+		holder.getItems().push_back(line);
+		holder.getLastItem().root = &holder;
+	}
+
+
+	const CachedBarline* getRItem(size_t id) const
+	{
+		return &holder.getItems()[id];
+	}
+
+	virtual size_t getItemsCount() const
+	{
+		return holder.getItemsCount();
+	}
+
+	virtual void clear()
+	{
+		holder.getItems().clear();
+	}
+};

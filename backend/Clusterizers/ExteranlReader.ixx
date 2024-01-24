@@ -68,7 +68,7 @@ export BackString getPythonSettings(const MLSettings& settings)
 			break;
 		case OptionValue::sv_enum:
 			json += quote;
-			json += set.data.e->getSelected();
+			json += set.data.e->getSelectedName();
 			json += quote;
 			break;
 		case OptionValue::sv_path:

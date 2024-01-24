@@ -13,7 +13,8 @@ export class EnetrgyBarcode : public bc::BarcodeCreator
 public:
 	float* run(const bc::DatagridProvider* src, bc::barstruct& str, float& startEnergy)
 	{
-		init(src, str.proctype, str);
+		settings = str;
+		init(src, str.proctype);
 		switch (str.proctype)
 		{
 		case bc::ProcType::Radius:
@@ -170,7 +171,8 @@ export class CellBarcode : public bc::BarcodeCreator
 public:
 	bc::Baritem* run(const bc::DatagridProvider* src, bc::barstruct& str, float& startEnergy)
 	{
-		init(src, str.proctype, str);
+		settings = str;
+		init(src, str.proctype);
 		field.resize(bc::BarcodeCreator::totalSize);
 		std::fill(field.begin(), field.end(), nullptr);
 		switch (str.proctype)
