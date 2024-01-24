@@ -105,31 +105,31 @@ struct TPoint
 
 
 	TPoint operator*(double scalar) const {
-		return TPoint(x * scalar, y * scalar);
+		return TPoint(static_cast<T>(x * scalar), static_cast<T>(y * scalar));
 	}
 
 	TPoint operator/(double scalar) const {
-		return TPoint(x / scalar, y / scalar);
+		return TPoint(static_cast<T>(x / scalar), static_cast<T>(y / scalar));
 	}
 
 	TPoint operator*(float scalar) const {
-		return TPoint(x * scalar, y * scalar);
+		return TPoint(static_cast<T>(x * scalar), static_cast<T>(y * scalar));
 	}
 
 	TPoint operator/(float scalar) const {
-		return TPoint(x / scalar, y / scalar);
+		return TPoint(static_cast<T>(x / scalar), static_cast<T>(y / scalar));
 	}
 
 	TPoint operator*(int scalar) const {
-		return TPoint(x * scalar, y * scalar);
+		return TPoint(static_cast<T>(x * scalar), static_cast<T>(y * scalar));
 	}
 
 	TPoint operator/(int scalar) const {
-		return TPoint(x / scalar, y / scalar);
+		return TPoint(static_cast<T>(x / scalar), static_cast<T>(y / scalar));
 	}
 
 	TPoint operator-(T scalar) const {
-		return TPoint(x - scalar, y - scalar);
+		return TPoint(static_cast<T>(x - scalar), static_cast<T>(y - scalar));
 	}
 
 	//// TPoint dot product operator

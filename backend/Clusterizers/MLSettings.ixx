@@ -100,6 +100,7 @@ public:
 		case OptionValue::sv_enum:
 			data.e = new OptionEnum({});
 			data.e->values = other.data.e->values;
+			data.e->names = other.data.e->names;
 			data.e->selected = other.data.e->selected;
 			break;
 		default:

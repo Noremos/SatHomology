@@ -160,7 +160,7 @@ public:
 
 		if (options & WithGraph)
 		{
-			drawGrapch(ImVec2(start.x + width, start.y), width);
+			drawGrapch(ImVec2(start.x + width, start.y), 200);
 		}
 	}
 };

@@ -10,10 +10,9 @@ module;
 export module RasterLayers;
 import LayersCore;
 
-import BarcodeModule;
+import BarTypes;
 import IOCore;
 import Platform;
-import GeoprocessorModule;
 import IItemModule;
 
 import MetadataIOCore;
@@ -193,18 +192,21 @@ export struct BarcodeProperies : public MLSettings
 		//comp.name = "Алг";
 		//comp.data.e->add("Растровый", 0);
 		//comp.data.e->add("Растр в точки", 1);
+		// values.push_back(comp);
 
-		values.push_back(comp);
 		values.push_back({ "trueSort", false });
 	}
 
-	bc::barstruct get()
+	bc::barstruct get() const
 	{
 		bc::barstruct st;
 		st.comtype = getEnumValue<bc::ComponentType>("Тип");
 		st.proctype = getEnumValue<bc::ProcType>("Сортировка");
 		st.coltype = getEnumValue<bc::ColorType>("Цвет");
 		st.attachMode = getEnumValue<bc::AttachMode>("Присоединение");
+		st.createBinaryMasks = true;
+		st.createGraph = true;
+		st.returnType = bc::ReturnType::barcode2d;
 
 		return st;
 	}

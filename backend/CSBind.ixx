@@ -35,7 +35,7 @@ PJ_COORD getPjCoord(const T& p)
 
 
 template<class P>
-static void ioPoint(JsonObjectIOState* state, BackString name, P& p)
+void ioPoint(JsonObjectIOState* state, BackString name, P& p)
 {
 	state->scDouble(name + "_x", p.x);
 	state->scDouble(name + "_y", p.y);

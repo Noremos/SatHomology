@@ -10,7 +10,7 @@ import GuiWidgets;
 import RasterLayers;
 import GuiLayers;
 import GuiOverlap;
-
+import DynamicSettings;
 
 GuiBackend backend;
 int maxThreadCount, minThreadCount;
@@ -189,11 +189,11 @@ public:
 
 	void grabSets()
 	{
-		properties.barstruct.proctype = procCB.currentValue();
-		properties.barstruct.coltype = colorCB.currentValue();
-		properties.barstruct.comtype = componentCB.currentValue();
-		properties.attachMode = attachCB.currentValue();
-		properties.alg = alg.currentIndex;
+		//properties.barstruct.proctype = procCB.currentValue();
+		//properties.barstruct.coltype = colorCB.currentValue();
+		//properties.barstruct.comtype = componentCB.currentValue();
+		//properties.attachMode = attachCB.currentValue();
+		//properties.alg = alg.currentIndex;
 	}
 
 	void createBarcode(ILayerWorker& context)
@@ -235,21 +235,9 @@ public:
 			ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
 			if (ImGui::BeginTabBar("Настройки", tab_bar_flags))
 			{
-				//drawDynamicSettings(properties);
 				if (ImGui::BeginTabItem("Алгоритм"))
 				{
-					if (alg.currentIndex == 0)
-					{
-						componentCB.drawCombobox("##Форма");
-						procCB.drawCombobox("##Обработка");
-						colorCB.drawCombobox("##Цвет");
-						attachCB.drawCombobox("##Attach");
-					}
-					else
-					{
-						ImGui::Checkbox("Использовать дыры", &properties.alg1UseHoles);
-						ImGui::Checkbox("Игнорировать высоту", &properties.alg1IgnoreHeight);
-					}
+					drawDynamicSettings(properties);
 
 					ImGui::EndTabItem();
 				}

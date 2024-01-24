@@ -622,6 +622,8 @@ RetLayers RasterLineLayer::createCacheBarcode(IRasterLayer* inLayer, const Barco
 	//	constr.setStep(stepSB);
 	// -------
 
+	constr = propertices.get();
+
 	// Input Layer prepatons
 	int tileSize = inLayer->prov.tileSize;
 	int tileOffset = inLayer->tileOffset;

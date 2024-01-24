@@ -112,7 +112,7 @@ public:
 		width = std::exchange(other.width, 0);
 		height = std::exchange(other.height, 0);
 		textureId = std::move(other.textureId);
-		scaleFactor = std::exchange(other.scaleFactor, 0);
+		scaleFactor = std::exchange(other.scaleFactor, 0.f);
 
 		return *this;
 	}

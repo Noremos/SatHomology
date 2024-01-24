@@ -29,7 +29,6 @@ import RasterLayers;
 import Classifiers;
 import MetadataIOCore;
 import VectorLayers;
-import MHashMap;
 import CSBind;
 import RasterBarHolderRLayer;
 import Settings;
