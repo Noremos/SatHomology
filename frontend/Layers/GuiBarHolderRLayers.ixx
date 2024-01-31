@@ -99,7 +99,6 @@ public:
 		{
 			chart.show = true;
 		}
-		clusterVals.draw(context);
 	}
 
 	GuiBarcodeChart chart;
