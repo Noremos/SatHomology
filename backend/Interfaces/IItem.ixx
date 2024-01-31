@@ -177,7 +177,7 @@ public:
 		assert(state->isReading());
 
 		auto* reader = dynamic_cast<StateBinFile::BinStateReader*>(state.get());
-		return reader->getIndexSize();
+		return (int)reader->getIndexSize();
 	}
 
 	IClassItemHolder* load(int& index, IClassItemHolder* t)
@@ -197,7 +197,7 @@ public:
 		size_t i = 0, total = reader->getIndexSize();
 		for (; i < total; ++i)
 		{
-			reader->moveIndex(i);
+			reader->moveIndex((int)i);
 			int rindex = state->pInt(0);
 			if (rindex == index)
 				break;

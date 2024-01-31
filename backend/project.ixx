@@ -22,6 +22,7 @@ import ImgReader;
 import IOCore;
 import LayersCore;
 import BarcodeModule;
+import BarScalarModule;
 import GeoprocessorModule;
 import JsonCore;
 import TrainIO;

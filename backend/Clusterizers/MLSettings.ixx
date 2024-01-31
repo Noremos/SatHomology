@@ -249,7 +249,7 @@ export class MLSettings
 public:
 	std::vector<OptionValue> values;
 
-	bool* getBool(BackStringView name)
+	const bool* getBool(BackStringView name) const
 	{
 		for (auto& value : values)
 		{
@@ -262,7 +262,7 @@ public:
 		return nullptr;
 	}
 
-	BackString* getString(BackStringView name)
+	const BackString* getString(BackStringView name) const
 	{
 		for (auto& value : values)
 		{
@@ -275,7 +275,7 @@ public:
 		return nullptr;
 	}
 
-	int* getInt(BackStringView name)
+	const int* getInt(BackStringView name) const
 	{
 		for (auto& value : values)
 		{
@@ -288,7 +288,7 @@ public:
 		return nullptr;
 	}
 
-	double* getDouble(BackStringView name)
+	const double* getDouble(BackStringView name) const
 	{
 		for (auto& value : values)
 		{

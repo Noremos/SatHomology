@@ -3,6 +3,8 @@ module;
 #include "../Bind/Common.h"
 #include <memory>
 #include <functional>
+#include <istream>
+#include <ostream>
 
 export module MetadataIOCore;
 
