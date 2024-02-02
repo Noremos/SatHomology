@@ -18,8 +18,8 @@ import DynamicSettings;
 import GroupLayer;
 import GuiLayers;
 import VectorLayers;
+import ClassifierCore;
 
-GuiBackend backend;
 
 struct StringBuffer
 {
@@ -72,6 +72,7 @@ public:
 
 export class GuiClusterizationWindow
 {
+	ClassifierBackend core;
 	std::unique_ptr<IBarClusterizer> clusterizer;
 	BarCategories& clusterCategs;
 
@@ -115,11 +116,10 @@ public:
 	//MMMAP<int, VectorLayer*> classLayers;
 
 	SelPair selectedPrevied;
-	GuiClusterizationWindow() : clusterizer(nullptr), clusterCategs(backend.proj->classCategs)
+	GuiClusterizationWindow() : core(), clusterizer(nullptr), clusterCategs(core.classCategs)
 	{
 		curColor = ImVec4(1.0, 1.f, 1.f, 1.f);
 		//c;
-
 	}
 
 
@@ -328,7 +328,7 @@ public:
 					{
 						//auto* layer = addClassLayer(classId);
 
-						VectorLayer* layer = backend.proj->addClassLayer(-1, false);
+						VectorLayer* layer = core.addClassLayer(-1, false);
 						layer->name = "Class: ";
 						layer->name += classesLB.getItems()[i];
 						layer->color = BackColor::random(); //clusterCategs.get(i)->color;

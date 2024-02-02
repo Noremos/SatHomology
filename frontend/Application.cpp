@@ -445,10 +445,9 @@ namespace MyApp
 
 			// ---------------------------------
 			ImGui::SameLine();
-			if (ImGui::Button("Восстановить"))
-			{
-				backend.restoreSource();
-			}
+			//if (ImGui::Button("Восстановить"))
+			//{
+			//}
 
 			ImGui::SameLine();
 			if (ImGui::Button("Сохранить как..."))
@@ -956,7 +955,7 @@ namespace MyApp
 		//LayerFactory::RegisterFactory<VectorGuiLayer, VetorLayer>(VECTOR_LAYER_FID);
 		LayerFactory::RegisterFactory<TreeVectorGuiLayer, TreeVectorLayer>(TREE_VECTOR_LAYER_FID);
 
-		classerVals.ioLayer = layersVals.getIoLayer();
+		//classerVals.ioLayer = layersVals.getIoLayer();
 		auto drawLine = [](const bc::point& p1, const bc::point& p2, bool finale)
 		{
 			const std::lock_guard<std::mutex> lock(debugVals.drawMutex);

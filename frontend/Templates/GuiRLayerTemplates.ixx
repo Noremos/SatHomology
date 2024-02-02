@@ -199,8 +199,7 @@ public:
 	void createBarcode(ILayerWorker& context)
 	{
 		grabSets();
-		RetLayers layerData = backend.createBarcode(context.iol, properties, filterInfo.getFilter());
-		//RetLayers layerData = proj->createCacheBarcode(context.iol, properties, filterInfo.getFilter());
+		RetLayers layerData = backend.proj->createCacheBarcode(context.iol, properties, filterInfo.getFilter());
 		context.setLayers(layerData, "barcode");
 	}
 	StepIntSlider tileSizeSlider, offsetSlider;

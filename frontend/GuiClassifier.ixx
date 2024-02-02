@@ -3,7 +3,6 @@ module;
 
 export module GuiClassifierModule;
 
-import ProjectModule;
 import IOCore;
 import Platform;
 import GuiWidgets;
@@ -11,11 +10,13 @@ import TrainIO;
 import StatChart;
 import DrawUtils;
 
-Project* proj = Project::getProject();
+import ClassifierCore;
+import ProjectModule;
 
 
 export struct GuiClassifer
 {
+	ClassifierBackend core;
 	struct TrainPiecePreview
 	{
 		size_t dbLocalId;
@@ -44,7 +45,7 @@ export struct GuiClassifer
 
 	bool show = false;
 	CachedObjectId selceted;
-	InOutLayer* ioLayer;
+	int inLayer;
 
 	ImVec4 curColor;
 	bool changeColor = false;
@@ -94,9 +95,9 @@ export struct GuiClassifer
 		classesLB.clear();
 
 		ClassDataIO io;
-		io.open(proj->getMetaPath(proj->classifier.name()));
+		io.open(Project::proj->getMetaPath(core.classifier->name()));
 
-		for (auto &&c : proj->classCategs.categs)
+		for (auto &&c : core.classCategs.categs)
 		{
 			classesLB.add(c.name, {c.id});
 			loadClassImages(io, classesLB.back());
@@ -120,7 +121,7 @@ export struct GuiClassifer
 	BackColor& getCurColor()
 	{
 		int claId = classesLB.currentValue().classId;
-		return proj->classCategs.get(claId)->color;
+		return core.classCategs.get(claId)->color;
 	}
 
 	void drawClassifierWindow()
@@ -143,7 +144,7 @@ export struct GuiClassifer
 		if (ImGui::Button("Добавить"))
 		{
 			BackString st(buffer);
-			int classId = proj->addClassType(st);
+			int classId = core.addClassType(st);
 
 			classesLB.add(st, {classId});
 			classesLB.endAdding();
@@ -166,7 +167,7 @@ export struct GuiClassifer
 			BackString st(buffer);
 			int selectedClass = classesLB.currentValue().classId;
 			classesLB.updateName(classesLB.currentIndex, st);
-			proj->changeClassName(selectedClass, st);
+			core.changeClassName(selectedClass, st);
 		}
 		ImGui::EndDisabled();
 
@@ -174,7 +175,7 @@ export struct GuiClassifer
 		if (ImGui::Button("Удалить"))
 		{
 			int selClassID = classesLB.currentValue().classId;
-			proj->removeClassType(selClassID);
+			core.removeClassType(selClassID);
 			classesLB.remove(classesLB.currentIndex);
 		}
 		ImGui::EndDisabled();
@@ -250,8 +251,8 @@ export struct GuiClassifer
 			//if (ImGui::Button("Show graph"))
 			//{
 			//	int classId = classesLB.currentValue().classId;
-			//	graph.init(proj->classifier.dbPath, classId);
-			//	graphBarlines.initBarlines(proj->classifier.dbPath, classId);
+			//	graph.init(core.classifier.dbPath, classId);
+			//	graphBarlines.initBarlines(core.classifier.dbPath, classId);
 			//}
 
 			ImGui::BeginDisabled(!selceted.hasData());
@@ -260,8 +261,8 @@ export struct GuiClassifer
 			{
 				BackImage icon;
 				auto& selectedClass = classesLB.currentValue();
-				assert(proj->classCategs.size() !=0);
-				size_t dbLocalId = proj->addTrainData(ioLayer->in, selectedClass.classId, selceted, &icon);
+				assert(core.classCategs.size() !=0);
+				size_t dbLocalId = core.addTrainData(inLayer, selectedClass.classId, selceted, &icon);
 				selectedClass.imgs.push_back(TrainPiecePreview(icon, dbLocalId));
 			}
 			ImGui::EndDisabled();
@@ -271,7 +272,7 @@ export struct GuiClassifer
 			if (ImGui::Button("Удалить данные"))
 			{
 				auto& selectedClass = classesLB.currentValue();
-				proj->removeTrainData(selectedClass.classId, selectedPrevied.dbId);
+				core.removeTrainData(selectedClass.classId, selectedPrevied.dbId);
 				auto& b = selectedClass.imgs;
 				b.erase(b.begin() + selectedPrevied.vecId);
 				selectedPrevied.vecId = -1;

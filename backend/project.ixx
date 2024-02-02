@@ -112,7 +112,6 @@ export class Project
 	void extraRead(const BackJson& json)
 	{
 		layers.clear();
-		classLayers.clear();
 		JsonObjectIOStateReader reader(json);
 		extraReadWrite(&reader);
 	}
@@ -163,39 +162,6 @@ export class Project
 			}
 
 			lay->saveLoadState(obj, sub);
-			arrst->objectEnd();
-		}
-		state->arrayEnd();
-
-		size = classLayers.size();
-		arrst = state->arrayBegin("classBind", size);
-		auto cb = classLayers.begin();
-		for (int i = 0; i < size; i++)
-		{
-			JsonObjectIOState* obj = arrst->objectBegin(i);
-
-			int classId;
-			int coreId;
-			if (!isReading)
-			{
-				classId = cb->first;
-				coreId = cb->second->id;
-				++cb;
-			}
-			obj->scInt("class_id", classId);
-			obj->scInt("layer_id", coreId);
-
-			if (isReading)
-			{
-				auto* vectLayer = layers.at(coreId);
-				if (vectLayer)
-					classLayers[classId] = static_cast<VectorLayer*>(vectLayer);
-				else
-				{
-					auto* layer = addClassLayer(classId);
-					layer->name = "Class layer";
-				}
-			}
 			arrst->objectEnd();
 		}
 		state->arrayEnd();
@@ -335,19 +301,12 @@ public:
 	{
 		return dynamic_cast<T*>(getInRaster(iol.in, iol.subImgIndex));
 	}
-	//RasterLayer main;
 
-	void setReadyLaod(int curImgInd)
+	void removeLayer(int delId)
 	{
-		//int displayWid = images[curImgInd]->width();
-		//setSubImage(curImgInd);
-
-		classCategs = BarCategories::loadCategories(getPath(BackPath::classifier));
-
-		classifier.open(getMetaPath());
-		classifier.loadData(classCategs);
-		//classifier.categs
+		layers.remove(delId);
 	}
+	//RasterLayer main;
 
 	static Project* proj;
 
@@ -517,14 +476,6 @@ public:
 		return true;
 	}
 
-	void readGeojson();
-	void readMyGeo(bool reinitY);
-
-	int predict(const IClassItem* item)
-	{
-		int classType = classifier.predict(item);
-		return classType;
-	}
 
 	RetLayers createCacheBarcode(InOutLayer& iol, const BarcodeProperies& propertices, IItemFilter* filter = nullptr)
 	{
@@ -540,177 +491,11 @@ public:
 		return ret;
 	}
 
-
 	BackPoint toGlob(const CSBinding& cs, const TileProvider& tileProv, float diplsayToRealFactor, BackPoint p)
 	{
 		BackPixelPoint op = tileProv.tileToPreview(p.x, p.y); // To display
 		BackPoint iglob((static_cast<float>(op.x) + 0.5f), static_cast<float>(op.y) + 0.5f);
 		return cs.toGlobal(iglob.x * diplsayToRealFactor, iglob.y * diplsayToRealFactor); // To real
-	}
-
-	std::mutex addPrimitiveMutex;
-	bool predictForLayer(IClassItem* item, const TileProvider& tileProv, float diplsayToRealFactor)
-	{
-		auto classId = predict(item);
-		if (classId != -1)
-		{
-			VectorLayer* vl = classLayers.at(classId);
-			assert(vl != nullptr);
-			CSBinding& cs = vl->cs;
-
-			DrawPrimitive* p;
-			{
-				std::lock_guard<std::mutex> guard(addPrimitiveMutex);
-				p = vl->addPrimitive(vl->color);
-			}
-
-			//BackPoint center;
-			//float r;
-			//getCircle(item->getMatrix(), center, r);
-			//BackPoint rb(center.x + r, center.y + r);
-			//BackPoint iglob = toGlob(cs, tileProv, diplsayToRealFactor, center);
-			//BackPoint globRb = toGlob(cs, tileProv, diplsayToRealFactor, rb);
-			//p->setCircle(iglob, globRb);
-
-
-			mcountor temp;
-			getCountour(item->getMatrix(), temp, true);
-			for (const auto& pm : temp)
-			{
-				auto point = bc::barvalue::getStatPoint(pm);
-
-				BackPixelPoint op = tileProv.tileToPreview(point.x, point.y); // To display
-				BackPoint iglob((static_cast<float>(op.x) + 0.5f), static_cast<float>(op.y) + 0.5f);
-
-				iglob = cs.toGlobal(iglob.x * diplsayToRealFactor, iglob.y * diplsayToRealFactor); // To real
-				p->addPoint(iglob);
-			}
-
-			return true;
-		}
-		else
-			return false;
-	}
-
-
-	//void getOffsertByTileIndex(uint tileIndex, uint& offX, uint& offY)
-	//{
-	//	int tilesInRow = getCon(reader->width(), tileSize);
-	//	offY = (tileIndex / tilesInRow) * tileSize;
-	//	offX = (tileIndex % tilesInRow) * tileSize;
-	//}
-
-	//uint getTileIndexByOffset(uint offX, uint offY)
-	//{
-	//	int tilesInRow = getCon(reader->width(), tileSize);
-	//	return (offY / tileSize) * tilesInRow + offX / tileSize;
-	//}
-
-
-	// BarcodeHolder threasholdLines(bc::Baritem* item)
-	// {
-	// 	BarcodeHolder vec;
-	// 	for (size_t i = 0; i < item->barlines.size(); ++i)
-	// 	{
-	// 		if (item->barlines[i]->len() < 10)
-	// 		{
-	// 			vec.lines.push_back(item->barlines[i]->clone());
-	// 		}
-	// 	}
-	// 	return vec;
-	// }
-
-	MMMAP<int, VectorLayer*> classLayers;
-	int addClassType(const BackString& name)
-	{
-		int classId = classCategs.addValue(name);
-		classifier.addClass(classId);
-		auto* layer = addClassLayer(classId);
-		layer->name = "Class: " + name;
-
-		saveProject();
-		return classId;
-	}
-
-	VectorLayer* addClassLayer(int classId, bool addToList = true)
-	{
-		auto* layer = addLayerData<VectorLayer>(ds.sysProj.getId());
-		layer->color = BackColor::random();
-		//layer->vecType = VectorLayer::VecType::circles;
-		layer->vecType = VectorLayer::VecType::polygons;
-		if (addToList)
-		{
-			layer->isSystem = true;
-			classLayers[classId] = layer;
-		}
-
-		return layer;
-	}
-
-	void changeClassName(int classId, const BackString& name)
-	{
-		classCategs.changeName(classId, name);
-	}
-
-	void removeClassType(int classId)
-	{
-		classCategs.remove(classId);
-		classifier.removeClass(classId);
-
-		auto claVec = classLayers.find(classId);
-		claVec->second->isSystem = false;
-		classLayers.erase(classId);
-	}
-
-	void removeLayer(int coreId)
-	{
-		ILayer* lay = layers.at(coreId);
-		if (!lay->isSystem)
-		{
-			layers.remove(coreId);
-		}
-	}
-
-	size_t addTrainData(int layerId, int classId, CachedObjectId srcItemId, BackImage* destIcon)
-	{
-		auto inLayer = getInTRaster<RasterLineLayer>(layerId);
-		assert(inLayer);
-		IRasterLayer* sourceLayer = getInRaster(inLayer->parentlayerId);
-		sourceLayer->setSubImage(0);
-
-		ItemHolderCache cached;
-		cached.openRead(inLayer->getCacheFilePath(getMeta()));
-
-		CurItemHolder item; // Caching item is raw, nit processed
-		cached.loadSpecific(srcItemId.tileId, &item);
-
-		BackImage* fromSourceImg = nullptr;
-		assert(srcItemId.vecId < item.getItemsCount());
-		auto line = item.getItem(srcItemId.vecId);
-		if (destIcon != nullptr && sourceLayer)
-		{
-			auto rect = bc::getBarRect(line->getMatrix());
-			auto tileProv = inLayer->prov.tileByIndex(srcItemId.tileId);
-			BackPixelPoint st = tileProv.tileToFull(rect.x, rect.y);
-			BackPixelPoint ed = tileProv.tileToFull(rect.right(), rect.botton());
-
-			float realFactor = inLayer->subToRealFactor / inLayer->prov.displayFactor; // sub -> display -> real
-			printf("Get rect (%d, %d) (%d, %d) with factor %f\n", st.x, st.y, ed.x + st.x, ed.y + st.y, realFactor);
-			ed = (ed - st) * realFactor;
-			st = st * realFactor;
-			printf("Get rect (%d, %d) (%d, %d)\n", st.x, st.y, ed.x + st.x, ed.y + st.y);
-			*destIcon = sourceLayer->getRect(st.x, st.y, ed.x, ed.y);
-			fromSourceImg = destIcon;
-		}
-		//rb->barlines[srcItemId.vecId] = nullptr;
-
-		assert(proj->classCategs.size() != 0);
-		return classifier.addData(classId, line, fromSourceImg);
-	}
-
-	void removeTrainData(int classId, int localId)
-	{
-		classifier.removeData(classId, localId);
 	}
 
 	RetLayers exeFilter(InOutLayer& iol, bc::ProcType type, int algNum)
@@ -1277,98 +1062,4 @@ public:
 	}
 };
 
-
-//bc::barlinevector geojson[3];
-
-using std::vector;
-
 Project* Project::proj = nullptr;
-using namespace bc;
-
-// ---------------------------
-
-
-
-// ---------------------------
-//
-//
-//bool needSkip(const Barscalar& scal) const
-//{
-//	return false; //scal > 10;
-//}
-
-static int getFid(int wid, int s)
-{
-	return (wid + s - 1) / s;
-}
-
-int normal(float val, int factor)
-{
-	return  static_cast<int>(val / factor);
-}
-
-void Project::readGeojson()
-{
-	//if (imgType == ReadType::Simple)
-	//{
-	//	return;
-	//}
-	BackJson object = jsonFromFile(getPath(BackPath::geojson));
-
-	BackJson features = object["features"];// .array();
-
-	//TiffReader* treader = dynamic_cast<TiffReader*>(reader);
-	//	openReader();
-	//	Size2 size = imgsrch.getTileSize();
-	for (size_t i = 0; i < features.size(); i++)
-	{
-		//auto arrcoors = features.at(i)["geometry"].object()["coordinates"].array();
-
-		// Send in format x, y, T
-		//QVector3D coord(arrcoors[0].toDouble(), arrcoors[1].toDouble(), 0);
-		//coord = treader->curSubImage->convertModelToRaster(coord);
-		//// Get in format x, T, y
-
-		//if (coord.x() < 0 || coord.z() < 0 || coord.x() >= reader->width() || coord.z() >=reader->height())
-		//	continue;
-
-//		int x = normal(coord.x(), u_displayFactor);
-//		int z = normal(coord.z(), u_displayFactor);
-//		coord.setY(widget->terra->getValue(x, z));
-
-//		widget->importedMakrers->addBoundy(coord, u_displayFactor);
-	}
-
-	//	widget->importedMakrers->updateBuffer();
-}
-
-
-void Project::readMyGeo(bool reinitY)
-{
-	//	QFile inputFile(getPath(BackPath::geojson));
-	//	if (!inputFile.open(QIODevice::ReadOnly))
-	//	{
-	//		return;
-	//	}
-	//
-	//	QTextStream in(&inputFile);
-	//	while (!in.atEnd())
-	//	{
-	//		BackString line = in.readLine();
-	//		auto splo = line.split(' ');
-	//		if (splo.size()!=3)
-	//			continue; // skip t K
-	//
-	//		QVector3D coord(splo[0].toFloat(), splo[1].toFloat(), splo[2].toFloat());
-	//
-	//		if (reinitY)
-	//		{
-	////			coord.setY(widget->terra->getValue(coord.x(), coord.z()));
-	//		}
-	//
-	////		widget->markers->addBoundy(coord, 1);
-	//	}
-	//	inputFile.close();
-
-	//	widget->markers->updateBuffer();
-}
