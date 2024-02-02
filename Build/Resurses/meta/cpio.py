@@ -46,7 +46,8 @@ def parseArgs(argv):
     # Загрузка данных из файла
     X = read_array_from_file(data_file)
     try:
-        jsonAsString = jsonAsString[1:-1]
+        if jsonAsString[0] != '{' and jsonAsString[-1] != '}':
+            jsonAsString = jsonAsString[1:-1]
         params = json.loads(jsonAsString)
     except Exception as e:
         print(f"ERROR: Str: {jsonAsString}\n {e}")

@@ -577,20 +577,25 @@ public:
 
 		printf("Start run for tile %d\n", tileProv.index);
 		//outLayer->addHolder(*holder, tileProv, filter);
-		for (size_t i = 0; i < holder.getItemsCount(); ++i)
+		if (outLayer->collectionToPredict == nullptr)
 		{
-			auto* item = holder.getRItem(i);
-			if (outLayer->passLine(item, filter))
+			for (size_t i = 0; i < holder.getItemsCount(); ++i)
 			{
-				if (addLine)
+				auto* item = holder.getRItem(i);
+				if (outLayer->passLine(item, filter))
 				{
 					outLayer->addLine(parentne, (int)i, item, tileProv);
 				}
-				else
+			}
+		}
+		else
+		{
+			for (size_t i = 0; i < holder.getItemsCount(); ++i)
+			{
+				auto* item = holder.getRItem(i);
+				if (outLayer->passLine(item, filter))
 				{
-					if (outLayer->collectionToPredict)
-						outLayer->collectionToPredict->addItem(*item);
-					//proj->predictForLayer(item, tileProv, outLayer->subToRealFactor);
+					outLayer->collectionToPredict->addItem(*item);
 				}
 			}
 		}

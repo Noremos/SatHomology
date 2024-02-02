@@ -15,10 +15,48 @@ import BarTypes;
 //};
 
 
-export class ICluster // : public IBffIO
+export class ICluster : public IClassItem // : public IBffIO
 {
 public:
-	virtual const bc::barvector& getMatrix() const = 0;
+	//virtual const bc::barvector& getMatrix() const = 0;
+
+	virtual size_t getId() const
+	{
+		return -1;
+	}
+
+	virtual size_t getParentId() const
+	{
+		return -1;
+	}
+	// virtual const bc::barlinevector& getLines() const = 0;
+
+	virtual void saveLoadState(StateBinFile::BinState*) 
+	{ }
+
+	virtual const size_t getMatrixSize() const
+	{
+		return getMatrix().size();
+	}
+
+	bc::barvalue getMatrValue(int id) const
+	{
+		return getMatrix()[id];
+	}
+
+	virtual int getDeath() const
+	{
+		return 0;
+	}
+	virtual Barscalar start() const
+	{
+		return 0;
+	}
+	virtual Barscalar end() const
+	{
+		return 0;
+	}
+
 	virtual ~ICluster()
 	{}
 };

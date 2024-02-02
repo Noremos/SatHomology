@@ -5,7 +5,6 @@ module;
 
 export module BarcodeChart;
 
-import CachedBarcode;
 import RasterLayers;
 
 
@@ -78,9 +77,9 @@ public:
 	ImColor pointColor = { 0.3f, 0.8f, 0.8f };
 	ImColor backgroundColor = {0.2f, 0.2f, 0.2f};
 
-	void drawGrapch(ImVec2 start, int width)
+	int drawGrapch(ImVec2 start, int height)
 	{
-		width = std::min(std::min(width, 200), (int)maxEnd);
+		int width = std::max(height, 200);// , (int)maxEnd);
 		ImVec2 end(start.x + width, start.y + width);
 		float ratio = static_cast<float>(width) / 255.f;
 		ImDrawList* list = ImGui::GetWindowDrawList();
@@ -97,12 +96,14 @@ public:
 
 			list->AddCircleFilled(sp, 3, pointColor);
 		}
+
+		return width;
 	}
 
-	void draw(bool disableDelete, DrawOptions options)
+	int draw(bool disableDelete, DrawOptions options)
 	{
 		if (deleted)
-			return;
+			return 0;
 
 		int margingX = 10;
 		int margingY = 20;
@@ -132,7 +133,7 @@ public:
 		if (ImGui::Button("D", {20, 40}))
 			deleted = true;
 		ImGui::EndDisabled();
-
+		int height = end.y - start.y;
 		if (options & WithBarcodes)
 		{
 			ImGui::SetCursorScreenPos(ImVec2(start.x, end.y));
@@ -160,8 +161,11 @@ public:
 
 		if (options & WithGraph)
 		{
-			drawGrapch(ImVec2(start.x + width, start.y), 200);
+			height = drawGrapch(ImVec2(start.x + width, start.y), end.y - start.y);
 		}
+
+		ImGui::SetCursorScreenPos(ImVec2(start.x, start.y + height));
+		return height;
 	}
 };
 

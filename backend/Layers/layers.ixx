@@ -207,7 +207,7 @@ export struct BarcodeProperies : public MLSettings
 		st.createBinaryMasks = true;
 		st.createGraph = true;
 		st.returnType = bc::ReturnType::barcode2d;
-
+		st.trueSort = *getBool("trueSort");
 		return st;
 	}
 	// ---
@@ -221,7 +221,6 @@ export struct BarcodeProperies : public MLSettings
 	int alg = 0; // 0 - raster; 1 - cloud
 	bool alg1UseHoles = false;
 	bool alg1IgnoreHeight = false;
-	bool trueSort = false;
 };
 
 
