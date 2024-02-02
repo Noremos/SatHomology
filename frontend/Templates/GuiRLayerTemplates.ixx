@@ -4,15 +4,15 @@ module;
 #include <future>
 
 export module GuiRLayersTemplates;
-import FrontendBind;
 import IItemModule;
 import GuiWidgets;
 import RasterLayers;
 import GuiLayers;
 import GuiOverlap;
 import DynamicSettings;
+import Exp;
+import CoreLoaders;
 
-GuiBackend backend;
 int maxThreadCount, minThreadCount;
 
 export struct GuiFilter
@@ -199,7 +199,7 @@ public:
 	void createBarcode(ILayerWorker& context)
 	{
 		grabSets();
-		RetLayers layerData = backend.proj->createCacheBarcode(context.iol, properties, filterInfo.getFilter());
+		RetLayers layerData = createCacheBarcode(context.iol, properties, filterInfo.getFilter());
 		context.setLayers(layerData, "barcode");
 	}
 	StepIntSlider tileSizeSlider, offsetSlider;
@@ -385,7 +385,7 @@ public:
 		if (ImGui::Button("Функция активации"))
 		{
 			//auto rets = proj->exeFilter(context.iol, 0);
-			auto rets = backend.exeFilter(context.iol, procCB.currentValue(), 0);
+			auto rets = exeFilter(context.iol, procCB.currentValue(), 0);
 			context.setLayers(rets, "filter");
 		}
 
@@ -393,7 +393,7 @@ public:
 		if (ImGui::Button("Квадратичная"))
 		{
 			//auto rets = proj->exeFilter(context.iol, 0);
-			auto rets = backend.exeFilter(context.iol, procCB.currentValue(), 1);
+			auto rets = exeFilter(context.iol, procCB.currentValue(), 1);
 			context.setLayers(rets, "new bar");
 		}
 
@@ -403,13 +403,13 @@ public:
 		if (ImGui::Button("Энергия"))
 		{
 			//auto rets = proj->exeFilter(context.iol, 0);
-			auto rets = backend.proj->exeEnergy(context.iol, procCB.currentValue(), startEnergy, true);
+			auto rets = exeEnergy(context.iol, procCB.currentValue(), startEnergy, true);
 			context.setLayers(rets, "new cells");
 		}
 		if (ImGui::Button("Энергия2"))
 		{
 			//auto rets = proj->exeFilter(context.iol, 0);
-			auto rets = backend.proj->exeEnergy(context.iol, procCB.currentValue(), startEnergy, false);
+			auto rets = exeEnergy(context.iol, procCB.currentValue(), startEnergy, false);
 			context.setLayers(rets, "new cells");
 		}
 		ImGui::Separator();
@@ -417,7 +417,7 @@ public:
 		if (ImGui::Button("3d"))
 		{
 			//auto rets = proj->exeFilter(context.iol, 0);
-			backend.exeFilter(context.iol, procCB.currentValue(), 3);
+			exeFilter(context.iol, procCB.currentValue(), 3);
 		}
 
 		if (ImGui::Button("GUI"))
@@ -436,7 +436,7 @@ public:
 			if (ImGui::Button("Run"))
 			{
 				TiledRasterGuiLayer<T>::grabSets();
-				auto rets = backend.exeGUI(context.iol, TiledRasterGuiLayer<T>::properties, filtere.getFilter());
+				auto rets = exeGUI(context.iol, TiledRasterGuiLayer<T>::properties, filtere.getFilter());
 
 				ImGui::CloseCurrentPopup();
 				context.setLayers(rets, "Разложить");

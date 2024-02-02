@@ -26,6 +26,7 @@ import MetadataIOCore;
 import BarTypes;
 import BarScalarModule;
 import RasterBarHolderRLayer;
+import CoreLoaders;
 // Todo.
 // 2 режима
 export class GuiBackend
@@ -67,26 +68,9 @@ public:
 		BackPathStr fullPath = path / name;
 		proj->setProjectPath(fullPath);
 		dropDirIfExists(proj->getPath(BackPath::metadata));
-		proj->loadImage(imgPath, 1);
+		loadImage(imgPath, 1);
 		proj->state = GuiState::Loaded;
 	}
-
-
-	RetLayers createCacheBarcode(InOutLayer& iol, const BarcodeProperies& propertices, IItemFilter* filter = nullptr)
-	{
-		//if (block) return {};
-		IRasterLayer* inLayer = Project::proj->getInRaster(iol);
-
-		RasterLineLayer* layer = Project::proj->addOrUpdateOut<RasterLineLayer>(iol, inLayer->cs.getProjId());
-		auto layers = layer->createCacheBarcode(inLayer, propertices, filter);
-
-		//u_algorithm = propertices.alg;
-		proj->saveProject();
-
-
-		return layers;
-	}
-
 
 	//RetLayers processRaster(InOutLayer& layer, IItemFilter* filter)
 	//{
@@ -95,24 +79,6 @@ public:
 
 	//	return proj->processCachedBarcode(layer, filter);
 	//}
-
-
-	RetLayers exeFilter(InOutLayer& layer, bc::ProcType type, int algNum)
-	{
-		if (!isLoaded())
-			return RetLayers();
-
-		return proj->exeFilter(layer, type, algNum);
-	}
-
-
-	RetLayers exeGUI(InOutLayer& layer, const BarcodeProperies& propertices, IItemFilter* filter)
-	{
-		if (!isLoaded())
-			return RetLayers();
-
-		return proj->exeGUI(layer, propertices, filter);
-	}
 
 	VectorLayer* addVectorLayer()
 	{
@@ -145,7 +111,7 @@ public:
 			}
 
 			newState = GuiState::Loaded;
-			layer = proj->loadImage(path, 1);
+			layer = loadImage(path, 1);
 		}
 
 

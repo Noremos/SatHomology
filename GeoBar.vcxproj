@@ -100,8 +100,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="backend\Algs\CachedBarcodeAlg.ixx" />
+    <ClCompile Include="backend\Algs\CoreLoaders.ixx" />
     <ClCompile Include="backend\Algs\Energy.ixx" />
+    <ClCompile Include="backend\Algs\Exp.ixx" />
     <ClCompile Include="backend\CachedBarcode.ixx" />
+    <ClCompile Include="backend\Classifer\Classifier.ixx" />
     <ClCompile Include="backend\Clusterizers\ConverctItem.ixx" />
     <ClCompile Include="backend\Clusterizers\ExteranlReader.ixx" />
     <ClCompile Include="backend\Clusterizers\MLSettings.ixx" />
@@ -121,6 +124,7 @@
     <ClCompile Include="backend\Settings.ixx" />
     <ClCompile Include="Bind\Common.cpp" />
     <ClCompile Include="Bind\MHashMap.ixx" />
+    <ClCompile Include="frontend\GuiITemPrevew.ixx" />
     <ClCompile Include="frontend\Layers\GuiBarHolderRLayers.ixx" />
     <ClCompile Include="frontend\Layers\GuiVectorLayers.ixx" />
     <ClCompile Include="frontend\Templates\GuiRLayerTemplates.ixx" />

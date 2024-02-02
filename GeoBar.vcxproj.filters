@@ -270,6 +270,18 @@
     <ClCompile Include="backend\Layers\RasterBarHolderRLeyer.ixx">
       <Filter>Backend\Impl</Filter>
     </ClCompile>
+    <ClCompile Include="backend\Classifer\Classifier.ixx">
+      <Filter>Backend\ML</Filter>
+    </ClCompile>
+    <ClCompile Include="frontend\GuiITemPrevew.ixx">
+      <Filter>GUI\WindowWidgets</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\Algs\Exp.ixx">
+      <Filter>Backend\Algs</Filter>
+    </ClCompile>
+    <ClCompile Include="backend\Algs\CoreLoaders.ixx">
+      <Filter>Backend</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="side\imgui\imgui_internal.h">

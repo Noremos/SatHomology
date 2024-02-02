@@ -260,6 +260,25 @@ int getCon(int total, int part)
 export using LFID = unsigned int;
 
 
+export struct InOutLayer
+{
+	int in;
+	int subImgIndex = 0;
+	int out;
+	bool skipOut = false;
+
+	bool skipOutput()
+	{
+		return skipOut;
+	}
+
+	bool isOutEmpty()
+	{
+		return out == -1 || in == out;
+	}
+};
+
+
 export template <class T>
 class LayersList
 {
