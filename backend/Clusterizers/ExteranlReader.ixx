@@ -6,12 +6,14 @@ module;
 #include <unistd.h>
 #endif
 
-#include "../../Bind/Common.h"
 #include <iostream>
+#include <string>
+#include <algorithm>
 
 export module ExteranlReader;
 
 import MLSettings;
+import BackBind;
 
 export BackString get_temp_file_path()
 {
@@ -19,7 +21,7 @@ export BackString get_temp_file_path()
 	char buffer[MAX_PATH];
 	GetTempPathA(MAX_PATH, buffer);
 	BackString temp_path(buffer);
-	return temp_path + "input_array.txt";
+	return temp_path.append("input_array.txt");
 #else
 	return "/tmp/input_array.txt";
 #endif
@@ -112,7 +114,7 @@ export bool exec(BackStringView cmd, std::vector<unsigned long>& assigments, int
 	}
 
 	outputString.resize(outputString.length() - 1); // Skip last '\n'
-	std::ifstream iss;
+	BackFileReader iss;
 	iss.open(outputString);
 	iss >> n;
 	printf("%d\n", n);

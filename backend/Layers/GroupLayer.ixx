@@ -4,12 +4,10 @@ module;
 #include <memory>
 #include <list>
 
-#include "../../Bind/Common.h"
 #include <cassert>
 
 export module GroupLayer;
 
-import IOCore;
 import LayersCore;
 
 export class GroupLayer : public ILayer
@@ -74,7 +72,7 @@ public:
 		return 0;
 	}
 
-	// Унаследовано через ILayer
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ ILayer
 	float displayWidth() const override
 	{
 		return 0.0f;

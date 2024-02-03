@@ -7,6 +7,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include <stdio.h>
+#include "../side/implot/implot.h"
 //#define GL_SILENCE_DEPRECATION
 //#if defined(IMGUI_IMPL_OPENGL_ES2)
 //#include <GLES2/gl2.h>
@@ -86,6 +87,7 @@ int main(int, char** argv)
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
+	ImPlot::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;	   // Enable Keyboard Controls
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;	  // Enable Gamepad Controls
@@ -167,8 +169,8 @@ int main(int, char** argv)
 	// Cleanup
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
+	ImPlot::DestroyContext();
 	ImGui::DestroyContext();
-
 	glfwDestroyWindow(window);
 	glfwTerminate();
 

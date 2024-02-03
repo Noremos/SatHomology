@@ -3,8 +3,9 @@ module;
 
 export module DynamicSettings;
 
-import IOCore;
 import MLSettings;
+import BackTypes;
+import BackBind;
 
 
 static int MyResizeCallback(ImGuiInputTextCallbackData* data)
@@ -21,7 +22,7 @@ static int MyResizeCallback(ImGuiInputTextCallbackData* data)
 
 // Note: Because ImGui:: is a namespace you would typically add your own function into the namespace.
 // For example, you code may declare a function 'ImGui::InputText(const char* label, MyString* my_str)'
-static bool MyInputText(const char* label, BackString* my_str, const ImVec2& size = ImVec2(0, 0), ImGuiInputTextFlags flags = 0)
+bool MyInputText(const char* label, BackString* my_str, const ImVec2& size = ImVec2(0, 0), ImGuiInputTextFlags flags = 0)
 {
 	IM_ASSERT((flags & ImGuiInputTextFlags_CallbackResize) == 0);
 	return ImGui::InputText(label, (char*)my_str->c_str(), my_str->length(), flags | ImGuiInputTextFlags_CallbackResize, MyResizeCallback, (void*)my_str);

@@ -2,6 +2,7 @@ module;
 #include "DrawCommon.h"
 
 #include <numeric>
+#include <algorithm>
 
 export module GuiLayers;
 
@@ -10,11 +11,11 @@ import ProjectModule;
 import BarcodeModule;
 import GuiWidgets;
 import GuiOverlap;
-import IOCore;
 import VectorLayers;
 import CSBind;
 import Platform;
 import DrawUtils;
+import BackBind;
 //import LuaStates;
 
 //import FrontendBind;
@@ -308,7 +309,8 @@ public:
 	virtual void toGuiData()
 	{
 		copiedId = data->getSysId();
-		strId = data->name + intToStr(copiedId);
+		strId = data->name;
+		strId += intToStr(copiedId);
 		projSet.setup(data->cs);
 	}
 
@@ -366,7 +368,8 @@ public:
 			return;
 
 		data->name = name;
-		strId = name + intToStr(data->id);
+		strId = name;
+		strId += intToStr(data->id);
 	}
 
 	virtual ~GuiLayerData()
@@ -608,7 +611,7 @@ public:
 		int pointsVisible = 0;
 		bool inside = false;
 		std::vector<ImVec2> displayPoints;
-		int n = points.size();
+		int n = (int)points.size();
 		for (int i = 0, j = n - 1; i < n; j = i++)
 		{
 			const BackPoint& a = points[i];

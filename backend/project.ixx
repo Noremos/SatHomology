@@ -8,9 +8,6 @@ module;
 #include <mutex>
 //#include <iostream>
 
-#include "../Bind/Common.h"
-
-
 //#include "../side/Barcode/PrjBarlib/include/CellEater.h"
 
 
@@ -19,12 +16,12 @@ export module ProjectModule;
 import Platform;
 
 import ImgReader;
-import IOCore;
 import LayersCore;
 import JsonCore;
-import MetadataIOCore;
+import MetadataCoreIO;
 import CSBind;
 import Settings;
+import BackBind;
 
 
 template<class T>
@@ -275,9 +272,7 @@ public:
 public:
 	void setProjectPath(const BackPathStr& path, bool recreateMeta = false)
 	{
-		std::filesystem::path dir = path;
-		dir = std::filesystem::absolute(dir).parent_path();
-		projectPath = dir;
+		// projectPath = std::filesystem::absolute(path).parent_path();
 
 		settupMeta(recreateMeta);
 

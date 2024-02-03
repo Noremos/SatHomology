@@ -83,17 +83,17 @@ export module LuaLayers;
 //			"clear", &VectorLayer::clear
 //		);
 //
-//		state.new_usertype<MatrImg>("BackImage",
-//			"resize", &MatrImg::resize,
-//			"getRect", &MatrImg::getRect,
-//			"set", &MatrImg::set,
-//			"get", &MatrImg::get,
-//			"channels", &MatrImg::channels,
-//			"min", &MatrImg::min,
-//			"max", &MatrImg::max,
-//			"wid", &MatrImg::wid,
-//			"hei", &MatrImg::hei,
-//			"fill", &MatrImg::fill
+//		state.new_usertype<BackImage>("BackImage",
+//			"resize", &BackImage::resize,
+//			"getRect", &BackImage::getRect,
+//			"set", &BackImage::set,
+//			"get", &BackImage::get,
+//			"channels", &BackImage::channels,
+//			"min", &BackImage::min,
+//			"max", &BackImage::max,
+//			"wid", &BackImage::wid,
+//			"hei", &BackImage::hei,
+//			"fill", &BackImage::fill
 //		);
 //
 //		state.new_usertype<RasterLayer>("RasterLayer",

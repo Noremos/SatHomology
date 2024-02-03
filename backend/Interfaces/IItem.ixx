@@ -1,13 +1,15 @@
 module;
-#include "../../Bind/Common.h"
 #include <assert.h>
 #include <functional>
+#include <vector>
+#include <memory>
 
 export module IItemModule;
 
 import BarScalarModule;
 import BarTypes;
-import MetadataIOCore;
+import MetadataCoreIO;
+import BackBind;
 
 export class IClassItem : public IBffIO
 {
@@ -359,7 +361,7 @@ public:
 	int idCounter = 0;
 
 	template <typename Item, typename Holder, typename ML>
-	int Register(std::string_view name)
+	int Register(BackStringView name)
 	{
 		itemCreators.push_back([]() { return std::make_unique<Item>(); });
 		holderCreators.push_back([]() { return std::make_unique<Holder>(); });
@@ -375,7 +377,7 @@ class GlobalRegister
 {
 	int id;
 public:
-	GlobalRegister(TFactory& factory, std::string_view name)
+	GlobalRegister(TFactory& factory, BackStringView name)
 	{
 		id = factory.Register<TClass, TClassHolder, TML>(name);
 	}

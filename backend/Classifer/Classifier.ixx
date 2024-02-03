@@ -2,19 +2,19 @@ module;
 #include <mutex>
 #include <cassert>
 #include <unordered_map>
-#include "../../Bind/Common.h"
 
 export module ClassifierCore;
-import IItemModule; // 
+import IItemModule; //
 import Classifiers;
 import LayersCore;
 import TrainIO;
 import GeoprocessorModule;
 import VectorLayers;
 import RasterBarHolderRLayer;
-import ProjectModule;
-import IOCore; // BackImage
+import ProjectModule; // BackImage
 import CSBind; // csbind
+import BackBind;
+import MatrModule;
 
 // BarClassses
 import ClassifierInterface;

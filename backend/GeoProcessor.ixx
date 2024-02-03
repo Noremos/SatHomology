@@ -7,15 +7,13 @@ module;
 #include <ranges>
 #include <unordered_set>
 
-// My
-#include "../Bind/Common.h"
-
 export module GeoprocessorModule;
 
 import Platform;
-import IOCore;
 import BarTypes;
 import MHashMap;
+import BackBind;
+import MatrModule;
 
 
 using uint = unsigned int;

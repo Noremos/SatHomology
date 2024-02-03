@@ -2,12 +2,11 @@
 #include "Application.h"
 #include "DrawCommon.h"
 
-#include "../Bind/Common.h"
-
 #include <cmath>
 #include <initializer_list>
 #include <memory>
 #include <future>
+#include <iostream>
 
 //#include "sol3/sol.hpp"
 //
@@ -21,14 +20,15 @@ import BarcodeModule;
 import GuiOverlap;
 import GuiClassifierModule;
 import GuiWidgets;
-import IOCore;
 import VectorLayers;
 import GuiVectorLayers;
 import ProjectModule;
 import GuiRasterLayers;
 import GuiBarHolderLayer;
 import Settings;
+import BackBind;
 //import Lua;
+
 
 
 /// Widget for raster layers

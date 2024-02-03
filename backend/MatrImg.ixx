@@ -12,7 +12,7 @@ import BarScalarModule;
 using uchar = unsigned char;
 
 
-export class MatrImg : public bc::DatagridProvider
+class BackImage : public bc::DatagridProvider
 {
 public:
 	void fill(const Barscalar &s)
@@ -155,12 +155,12 @@ protected:
 
 
 public:
-	MatrImg(int width = 1, int height = 1, int chnls = 1, BarType btype = BarType::NONE)
+	BackImage(int width = 1, int height = 1, int chnls = 1, BarType btype = BarType::NONE)
 	{
 		reinit(width, height, chnls, btype);
 	}
 
-	MatrImg(int width, int height, BarType btype)
+	BackImage(int width, int height, BarType btype)
 	{
 		int chnls = 1;
 		switch (btype)
@@ -185,7 +185,7 @@ public:
 		reinit(width, height, chnls, btype);
 	}
 
-	MatrImg(int width, int height, int chnls, uchar *_data, bool copy = true, bool deleteData = true)
+	BackImage(int width, int height, int chnls, uchar *_data, bool copy = true, bool deleteData = true)
 	{
 		if (copy)
 		{
@@ -196,7 +196,7 @@ public:
 	}
 
 
-	MatrImg(int width, int height, int chnls, BarType type, uchar *_data, bool copy = true, bool deleteData = true)
+	BackImage(int width, int height, int chnls, BarType type, uchar *_data, bool copy = true, bool deleteData = true)
 	{
 		if (copy)
 		{
@@ -219,10 +219,10 @@ public:
 		type = BarType::INT32_1;
 	}
 
-	void assign(const MatrImg &copy) { assignCopyOf(copy); }
+	void assign(const BackImage &copy) { assignCopyOf(copy); }
 
 	// move
-	MatrImg(MatrImg &&moveImg) noexcept
+	BackImage(BackImage &&moveImg) noexcept
 	{
 		assignInstanceOf(moveImg);
 		moveImg._deleteData = false;
@@ -230,7 +230,7 @@ public:
 		moveImg.type = BarType::NONE;
 	}
 
-	MatrImg &operator=(MatrImg &&moveImg) noexcept
+	BackImage &operator=(BackImage &&moveImg) noexcept
 	{
 		if (&moveImg != this)
 		{
@@ -246,13 +246,13 @@ public:
 // copy
 
 
-	MatrImg(const MatrImg &copyImg)
+	BackImage(const BackImage &copyImg)
 	{
 		assignCopyOf(copyImg);
 	}
 
 
-	MatrImg(const MatrImg &copyImg, bool copy)
+	BackImage(const BackImage &copyImg, bool copy)
 	{
 		if (copy)
 			assignCopyOf(copyImg);
@@ -261,7 +261,7 @@ public:
 	}
 
 	//Перегрузка оператора присваивания
-	MatrImg &operator=(const MatrImg &drob)
+	BackImage &operator=(const BackImage &drob)
 	{
 		if (&drob != this)
 			assignCopyOf(drob);
@@ -270,7 +270,7 @@ public:
 	}
 
 
-	virtual ~MatrImg() { valDelete(); }
+	virtual ~BackImage() { valDelete(); }
 
 	uchar *getData() const { return data; }
 
@@ -596,7 +596,7 @@ public:
 		}
 	}
 
-	void assignCopyOf(const MatrImg& copy)
+	void assignCopyOf(const BackImage& copy)
 	{
 		setMetadata(copy._wid, copy._hei, copy._channels);
 		valAssignCopyOf(copy.data);
@@ -605,7 +605,7 @@ public:
 		this->type = copy.type;
 	}
 
-	void assignInstanceOf(const MatrImg& inst)
+	void assignInstanceOf(const BackImage& inst)
 	{
 		setMetadata(inst._wid, inst._hei, inst._channels);
 		valAssignInstanceOf(inst.data);
@@ -654,12 +654,12 @@ public:
 	}
 
 
-	MatrImg getRect(int stX, int stRow, int wid, int hei)
+	BackImage getRect(int stX, int stRow, int wid, int hei)
 	{
 		const int typeSize = TSize; // channels * scalar size
 		const int destBytesSize = wid * typeSize;
 
-		MatrImg r(wid, hei, _channels, type);
+		BackImage r(wid, hei, _channels, type);
 		for (int y = 0; y < hei; y++)
 		{
 			const int srcRowOffset = ((y + stRow) * _wid + stX) * typeSize;
@@ -670,3 +670,8 @@ public:
 		return r;
 	}
 };
+
+export
+{
+	using BackImage = BackImage;
+}

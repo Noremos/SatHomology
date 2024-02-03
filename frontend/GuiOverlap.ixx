@@ -1,9 +1,9 @@
 module;
+#include <cmath>
 #include "DrawCommon.h"
 
 export module GuiOverlap;
 
-import IOCore;
 import LayersCore;
 import GuiWidgets;
 import BarScalarModule;

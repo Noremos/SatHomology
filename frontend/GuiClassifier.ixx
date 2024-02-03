@@ -1,9 +1,9 @@
 module;
+#include <algorithm>
 #include "DrawCommon.h"
 
 export module GuiClassifierModule;
 
-import IOCore;
 import Platform;
 import GuiWidgets;
 import TrainIO;

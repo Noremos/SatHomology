@@ -754,7 +754,7 @@ public:
 		selectedProjId = -1;
 		for (int i = 0; i < projections.size(); i++)
 		{
-			if (projections[i].substr(5) == projectionName)
+			if (StrEquals(projections[i].substr(5), projectionName))
 			{
 				selectedProjId = i;
 				break;

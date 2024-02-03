@@ -1,5 +1,4 @@
 module;
-#include "../Bind/Common.h"
 #include <vector>
 #include <memory>
 
@@ -7,6 +6,7 @@ export module EnergyModule;
 
 import BarcodeModule;
 import BarTypes;
+import BackBind;
 
 export class EnetrgyBarcode : public bc::BarcodeCreator
 {

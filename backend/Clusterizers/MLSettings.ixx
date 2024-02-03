@@ -1,9 +1,11 @@
 module;
-#include "../../Bind/Common.h"
+#include <cstdint>
+#include <vector>
 
 export module MLSettings;
 
 import JsonCore;
+import BackBind;
 
 export struct OptionEnum
 {
@@ -253,7 +255,7 @@ public:
 	{
 		for (auto& value : values)
 		{
-			if (value.name == name)
+			if (StrEquals(value.name, name))
 			{
 				return &value.data.b;
 			}
@@ -266,7 +268,7 @@ public:
 	{
 		for (auto& value : values)
 		{
-			if (value.name == name)
+			if (StrEquals(value.name, name))
 			{
 				return value.data.s;
 			}
@@ -279,7 +281,7 @@ public:
 	{
 		for (auto& value : values)
 		{
-			if (value.name == name)
+			if (StrEquals(value.name, name))
 			{
 				return &value.data.i;
 			}
@@ -292,7 +294,7 @@ public:
 	{
 		for (auto& value : values)
 		{
-			if (value.name == name)
+			if (StrEquals(value.name, name))
 			{
 				return &value.data.d;
 			}
@@ -304,7 +306,7 @@ public:
 	{
 		for (auto& value : values)
 		{
-			if (value.name == name)
+			if (StrEquals(value.name, name))
 			{
 				return value.data.e->getSelectedName();
 			}

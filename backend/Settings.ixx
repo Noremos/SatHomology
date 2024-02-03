@@ -4,7 +4,7 @@ module;
 
 export module Settings;
 
-import MetadataIOCore;
+import MetadataCoreIO;
 
 
 const char* const jsn_displayFacto = "step";

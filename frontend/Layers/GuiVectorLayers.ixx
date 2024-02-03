@@ -1,5 +1,4 @@
 module;
-#include "../../Bind/Common.h"
 #include "../DrawCommon.h"
 
 export module GuiVectorLayers;

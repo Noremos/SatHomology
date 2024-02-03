@@ -6,7 +6,6 @@ module;
 #include <vector>
 #include <assert.h>
 
-#include "../../Bind/Common.h"
 
 export module Classifiers;
 
@@ -14,7 +13,6 @@ import BarcodeModule;
 import IItemModule;
 import ClassifierInterface;
 
-import IOCore;
 import Platform;
 
 import TrainIO;
@@ -575,6 +573,6 @@ public:
 };
 
 
-GlobalClassRegister<BarlineClass, BaritemHolder, barclassificator> a("Линии");
-GlobalClassRegister<BettylineClass, BettyItemHolder, BettyClassificator> b("Бэтти");
+GlobalClassRegister<BarlineClass, BaritemHolder, barclassificator> a("пїЅпїЅпїЅпїЅпїЅ");
+GlobalClassRegister<BettylineClass, BettyItemHolder, BettyClassificator> b("пїЅпїЅпїЅпїЅпїЅ");
 //export int fyBettyClasssifier = GlobalRegister<BettylineClass, BettyItemHolder, BettyClassificator>().getId();

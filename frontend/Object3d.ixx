@@ -8,17 +8,15 @@ module;
 
 #include <fstream> // for std::filebuf
 #include <iterator> // for std::{i,o}streambuf_iterator
-#include <filesystem>
 #include <iostream>
 
-#include "../Bind/Common.h"
 #include "fast_float.h"
 
 
 export module Obejct3DModule;
 import ImgReader;
-import IOCore;
 import BackTypes;
+import BackBind;
 
 
 typedef unsigned char uchar;

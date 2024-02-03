@@ -53,6 +53,9 @@
     <Filter Include="Backend\Algs">
       <UniqueIdentifier>{15b99d3b-4e80-4757-855a-04fee3c4c59e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GUI\imgui\Plot">
+      <UniqueIdentifier>{3340dc17-e495-40cc-92d9-e997e485aab2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="side\imgui\imgui.cpp">
@@ -105,9 +108,6 @@
     </ClCompile>
     <ClCompile Include="frontend\main.cpp">
       <Filter>GUI\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Bind\CoreIO.ixx">
-      <Filter>Backend\Bind</Filter>
     </ClCompile>
     <ClCompile Include="Bind\Side.ixx">
       <Filter>Backend\Bind</Filter>
@@ -167,9 +167,6 @@
       <Filter>Backend\Impl</Filter>
     </ClCompile>
     <ClCompile Include="backend\CSBind.ixx">
-      <Filter>Backend\Bind</Filter>
-    </ClCompile>
-    <ClCompile Include="Bind\Common.cpp">
       <Filter>Backend\Bind</Filter>
     </ClCompile>
     <ClCompile Include="Bind\MHashMap.ixx">
@@ -282,6 +279,18 @@
     <ClCompile Include="backend\Algs\CoreLoaders.ixx">
       <Filter>Backend</Filter>
     </ClCompile>
+    <ClCompile Include="side\implot\implot.cpp">
+      <Filter>GUI\imgui\Plot</Filter>
+    </ClCompile>
+    <ClCompile Include="side\implot\implot_demo.cpp">
+      <Filter>GUI\imgui\Plot</Filter>
+    </ClCompile>
+    <ClCompile Include="side\implot\implot_items.cpp">
+      <Filter>GUI\imgui\Plot</Filter>
+    </ClCompile>
+    <ClCompile Include="Bind\Common.ixx">
+      <Filter>Backend\Bind</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="side\imgui\imgui_internal.h">
@@ -311,9 +320,6 @@
     <ClInclude Include="frontend\Application.h">
       <Filter>GUI\Core</Filter>
     </ClInclude>
-    <ClInclude Include="Bind\Common.h">
-      <Filter>Backend\Bind</Filter>
-    </ClInclude>
     <ClInclude Include="side\imconfig.h" />
     <ClInclude Include="side\GuiCodeEditor.h">
       <Filter>GUI\WindowWidgets</Filter>
@@ -326,6 +332,12 @@
     </ClInclude>
     <ClInclude Include="side\kde.h">
       <Filter>Side</Filter>
+    </ClInclude>
+    <ClInclude Include="side\implot\implot.h">
+      <Filter>GUI\imgui\Plot</Filter>
+    </ClInclude>
+    <ClInclude Include="side\implot\implot_internal.h">
+      <Filter>GUI\imgui\Plot</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

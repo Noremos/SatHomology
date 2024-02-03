@@ -1,17 +1,18 @@
 ﻿ module;
- #include "Common.h"
  #include <iostream>
 
 #include <json/json.h>
 
- export module JsonCore;
+export module JsonCore;
 
- export using BackJson = Json::Value;
- export using JsonObject = BackJson;
- export using JsonArray = BackJson;
+import BackBind;
+
+export using BackJson = Json::Value;
+export using JsonObject = BackJson;
+export using JsonArray = BackJson;
 
 
- export BackJson jsonFromFile(const BackPathStr& path)
+export BackJson jsonFromFile(const BackPathStr& path)
  {
 	BackJson temp;
  	BackFileReader file;
@@ -27,7 +28,7 @@
  	return temp;
  }
 
- export void jsonToFile(const BackJson& json, const BackPathStr& path)
+export void jsonToFile(const BackJson& json, const BackPathStr& path)
  {
  	BackFileWriter file;
  	file.open(path, std::ios::trunc);

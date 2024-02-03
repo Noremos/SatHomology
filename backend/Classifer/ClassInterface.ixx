@@ -1,21 +1,23 @@
 module;
 
 #include <cassert>
+#include <sstream>
+#include <vector>
 
-#include "../../Bind/Common.h"
 
 export module ClassifierInterface;
 // import std.core;
 
-import IOCore;
 import Platform;
 
 import BarcodeModule;
 
-import MetadataIOCore;
+import MetadataCoreIO;
 import TrainIO;
 import MHashMap;
 import IItemModule;
+import BackBind;
+import MatrModule;
 
 
 // Classifer

@@ -1,16 +1,18 @@
 module;
 #include <cassert>
+#include <iostream>
+#include <vector>
+
 #ifdef GEOPROJ
 #include <proj.h>
 #endif
 
-#include "../Bind/Common.h"
 #include <sqlite3.h>
 
 export module CSBind;
 
-import MetadataIOCore;
-import IOCore;
+import MetadataCoreIO;
+import BackBind;
 
 #ifdef GEOPROJ
 
@@ -167,7 +169,7 @@ public:
 	auto rc = sqlite3_open_v2((Variables::metaPath / "proj.sqlite").string().c_str(), &db, SQLITE_OPEN_READONLY, NULL);
 		if (rc != SQLITE_OK)
 		{
-			fprintf(stderr, "������ ��������/�������� ��: %s\n", sqlite3_errmsg(db));
+			std::cerr << "������ ��������/�������� ��: " << sqlite3_errmsg(db) << std::endl;
 			return NULL;
 		}
 

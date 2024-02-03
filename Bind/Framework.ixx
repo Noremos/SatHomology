@@ -1,7 +1,6 @@
 module;
 
 #include <assert.h>
-#include "../Bind/Common.h"
 
 // Side
 #include "PortFileDialog.h"
@@ -10,9 +9,11 @@ module;
 #include "fpng/fpng.h"
 
 export module Platform;
+
+import BackBind;
 import SideBind;
-import IOCore;
 import BackTypes;
+import MatrModule;
 
 export using MemImgData = std::vector<uint8_t>;
 export
@@ -93,7 +94,7 @@ void imwrite(const BackPathStr& path, const BackImage& mat)
 BackImage imreadFromMemory(const uchar* data, size_t size)
 {
 	int width, height, chls;
-	unsigned char* image_data = stbi_load_from_memory(data, size, & width, &height, &chls, 0);
+	unsigned char* image_data = stbi_load_from_memory(data, size, &width, &height, &chls, 0);
 	if (image_data == NULL)
 		return BackImage(0, 0, 0, NULL, false, false);
 

@@ -3,16 +3,14 @@ module;
 #include <unordered_set>
 #include <algorithm>
 
-#include "../../Bind/Common.h"
 
 export module VectorLayers;
 //import std.core;
 import LayersCore;
 
-import IOCore;
 import Platform;
 
-import MetadataIOCore;
+import MetadataCoreIO;
 import StateBinIO;
 
 using LayerMetaProvider = MetadataProvider;
@@ -235,12 +233,7 @@ public:
 		json[json.length() - 1] = ']';
 		json += "}";
 
-		std::ofstream file(savePath, std::ios::trunc);
-		if (file.is_open())
-		{
-			file << json;
-			file.close();
-		}
+		WriteFile(savePath, json);
 	}
 
 	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder)

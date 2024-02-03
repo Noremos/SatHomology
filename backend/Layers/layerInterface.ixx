@@ -4,18 +4,18 @@ module;
 #include <memory>
 #include <list>
 
-#include "../../Bind/Common.h"
 #include <cassert>
 
 export module LayersCore;
 
-import IOCore;
 import BarTypes;
 import Platform;
 import JsonCore;
-import MetadataIOCore;
+import MetadataCoreIO;
 import CSBind;
 import MHashMap;
+import BackBind;
+import MatrModule;
 
 export const int DEF_TILE_SIZE = 1000;
 export const int DEF_TILE_OFFSET = 300;
@@ -471,7 +471,7 @@ public:
 	BackString getMetaLayerName()
 	{
 		BackString name = intToStr(id);
-		return name + "_layer";
+		return name.append("_layer");
 	}
 
 	MetadataProvider getLayerMeta(const MetadataProvider& metaFolder)

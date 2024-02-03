@@ -7,9 +7,7 @@ module;
 #include <cassert>
 #include <iostream>
 #include <cmath>
-
-#include "../../Bind/Common.h"
-//#include "../../side/KmeansPlusPlus/kmeansPlusPlus.h"
+#include <algorithm>
 
 export module ConvertItem;
 
@@ -17,6 +15,7 @@ import ClusterInterface;
 import TreeSignClass;
 import ExteranlReader;
 import Platform;
+import BackBind;
 
 
 
@@ -71,6 +70,15 @@ public:
 		path =   std::move(other.path);
 	}
 
+	Barscalar start() const override
+	{
+		return path[0].x;
+	}
+
+	Barscalar end() const override
+	{
+		return path[0].y;
+	}
 
 private:
 };
@@ -158,11 +166,11 @@ public:
 	void convert(Landscape& landscape)
 	{
 		landscape.sort();
-		// По birth
+		// пїЅпїЅ birth
 		for (size_t i = 0; i < landscape.size(); i++)
 		{
 			auto& line = landscape.get(i);
-			
+
 			float start = line.getStart();
 			float middle = line.getMiddle();
 			float h = line.getHeight();
@@ -170,12 +178,12 @@ public:
 			float minLength = 0;
 
 			//std::vector<landres> landPath = { {start, 0}, {middle, h} };
-			
+
 			Base::items.push_back({});
 			ConvertClass& cl = Base::items.back();
 			//cl.matrix = line.matrix;
 
-			int startI = 0;
+			size_t startI = 0;
 
 			size_t curI = i;
 			while (true)
@@ -192,7 +200,7 @@ public:
 						{
 							if (val.value >= end)
 								break;
-							
+
 							cl.matrix.push_back(val);
 						}
 						break;
@@ -306,25 +314,25 @@ public:
 		return n;
 	}
 
-	//// Функция для выполнения алгоритма K-means
+	//// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ K-means
 	//void kmeans(const std::vector<Point>& data, int k)
 	//{
-	//	// Инициализация центроидов
+	//	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	//	std::vector<Point> centroids;
 	//	for (int i = 0; i < k; ++i) {
 	//		centroids.push_back(data[i]);
 	//	}
 
-	//	// Присваивание точек к ближайшим центроидам и пересчет центроидов
+	//	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	//	bool centroidsChanged = true;
 	//	while (centroidsChanged)
 	//	{
 	//		centroidsChanged = false;
 
-	//		// Список кластеров с точками
+	//		// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	//		std::vector<std::vector<Point>> clusters(k);
 
-	//		// Присваивание точек к ближайшим центроидам
+	//		// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	//		for (const auto& point : data) {
 	//			double minDistance = std::numeric_limits<double>::max();
 	//			int closestCentroid = 0;
@@ -341,7 +349,7 @@ public:
 	//			clusters[closestCentroid].push_back(point);
 	//		}
 
-	//		// Пересчет центроидов
+	//		// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	//		for (int i = 0; i < k; ++i)
 	//		{
 	//			double sumX = 0.0;
@@ -367,9 +375,9 @@ public:
 	//		}
 	//	}
 
-	//	// Вывод результатов
+	//	// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	//	for (int i = 0; i < k; ++i) {
-	//		std::cout << "Кластер " << i + 1 << " содержит точки:";
+	//		std::cout << "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ " << i + 1 << " пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ:";
 
 	//		for (const auto& point : clusters[i]) {
 	//			std::cout << " (" << point.x << ", " << point.y << ")";
@@ -386,7 +394,7 @@ public:
 		const ConvertCollection& allItems = dynamic_cast<const ConvertCollection&>(iallItems);
 
 		BackString filePath = get_temp_file_path();
-		std::ofstream tempFile(filePath, std::ofstream::out | std::ofstream::trunc);
+		BackFileWriter tempFile(filePath, BackFileWriter::out | BackFileWriter::trunc);
 		if (!tempFile.is_open())
 		{
 			std::cerr << "Unable to open temporary file for writing." << std::endl;
@@ -401,19 +409,19 @@ public:
 			{
 				tempFile << num.getLength() << " ";
 			}
-			tempFile.seekp(-1, tempFile.cur); // Удаляем последнюю запятую
+			tempFile.seekp(-1, tempFile.cur); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 			tempFile << std::endl;
 
 		}
 		tempFile.close();
 
 
-		//// Функция для вычисления Евклидового расстояния между двумя точками
-		//double euclideanDistance(const Point & p1, const Point & p2) {
+		//// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+		//double euclideanDistance(const Point& p1, const Point& p2) {
 		//	return std::sqrt(std::pow(p2.x - p1.x, 2) + std::pow(p2.y - p1.y, 2));
 		//}
 
-		// Пример данных
+		// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 		//kmeans(data, k);
 
 		//return 0;

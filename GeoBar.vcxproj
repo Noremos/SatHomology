@@ -122,7 +122,7 @@
     <ClCompile Include="backend\Layers\VectorLayers.ixx" />
     <ClCompile Include="backend\CSBind.ixx" />
     <ClCompile Include="backend\Settings.ixx" />
-    <ClCompile Include="Bind\Common.cpp" />
+    <ClCompile Include="Bind\Common.ixx" />
     <ClCompile Include="Bind\MHashMap.ixx" />
     <ClCompile Include="frontend\GuiITemPrevew.ixx" />
     <ClCompile Include="frontend\Layers\GuiBarHolderRLayers.ixx" />
@@ -159,7 +159,6 @@
     <ClCompile Include="backend\SimpleImgReader.ixx" />
     <ClCompile Include="backend\BackTypes.ixx" />
     <ClCompile Include="backend\TrainData.ixx" />
-    <ClCompile Include="Bind\CoreIO.ixx" />
     <ClCompile Include="Bind\Framework.ixx" />
     <ClCompile Include="Bind\Json.ixx" />
     <ClCompile Include="Bind\Side.ixx" />
@@ -179,6 +178,9 @@
     <ClCompile Include="frontend\Viewer3d.ixx">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="side\implot\implot.cpp" />
+    <ClCompile Include="side\implot\implot_demo.cpp" />
+    <ClCompile Include="side\implot\implot_items.cpp" />
     <ClCompile Include="side\sago\platform_folders.cpp" />
     <ClCompile Include="backend\Clusterizers\KmeansClassifer.ixx" />
   </ItemGroup>
@@ -196,10 +198,11 @@
     <ClCompile Include="backend\MatrImg.ixx">
       <FileType>Document</FileType>
     </ClCompile>
-    <ClInclude Include="Bind\Common.h" />
     <ClInclude Include="frontend\Application.h" />
     <ClInclude Include="frontend\FrontTypes.h" />
     <ClInclude Include="side\IconsFontAwesome5.h" />
+    <ClInclude Include="side\implot\implot.h" />
+    <ClInclude Include="side\implot\implot_internal.h" />
     <ClInclude Include="side\kde.h" />
     <ClInclude Include="side\PortFileDialog.h" />
     <ClInclude Include="side\stb_image.h" />

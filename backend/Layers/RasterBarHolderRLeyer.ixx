@@ -15,13 +15,12 @@ module;
 #ifdef _WIN32
 #include <windows.h>
 #endif
-#include "../../Bind/Common.h"
 
 export module RasterBarHolderRLayer;
 
 import LayersCore;
 import RasterLayers;
-import MetadataIOCore;
+import MetadataCoreIO;
 import IItemModule;
 import GeoprocessorModule;
 import Settings;

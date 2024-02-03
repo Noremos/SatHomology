@@ -1,7 +1,8 @@
 ﻿module;
 
-#include "../../Bind/Common.h"
 #include <cassert>
+#include <algorithm>
+#include <string>
 
 export module Exp;
 import LayersCore;
@@ -15,7 +16,8 @@ import Classifiers;
 import GeoprocessorModule;
 import EnergyModule;
 import IItemModule;
-import IOCore;
+import BackBind;
+import MatrModule;
 
 
 class TreeWalk
@@ -181,8 +183,8 @@ void ResizeAspect(BackSize& size, const BackSize maxSize)
 	double aspect_ratio = static_cast<float>(size.wid) / size.hei;
 	double max_aspect_width = static_cast<float>(maxSize.hei) * aspect_ratio;
 	double max_aspect_height = static_cast<float>(maxSize.wid) / aspect_ratio;
-	size.wid = (int)MIN(maxSize.wid, max_aspect_width);
-	size.hei = (int)MIN(maxSize.hei, max_aspect_height);
+	size.wid = (int)std::min((double)maxSize.wid, max_aspect_width);
+	size.hei = (int)std::min((double)maxSize.hei, max_aspect_height);
 }
 
 
@@ -212,7 +214,7 @@ void getMod(BackPixelPoint& start, BackPixelPoint& end, BackPixelPoint p, BackSi
 export RetLayers exeQuadro(IRasterLayer* input, bc::ProcType type)
 {
 	Project* proj = Project::getProject();
-	
+
 	RetLayers ret;
 	const BackImage& src = *(input->getCachedImage());
 

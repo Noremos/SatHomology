@@ -1,16 +1,15 @@
 module;
 
-#include "../Bind/Common.h"
 #include <memory>
 #include <functional>
 #include <istream>
 #include <ostream>
 
-export module MetadataIOCore;
+export module MetadataCoreIO;
 
 import JsonCore;
 import StateBinIO;
-import IOCore;
+import BackBind;
 
 
 export class MetadataProvider

@@ -1,12 +1,11 @@
 module;
-
-#include "../Bind/Common.h"
-
+#include <exception>
 export module SimpleImgReaderModule;
 
 import Platform;
 import ImgReader;
-import IOCore;
+import BackBind;
+import MatrModule;
 
 
 export class SimpleImgReader : public ImageReader
@@ -15,7 +14,7 @@ export class SimpleImgReader : public ImageReader
 	ImageType type;
 	int typeSize;
 	int samples;
-	//	MatrImg main;
+	//	BackImage main;
 		// ImageReader interface
 public:
 	SimpleImgReader() : ImageReader()
@@ -23,7 +22,7 @@ public:
 		isTile = false;
 	}
 	rowptr getRowData(int ri) override;
-	bool open(const std::string& path) override;
+	bool open(const BackString& path) override;
 	void close() override;
 	ImageType getType() override;
 	int getSamples() override;
@@ -46,7 +45,7 @@ rowptr SimpleImgReader::getRowData(int ri)
 	return ptr;
 }
 
-bool SimpleImgReader::open(const std::string& path)
+bool SimpleImgReader::open(const BackString& path)
 {
 	main = imread(path);
 	samples = main.channels();
@@ -67,7 +66,7 @@ bool SimpleImgReader::open(const std::string& path)
 
 	ready = true;
 	return true;
-//	MatrImg e(img.width(), img.height(), i);
+//	BackImage e(img.width(), img.height(), i);
 
 //	int lineLen = e.bytesInLine();
 //	for (int y = 0; y < img.height(); y++)

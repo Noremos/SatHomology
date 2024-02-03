@@ -1,9 +1,12 @@
 module;
-#include "DrawCommon.h"
+#include <algorithm>
+#include <sstream>
+#include <vector>
+#include <memory>
 
+#include "DrawCommon.h"
 export module StatChart;
 
-import IOCore;
 import LayersCore;
 import GuiWidgets;
 
@@ -12,6 +15,7 @@ import ClassifierInterface;
 import TrainIO;
 import Classifiers;
 import ProjectModule;
+import BackBind;
 
 
 Project* proj = Project::getProject();
@@ -44,7 +48,7 @@ export class BarChart
 			//const float proc = 300.f / (metrStart + metrLen);
 			int st = metrStart / proc;// 300.f;
 			int ed = (metrStart + metrLen) / proc;// 300.f;
-			ed = MIN(ed, len);
+			ed = std::min(ed, len);
 
 			for (int i = st; i <= ed; i++)
 			{

@@ -1,11 +1,13 @@
 module;
-#include "../../Bind/Common.h"
 #include <cassert>
+#include <algorithm>
+#include <memory>
 export module CachedBarcode;
 
 import IItemModule;
 import MHashMap;
 import BarcodeModule;
+import BackBind;
 
 class CachedBaritemHolder;
 

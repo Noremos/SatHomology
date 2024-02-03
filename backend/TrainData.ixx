@@ -1,6 +1,5 @@
 ﻿module;
 
-#include "../Bind/Common.h"
 #include <sqlite3.h>
 
 #include <vector>
@@ -10,10 +9,11 @@
 
 export module TrainIO;
 
-import IOCore;
 import BackTypes;
-import MetadataIOCore;
+import MetadataCoreIO;
 import Platform;
+import BackBind;
+import MatrModule;
 
 //enum ClassCategType
 //{
@@ -534,20 +534,20 @@ public:
 			if (!pathExists(dirl))
 				continue;
 
-			for (auto const& entry : std::filesystem::directory_iterator(dirl))
-			{
-				if (!entry.is_regular_file())
-				{
-					continue;
-				}
+			// for (auto const& entry : std::filesystem::directory_iterator(dirl))
+			// {
+			// 	if (!entry.is_regular_file())
+			// 	{
+			// 		continue;
+			// 	}
 
-				BackPathStr filename = entry.path().string();
-				auto ext = entry.path().extension();
-				if (ext == ".jpg")
-				{
-					callback(categ, filename);
-				}
-			}
+			// 	BackPathStr filename = entry.path().string();
+			// 	auto ext = entry.path().extension();
+			// 	if (ext == ".jpg")
+			// 	{
+			// 		callback(categ, filename);
+			// 	}
+			// }
 		}
 	}
 

@@ -2,7 +2,6 @@ module;
 #include <cassert>
 #include <algorithm>
 #include <vector>
-#include "../../Bind/Common.h"
 #include <iostream>
 
 export module SortItem;
@@ -20,7 +19,7 @@ export class SortClass : public ICluster
 {
 public:
 	const CachedBarline* bar;
-	
+
 	float sqr(int a) const
 	{
 		return a * a;

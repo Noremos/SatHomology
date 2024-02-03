@@ -1,5 +1,9 @@
 module;
 #include <algorithm>
+#include <memory>
+#include <cmath>
+#include <vector>
+
 #include "DrawCommon.h"
 #include <glew.h>
 
@@ -8,10 +12,10 @@ export module DrawUtils;
 import MatrModule;
 import CSBind;
 import SideBind;
+import BackBind;
 
-export {
-
-
+export
+{
 	void ResizeImage(int& width, int& height, int max_width, int max_height)
 	{
 		// Calculate the aspect ratio of the image
@@ -145,18 +149,18 @@ public:
 		return true;
 	}
 
-	void setImage(const MatrImg& img, bool smooth = true)
+	void setImage(const BackImage& img, bool smooth = true)
 	{
 		width = img.width();
 		height = img.height();
 		makeTexture(img.data, img.channels(), smooth);
 	}
 
-	void setImage(const MatrImg& img, int wid, int hei, bool smooth = true)
+	void setImage(const BackImage& img, int wid, int hei, bool smooth = true)
 	{
 		width = wid;
 		height = hei;
-		MatrImg newImg(wid, hei, img.channels());
+		BackImage newImg(wid, hei, img.channels());
 
 		const float x_ratio = static_cast<float>(img.width()) / (wid);
 		const float y_ratio = static_cast<float>(img.height()) / (hei);
@@ -178,7 +182,7 @@ public:
 				const auto ewf = [](int p1, int p2, int p3, int p4)
 				{
 					int a = static_cast<int>((float)p1 * 0.25 + p2 * 0.25 + p3 * 0.25 + p4 * 0.25);
-					return static_cast<uchar>(MAX(MIN(a, 255), 0));
+					return static_cast<uchar>(std::max(std::min(a, 255), 0));
 				};
 
 				Barscalar p_interp;

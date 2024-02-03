@@ -1,5 +1,4 @@
 module;
-#include "../../Bind/Common.h"
 
 export module ClusterInterface;
 
@@ -31,7 +30,7 @@ public:
 	}
 	// virtual const bc::barlinevector& getLines() const = 0;
 
-	virtual void saveLoadState(StateBinFile::BinState*) 
+	virtual void saveLoadState(StateBinFile::BinState*)
 	{ }
 
 	virtual const size_t getMatrixSize() const
@@ -159,7 +158,7 @@ export template<class TClass, class TClassHolder, class TClassifier>
 class GlobalClusterRegister : public GlobalRegister<ClusterFactory, TClass, TClassHolder, TClassifier>
 {
 public:
-	GlobalClusterRegister(std::string_view name = "") : GlobalRegister<ClusterFactory, TClass, TClassHolder, TClassifier>(getClusterFactory(), name)
+	GlobalClusterRegister(BackStringView name = "") : GlobalRegister<ClusterFactory, TClass, TClassHolder, TClassifier>(getClusterFactory(), name)
 	{ }
 };
 //using GlobalClusterRegister = GlobalRegister<TClass, TClassHolder, TClassifier, ClusterFactory>;

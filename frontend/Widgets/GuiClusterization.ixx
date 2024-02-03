@@ -4,7 +4,6 @@ module;
 
 export module GuiClusterization;
 
-import IOCore;
 import Platform;
 import GuiWidgets;
 import TrainIO;
@@ -316,7 +315,7 @@ public:
 					classesLB.clear();
 					for (int i = 0, total = n; i < total; i++)
 					{
-						classesLB.add(std::to_string(i), {i});
+						classesLB.add(intToStr(i), {i});
 						classesLB.endAdding();
 					}
 

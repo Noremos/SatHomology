@@ -6,7 +6,6 @@ module;
 #include <cassert>
 #include <iostream>
 
-#include "../../Bind/Common.h"
 
 export module Sklearn;
 
@@ -68,7 +67,7 @@ public:
 		const TreeSignatureCollection& allItems = dynamic_cast<const TreeSignatureCollection&>(iallItems);
 
 		BackString filePath = get_temp_file_path();
-		std::ofstream tempFile(filePath, std::ofstream::out | std::ofstream::trunc);
+		BackFileWriter tempFile(filePath, BackFileWriter::out | BackFileWriter::trunc);
 		if (!tempFile.is_open())
 		{
 			std::cerr << "Unable to open temporary file for writing." << std::endl;
@@ -83,7 +82,7 @@ public:
 			{
 				tempFile << num << " ";
 			}
-			tempFile.seekp(-1, tempFile.cur); // Удаляем последнюю запятую
+			tempFile.seekp(-1, tempFile.cur); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 			tempFile << std::endl;
 
 		}

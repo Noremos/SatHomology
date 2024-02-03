@@ -5,22 +5,21 @@ module;
 #include <functional>
 #include <cassert>
 
-#include "../../Bind/Common.h"
 
 export module RasterLayers;
 import LayersCore;
 
 import BarTypes;
-import IOCore;
 import Platform;
-import IItemModule;
 
-import MetadataIOCore;
+import MetadataCoreIO;
 
 import ImgReader;
 import SimpleImgReaderModule;
 import MHashMap;
 import MLSettings;
+import BackBind;
+import MatrModule;
 
 using LayerMetaProvider = MetadataProvider;
 
@@ -600,7 +599,7 @@ public:
 				trear->setCurrentSubImage(i);
 				if (reader->width() <= 2000)
 				{
-					images.push_back(tiffToImg(reader, tiles / (intToStr(k++) + ".png"), 1.0, true));
+					images.push_back(tiffToImg(reader, tiles / (intToStr(k++).append(".png")), 1.0, true));
 					break;
 				}
 			}
@@ -608,14 +607,14 @@ public:
 			if (images.size() == 0)
 			{
 				int factor = reader->width() / 2000;
-				images.push_back(tiffToImg(reader, tiles / (intToStr(0) + ".png"), factor, true));
+				images.push_back(tiffToImg(reader, tiles / (intToStr(0).append(".png")), factor, true));
 			}
 
 			trear->setCurrentSubImage(subImageIndex);
 		}
 		else
 		{
-			images.push_back(tiffToImg(reader, tiles / (intToStr(0) + ".png"), 1, true));
+			images.push_back(tiffToImg(reader, tiles / (intToStr(0).append(".png")), 1, true));
 		}
 
 		subImgSize = images.size();
@@ -633,7 +632,7 @@ public:
 		for (int i = 0; i < subImgSize; ++i)
 		{
 			// int factor = 1;
-			BackPathStr stp = tiles / (intToStr(i) + ".png");
+			BackPathStr stp = tiles / (intToStr(i).append(".png"));
 			images.push_back(imread(stp));
 		}
 	}

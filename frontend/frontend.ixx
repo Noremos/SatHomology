@@ -13,7 +13,6 @@ export module FrontendBind;
 
 import ProjectModule;
 import Platform;
-import IOCore;
 import BarcodeModule;
 import RasterLayers;
 
@@ -22,11 +21,13 @@ import IItemModule;
 import VectorLayers;
 import CSBind;
 import LayersCore;
-import MetadataIOCore;
+import MetadataCoreIO;
 import BarTypes;
 import BarScalarModule;
 import RasterBarHolderRLayer;
 import CoreLoaders;
+import BackBind;
+
 // Todo.
 // 2 режима
 export class GuiBackend
