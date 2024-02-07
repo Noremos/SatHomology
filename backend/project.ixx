@@ -15,7 +15,6 @@ export module ProjectModule;
 
 import Platform;
 
-import ImgReader;
 import LayersCore;
 import JsonCore;
 import MetadataCoreIO;

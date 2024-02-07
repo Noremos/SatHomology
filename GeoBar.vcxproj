@@ -117,7 +117,7 @@
     <ClCompile Include="backend\Interfaces\IItem.ixx" />
     <ClCompile Include="backend\Interfaces\MLClasses.ixx" />
     <ClCompile Include="backend\Layers\GroupLayer.ixx" />
-    <ClCompile Include="backend\Layers\RasterBarHolderRLeyer.ixx" />
+    <ClCompile Include="backend\Layers\RasterLineLayer.ixx" />
     <ClCompile Include="backend\Layers\SimpleLineDisplay.ixx" />
     <ClCompile Include="backend\Layers\VectorLayers.ixx" />
     <ClCompile Include="backend\CSBind.ixx" />
@@ -125,7 +125,7 @@
     <ClCompile Include="Bind\Common.ixx" />
     <ClCompile Include="Bind\MHashMap.ixx" />
     <ClCompile Include="frontend\GuiITemPrevew.ixx" />
-    <ClCompile Include="frontend\Layers\GuiBarHolderRLayers.ixx" />
+    <ClCompile Include="frontend\Layers\GuiRasterLineLayer.ixx" />
     <ClCompile Include="frontend\Layers\GuiVectorLayers.ixx" />
     <ClCompile Include="frontend\Templates\GuiRLayerTemplates.ixx" />
     <ClCompile Include="frontend\Layers\GuiLuaLayers.ixx" />

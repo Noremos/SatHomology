@@ -9,7 +9,7 @@ import GuiWidgets;
 import TrainIO;
 import ClusterInterface;
 import TreeClassifier;
-import RasterBarHolderRLayer;
+import RasterLineLayerModule;
 import FrontendBind;
 import GeoprocessorModule;
 import GuiVectorLayers;
@@ -299,7 +299,7 @@ public:
 				collectionToPredict->clear();
 				auto methodId = clsuterMethods.currentValue().methodId;
 				line->collectionToPredict = collectionToPredict.get();
-				line->processCachedBarcode(nullptr, false);
+				line->processCachedBarcode(nullptr);
 				clusterizer->setClassesCount(classesLB.getSize());
 				line->collectionToPredict->perform();
 
@@ -307,7 +307,7 @@ public:
 				{
 					ImGui::OpenPopup("NoDataToCluster");
 				}
-				else if (clusterizer->predict(*line->collectionToPredict))
+				else if (clusterizer->predict(*collectionToPredict.get()))
 				{
 					const int n = clusterizer->getClusters();
 					std::cout << "Number of clasters is " << n << std::endl;
@@ -339,7 +339,7 @@ public:
 						//group->subLayers.push_back(layer->getSysId());
 					}
 
-					for (int i = 0; i < line->collectionToPredict->getItemsCount(); i++)
+					for (int i = 0; i < collectionToPredict->getItemsCount(); i++)
 					{
 						const int classTypeOfItem = clusterizer->test(i);
 						if (classTypeOfItem == -1)
@@ -352,8 +352,8 @@ public:
 						DrawPrimitive* prim = classLayer->addPrimitive(classLayer->color);
 
 						std::vector<uint> out;
-						auto& item = line->collectionToPredict->getItem(i);
-						auto rect = getCountourOder(item.getMatrix(), out, true);
+						auto* item = collectionToPredict->getCItem(i);
+						auto rect = getCountourOder(item->getMatrix(), out, true);
 						for (const auto& pm : out)
 						{
 							auto op = bc::barvalue::getStatPoint(pm);

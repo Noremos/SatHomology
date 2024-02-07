@@ -14,66 +14,64 @@ import CSBind;
 import SideBind;
 import BackBind;
 
-export
+export void ResizeImage(int& width, int& height, int max_width, int max_height)
 {
-	void ResizeImage(int& width, int& height, int max_width, int max_height)
-	{
-		// Calculate the aspect ratio of the image
-		float aspect_ratio = static_cast<float>(width) / static_cast<float>(height);
+	// Calculate the aspect ratio of the image
+	float aspect_ratio = static_cast<float>(width) / static_cast<float>(height);
 
-		// Calculate the maximum width and height that maintain the aspect ratio
-		int max_aspect_width = std::round(max_height * aspect_ratio);
-		int max_aspect_height = std::round(max_width / aspect_ratio);
+	// Calculate the maximum width and height that maintain the aspect ratio
+	int max_aspect_width = std::round(max_height * aspect_ratio);
+	int max_aspect_height = std::round(max_width / aspect_ratio);
 
-		// Use the maximum width or height that maintains the aspect ratio, whichever is smaller
-		width = std::min(max_width, max_aspect_width);
-		height = std::min(max_height, max_aspect_height);
-	}
-
-	void ResizeImage(ImVec2& size, const ImVec2& maxSize)
-	{
-		// Calculate the aspect ratio of the image
-		float aspect_ratio = size.x / size.y;
-		float max_aspect_width = maxSize.y * aspect_ratio;
-		float max_aspect_height = maxSize.x / aspect_ratio;
-		size.x = std::min(maxSize.x, max_aspect_width);
-		size.y = std::min(maxSize.y, max_aspect_height);
-	}
-
-	void ResizeImage(BackPoint& size, const BackPoint& maxSize)
-	{
-		// Calculate the aspect ratio of the image
-		double aspect_ratio = size.x / size.y;
-		double max_aspect_width = maxSize.y * aspect_ratio;
-		double max_aspect_height = maxSize.x / aspect_ratio;
-		size.x = std::min(maxSize.x, max_aspect_width);
-		size.y = std::min(maxSize.y, max_aspect_height);
-	}
-
-
-	using ApplicationVec2 = ImVec2;
-	using WindowVec2 = ImVec2; // The top-left is a begin window
-	using ItemVec2 = ImVec2; // The top-left is an Item (image) coords
-
-	struct TextureId
-	{
-		GLuint textureId;
-		~TextureId()
-		{
-			glDeleteTextures(1, &textureId);
-		}
-	};
-
-	inline ImVec2 toIV(const BackPoint& p)
-	{
-		return ImVec2(p.x, p.y);
-	}
-
-	inline BackPoint toBP(const ImVec2& p)
-	{
-		return BackPoint(p.x, p.y);
-	}
+	// Use the maximum width or height that maintains the aspect ratio, whichever is smaller
+	width = std::min(max_width, max_aspect_width);
+	height = std::min(max_height, max_aspect_height);
 }
+
+export void ResizeImage(ImVec2& size, const ImVec2& maxSize)
+{
+	// Calculate the aspect ratio of the image
+	float aspect_ratio = size.x / size.y;
+	float max_aspect_width = maxSize.y * aspect_ratio;
+	float max_aspect_height = maxSize.x / aspect_ratio;
+	size.x = std::min(maxSize.x, max_aspect_width);
+	size.y = std::min(maxSize.y, max_aspect_height);
+}
+
+export void ResizeImage(BackPoint& size, const BackPoint& maxSize)
+{
+	// Calculate the aspect ratio of the image
+	double aspect_ratio = size.x / size.y;
+	double max_aspect_width = maxSize.y * aspect_ratio;
+	double max_aspect_height = maxSize.x / aspect_ratio;
+	size.x = std::min(maxSize.x, max_aspect_width);
+	size.y = std::min(maxSize.y, max_aspect_height);
+}
+
+
+export using ApplicationVec2 = ImVec2;
+export using WindowVec2 = ImVec2; // The top-left is a begin window
+export using ItemVec2 = ImVec2; // The top-left is an Item (image) coords
+
+export struct TextureId
+{
+	GLuint textureId;
+	~TextureId()
+	{
+		glDeleteTextures(1, &textureId);
+	}
+};
+
+export inline ImVec2 toIV(const BackPoint& p)
+{
+	return ImVec2(p.x, p.y);
+}
+
+export BackPoint toBP(const ImVec2& p)
+{
+	return BackPoint(p.x, p.y);
+}
+
 
 
 export class GuiImage

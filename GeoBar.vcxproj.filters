@@ -211,7 +211,7 @@
     <ClCompile Include="frontend\Templates\GuiRLayerTemplates.ixx">
       <Filter>GUI\layers</Filter>
     </ClCompile>
-    <ClCompile Include="frontend\Layers\GuiBarHolderRLayers.ixx">
+    <ClCompile Include="frontend\Layers\GuiRasterLineLayer.ixx">
       <Filter>GUI\layers</Filter>
     </ClCompile>
     <ClCompile Include="frontend\Layers\GuiLuaLayers.ixx">
@@ -264,7 +264,7 @@
     <ClCompile Include="frontend\Widgets\DrawBarcode.ixx">
       <Filter>GUI</Filter>
     </ClCompile>
-    <ClCompile Include="backend\Layers\RasterBarHolderRLeyer.ixx">
+    <ClCompile Include="backend\Layers\RasterLineLayer.ixx">
       <Filter>Backend\Impl</Filter>
     </ClCompile>
     <ClCompile Include="backend\Classifer\Classifier.ixx">

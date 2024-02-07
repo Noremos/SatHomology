@@ -594,7 +594,6 @@ public:
 export class GuiDrawCloudPointClick : public GuiDrawImage
 {
 	//bool dropPoints = false;
-	const bc::barvector* points = nullptr;
 public:
 
 	std::vector<BackPoint> pointsToDraw;
@@ -602,26 +601,26 @@ public:
 	void unsetPoints()
 	{
 		pointsToDraw.clear();
-		points = nullptr;
 	}
 
-	void setPoints(const GuiDisplaySystem& ds, CSBinding& cs, const bc::barvector* _points)
+	void setPoints(const CSBinding& cs, const bc::barvector* _points, bool clear = true)
 	{
 		// if (dropPoints)
 		// 	delete points;
 
 		// points = _point;
 		// dropPoints = drop;
-
-		pointsToDraw.clear();
-		points = _points;
+		if (clear)
+		{
+			pointsToDraw.clear();
+		}
 
 		if (!_points)
 		{
 			return;
 		}
 
-		const bc::barvector& pointsi = *points;
+		const bc::barvector& pointsi = *_points;
 		for (auto &p : pointsi)
 		{
 			// int x = getDisplayX(p.getX());
@@ -640,7 +639,7 @@ public:
 
 	void drawPoints(const GuiDisplaySystem& ds, CSBinding& cs, ImVec2 realImgSize)
 	{
-		if (points == nullptr)
+		if (pointsToDraw.size() == 0)
 			return;
 
 		// TODO: replce it with toDisplay(0.5); Can be with minus

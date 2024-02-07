@@ -1,8 +1,8 @@
 module;
+#include <cassert>
 
 export module ClusterInterface;
 
-import TrainIO;
 import IItemModule;
 import CachedBarcode;
 import MLSettings;
@@ -61,7 +61,7 @@ public:
 };
 
 // Holder - a container to store items
-export class IClusterItemHolder// : public IBffIO
+export class IClusterItemHolder : public IClassItemHolder
 {
 public:
 	IClusterItemHolder(bool isRootBased) : settings(), rootBased(isRootBased)
@@ -71,14 +71,49 @@ public:
 	bool rootBased;
 
 	//virtual ICluster* getItem(size_t id) = 0;
-	virtual const ICluster& getItem(size_t id) const = 0;
-	virtual size_t getItemsCount() const = 0;
+	virtual const ICluster* getCItem(size_t id) const = 0;
 	virtual void addItem(const CachedBarline& item) = 0;
 	virtual void clear() = 0;
-	virtual void perform()
-	{ }
 
 	virtual ~IClusterItemHolder() {}
+
+private:
+	const IClassItem* getItem(size_t id) const override
+	{
+		return getCItem(id);
+	}
+
+	IClassItem* getItem(size_t id) override
+	{
+		assert(false);
+		throw;
+		return nullptr;
+	}
+
+	void saveLoadState(StateBinFile::BinState* state) override
+	{
+		assert(false);
+		throw;
+	}
+
+	void create(bc::DatagridProvider* img, const bc::barstruct& constr, const ItemCallback& callback) override
+	{
+		assert(false);
+		throw;
+	}
+
+	void addItem(const IClassItem& line) override
+	{
+		auto* r = dynamic_cast<const CachedBarline*>(&line);
+		if (r)
+			addItem(*r);
+		else
+		{
+			assert(false);
+			throw;
+		}
+	}
+
 };
 
 
@@ -93,14 +128,19 @@ public:
 	IClusterItemValuesHolder(bool isRootBased) : IClusterItemHolder(isRootBased)
 	{ }
 
-	T* getItem(size_t id)
+	T* getRItem(size_t id)
 	{
 		return &items[id];
 	}
 
-	const T& getItem(size_t id) const
+	const T& getRItem(size_t id) const
 	{
 		return items[id];
+	}
+
+	const ICluster* getCItem(size_t id) const override
+	{
+		return &items[id];
 	}
 
 	size_t getItemsCount() const

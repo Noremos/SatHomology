@@ -28,3 +28,6 @@ Build/Temp
 Build/Release.zip
 imgui.ini
 side/KmeansPlusPlus
+packages
+Tests/x64
+x64

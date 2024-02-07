@@ -1109,6 +1109,7 @@ public:
 
 		if (delId != -1)
 		{
+			layers.remove(delId);
 			proj->removeLayer(delId);
 		}
 

@@ -1,7 +1,7 @@
 module;
 export module CoreLoaders;
 import LayersCore;
-import RasterBarHolderRLayer;
+import RasterLineLayerModule;
 import RasterLayers;
 import ProjectModule;
 import IItemModule;

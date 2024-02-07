@@ -47,7 +47,7 @@ class SavedLines
 		for (size_t i = 0; i < line.children.size(); i++)
 		{
 			++ldepts;
-			getLines(*line.children[i], ldepts);
+			getLines(*line.getChild(i), ldepts);
 		}
 
 		//ldepts = d;

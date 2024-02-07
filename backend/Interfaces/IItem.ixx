@@ -44,6 +44,8 @@ public:
 	virtual const IClassItem* getItem(size_t id) const = 0;
 	virtual size_t getItemsCount() const = 0;
 	virtual void addItem(const IClassItem& item) = 0;
+	virtual void perform()
+	{ }
 
 	using ItemCallback = std::function<void(IClassItem* item)>;
 

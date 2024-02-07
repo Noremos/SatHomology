@@ -336,12 +336,18 @@ public:
 	}
 };
 
+struct SimpleLine;
+export struct SimpleLineHolder
+{
+	//std::vector<std::unique_ptr<SimpleLine>> holder;
+	std::unordered_map<size_t, std::unique_ptr<SimpleLine>> holder;
+};
 
 export struct SimpleLine
 {
-	int id, barlineIndex;
-	SimpleLine(int id = 0, int barlineIndex = 0) :
-	id(id), barlineIndex(barlineIndex), start(0), end(0), depth(0), matrSrcSize(0)
+	int tileId, barlineIndex;
+	SimpleLine(int tileId = 0, int barlineIndex = 0) :
+	tileId(tileId), barlineIndex(barlineIndex), start(0), end(0), depth(0), matrSrcSize(0)
 	{}
 	//	ushort counter = 0;
 	Barscalar start, end;
@@ -349,12 +355,24 @@ export struct SimpleLine
 	int depth;
 	int matrSrcSize;
 
-	SimpleLine* parent;
-	std::vector<SimpleLine*> children;
+	uint parent = -1;
+	std::vector<uint> children;
 
 	bc::barvector matr;
+	SimpleLineHolder* root;
 
-	int getDeath()
+	SimpleLine* getParent() const
+	{
+		if (parent == -1)
+			return nullptr;
+
+		return root->holder[parent].get();
+	}
+	SimpleLine* getChild(uint id) const
+	{
+		return root->holder[children[id]].get();
+	}
+	int getDeath() const
 	{
 		return depth;
 	}

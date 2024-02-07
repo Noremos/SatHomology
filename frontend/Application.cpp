@@ -7,6 +7,7 @@
 #include <memory>
 #include <future>
 #include <iostream>
+#include "../side/implot/implot.h"
 
 //#include "sol3/sol.hpp"
 //
@@ -24,7 +25,7 @@ import VectorLayers;
 import GuiVectorLayers;
 import ProjectModule;
 import GuiRasterLayers;
-import GuiBarHolderLayer;
+import GuiRasterLineLayer;
 import Settings;
 import BackBind;
 //import Lua;
@@ -392,7 +393,7 @@ namespace MyApp
 						//layer->data = backend.getMain();
 						// centerVals.heimap.init(layer->getData()->mat);
 						// centerVals.tilemap.init(&layer->main, backend.getTileSize());
-						classerVals.init();
+						//classerVals.init();
 					}
 				}
 			}
@@ -520,7 +521,7 @@ namespace MyApp
 				RasterLineGuiLayer* lay = layersVals.getCastCurrentLayer<RasterLineGuiLayer>();
 				if (lay && lay->selectedLine)
 				{
-					classerVals.selceted = { lay->selectedLine->id, lay->selectedLine->barlineIndex};
+					classerVals.selceted = { lay->selectedLine->tileId, lay->selectedLine->barlineIndex};
 				}
 			}
 
@@ -590,10 +591,10 @@ namespace MyApp
 			// }
 
 			ImGui::SameLine(0, 30);
-			if (ImGui::Button("Классификатор"))
-			{
-				classerVals.show = true;
-			}
+			//if (ImGui::Button("Классификатор"))
+			//{
+			//	classerVals.show = true;
+			//}
 
 			// ImGui::Text(bottomVals.debug.c_str());
 
@@ -859,6 +860,8 @@ namespace MyApp
 		layersVals.drawLayersWindow();
 
 		commonValus.onAirC();
+
+		ImPlot::ShowDemoWindow();
 
 		//if (ImGui::BeginViewportSideBar("##MainStatusBar", NULL, ImGuiDir_Down, heighto, window_flags)) {
 		//    if (ImGui::BeginMenuBar()) {

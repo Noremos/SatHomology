@@ -3,7 +3,7 @@
 ////export module CachedBarcodeAlg;
 //
 //import IAlgoriphm;
-//import RasterBarHolderRLayer;
+//import RasterLineLayerModule;
 //
 //export class BarLineWorker : public IWorker
 //{

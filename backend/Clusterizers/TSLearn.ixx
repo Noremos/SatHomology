@@ -62,7 +62,7 @@ public:
 
 		for (size_t i = 0; i < allItems.getItemsCount(); i++)
 		{
-			auto& sign = allItems.getItem(i).signature;
+			auto& sign = allItems.getRItem(i).signature;
 
 			for (const auto& num : sign)
 			{

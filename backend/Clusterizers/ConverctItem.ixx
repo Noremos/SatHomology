@@ -12,10 +12,9 @@ module;
 export module ConvertItem;
 
 import ClusterInterface;
-import TreeSignClass;
-import ExteranlReader;
 import Platform;
 import BackBind;
+import ExteranlReader;
 
 
 
@@ -44,14 +43,20 @@ public:
 	{
 		return matrix;
 	}
+
 	void add(float x, float y)
 	{
 		path.push_back({x, y});
 	}
 //
-	ConvertClass()
+	size_t id;
+	ConvertClass(size_t id = -1) : id(id)
 	{ }
 //
+	size_t getId() const override
+	{
+		return id;
+	}
 
 	//float getLength() const
 	//{
@@ -60,12 +65,14 @@ public:
 
 	explicit ConvertClass(const ConvertClass& other) //: id(id)
 	{
+		id = other.id;
 		matrix = other.matrix;
 		path = other.path;
 	}
 
 	explicit ConvertClass(ConvertClass&& other) //: id(id)
 	{
+		id = other.id;
 		matrix = std::move(other.matrix);
 		path =   std::move(other.path);
 	}
@@ -116,7 +123,7 @@ struct Landscape
 			if (a.start == b.start)
 				return a.len < b.len;
 
-			return a.start > b.start;
+			return a.start < b.start;
 		});
 	}
 
@@ -161,82 +168,92 @@ public:
 	{
 	}
 
-
-
 	void convert(Landscape& landscape)
 	{
 		landscape.sort();
 		// �� birth
 		for (size_t i = 0; i < landscape.size(); i++)
 		{
-			auto& line = landscape.get(i);
+			auto* line = &landscape.get(i);
 
-			float start = line.getStart();
-			float middle = line.getMiddle();
-			float h = line.getHeight();
-			float end = line.getEnd();
+			float start = line->getStart();
+			float middle = line->getMiddle();
+			float h = line->getHeight();
+			float end = line->getEnd();
 			float minLength = 0;
+			float matrstart = start;
+			float beginning = start;
+			float ending = end;
+			float lastMin = beginning;
 
 			//std::vector<landres> landPath = { {start, 0}, {middle, h} };
 
 			Base::items.push_back({});
 			ConvertClass& cl = Base::items.back();
+			cl.id = i;
 			//cl.matrix = line.matrix;
 
 			size_t startI = 0;
-
-			size_t curI = i;
+			int curI = i;
+			bool curLineCatechd = false;
 			while (true)
 			{
 				// Asc
-				for (size_t ascI = 0; ascI < curI; ascI++)
+				for (int ascI = curI - 1; ascI >= 0; --ascI)
 				{
-					auto& land = landscape.get(ascI);
-					if (land.getStart() < start && start < land.getEnd() && land.getEnd() < end && land.len > minLength)
+					auto& prevLine = landscape.get(ascI);
+					if (prevLine.getStart() < beginning && prevLine.getEnd() < end && prevLine.getEnd() > lastMin)
 					{
-						end = land.getEnd();
-						auto& chm = land.matrix; // srcLine.getChild(i)->getMatrix();
-						for (auto& val : chm)
-						{
-							if (val.value >= end)
-								break;
-
-							cl.matrix.push_back(val);
-						}
+						end = prevLine.getEnd();
 						break;
 					}
 				}
+
+				// Select common values (all when there is no prev)
+				// from line.satrt to prevLine.end
+				// from end to line->end
+				auto& matr = line->matrix; //srcLine.getChild(startI)->getMatrix();
+				for (auto& val : matr)
+				{
+					if (val.value < end)
+						break;
+
+					cl.matrix.push_back(val);
+				}
+				curLineCatechd = true;
+
+
 				// dsc
+				startI = static_cast<size_t>(curI) + 1;
 				bool found = false;
-				startI = curI;
 				for (; startI < landscape.size(); startI++)
 				{
-					auto& land = landscape.get(startI);
-
-					if (land.getStart() < end && land.getEnd() > end)
+					auto& nextLine = landscape.get(startI);
+					if (nextLine.getStart() > end)
 					{
-						//float crossGip = end - land->getStart();
-						//float leh = crossGip / 2;
-
-						minLength = end - land.getStart();
-						start = land.getStart();
-						end = land.getEnd();
-						found = true;
-						curI = startI;
-
-						auto& chm = land.matrix; //srcLine.getChild(startI)->getMatrix();
-						for (auto& val : chm)
-						{
-							if (val.value >= end)
-								break;
-
-							cl.matrix.push_back(val);
-						}
-
 						break;
 					}
 
-					//landPath.push_back({ land->getStart() +  leh, leh});
+					if (nextLine.getStart() < end && nextLine.getEnd() > end)
+					{
+						//float crossGip = end - nextLine->getStart();
+						//float leh = crossGip / 2;
+
+						// from line matrstart(cur line start) to nextLine.start
+						// From this line start to the next line start
+						lastMin = end;
+						minLength = end - nextLine.getStart();
+						start = nextLine.getStart();
+						end = nextLine.getEnd();
+						found = true;
+						curLineCatechd = false;
+						curI = startI;
+						line = &landscape.get(curI);
+						matrstart = line->getStart();
+						break;
+					}
+
+					//landPath.push_back({ nextLine->getStart() +  leh, leh});
 					//auto lastH = landPath.back();
 					//cl.paths.push_back({ lastH.x + lastH.y, 0 });
 					//cl.paths.push_back({ lastH.x + lastH.y, 0 });
@@ -244,12 +261,23 @@ public:
 				if (!found)
 					break;
 			}
-			cl.add(start, end);
+
+			if (!curLineCatechd)
+			{
+				auto& chm = line->matrix; //srcLine.getChild(startI)->getMatrix();
+				for (auto& val : chm)
+				{
+					cl.matrix.push_back(val);
+				}
+			}
+
+	
+			cl.add(beginning, end);
 		}
 	}
 
 
-	Landscape land;
+	Landscape nextLine;
 	virtual void addItem(const CachedBarline& line)
 	{
 		//lines.addUpdateRoot(line);
@@ -257,16 +285,16 @@ public:
 		//for (int i = 0; i < line.getChildrenCount(); i++)
 		//{
 		//	CachedBarline* child = line.getChild(i);
-		//	land.addExpr(child->start().getAvgFloat(), child->end().getAvgFloat());
+		//	nextLine.addExpr(child->start().getAvgFloat(), child->end().getAvgFloat());
 		//}
 
-		land.addExpr(line.start().getAvgFloat(), line.end().getAvgFloat());
+		nextLine.addExpr(line.start().getAvgFloat(), line.end().getAvgFloat());
+		nextLine.lands.back().matrix = line.getMatrix();
 	}
-
 
 	virtual void perform()
 	{
-		convert(land);
+		convert(nextLine);
 	}
 
 	/*const CachedBarline* getRItem(size_t id) const
@@ -403,7 +431,7 @@ public:
 
 		for (size_t i = 0; i < allItems.getItemsCount(); i++)
 		{
-			auto& item = allItems.getItem(i);
+			auto& item = allItems.getRItem(i);
 
 			for (const auto& num : item.path)
 			{

@@ -131,11 +131,11 @@ public:
 		holder.getItems().push_back(line);
 		holder.getLastItem().root = &holder;
 	}
-	const ICluster& getItem(size_t id) const
+	const ICluster* getCItem(size_t id) const
 	{
 		static SortClass a(nullptr);
 		a.bar = &holder.getItems()[id];
-		return a;
+		return &a;
 	}
 
 	const CachedBarline* getRItem(size_t id) const

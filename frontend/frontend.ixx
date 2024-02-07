@@ -24,7 +24,7 @@ import LayersCore;
 import MetadataCoreIO;
 import BarTypes;
 import BarScalarModule;
-import RasterBarHolderRLayer;
+import RasterLineLayerModule;
 import CoreLoaders;
 import BackBind;
 

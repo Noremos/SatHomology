@@ -7,7 +7,7 @@
 export module Exp;
 import LayersCore;
 import ProjectModule;
-import RasterBarHolderRLayer;
+import RasterLineLayerModule;
 import VectorLayers;
 import BarTypes;
 import BarcodeModule;

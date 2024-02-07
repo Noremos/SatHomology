@@ -36,6 +36,11 @@ public:
 		copyFrom(other);
 	}
 
+	CachedBarline(const CachedBarline* other)
+	{
+		copyFrom(*other);
+	}
+
 	CachedBarline& operator=(const CachedBarline& other)
 	{
 		copyFrom(other);
@@ -86,7 +91,11 @@ public:
 
 	CachedBarline(const IClassItem* item)
 	{
-		assert(false);
+		auto* t = dynamic_cast<const CachedBarline*>(item);
+		if (t)
+			copyFrom(*t);
+		else
+			assert(false);
 	}
 
 	CachedBarline(uint id, bc::barline* line, CachedBaritemHolder* root) : IClassItem()
