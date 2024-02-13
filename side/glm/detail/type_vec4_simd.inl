@@ -35,13 +35,13 @@ namespace detail
 	};
 
 	template<qualifier Q, int E0, int E1, int E2, int E3>
-	struct _swizzle_base1<4, uint, Q, E0,E1,E2,E3, true> : public _swizzle_base0<uint, 4>
+	struct _swizzle_base1<4, buint, Q, E0,E1,E2,E3, true> : public _swizzle_base0<buint, 4>
 	{
-		GLM_FUNC_QUALIFIER vec<4, uint, Q> operator ()()  const
+		GLM_FUNC_QUALIFIER vec<4, buint, Q> operator ()()  const
 		{
 			__m128i data = *reinterpret_cast<__m128i const*>(&this->_buffer);
 
-			vec<4, uint, Q> Result;
+			vec<4, buint, Q> Result;
 			Result.data = _mm_shuffle_epi32(data, _MM_SHUFFLE(E3, E2, E1, E0));
 			return Result;
 		}
@@ -480,13 +480,13 @@ namespace detail {
 	};
 
 	template<qualifier Q>
-	struct compute_vec4_add<uint, Q, true>
+	struct compute_vec4_add<buint, Q, true>
 	{
 		static
-		vec<4, uint, Q>
-		call(vec<4, uint, Q> const& a, vec<4, uint, Q> const& b)
+		vec<4, buint, Q>
+		call(vec<4, buint, Q> const& a, vec<4, buint, Q> const& b)
 		{
-			vec<4, uint, Q> Result;
+			vec<4, buint, Q> Result;
 			Result.data = vaddq_u32(a.data, b.data);
 			return Result;
 		}
@@ -517,11 +517,11 @@ namespace detail {
 	};
 
 	template<qualifier Q>
-	struct compute_vec4_sub<uint, Q, true>
+	struct compute_vec4_sub<buint, Q, true>
 	{
-		static vec<4, uint, Q> call(vec<4, uint, Q> const& a, vec<4, uint, Q> const& b)
+		static vec<4, buint, Q> call(vec<4, buint, Q> const& a, vec<4, buint, Q> const& b)
 		{
-			vec<4, uint, Q> Result;
+			vec<4, buint, Q> Result;
 			Result.data = vsubq_u32(a.data, b.data);
 			return Result;
 		}
@@ -550,11 +550,11 @@ namespace detail {
 	};
 
 	template<qualifier Q>
-	struct compute_vec4_mul<uint, Q, true>
+	struct compute_vec4_mul<buint, Q, true>
 	{
-		static vec<4, uint, Q> call(vec<4, uint, Q> const& a, vec<4, uint, Q> const& b)
+		static vec<4, buint, Q> call(vec<4, buint, Q> const& a, vec<4, buint, Q> const& b)
 		{
-			vec<4, uint, Q> Result;
+			vec<4, buint, Q> Result;
 			Result.data = vmulq_u32(a.data, b.data);
 			return Result;
 		}
@@ -615,9 +615,9 @@ namespace detail {
 	};
 
 	template<qualifier Q>
-	struct compute_vec4_equal<uint, Q, false, 32, true>
+	struct compute_vec4_equal<buint, Q, false, 32, true>
 	{
-		static bool call(vec<4, uint, Q> const& v1, vec<4, uint, Q> const& v2)
+		static bool call(vec<4, buint, Q> const& v1, vec<4, buint, Q> const& v2)
 		{
 			uint32x4_t cmp = vceqq_u32(v1.data, v2.data);
 #if GLM_ARCH & GLM_ARCH_ARMV8_BIT
@@ -662,11 +662,11 @@ namespace detail {
 	};
 
 	template<qualifier Q>
-	struct compute_vec4_nequal<uint, Q, false, 32, true>
+	struct compute_vec4_nequal<buint, Q, false, 32, true>
 	{
-		static bool call(vec<4, uint, Q> const& v1, vec<4, uint, Q> const& v2)
+		static bool call(vec<4, buint, Q> const& v1, vec<4, buint, Q> const& v2)
 		{
-			return !compute_vec4_equal<uint, Q, false, 32, true>::call(v1, v2);
+			return !compute_vec4_equal<buint, Q, false, 32, true>::call(v1, v2);
 		}
 	};
 
@@ -713,17 +713,17 @@ namespace detail {
 	{}
 
 	template<>
-	GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<4, uint, aligned_lowp>::vec(uint _s) :
+	GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<4, buint, aligned_lowp>::vec(buint _s) :
 		data(vdupq_n_u32(_s))
 	{}
 
 	template<>
-	GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<4, uint, aligned_mediump>::vec(uint _s) :
+	GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<4, buint, aligned_mediump>::vec(buint _s) :
 		data(vdupq_n_u32(_s))
 	{}
 
 	template<>
-	GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<4, uint, aligned_highp>::vec(uint _s) :
+	GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<4, buint, aligned_highp>::vec(buint _s) :
 		data(vdupq_n_u32(_s))
 	{}
 
@@ -741,7 +741,7 @@ namespace detail {
 
 	template<>
 	template<>
-	GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<4, float, aligned_highp>::vec(const vec<4, uint, aligned_highp>& rhs) :
+	GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<4, float, aligned_highp>::vec(const vec<4, buint, aligned_highp>& rhs) :
 		data(vcvtq_f32_u32(rhs.data))
 	{}
 
@@ -765,21 +765,21 @@ namespace detail {
 
 	template<>
 	template<>
-	GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<4, float, aligned_lowp>::vec(uint _x, uint _y, uint _z, uint _w) :
-		data(vcvtq_f32_u32(vec<4, uint, aligned_lowp>(_x, _y, _z, _w).data))
+	GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<4, float, aligned_lowp>::vec(buint _x, buint _y, buint _z, buint _w) :
+		data(vcvtq_f32_u32(vec<4, buint, aligned_lowp>(_x, _y, _z, _w).data))
 	{}
 
 	template<>
 	template<>
-	GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<4, float, aligned_mediump>::vec(uint _x, uint _y, uint _z, uint _w) :
-		data(vcvtq_f32_u32(vec<4, uint, aligned_mediump>(_x, _y, _z, _w).data))
+	GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<4, float, aligned_mediump>::vec(buint _x, buint _y, buint _z, buint _w) :
+		data(vcvtq_f32_u32(vec<4, buint, aligned_mediump>(_x, _y, _z, _w).data))
 	{}
 
 
 	template<>
 	template<>
-	GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<4, float, aligned_highp>::vec(uint _x, uint _y, uint _z, uint _w) :
-		data(vcvtq_f32_u32(vec<4, uint, aligned_highp>(_x, _y, _z, _w).data))
+	GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<4, float, aligned_highp>::vec(buint _x, buint _y, buint _z, buint _w) :
+		data(vcvtq_f32_u32(vec<4, buint, aligned_highp>(_x, _y, _z, _w).data))
 	{}
 
 #endif

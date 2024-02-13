@@ -3,12 +3,15 @@ module;
 
 #include <numeric>
 #include <algorithm>
+#include "Barcode/PrjBarlib/include/barcodeCreator.h"
+#include "Usings.h"
 
 export module GuiLayers;
 
+import LayersCore;
 import RasterLayers;
 import ProjectModule;
-import BarcodeModule;
+// import BarcodeModule;
 import GuiWidgets;
 import GuiOverlap;
 import VectorLayers;
@@ -20,8 +23,8 @@ import BackBind;
 
 //import FrontendBind;
 
-class LayersVals;
-class ILayerWorker;
+export class LayersVals;
+export class ILayerWorker;
 
 Project* proj = Project::getProject();
 //GuiBackend backend;
@@ -124,7 +127,7 @@ CoreLayerFactory::FunctionGuiHolder<IGuiLayer> LayerFactory::guiLayersCreators;
 
 // Contexr
 
-export class ILayerWorker
+class ILayerWorker
 {
 public:
 	InOutLayer iol;
@@ -243,7 +246,7 @@ public:
 	{
 		lastRealSize = toIV(ds.drawSize);
 
-		uint i = 0;
+		buint i = 0;
 		for (auto& lay : layers)
 		{
 			// ImGui::SetNextWindowPos(pos);
@@ -794,7 +797,7 @@ public:
 };
 
 
-export class LayersVals : public ILayerWorker
+class LayersVals : public ILayerWorker
 {
 public:
 
@@ -825,7 +828,7 @@ public:
 	//	if (displayRadioId == -1)
 	//		displayRadioId = 0;
 
-	//	uint j = 0;
+	//	buint j = 0;
 	//	for (auto& lay : layers)
 	//	{
 	//		bool fistLayer = j == 0;
@@ -991,7 +994,7 @@ public:
 			if (displayRadioId == -1)
 				displayRadioId = 0;
 
-			uint j = 0;
+			buint j = 0;
 			for (auto& lay : layers)
 			{
 				bool fistLayer = j == 0;

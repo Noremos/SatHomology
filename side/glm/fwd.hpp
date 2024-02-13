@@ -84,9 +84,9 @@ namespace glm
 	typedef int64					highp_int64_t;
 	typedef int64					int64_t;
 
-	// Scalar uint
+	// Scalar buint
 
-	typedef unsigned int			uint;
+	typedef unsigned int			buint;
 
 	typedef uint8					lowp_u8;
 	typedef uint8					mediump_u8;
@@ -301,27 +301,27 @@ namespace glm
 	typedef vec<3, i64, defaultp>	i64vec3;
 	typedef vec<4, i64, defaultp>	i64vec4;
 
-	// Vector uint
+	// Vector buint
 
-	typedef vec<1, uint, lowp>		lowp_uvec1;
-	typedef vec<2, uint, lowp>		lowp_uvec2;
-	typedef vec<3, uint, lowp>		lowp_uvec3;
-	typedef vec<4, uint, lowp>		lowp_uvec4;
+	typedef vec<1, buint, lowp>		lowp_uvec1;
+	typedef vec<2, buint, lowp>		lowp_uvec2;
+	typedef vec<3, buint, lowp>		lowp_uvec3;
+	typedef vec<4, buint, lowp>		lowp_uvec4;
 
-	typedef vec<1, uint, mediump>	mediump_uvec1;
-	typedef vec<2, uint, mediump>	mediump_uvec2;
-	typedef vec<3, uint, mediump>	mediump_uvec3;
-	typedef vec<4, uint, mediump>	mediump_uvec4;
+	typedef vec<1, buint, mediump>	mediump_uvec1;
+	typedef vec<2, buint, mediump>	mediump_uvec2;
+	typedef vec<3, buint, mediump>	mediump_uvec3;
+	typedef vec<4, buint, mediump>	mediump_uvec4;
 
-	typedef vec<1, uint, highp>		highp_uvec1;
-	typedef vec<2, uint, highp>		highp_uvec2;
-	typedef vec<3, uint, highp>		highp_uvec3;
-	typedef vec<4, uint, highp>		highp_uvec4;
+	typedef vec<1, buint, highp>		highp_uvec1;
+	typedef vec<2, buint, highp>		highp_uvec2;
+	typedef vec<3, buint, highp>		highp_uvec3;
+	typedef vec<4, buint, highp>		highp_uvec4;
 
-	typedef vec<1, uint, defaultp>	uvec1;
-	typedef vec<2, uint, defaultp>	uvec2;
-	typedef vec<3, uint, defaultp>	uvec3;
-	typedef vec<4, uint, defaultp>	uvec4;
+	typedef vec<1, buint, defaultp>	uvec1;
+	typedef vec<2, buint, defaultp>	uvec2;
+	typedef vec<3, buint, defaultp>	uvec3;
+	typedef vec<4, buint, defaultp>	uvec4;
 
 	typedef vec<1, u8, lowp>		lowp_u8vec1;
 	typedef vec<2, u8, lowp>		lowp_u8vec2;
@@ -678,7 +678,7 @@ namespace glm
 	typedef mat<4, 2, f32, lowp>		lowp_f32mat4x2;
 	typedef mat<4, 3, f32, lowp>		lowp_f32mat4x3;
 	typedef mat<4, 4, f32, lowp>		lowp_f32mat4x4;
-	
+
 	typedef mat<2, 2, f32, mediump>		mediump_f32mat2x2;
 	typedef mat<2, 3, f32, mediump>		mediump_f32mat2x3;
 	typedef mat<2, 4, f32, mediump>		mediump_f32mat2x4;
@@ -998,45 +998,45 @@ namespace glm
 
 	// Unsigned integer matrix MxN
 
-	typedef mat<2, 2, uint, lowp>		lowp_umat2x2;
-	typedef mat<2, 3, uint, lowp>		lowp_umat2x3;
-	typedef mat<2, 4, uint, lowp>		lowp_umat2x4;
-	typedef mat<3, 2, uint, lowp>		lowp_umat3x2;
-	typedef mat<3, 3, uint, lowp>		lowp_umat3x3;
-	typedef mat<3, 4, uint, lowp>		lowp_umat3x4;
-	typedef mat<4, 2, uint, lowp>		lowp_umat4x2;
-	typedef mat<4, 3, uint, lowp>		lowp_umat4x3;
-	typedef mat<4, 4, uint, lowp>		lowp_umat4x4;
+	typedef mat<2, 2, buint, lowp>		lowp_umat2x2;
+	typedef mat<2, 3, buint, lowp>		lowp_umat2x3;
+	typedef mat<2, 4, buint, lowp>		lowp_umat2x4;
+	typedef mat<3, 2, buint, lowp>		lowp_umat3x2;
+	typedef mat<3, 3, buint, lowp>		lowp_umat3x3;
+	typedef mat<3, 4, buint, lowp>		lowp_umat3x4;
+	typedef mat<4, 2, buint, lowp>		lowp_umat4x2;
+	typedef mat<4, 3, buint, lowp>		lowp_umat4x3;
+	typedef mat<4, 4, buint, lowp>		lowp_umat4x4;
 
-	typedef mat<2, 2, uint, mediump>	mediump_umat2x2;
-	typedef mat<2, 3, uint, mediump>	mediump_umat2x3;
-	typedef mat<2, 4, uint, mediump>	mediump_umat2x4;
-	typedef mat<3, 2, uint, mediump>	mediump_umat3x2;
-	typedef mat<3, 3, uint, mediump>	mediump_umat3x3;
-	typedef mat<3, 4, uint, mediump>	mediump_umat3x4;
-	typedef mat<4, 2, uint, mediump>	mediump_umat4x2;
-	typedef mat<4, 3, uint, mediump>	mediump_umat4x3;
-	typedef mat<4, 4, uint, mediump>	mediump_umat4x4;
+	typedef mat<2, 2, buint, mediump>	mediump_umat2x2;
+	typedef mat<2, 3, buint, mediump>	mediump_umat2x3;
+	typedef mat<2, 4, buint, mediump>	mediump_umat2x4;
+	typedef mat<3, 2, buint, mediump>	mediump_umat3x2;
+	typedef mat<3, 3, buint, mediump>	mediump_umat3x3;
+	typedef mat<3, 4, buint, mediump>	mediump_umat3x4;
+	typedef mat<4, 2, buint, mediump>	mediump_umat4x2;
+	typedef mat<4, 3, buint, mediump>	mediump_umat4x3;
+	typedef mat<4, 4, buint, mediump>	mediump_umat4x4;
 
-	typedef mat<2, 2, uint, highp>		highp_umat2x2;
-	typedef mat<2, 3, uint, highp>		highp_umat2x3;
-	typedef mat<2, 4, uint, highp>		highp_umat2x4;
-	typedef mat<3, 2, uint, highp>		highp_umat3x2;
-	typedef mat<3, 3, uint, highp>		highp_umat3x3;
-	typedef mat<3, 4, uint, highp>		highp_umat3x4;
-	typedef mat<4, 2, uint, highp>		highp_umat4x2;
-	typedef mat<4, 3, uint, highp>		highp_umat4x3;
-	typedef mat<4, 4, uint, highp>		highp_umat4x4;
+	typedef mat<2, 2, buint, highp>		highp_umat2x2;
+	typedef mat<2, 3, buint, highp>		highp_umat2x3;
+	typedef mat<2, 4, buint, highp>		highp_umat2x4;
+	typedef mat<3, 2, buint, highp>		highp_umat3x2;
+	typedef mat<3, 3, buint, highp>		highp_umat3x3;
+	typedef mat<3, 4, buint, highp>		highp_umat3x4;
+	typedef mat<4, 2, buint, highp>		highp_umat4x2;
+	typedef mat<4, 3, buint, highp>		highp_umat4x3;
+	typedef mat<4, 4, buint, highp>		highp_umat4x4;
 
-	typedef mat<2, 2, uint, defaultp>	umat2x2;
-	typedef mat<2, 3, uint, defaultp>	umat2x3;
-	typedef mat<2, 4, uint, defaultp>	umat2x4;
-	typedef mat<3, 2, uint, defaultp>	umat3x2;
-	typedef mat<3, 3, uint, defaultp>	umat3x3;
-	typedef mat<3, 4, uint, defaultp>	umat3x4;
-	typedef mat<4, 2, uint, defaultp>	umat4x2;
-	typedef mat<4, 3, uint, defaultp>	umat4x3;
-	typedef mat<4, 4, uint, defaultp>	umat4x4;
+	typedef mat<2, 2, buint, defaultp>	umat2x2;
+	typedef mat<2, 3, buint, defaultp>	umat2x3;
+	typedef mat<2, 4, buint, defaultp>	umat2x4;
+	typedef mat<3, 2, buint, defaultp>	umat3x2;
+	typedef mat<3, 3, buint, defaultp>	umat3x3;
+	typedef mat<3, 4, buint, defaultp>	umat3x4;
+	typedef mat<4, 2, buint, defaultp>	umat4x2;
+	typedef mat<4, 3, buint, defaultp>	umat4x3;
+	typedef mat<4, 4, buint, defaultp>	umat4x4;
 
 
 	typedef mat<2, 2, uint8, lowp>		lowp_u8mat2x2;
@@ -1229,5 +1229,3 @@ namespace glm
 	typedef qua<f64, highp>				highp_f64quat;
 	typedef qua<f64, defaultp>			f64quat;
 }//namespace glm
-
-

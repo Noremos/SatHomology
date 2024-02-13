@@ -8,6 +8,7 @@ module;
 #endif
 
 #include <sqlite3.h>
+#include "Usings.h"
 
 export module CSBind;
 
@@ -80,7 +81,7 @@ public:
 			return false;
 		}
 
-		const uchar* wtkContext = sqlite3_column_text(stmt, 0);
+		const buchar* wtkContext = sqlite3_column_text(stmt, 0);
 
 		const char* cpath = Variables::prodDbPath.c_str();
 
@@ -198,7 +199,7 @@ public:
 		std::vector<BackString> names;
 		while (sqlite3_step(stmt) == SQLITE_ROW)
 		{
-			const uchar* wtkContext = sqlite3_column_text(stmt, 0);
+			const buchar* wtkContext = sqlite3_column_text(stmt, 0);
 			names.push_back(BackString("EPSG:") + (const char*)wtkContext);
 		}
 

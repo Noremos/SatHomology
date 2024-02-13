@@ -2,23 +2,27 @@ module;
 #include <cassert>
 #include <algorithm>
 #include <memory>
+#include "Barcode/PrjBarlib/include/barcodeCreator.h"
+#include "Usings.h"
+
 export module CachedBarcode;
 
 import IItemModule;
 import MHashMap;
-import BarcodeModule;
+// import BarcodeModule;
 import BackBind;
+import StateBinIO;
 
-class CachedBaritemHolder;
+export class CachedBaritemHolder;
 
 export class CachedBarline : public IClassItem
 {
 	//static unsigned int idCounter;
 public:
-	uint id;
-	uint parentId;
-	std::unique_ptr<uint[]> children;
-	uint childrenCount;
+	buint id;
+	buint parentId;
+	std::unique_ptr<buint[]> children;
+	buint childrenCount;
 	Barscalar startl, endl;
 	bc::barvector matrix;
 	//int matrix;
@@ -55,7 +59,7 @@ public:
 		childrenCount = other.childrenCount;
 		if (childrenCount)
 		{
-			children.reset(new uint[childrenCount]);
+			children.reset(new buint[childrenCount]);
 			std::copy_n(other.children.get(), childrenCount, children.get());
 		}
 		startl = other.startl;
@@ -98,7 +102,7 @@ public:
 			assert(false);
 	}
 
-	CachedBarline(uint id, bc::barline* line, CachedBaritemHolder* root) : IClassItem()
+	CachedBarline(buint id, bc::barline* line, CachedBaritemHolder* root) : IClassItem()
 	{
 		update(id, line, root);
 	}
@@ -106,7 +110,7 @@ public:
 	~CachedBarline()
 	{}
 
-	void update(uint id, bc::barline* line, CachedBaritemHolder* root)
+	void update(buint id, bc::barline* line, CachedBaritemHolder* root)
 	{
 		this->id = id;
 		parentId = -1;
@@ -115,7 +119,7 @@ public:
 		endl = line->end();
 		//matrix = (int)line->getPointsSize();
 		matrix = std::move(line->getMatrix());
-		depth = (uchar)line->getDeath();
+		depth = (buchar)line->getDeath();
 
 		this->root = root;
 	}
@@ -192,9 +196,9 @@ public:
 
 		childrenCount = state->pShort(childrenCount);
 		if (childrenCount > 0 && state->isReading())
-			children.reset(new uint[childrenCount]);
+			children.reset(new buint[childrenCount]);
 
-		for (uint i = 0; i < childrenCount; i++)
+		for (buint i = 0; i < childrenCount; i++)
 		{
 			children[i] = state->pInt(children[i]);
 		}
@@ -203,7 +207,7 @@ public:
 };
 
 
-export class CachedBaritemHolder : public IDataClassItemValueHolder<CachedBarline>
+class CachedBaritemHolder : public IDataClassItemValueHolder<CachedBarline>
 {
 	using Base = IDataClassItemValueHolder<CachedBarline>;
 	int root = 0;
@@ -233,7 +237,7 @@ public:
 			if (id.childrenCount)
 			{
 				int k = 0;
-				id.children.reset(new uint[id.childrenCount]);
+				id.children.reset(new buint[id.childrenCount]);
 				for (auto child : line->childrenId)
 				{
 					id.children[k++] = child;

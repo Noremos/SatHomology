@@ -1,9 +1,12 @@
 module;
 #include <exception>
+#include "Barcode/PrjBarlib/include/barstrucs.h"
+#include "Usings.h"
+#include "Barcode/PrjBarlib/modules/tiffreader.h"
 export module SimpleImgReaderModule;
 
 import Platform;
-import ImgReader;
+// import ImgReader;
 import BackBind;
 import MatrModule;
 
@@ -161,7 +164,7 @@ public:
 		baseobj.maxVal = scalarToRow(max);
 		baseobj.minVal = scalarToRow(min);
 	}
-	size_t typeSize() const override { return getReaderTypeSize(baseobj.data.type); }
+	size_t typeSize() const override { return getImgTypeSize(baseobj.data.type); }
 	Barscalar get(int x, int y) const override { return rowToScalar(baseobj.get(x, y)); }
 	//BarType getType()
 	//{
@@ -260,7 +263,7 @@ public:
 		switch (val.type)
 		{
 		case BarType::BYTE8_1:
-			nva = roweltype((uchar)val.data.b1);
+			nva = roweltype((buchar)val.data.b1);
 			break;
 			//		case BarType::BYTE8_3:
 			//			nva = roweltype(val.data.b3[0], val.data.b3[1], val.data.b3[2], 255);

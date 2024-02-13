@@ -4,6 +4,7 @@ module;
 #include <future>
 
 export module GuiRasterLayers;
+import BackBind;
 import IItemModule;
 import GuiWidgets;
 import RasterLayers;
@@ -11,7 +12,8 @@ import GuiLayers;
 import GuiOverlap;
 import GuiRLayersTemplates;
 import Platform;
-
+import DrawUtils;
+import LayersCore;
 
 export class RasterGuiLayer : public RasterToolsLayer<RasterLayer>
 {
@@ -137,7 +139,7 @@ public:
 				rectMax = ImGui::GetMousePos();
 				ImU32 color = IM_COL32(0, 0, 255, 120);
 				float thickness = 2.0f;
-				drawList->AddRectFilled(rectMin, rectMax, color, 0, ImDrawCornerFlags_All);
+				drawList->AddRectFilled(rectMin, rectMax, color, 0, ImDrawFlags_RoundCornersAll);
 			}
 		}
 		ImGui::EndChild();

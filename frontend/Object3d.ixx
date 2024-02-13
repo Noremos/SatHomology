@@ -11,17 +11,18 @@ module;
 #include <iostream>
 
 #include "fast_float.h"
-
+#include "Usings.h"
+#include "Barcode/PrjBarlib/modules/tiffreader.h"
 
 export module Obejct3DModule;
-import ImgReader;
+// import ImgReader;
 import BackTypes;
 import BackBind;
 
 
-typedef unsigned char uchar;
-typedef unsigned int uint;
-typedef unsigned short ushort;
+typedef unsigned char buchar;
+typedef unsigned int buint;
+typedef unsigned short bushort;
 
 //typedef unsigned long long offu64;
 typedef unsigned int offu64;

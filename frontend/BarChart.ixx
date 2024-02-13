@@ -4,8 +4,14 @@ module;
 #include <vector>
 #include <memory>
 
+#include "Barcode/PrjBarlib/include/barstrucs.h"
+#include "Barcode/PrjBarlib/include/barline.h"
 #include "DrawCommon.h"
 export module StatChart;
+
+import BackTypes;
+import BackBind;
+import MatrModule;
 
 import LayersCore;
 import GuiWidgets;
@@ -15,7 +21,6 @@ import ClassifierInterface;
 import TrainIO;
 import Classifiers;
 import ProjectModule;
-import BackBind;
 
 
 Project* proj = Project::getProject();
@@ -23,7 +28,7 @@ Project* proj = Project::getProject();
 
 export class BarChart
 {
-	static const int len = 300;
+	static constexpr int len = 300;
 	struct DrawChartline
 	{
 		DrawChartline(const char* name, int totalSize, int max) :
@@ -59,7 +64,7 @@ export class BarChart
 		void draw(ImDrawList* list)
 		{
 			ImVec2 pos = ImGui::GetCursorScreenPos();
-			ImGui::Text(name.c_str());
+			ImGui::Text("%s", name.c_str());
 			ImVec2 posAfter = ImGui::GetCursorScreenPos();
 			float hei = posAfter.y - pos.y;
 			float sad = 3;
@@ -70,7 +75,7 @@ export class BarChart
 			pos.x += 70;
 			pos.y += sad;
 
-			//ImVec2 size(len, 20);
+			//ImVecBarChart@StatChart::DrawChartline::set2 size(len, 20);
 			//ImVec2 end = pos + size;
 			int stSegment = 0;
 			float stColr = oppas[0];

@@ -173,7 +173,7 @@ namespace glm
 	/// @see <a href="http://www.opengl.org/sdk/docs/manglsl/xhtml/round.xml">GLSL round man page</a>
 	/// @see ext_scalar_common extension.
 	template<typename genType>
-	GLM_FUNC_DECL uint uround(genType const& x);
+	GLM_FUNC_DECL buint uround(genType const& x);
 
 	/// @}
 }//namespace glm

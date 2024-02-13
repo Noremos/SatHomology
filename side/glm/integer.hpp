@@ -34,10 +34,10 @@ namespace glm
 	/// @see <a href="http://www.opengl.org/sdk/docs/manglsl/xhtml/uaddCarry.xml">GLSL uaddCarry man page</a>
 	/// @see <a href="http://www.opengl.org/registry/doc/GLSLangSpec.4.20.8.pdf">GLSL 4.20.8 specification, section 8.8 Integer Functions</a>
 	template<length_t L, qualifier Q>
-	GLM_FUNC_DECL vec<L, uint, Q> uaddCarry(
-		vec<L, uint, Q> const& x,
-		vec<L, uint, Q> const& y,
-		vec<L, uint, Q> & carry);
+	GLM_FUNC_DECL vec<L, buint, Q> uaddCarry(
+		vec<L, buint, Q> const& x,
+		vec<L, buint, Q> const& y,
+		vec<L, buint, Q> & carry);
 
 	/// Subtracts the 32-bit unsigned integer y from x, returning
 	/// the difference if non-negative, or pow(2, 32) plus the difference
@@ -48,10 +48,10 @@ namespace glm
 	/// @see <a href="http://www.opengl.org/sdk/docs/manglsl/xhtml/usubBorrow.xml">GLSL usubBorrow man page</a>
 	/// @see <a href="http://www.opengl.org/registry/doc/GLSLangSpec.4.20.8.pdf">GLSL 4.20.8 specification, section 8.8 Integer Functions</a>
 	template<length_t L, qualifier Q>
-	GLM_FUNC_DECL vec<L, uint, Q> usubBorrow(
-		vec<L, uint, Q> const& x,
-		vec<L, uint, Q> const& y,
-		vec<L, uint, Q> & borrow);
+	GLM_FUNC_DECL vec<L, buint, Q> usubBorrow(
+		vec<L, buint, Q> const& x,
+		vec<L, buint, Q> const& y,
+		vec<L, buint, Q> & borrow);
 
 	/// Multiplies 32-bit integers x and y, producing a 64-bit
 	/// result. The 32 least-significant bits are returned in lsb.
@@ -63,10 +63,10 @@ namespace glm
 	/// @see <a href="http://www.opengl.org/registry/doc/GLSLangSpec.4.20.8.pdf">GLSL 4.20.8 specification, section 8.8 Integer Functions</a>
 	template<length_t L, qualifier Q>
 	GLM_FUNC_DECL void umulExtended(
-		vec<L, uint, Q> const& x,
-		vec<L, uint, Q> const& y,
-		vec<L, uint, Q> & msb,
-		vec<L, uint, Q> & lsb);
+		vec<L, buint, Q> const& x,
+		vec<L, buint, Q> const& y,
+		vec<L, buint, Q> & msb,
+		vec<L, buint, Q> & lsb);
 
 	/// Multiplies 32-bit integers x and y, producing a 64-bit
 	/// result. The 32 least-significant bits are returned in lsb.

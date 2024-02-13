@@ -424,7 +424,7 @@ namespace glm
 	///
 	/// @see <a href="http://www.opengl.org/sdk/docs/manglsl/xhtml/floatBitsToUint.xml">GLSL floatBitsToUint man page</a>
 	/// @see <a href="http://www.opengl.org/registry/doc/GLSLangSpec.4.20.8.pdf">GLSL 4.20.8 specification, section 8.3 Common Functions</a>
-	GLM_FUNC_DECL uint floatBitsToUint(float const& v);
+	GLM_FUNC_DECL buint floatBitsToUint(float const& v);
 
 	/// Returns a unsigned integer value representing
 	/// the encoding of a floating-point value. The floatingpoint
@@ -436,7 +436,7 @@ namespace glm
 	/// @see <a href="http://www.opengl.org/sdk/docs/manglsl/xhtml/floatBitsToUint.xml">GLSL floatBitsToUint man page</a>
 	/// @see <a href="http://www.opengl.org/registry/doc/GLSLangSpec.4.20.8.pdf">GLSL 4.20.8 specification, section 8.3 Common Functions</a>
 	template<length_t L, qualifier Q>
-	GLM_FUNC_DECL vec<L, uint, Q> floatBitsToUint(vec<L, float, Q> const& v);
+	GLM_FUNC_DECL vec<L, buint, Q> floatBitsToUint(vec<L, float, Q> const& v);
 
 	/// Returns a floating-point value corresponding to a signed
 	/// integer encoding of a floating-point value.
@@ -470,7 +470,7 @@ namespace glm
 	///
 	/// @see <a href="http://www.opengl.org/sdk/docs/manglsl/xhtml/uintBitsToFloat.xml">GLSL uintBitsToFloat man page</a>
 	/// @see <a href="http://www.opengl.org/registry/doc/GLSLangSpec.4.20.8.pdf">GLSL 4.20.8 specification, section 8.3 Common Functions</a>
-	GLM_FUNC_DECL float uintBitsToFloat(uint const& v);
+	GLM_FUNC_DECL float uintBitsToFloat(buint const& v);
 
 	/// Returns a floating-point value corresponding to a
 	/// unsigned integer encoding of a floating-point value.
@@ -484,7 +484,7 @@ namespace glm
 	/// @see <a href="http://www.opengl.org/sdk/docs/manglsl/xhtml/uintBitsToFloat.xml">GLSL uintBitsToFloat man page</a>
 	/// @see <a href="http://www.opengl.org/registry/doc/GLSLangSpec.4.20.8.pdf">GLSL 4.20.8 specification, section 8.3 Common Functions</a>
 	template<length_t L, qualifier Q>
-	GLM_FUNC_DECL vec<L, float, Q> uintBitsToFloat(vec<L, uint, Q> const& v);
+	GLM_FUNC_DECL vec<L, float, Q> uintBitsToFloat(vec<L, buint, Q> const& v);
 
 	/// Computes and returns a * b + c.
 	///
@@ -511,7 +511,7 @@ namespace glm
 	/// @see <a href="http://www.opengl.org/registry/doc/GLSLangSpec.4.20.8.pdf">GLSL 4.20.8 specification, section 8.3 Common Functions</a>
 	template<typename genType>
 	GLM_FUNC_DECL genType frexp(genType x, int& exp);
-	
+
 	template<length_t L, typename T, qualifier Q>
 	GLM_FUNC_DECL vec<L, T, Q> frexp(vec<L, T, Q> const& v, vec<L, int, Q>& exp);
 
@@ -528,7 +528,7 @@ namespace glm
 	/// @see <a href="http://www.opengl.org/registry/doc/GLSLangSpec.4.20.8.pdf">GLSL 4.20.8 specification, section 8.3 Common Functions</a>
 	template<typename genType>
 	GLM_FUNC_DECL genType ldexp(genType const& x, int const& exp);
-	
+
 	template<length_t L, typename T, qualifier Q>
 	GLM_FUNC_DECL vec<L, T, Q> ldexp(vec<L, T, Q> const& v, vec<L, int, Q> const& exp);
 
@@ -536,4 +536,3 @@ namespace glm
 }//namespace glm
 
 #include "detail/func_common.inl"
-

@@ -1,12 +1,15 @@
 module;
 #include <cmath>
 #include "DrawCommon.h"
+#include "Barcode/PrjBarlib/include/barscalar.h"
 
 export module GuiOverlap;
 
+import BackBind;
+import MatrModule;
 import LayersCore;
 import GuiWidgets;
-import BarScalarModule;
+// import BarScalarModule;
 
 struct vec3
 {

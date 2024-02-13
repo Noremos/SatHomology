@@ -4,9 +4,11 @@ module;
 
 #include <algorithm>
 #include <limits>
+#include "Barcode/PrjBarlib/include/barstrucs.h"
 
 export module GuiWidgets;
 
+import BackBind;
 import CSBind;
 import ProjectModule;
 import DrawUtils;
@@ -673,7 +675,7 @@ public:
 		// ptoj->getVector();
 
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings;
-		window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
+		window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
 
 		ImGui::SetCursorPos(ds.getDrawPos());
 		if (!ImGui::BeginChild("PointsOverdraw", ds.getDrawSize(), false, window_flags))

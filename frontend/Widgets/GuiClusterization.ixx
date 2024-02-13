@@ -1,9 +1,11 @@
 module;
 #include "../DrawCommon.h"
 #include <iostream>
+#include "Barcode/PrjBarlib/include/barstrucs.h"
 
 export module GuiClusterization;
 
+import BackBind;
 import Platform;
 import GuiWidgets;
 import TrainIO;
@@ -18,6 +20,7 @@ import GroupLayer;
 import GuiLayers;
 import VectorLayers;
 import ClassifierCore;
+import DrawUtils;
 
 
 struct StringBuffer
@@ -184,12 +187,12 @@ public:
 		if (!show)
 			return;
 
-		if (!ImGui::Begin("Кластеризация", &show))
+		if (!ImGui::Begin("Classification", &show))
 		{
 			ImGui::End();
 			return;
 		}
-		clsuterMethods.drawCombobox("Метод кластеризации");
+		clsuterMethods.drawCombobox("Classification Method");
 		if (clsuterMethods.hasChanged())
 		{
 			auto methodId = clsuterMethods.currentValue().methodId;
@@ -197,10 +200,10 @@ public:
 			clusterizer = getClusterFactory().CreateML(methodId);
 		}
 
-		ImGui::Text("Настройки классификатора");
+		ImGui::Text("Settings");
 		drawDynamicSettings(clusterizer->settings);
 
-		ImGui::Text("Препроцессинг");
+		ImGui::Text("Preprocessing");
 		drawDynamicSettings(collectionToPredict->settings);
 
 		//char nameCharBuffer[200]{};
@@ -294,7 +297,7 @@ public:
 
 			//ImGui::BeginDisabled(!selceted.hasData());
 
-			if (ImGui::Button("Запустить"))
+			if (ImGui::Button("Run"))
 			{
 				collectionToPredict->clear();
 				auto methodId = clsuterMethods.currentValue().methodId;
@@ -351,7 +354,7 @@ public:
 						auto* classLayer = layers[classTypeOfItem];
 						DrawPrimitive* prim = classLayer->addPrimitive(classLayer->color);
 
-						std::vector<uint> out;
+						std::vector<buint> out;
 						auto* item = collectionToPredict->getCItem(i);
 						auto rect = getCountourOder(item->getMatrix(), out, true);
 						for (const auto& pm : out)
@@ -376,7 +379,7 @@ public:
 			{
 				ImGui::Text("There are no data to cluster");
 
-				if (ImGui::Button("ОК"))
+				if (ImGui::Button("OK"))
 				{
 					ImGui::CloseCurrentPopup();
 				}

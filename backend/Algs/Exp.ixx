@@ -2,15 +2,17 @@
 
 #include <cassert>
 #include <algorithm>
-#include <string>
+#include "Barcode/PrjBarlib/include/barline.h"
+#include "Barcode/PrjBarlib/include/barcodeCreator.h"
+#include "Usings.h"
 
 export module Exp;
 import LayersCore;
 import ProjectModule;
 import RasterLineLayerModule;
 import VectorLayers;
-import BarTypes;
-import BarcodeModule;
+// import BarTypes;
+// import BarcodeModule;
 import RasterLayers;
 import Classifiers;
 import GeoprocessorModule;
@@ -69,7 +71,7 @@ public:
 		if (line->matr.size() == 0)
 			return guiTree;
 
-		std::vector<uint> out;
+		std::vector<buint> out;
 		auto rect = getCountourOder(line->matr, out, true);
 		if (out.size() == 0)
 		{
@@ -528,8 +530,8 @@ export RetLayers exeFilter(InOutLayer& iol, bc::ProcType type, int algNum)
 
 	const BackImage src = *(input->getCachedImage());
 
-	uint hist[256];//256
-	uint offs[256];//256
+	buint hist[256];//256
+	buint offs[256];//256
 	std::fill_n(hist, 256, 0);
 	std::fill_n(offs, 256, 0);
 	for (size_t i = 0; i < src.length(); i++)
@@ -544,13 +546,13 @@ export RetLayers exeFilter(InOutLayer& iol, bc::ProcType type, int algNum)
 		offs[i] = hist[i - 1];
 	}
 
-	std::unique_ptr<uint> ods;
-	uint* data = new uint[src.length()];//256
+	std::unique_ptr<buint> ods;
+	buint* data = new buint[src.length()];//256
 	ods.reset(data);
 
 	for (size_t i = 0; i < src.length(); i++)
 	{
-		uchar p = src.getLiner(i).getAvgUchar();
+		buchar p = src.getLiner(i).getAvgUchar();
 		data[offs[p]++] = i;
 	}
 

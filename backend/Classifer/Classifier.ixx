@@ -2,6 +2,8 @@ module;
 #include <mutex>
 #include <cassert>
 #include <unordered_map>
+#include "Usings.h"
+#include "Barcode/PrjBarlib/include/barstrucs.h"
 
 export module ClassifierCore;
 import IItemModule; //
@@ -18,6 +20,27 @@ import MatrModule;
 
 // BarClassses
 import ClassifierInterface;
+
+
+bc::BarRect getBarRect(const bc::barvector& matrix)
+{
+	int l, r, t, d;
+	r = l = matrix[0].getX();
+	t = d = matrix[0].getY();
+	for (size_t j = 0; j < matrix.size(); ++j)
+	{
+		if (l > matrix[j].getX())
+			l = matrix[j].getX();
+		if (r < matrix[j].getX())
+			r = matrix[j].getX();
+
+		if (t > matrix[j].getY())
+			t = matrix[j].getY();
+		if (d < matrix[j].getY())
+			d = matrix[j].getY();
+	}
+	return bc::BarRect(l, t, r - l + 1, d - t + 1);
+}
 
 export class ClassifierBackend
 {
@@ -93,14 +116,14 @@ public:
 	}
 
 
-	//void getOffsertByTileIndex(uint tileIndex, uint& offX, uint& offY)
+	//void getOffsertByTileIndex(buint tileIndex, buint& offX, buint& offY)
 	//{
 	//	int tilesInRow = getCon(reader->width(), tileSize);
 	//	offY = (tileIndex / tilesInRow) * tileSize;
 	//	offX = (tileIndex % tilesInRow) * tileSize;
 	//}
 
-	//uint getTileIndexByOffset(uint offX, uint offY)
+	//buint getTileIndexByOffset(buint offX, buint offY)
 	//{
 	//	int tilesInRow = getCon(reader->width(), tileSize);
 	//	return (offY / tileSize) * tilesInRow + offX / tileSize;
@@ -187,7 +210,7 @@ public:
 		IClassItem* line = item->getItem(srcItemId.vecId);
 		if (destIcon != nullptr && sourceLayer)
 		{
-			auto rect = bc::getBarRect(line->getMatrix());
+			auto rect = getBarRect(line->getMatrix());
 			auto tileProv = inLayer->prov.tileByIndex(srcItemId.tileId);
 			BackPixelPoint st = tileProv.tileToFull(rect.x, rect.y);
 			BackPixelPoint ed = tileProv.tileToFull(rect.right(), rect.botton());

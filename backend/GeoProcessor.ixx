@@ -6,17 +6,18 @@ module;
 #include <stack>
 #include <ranges>
 #include <unordered_set>
+#include "Barcode/PrjBarlib/include/barline.h"
+#include "Usings.h"
 
 export module GeoprocessorModule;
 
+import BackBind;
 import Platform;
-import BarTypes;
+// import BarTypes;
 import MHashMap;
 import BackBind;
 import MatrModule;
 
-
-using uint = unsigned int;
 
 export struct Cound
 {
@@ -54,7 +55,7 @@ export struct CounturRect
 };
 
 
-export using mcountor = std::vector<uint>;
+export using mcountor = std::vector<buint>;
 
 export CounturRect getCountour(const bc::barvector& points, mcountor& contur, bool aproximate = false);
 
@@ -111,7 +112,7 @@ inline void testC()
 
 export double getPsa(const bc::barvector& matr)
 {
-	MMMAP<uint, bool> map;
+	MMMAP<buint, bool> map;
 
 	int minX = 10000, maxX = 0, minY = 1000, maxY = 0;
 	for (const auto& pm : matr)
@@ -274,13 +275,13 @@ class MapCountur
 	int x = 0, y = 0;
 	int stIndex = 0;
 	mcountor& contur;
-	MMMAP<uint, bool> points;
+	MMMAP<buint, bool> points;
 
 	enum StartPos : char { LeftMid = 0, LeftTop = 1, TopMid = 2, RigthTop = 3, RigthMid = 4, RigthBottom = 5, BottomMid = 6, LeftBottom = 7 };
 
 	StartPos dirct = RigthMid;
 	std::stack<StartPos> dirs;
-	std::stack<uint> pointsStack;
+	std::stack<buint> pointsStack;
 
 	int accum = 2;
 	int poss[16][2] = { {-1, 0}, {-1, -1}, {0, -1}, {1, -1}, {1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}, {0, -1}, {1, -1}, {1, 0}, {1, 1}, {0, 1}, {-1, 1} };
@@ -413,7 +414,7 @@ private:
 		return false;
 	}
 
-	uint getIndex()
+	buint getIndex()
 	{
 		return bc::barvalue::getStatInd(x, y);
 	}
@@ -518,15 +519,15 @@ export CounturRect getCountourOder(const bc::barvector& points, mcountor& contur
 
 export struct DictWrap
 {
-	std::unordered_set<uint> points;
+	std::unordered_set<buint> points;
 	int wid = 0, hei = 0;
 
-	void set(uint i)
+	void set(buint i)
 	{
 		points.insert(i);
 	}
 
-	bool has(uint i) const
+	bool has(buint i) const
 	{
 		return points.find(i) != points.end();
 	}

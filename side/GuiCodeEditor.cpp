@@ -2006,7 +2006,7 @@
 //{
 //	const static Palette p = { {
 //			0xff7f7f7f,	// Default
-//			0xffd69c56,	// Keyword	
+//			0xffd69c56,	// Keyword
 //			0xff00ff00,	// Number
 //			0xff7070e0,	// String
 //			0xff70a0e0, // Char literal
@@ -2034,7 +2034,7 @@
 //{
 //	const static Palette p = { {
 //			0xff7f7f7f,	// None
-//			0xffff0c06,	// Keyword	
+//			0xffff0c06,	// Keyword
 //			0xff008000,	// Number
 //			0xff2020a0,	// String
 //			0xff304070, // Char literal
@@ -2062,7 +2062,7 @@
 //{
 //	const static Palette p = { {
 //			0xff00ffff,	// None
-//			0xffffff00,	// Keyword	
+//			0xffffff00,	// Keyword
 //			0xff00ff00,	// Number
 //			0xff808000,	// String
 //			0xff808000, // Char literal
@@ -2817,7 +2817,7 @@
 //			"pass", "pixelfragment", "PixelShader", "point", "PointStream", "precise", "RasterizerState", "RenderTargetView", "return", "register", "row_major", "RWBuffer", "RWByteAddressBuffer", "RWStructuredBuffer",
 //			"RWTexture1D", "RWTexture1DArray", "RWTexture2D", "RWTexture2DArray", "RWTexture3D", "sample", "sampler", "SamplerState", "SamplerComparisonState", "shared", "snorm", "stateblock", "stateblock_state",
 //			"static", "string", "struct", "switch", "StructuredBuffer", "tbuffer", "technique", "technique10", "technique11", "texture", "Texture1D", "Texture1DArray", "Texture2D", "Texture2DArray", "Texture2DMS",
-//			"Texture2DMSArray", "Texture3D", "TextureCube", "TextureCubeArray", "true", "typedef", "triangle", "triangleadj", "TriangleStream", "uint", "uniform", "unorm", "unsigned", "vector", "vertexfragment",
+//			"Texture2DMSArray", "Texture3D", "TextureCube", "TextureCubeArray", "true", "typedef", "triangle", "triangleadj", "TriangleStream", "buint", "uniform", "unorm", "unsigned", "vector", "vertexfragment",
 //			"VertexShader", "void", "volatile", "while",
 //			"bool1","bool2","bool3","bool4","double1","double2","double3","double4", "float1", "float2", "float3", "float4", "int1", "int2", "int3", "int4", "in", "out", "inout",
 //			"uint1", "uint2", "uint3", "uint4", "dword1", "dword2", "dword3", "dword4", "half1", "half2", "half3", "half4",
@@ -3063,7 +3063,7 @@
 //		static const char* const keywords[] = {
 //			"and", "abstract", "auto", "bool", "break", "case", "cast", "class", "const", "continue", "default", "do", "double", "else", "enum", "false", "final", "float", "for",
 //			"from", "funcdef", "function", "get", "if", "import", "in", "inout", "int", "interface", "int8", "int16", "int32", "int64", "is", "mixin", "namespace", "not",
-//			"null", "or", "out", "override", "private", "protected", "return", "set", "shared", "super", "switch", "this ", "true", "typedef", "uint", "uint8", "uint16", "uint32",
+//			"null", "or", "out", "override", "private", "protected", "return", "set", "shared", "super", "switch", "this ", "true", "typedef", "buint", "uint8", "uint16", "uint32",
 //			"uint64", "void", "while", "xor"
 //		};
 //

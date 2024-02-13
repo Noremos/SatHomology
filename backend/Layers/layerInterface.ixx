@@ -5,12 +5,14 @@ module;
 #include <list>
 
 #include <cassert>
+#include "../Bind/Json.h"
+#include "Barcode/PrjBarlib/include/barline.h"
 
 export module LayersCore;
 
-import BarTypes;
+// import BarTypes;
 import Platform;
-import JsonCore;
+// import JsonCore;
 import MetadataCoreIO;
 import CSBind;
 import MHashMap;
@@ -501,7 +503,50 @@ public:
 		std::copy(csf.img_transform, csf.img_transform + 6, cs.img_transform);
 	}
 
-	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder);
+
+	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder)
+	{
+		state->scInt("coreId", id);
+		state->scStr("name", name);
+
+		state->scBool("isSystem", isSystem);
+		state->scBool("visible", visible);
+
+		cs.saveLoadState(state, metaFolder);
+
+		//state->scInt("layerCounter", layerCounter);
+
+		// const bool isReading = state->isReading();
+		// int size = subLayers.size();
+
+		// JsonArrayIOState* arrst = state->arrayBegin("extraLayers", size);
+		// auto iter = subLayers.begin();
+
+		// for (int i = 0; i < size; i++)
+		// {
+		// 	JsonObjectIOState* obj = arrst->objectBegin(i);
+		// 	int factoryId;
+		// 	ILayer* lay;
+		// 	if (isReading)
+		// 	{
+		// 		obj->scInt("factoryId", factoryId);
+		// 		lay = CoreLayerFactory::CreateCoreLayer(factoryId);
+		// 		subLayers.addMove(lay);
+		// 	}
+		// 	else
+		// 	{
+		// 		lay = iter->get();
+		// 		factoryId = lay->getFactoryId();
+		// 		obj->scInt("factoryId", factoryId);
+		// 		iter++;
+		// 	}
+
+		// 	lay->saveLoadState(obj, metaFolder);
+		// 	arrst->objectEnd();
+		// }
+		// state->arrayEnd();
+	}
+
 	virtual Type getType() const = 0;
 	virtual const LFID getFactoryId() const = 0;
 	virtual void release(const MetadataProvider&)
@@ -612,48 +657,6 @@ public:
 CoreLayerFactory::FunctionCoreHolder<ILayer> CoreLayerFactory::coreLayersCreators;
 
 
-void ILayer::saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder)
-{
-	state->scInt("coreId", id);
-	state->scStr("name", name);
-
-	state->scBool("isSystem", isSystem);
-	state->scBool("visible", visible);
-
-	cs.saveLoadState(state, metaFolder);
-
-	//state->scInt("layerCounter", layerCounter);
-
-	// const bool isReading = state->isReading();
-	// int size = subLayers.size();
-
-	// JsonArrayIOState* arrst = state->arrayBegin("extraLayers", size);
-	// auto iter = subLayers.begin();
-
-	// for (int i = 0; i < size; i++)
-	// {
-	// 	JsonObjectIOState* obj = arrst->objectBegin(i);
-	// 	int factoryId;
-	// 	ILayer* lay;
-	// 	if (isReading)
-	// 	{
-	// 		obj->scInt("factoryId", factoryId);
-	// 		lay = CoreLayerFactory::CreateCoreLayer(factoryId);
-	// 		subLayers.addMove(lay);
-	// 	}
-	// 	else
-	// 	{
-	// 		lay = iter->get();
-	// 		factoryId = lay->getFactoryId();
-	// 		obj->scInt("factoryId", factoryId);
-	// 		iter++;
-	// 	}
-
-	// 	lay->saveLoadState(obj, metaFolder);
-	// 	arrst->objectEnd();
-	// }
-	// state->arrayEnd();
-}
 
 
 

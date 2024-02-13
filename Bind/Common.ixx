@@ -14,10 +14,9 @@ export using BackPathStr = std::filesystem::path;
 export using BackFileReader = std::ifstream;
 export using BackFileWriter = std::ofstream;
 
-export using uint = unsigned int;
-export using uchar = unsigned char;
-export using ushort = unsigned short;
-
+export using buint = unsigned int;
+export using buchar = unsigned char;
+export using bushort = unsigned short;
 
 
 export BackString operator+(const BackString& left, BackStringView right)
@@ -59,9 +58,9 @@ export struct BackSize
 
 export struct BackColor
 {
-	uchar r = 0;
-	uchar g = 0;
-	uchar b = 0;
+	buchar r = 0;
+	buchar g = 0;
+	buchar b = 0;
 	BackColor operator=(BackColor other)
 	{
 		r = other.r;
@@ -220,43 +219,43 @@ export struct toStdStr
 
 export struct TileIterator
 {
-	uint start;
-	uint tileSize;
-	uint fullTileSize;
+	buint start;
+	buint tileSize;
+	buint fullTileSize;
 
-	uint maxLen;
-	uint locIndex;
+	buint maxLen;
+	buint locIndex;
 
-	TileIterator(uint start, uint tileSize, uint offset, uint maxLen) :
+	TileIterator(buint start, buint tileSize, buint offset, buint maxLen) :
 		start(start), tileSize(tileSize), fullTileSize(tileSize + offset), maxLen(maxLen),
 		locIndex(0)
 	{ }
 
-	void reset(uint st = 0)
+	void reset(buint st = 0)
 	{
 		start = st;
 		locIndex = start / tileSize;
 	}
 
-	uint pos()
+	buint pos()
 	{
 		return start;
 	}
 
-	uint accum()
+	buint accum()
 	{
 		++locIndex;
 		start += tileSize;
 		return start;
 	}
 
-	uint tilesInLine() const
+	buint tilesInLine() const
 	{
 		return maxLen / tileSize + (maxLen % tileSize > (fullTileSize - tileSize) ? 1 : 0);
 	}
 
 
-	uint getFullTileSize()
+	buint getFullTileSize()
 	{
 		if (start + fullTileSize <= maxLen)
 		{
@@ -270,7 +269,7 @@ export struct TileIterator
 			return 0;
 	}
 
-	bool shouldSkip(uint& len)
+	bool shouldSkip(buint& len)
 	{
 		len = getFullTileSize();
 		return len <= (fullTileSize - tileSize); // len < offset

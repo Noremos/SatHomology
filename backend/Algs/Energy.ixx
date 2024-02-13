@@ -1,11 +1,14 @@
 module;
 #include <vector>
 #include <memory>
+#include "Barcode/PrjBarlib/include/barline.h"
+#include "Barcode/PrjBarlib/include/barcodeCreator.h"
+#include "Usings.h"
 
 export module EnergyModule;
 
-import BarcodeModule;
-import BarTypes;
+// import BarcodeModule;
+// import BarTypes;
 import BackBind;
 
 export class EnetrgyBarcode : public bc::BarcodeCreator
@@ -92,7 +95,7 @@ private:
 			bool found = false;
 			float& cur = energy[curpoindex];
 			static char poss[9][2] = { { -1,0 },{ -1,-1 },{ 0,-1 },{ 1,-1 },{ 1,0 },{ 1,1 },{ 0,1 },{ -1,1 },{ -1,0 } };
-			for (uchar i = 0; i < 8; ++i)
+			for (buchar i = 0; i < 8; ++i)
 			{
 				const bc::point IcurPoint(curpix + poss[i]);
 
@@ -108,7 +111,7 @@ private:
 					//cur = side / 2;
 					//side /= 2;
 
-					// 2 
+					// 2
 					//cur = side / 2;
 
 					// 3
@@ -255,12 +258,12 @@ private:
 			bc::point minPoint;
 			Cmp* first = nullptr;
 			Barscalar minDiff = high;
-			for (uchar j = 0; j < 8; ++j)
+			for (buchar j = 0; j < 8; ++j)
 			{
 				const bc::point IcurPoint2(curpix + poss[j]);
 				if (IS_OUT_OF_REG(IcurPoint2.x, IcurPoint2.y))
 					continue;
-				
+
 				Cmp* temp = getCmp(IcurPoint2.getLiner(iwid));
 				if (temp == nullptr)
 					continue;
@@ -274,7 +277,7 @@ private:
 					minDiff = tempDiff;
 				}
 			}
-	
+
 			if (first == nullptr)
 			{
 				comps.push_back(std::make_unique<Cmp>());
@@ -294,7 +297,7 @@ private:
 				first = nullptr;
 			}
 
-			for (uchar i = 0; i < 8; ++i)
+			for (buchar i = 0; i < 8; ++i)
 			{
 				const bc::point IcurPoint(curpix + poss[i]);
 
@@ -305,10 +308,10 @@ private:
 				Cmp* second = getCmp(IcurPindex);
 				if (!second || second == first)
 					continue;
-				
+
 				Barscalar nextHigh = workingImg->getLiner(IcurPindex);
 				Barscalar minDiff = nextHigh.absDiff(high);
-				for (uchar j = i + 1; j < 8; ++j)
+				for (buchar j = i + 1; j < 8; ++j)
 				{
 					const bc::point IcurPoint2(curpix + poss[j]);
 					if (IS_OUT_OF_REG(IcurPoint2.x, IcurPoint2.y))
@@ -333,8 +336,8 @@ private:
 						second = first;
 						first = temp;
 					}
- 						
-					
+
+
 					second->parent = first;
 					second->energy -= minDiff.getAvgFloat();
 					first->energy += second->energy;
@@ -349,7 +352,7 @@ private:
 						first = nullptr;
 					}
 				}
-			} // 
+			} //
 		}
 	}
 };

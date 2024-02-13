@@ -3,7 +3,11 @@ module;
 #include <memory>
 #include <future>
 
+#include "Barcode/PrjBarlib/include/barstrucs.h"
+
 export module GuiRasterLineLayer;
+
+import BackBind;
 import IItemModule;
 import GuiWidgets;
 import RasterLayers;
@@ -15,6 +19,8 @@ import GuiClusterization;
 import BarcodeChart;
 import GuiITemPrevew;
 
+import GuiLayers;
+import DrawUtils;
 //GuiBackend backend;
 
 
@@ -218,10 +224,10 @@ public:
 			ImGui::Separator();
 			BackString s = line->start.text<BackString, toStdStr>();
 			s = "Start: " + s;
-			ImGui::Text(s.c_str());
+			ImGui::Text("%s",s.c_str());
 			s = line->end.text<BackString, toStdStr>();
 			s = "End: " + s;
-			ImGui::Text(s.c_str());
+			ImGui::Text("%s", s.c_str());
 
 			ImGui::Text("Depth %d", line->depth);
 			ImGui::Text("Matr size %d", line->matrSrcSize);

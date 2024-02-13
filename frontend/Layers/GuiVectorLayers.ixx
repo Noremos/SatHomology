@@ -1,11 +1,13 @@
 module;
 #include "../DrawCommon.h"
+#include <vector>
 
 export module GuiVectorLayers;
+import BackBind;
 import VectorLayers;
 import GuiWidgets;
 import GuiLayers;
-
+import DrawUtils;
 
 export class VectorGuiLayer : public VectorBaseLayer<VectorLayer>
 {
@@ -42,11 +44,11 @@ public:
 
 };
 
-class TreeVectorGuiLayer;
+export class TreeVectorGuiLayer;
 void drawTree(const GuiDisplaySystem& ds, TreeVectorGuiLayer* layer, VecTree& tree, int& counter);
 
 
-export class TreeVectorGuiLayer : public VectorBaseLayer<TreeVectorLayer>
+class TreeVectorGuiLayer : public VectorBaseLayer<TreeVectorLayer>
 {
 public:
 	TreeVectorGuiLayer(TreeVectorLayer* fromCore) : VectorBaseLayer<TreeVectorLayer>(fromCore)

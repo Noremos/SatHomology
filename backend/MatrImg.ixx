@@ -1,18 +1,25 @@
 module;
-#include <string.h>
 #include <cassert>
 #include <algorithm>
 #include <cmath>
+#include "Barcode/PrjBarlib/include/barstrucs.h"
+#include "Usings.h"
+
+#include "fpng/fpng.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#define __STDC_LIB_EXT1__
+#include "stb_image_write.h"
 
 export module MatrModule;
 
-import BarTypes;
-import BarScalarModule;
+import BackBind;
+// import BarTypes;
+// import BarScalarModule;
 
-using uchar = unsigned char;
-
-
-class BackImage : public bc::DatagridProvider
+export class BackImage : public bc::DatagridProvider
 {
 public:
 	void fill(const Barscalar &s)
@@ -26,7 +33,7 @@ public:
 	typedef const Barscalar *const_bar_iterator;
 
 public:
-	uchar *data = nullptr;
+	buchar *data = nullptr;
 
 private:
 	mutable bc::CachedValue cachedMax;
@@ -112,7 +119,7 @@ protected:
 	void valInit()
 	{
 		valDelete();
-		data = new uchar[this->length() * TSize];
+		data = new buchar[this->length() * TSize];
 		_deleteData = true;
 		valZerofy();
 	}
@@ -124,10 +131,10 @@ protected:
 		return newVals;
 	}
 
-	void valAssignCopyOf(uchar *newData)
+	void valAssignCopyOf(buchar *newData)
 	{
 		valDelete();
-		data = new uchar[this->length() * TSize];
+		data = new buchar[this->length() * TSize];
 		_deleteData = true;
 		memcpy(data, newData, this->length() * TSize);
 	}
@@ -143,7 +150,7 @@ protected:
 		cachedMin.isCached = false;
 	}
 
-	void valAssignInstanceOf(uchar *newData, bool deleteData = true)
+	void valAssignInstanceOf(buchar *newData, bool deleteData = true)
 	{
 		valDelete();
 		_deleteData = deleteData;
@@ -185,7 +192,7 @@ public:
 		reinit(width, height, chnls, btype);
 	}
 
-	BackImage(int width, int height, int chnls, uchar *_data, bool copy = true, bool deleteData = true)
+	BackImage(int width, int height, int chnls, buchar *_data, bool copy = true, bool deleteData = true)
 	{
 		if (copy)
 		{
@@ -196,7 +203,7 @@ public:
 	}
 
 
-	BackImage(int width, int height, int chnls, BarType type, uchar *_data, bool copy = true, bool deleteData = true)
+	BackImage(int width, int height, int chnls, BarType type, buchar *_data, bool copy = true, bool deleteData = true)
 	{
 		if (copy)
 		{
@@ -272,7 +279,7 @@ public:
 
 	virtual ~BackImage() { valDelete(); }
 
-	uchar *getData() const { return data; }
+	buchar *getData() const { return data; }
 
 	void maxAndMin(Barscalar &_min, Barscalar &_max) const override
 	{
@@ -347,13 +354,13 @@ public:
 		return _max - _min;
 	}
 
-	void copyFromRawData(int width, int height, int chnls, uchar *rawData, BarType type = BarType::NONE)
+	void copyFromRawData(int width, int height, int chnls, buchar *rawData, BarType type = BarType::NONE)
 	{
 		setMetadata(width, height, chnls, type);
 		valAssignCopyOf(rawData);
 	}
 
-	void assignRawData(int width, int height, int chnls, uchar *rawData, bool deleteData = true, BarType type = BarType::NONE)
+	void assignRawData(int width, int height, int chnls, buchar *rawData, bool deleteData = true, BarType type = BarType::NONE)
 	{
 		setMetadata(width, height, chnls, type);
 
@@ -367,7 +374,7 @@ public:
 
 	inline Barscalar get(int x, int y) const override
 	{
-		uchar* off = data + (y * _wid + x) * TSize;
+		buchar* off = data + (y * _wid + x) * TSize;
 		switch (type)
 		{
 		case BarType::INT32_1:
@@ -385,7 +392,7 @@ public:
 		}
 	}
 
-	inline uchar* lineOffet(int y, int x = 0) const
+	inline buchar* lineOffet(int y, int x = 0) const
 	{
 		return data + (y * _wid + x) * TSize;
 	}
@@ -397,7 +404,7 @@ public:
 
 	inline void set(int x, int y, const Barscalar& val)
 	{
-		uchar* off = data + (y * _wid + x) * TSize;
+		buchar* off = data + (y * _wid + x) * TSize;
 		if (type == BarType::BYTE8_1)
 		{
 			*off = val.getAvgUchar();
@@ -446,11 +453,11 @@ public:
 
 	struct m_rgbfill
 	{
-		uchar rgb[3];
+		buchar rgb[3];
 	};
 	struct m_rgbafill
 	{
-		uchar rgb[4];
+		buchar rgb[4];
 	};
 
 	inline void setRow(int x, int y, int xwid, const Barscalar& val)
@@ -463,7 +470,7 @@ public:
 		assert(x + xwid <= _wid);
 		assert(type == val.type);
 
-		uchar* off = data + (y * _wid + x) * TSize;
+		buchar* off = data + (y * _wid + x) * TSize;
 		switch (type)
 		{
 		case BarType::BYTE8_1:
@@ -504,7 +511,7 @@ public:
 		}
 		else
 		{
-			uchar *off = data + (y * _wid + x) * TSize;
+			buchar *off = data + (y * _wid + x) * TSize;
 			if (val.type == BarType::BYTE8_3)
 			{
 				off[0] += val.data.b3[0];
@@ -537,7 +544,7 @@ public:
 		}
 		else
 		{
-			uchar *off = data + (y * _wid + x) * TSize;
+			buchar *off = data + (y * _wid + x) * TSize;
 			if (val.type == BarType::BYTE8_3)
 			{
 				off[0] -= val.data.b3[0];
@@ -565,7 +572,7 @@ public:
 		}
 		else
 		{
-			uchar *off = data + pos * TSize;
+			buchar *off = data + pos * TSize;
 			if (val.type == BarType::BYTE8_3)
 			{
 				off[0] = val.data.b3[0];
@@ -591,7 +598,7 @@ public:
 		}
 		else
 		{
-			uchar *off = data + pos * TSize;
+			buchar *off = data + pos * TSize;
 			return Barscalar(off[0], off[1], off[2]);
 		}
 	}
@@ -671,7 +678,100 @@ public:
 	}
 };
 
-export
+
+export void FrameworkInit()
 {
-	using BackImage = BackImage;
+	fpng::fpng_init();
 }
+
+export BackImage imread(const BackString& path)
+{
+	int width, height, chls;
+	unsigned char* image_data = stbi_load(path.c_str(), &width, &height, &chls, 0);
+	if (image_data == NULL)
+		return BackImage(0, 0, 0, NULL, false, false);
+
+	// if (chls == 4)
+	// {
+	// 	const int req = 3;
+	// 	unsigned int length = width * height;
+	// 	unsigned char* fixedData = new buchar[length * req];
+	// 	//memcpy(fixedData, image_data, length * req);
+	// 	for (size_t i = 0, destinationIndex = 0; i < length * chls; i += chls, destinationIndex += req)
+	// 	{
+	// 		fixedData[destinationIndex + 0] = image_data[i + 0];
+	// 		fixedData[destinationIndex + 1] = image_data[i + 1];
+	// 		fixedData[destinationIndex + 2] = image_data[i + 2];
+
+	// 		/*for (size_t j = 0; j < i + req; ++j)
+	// 		{
+	// 			fixedData[j] = image_data[destinationIndexj];
+	// 		}*/
+	// 	}
+	// 	delete[] image_data;
+	// 	image_data = fixedData;
+	// 	chls = req;
+	// }
+	return BackImage(width, height, chls, image_data, false, true);
+}
+
+export BackImage imread(const BackPathStr& path)
+{
+	return imread(path.string());
+}
+
+export void imwrite(const BackString& path, const BackImage& mat)
+{
+	fpng::fpng_encode_image_to_file(path.c_str(), mat.data, mat.width(), mat.height(), mat.channels());
+	// stbi_write_png(path.c_str(), mat.width(), mat.height(), mat.channels(), mat.data, 0); // so slow...
+}
+
+export void imwrite(const BackPathStr& path, const BackImage& mat)
+{
+	imwrite(path.string(), mat);
+}
+
+
+export BackImage imreadFromMemory(const buchar* data, size_t size)
+{
+	int width, height, chls;
+	unsigned char* image_data = stbi_load_from_memory(data, size, &width, &height, &chls, 0);
+	if (image_data == NULL)
+		return BackImage(0, 0, 0, NULL, false, false);
+
+	if (chls == 4)
+	{
+		const int req = 3;
+		unsigned int length = width * height;
+		unsigned char* fixedData = new buchar[length * req];
+		//memcpy(fixedData, image_data, length * req);
+		for (size_t i = 0, destinationIndex = 0; i < length * chls; i += chls, destinationIndex += req)
+		{
+			fixedData[destinationIndex + 0] = image_data[i + 0];
+			fixedData[destinationIndex + 1] = image_data[i + 1];
+			fixedData[destinationIndex + 2] = image_data[i + 2];
+		}
+		delete[] image_data;
+		image_data = fixedData;
+		chls = req;
+	}
+	return BackImage(width, height, chls, image_data, false, true);
+}
+
+export using MemImgData = std::vector<uint8_t>;
+
+export MemImgData imwriteToMemory(const BackImage& mat)
+{
+	MemImgData out_buf;
+	bool r = fpng::fpng_encode_image_to_memory(mat.getData(), mat.width(), mat.height(), mat.channels(), out_buf);
+	assert(r);
+	return out_buf;
+}
+	BackImage imread(const BackString& path);
+	BackImage imread(const BackPathStr& path);
+	BackImage imreadFromMemory(const buchar* data, size_t size);
+
+	void imwrite(const BackString& path, const BackImage& mat);
+	void imwrite(const BackPathStr& path, const BackImage& mat);
+
+	MemImgData imwriteToMemory(const BackImage& mat);

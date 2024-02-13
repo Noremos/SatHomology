@@ -4,6 +4,10 @@ module;
 
 export module GuiClassifierModule;
 
+import BackTypes;
+import BackBind;
+import MatrModule;
+
 import Platform;
 import GuiWidgets;
 import TrainIO;

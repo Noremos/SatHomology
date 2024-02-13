@@ -8,6 +8,8 @@
 #include <future>
 #include <iostream>
 #include "../side/implot/implot.h"
+#include "Barcode/PrjBarlib/include/barcodeCreator.h"
+#include "Json.h"
 
 //#include "sol3/sol.hpp"
 //
@@ -17,7 +19,7 @@
 import FrontendBind;
 import Platform;
 import GuiLayers;
-import BarcodeModule;
+// import BarcodeModule;
 import GuiOverlap;
 import GuiClassifierModule;
 import GuiWidgets;
@@ -28,6 +30,11 @@ import GuiRasterLayers;
 import GuiRasterLineLayer;
 import Settings;
 import BackBind;
+import RasterLineLayerModule;
+
+import DrawUtils;
+import RasterLayers;
+import LayersCore;
 //import Lua;
 
 
@@ -218,7 +225,7 @@ namespace MyApp
 
 	void drawProjectSettings()
 	{
-		if (ImGui::Button("Настройки проекта"))
+		if (ImGui::Button(BU8("Project settings")))
 		{
 			ImGui::OpenPopup("ProjectSetts");
 			tempThreads = getSettings().threadsCount;
@@ -228,7 +235,7 @@ namespace MyApp
 		if (ImGui::BeginPopupModal("ProjectSetts", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 		{
 			ImGui::BeginDisabled(minThreadCount < 2);
-			ImGui::Checkbox("Асинхронно", &runAsync);
+			ImGui::Checkbox(BU8("Async"), &runAsync);
 			ImGui::EndDisabled();
 
 			if (minThreadCount > 1)
@@ -251,7 +258,7 @@ namespace MyApp
 
 			ImGui::SetItemDefaultFocus();
 			ImGui::SameLine();
-			if (ImGui::Button("Отмена", ImVec2(120, 0)))
+			if (ImGui::Button(BU8("Cancel"), ImVec2(120, 0)))
 			{
 				ImGui::CloseCurrentPopup();
 			}
@@ -262,7 +269,7 @@ namespace MyApp
 
 	void drawLayerSettings()
 	{
-		if (ImGui::Button("Свойства слоя"))
+		if (ImGui::Button(BU8("Layer properties")))
 		{
 			ImGui::OpenPopup("ProcSetts");
 		}
@@ -290,7 +297,7 @@ namespace MyApp
 
 			ImGui::SetItemDefaultFocus();
 			ImGui::SameLine();
-			if (ImGui::Button("Отмена", ImVec2(120, 0)))
+			if (ImGui::Button(BU8("Отмена"), ImVec2(120, 0)))
 			{
 				ImGui::CloseCurrentPopup();
 			}
@@ -350,7 +357,7 @@ namespace MyApp
 				}
 
 				ImGui::SameLine();
-				if (ImGui::Button("Отмена", ImVec2(120, 0)))
+				if (ImGui::Button(BU8("Отмена"), ImVec2(120, 0)))
 				{
 					ImGui::CloseCurrentPopup();
 				}
@@ -361,7 +368,7 @@ namespace MyApp
 			static RasterFromDiskLayer* layer;
 
 			ImGui::SameLine();
-			if (ImGui::Button("Загрузить..."))
+			if (ImGui::Button(BU8("Open...")))
 			{
 				BackPathStr path = openImageOrProject();
 				if (!path.empty())
@@ -382,7 +389,7 @@ namespace MyApp
 							{
 								layer->cs.init(DEFAULT_PROJECTION);
 								tbVals.projset.setup(layer->cs);
-								ImGui::OpenPopup("Система координат");
+								ImGui::OpenPopup(BU8("Coord System"));
 							}
 						}
 						else
@@ -398,7 +405,7 @@ namespace MyApp
 				}
 			}
 
-			if (ImGui::BeginPopupModal("Система координат", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+			if (ImGui::BeginPopupModal(BU8("Coord System"), NULL, ImGuiWindowFlags_AlwaysAutoResize))
 			{
 				//tbVals.projset.draw();
 
@@ -417,7 +424,7 @@ namespace MyApp
 				}
 
 				ImGui::SameLine();
-				if (ImGui::Button("Отмена", ImVec2(120, 0)))
+				if (ImGui::Button(BU8("Cancel"), ImVec2(120, 0)))
 				{
 					backend.removeLayer(layer->id);
 					layer = nullptr;
@@ -451,7 +458,7 @@ namespace MyApp
 			//}
 
 			ImGui::SameLine();
-			if (ImGui::Button("Сохранить как..."))
+			if (ImGui::Button(BU8("Save")))
 			{
 				backend.save();
 			}
@@ -607,7 +614,7 @@ namespace MyApp
 			ImGui::SameLine();
 			ImGui::ProgressBar(0.0, ImVec2(0.0f, 0.0f));
 			ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-			ImGui::Text("Прогресс");
+			ImGui::Text(BU8("Progressbar"));
 
 			// GBL
 			ImGui::EndDisabled();
@@ -813,13 +820,13 @@ namespace MyApp
 
 	void ToolSetDraw()
 	{
-		if (!ImGui::Begin("Инструменты"))
+		if (!ImGui::Begin("Tools"))
 		{
 			ImGui::End();
 			return;
 		}
 
-		if (ImGui::Button("Добавить векторный слой"))
+		if (ImGui::Button("Add vector layer"))
 		{
 			//backend.
 			VectorLayer* layerData = backend.addVectorLayer();
@@ -881,7 +888,7 @@ namespace MyApp
 
 	void MyApp::Init(const char* root)
 	{
-		setlocale(LC_ALL, "ru_ru.utf-8");
+		// setlocale(LC_ALL, "ru_ru.utf-8");
 		srand(time(NULL));
 		Variables::setRoot(root);
 
@@ -914,7 +921,7 @@ namespace MyApp
 			0x0400, 0x044F, // Cyrillic
 			0,
 		};
-		ImFont* font = io.Fonts->AddFontFromFileTTF(Variables::getDefaultFontPath().string().c_str(), 18.0f, &font_config, ranges);
+		ImFont* font = io.Fonts->AddFontFromFileTTF(Variables::getDefaultFontPath().string().c_str(), 15.0f, &font_config, ranges);
 		IM_ASSERT(font != NULL);
 
 		//setlocale(LC_ALL, "rus");

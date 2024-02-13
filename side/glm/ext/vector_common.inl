@@ -137,11 +137,11 @@ namespace glm
 	}
 
 	template<length_t L, typename T, qualifier Q>
-	GLM_FUNC_QUALIFIER vec<L, uint, Q> uround(vec<L, T, Q> const& x)
+	GLM_FUNC_QUALIFIER vec<L, buint, Q> uround(vec<L, T, Q> const& x)
 	{
 		GLM_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, "'uround' only accept floating-point inputs");
 		assert(all(lessThanEqual(vec<L, T, Q>(0), x)));
 
-		return vec<L, uint, Q>(x + static_cast<T>(0.5));
+		return vec<L, buint, Q>(x + static_cast<T>(0.5));
 	}
 }//namespace glm

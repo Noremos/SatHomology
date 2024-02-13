@@ -1,12 +1,15 @@
 module;
 #include <cassert>
-
+#include "Barcode/PrjBarlib/include/barline.h"
+#include "Usings.h"
 export module ClusterInterface;
 
+import BackBind;
 import IItemModule;
 import CachedBarcode;
 import MLSettings;
-import BarTypes;
+import StateBinIO;
+// import BarTypes;
 //export class IClasterItem
 //{
 //	IClasterItem(CachedBarline*)
@@ -140,7 +143,7 @@ public:
 
 	const ICluster* getCItem(size_t id) const override
 	{
-		return &items[id];
+		return dynamic_cast<const ICluster*>(&items[id]);
 	}
 
 	size_t getItemsCount() const

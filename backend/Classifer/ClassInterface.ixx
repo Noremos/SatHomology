@@ -3,15 +3,17 @@ module;
 #include <cassert>
 #include <sstream>
 #include <vector>
-
+#include "Barcode/PrjBarlib/include/barcodeCreator.h"
+#include "Usings.h"
 
 export module ClassifierInterface;
 // import std.core;
 
 import Platform;
 
-import BarcodeModule;
+// import BarcodeModule;
 
+import BackTypes;
 import MetadataCoreIO;
 import TrainIO;
 import MHashMap;
@@ -51,7 +53,7 @@ public:
 		vbuffer temp;
 		auto str = st.str();
 		char* data = str.data();
-		temp.setData((uchar*)data, str.length(), false);
+		temp.setData((buchar*)data, str.length(), false);
 		size_t id = io.save(classInd, temp, icon);
 		addDataInnerT(classInd, raw, id, extract);
 
@@ -109,7 +111,6 @@ export template<class TItem, class TContainer>
 class TCacheClassifier : public IDataBarClassifier<TItem>
 {
 public:
-	template<class TContainer>
 	struct ClassData
 	{
 		int classId;
@@ -117,7 +118,7 @@ public:
 		MMMAP<size_t, int> cacheIndex;
 	};
 
-	using TClassData = ClassData<TContainer>;
+	using TClassData = ClassData;
 
 	std::vector<std::unique_ptr<TClassData>> classes;
 

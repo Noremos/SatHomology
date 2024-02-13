@@ -677,14 +677,14 @@ namespace glm
 	/// Convert each component from an integer vector into a packed unsigned integer.
 	///
 	/// @see gtc_packing
-	/// @see u16vec2 unpackUint2x16(uint p)
-	GLM_FUNC_DECL uint packUint2x16(u16vec2 const& v);
+	/// @see u16vec2 unpackUint2x16(buint p)
+	GLM_FUNC_DECL buint packUint2x16(u16vec2 const& v);
 
 	/// Convert a packed integer into an integer vector.
 	///
 	/// @see gtc_packing
-	/// @see uint packUint2x16(u16vec2 const& v)
-	GLM_FUNC_DECL u16vec2 unpackUint2x16(uint p);
+	/// @see buint packUint2x16(u16vec2 const& v)
+	GLM_FUNC_DECL u16vec2 unpackUint2x16(buint p);
 
 	/// Convert each component from an integer vector into a packed unsigned integer.
 	///

@@ -10526,25 +10526,25 @@ class binary_reader
                 return get_number(input_format_t::msgpack, number) && sax->number_float(static_cast<number_float_t>(number), "");
             }
 
-            case 0xCC: // uint 8
+            case 0xCC: // buint 8
             {
                 std::uint8_t number{};
                 return get_number(input_format_t::msgpack, number) && sax->number_unsigned(number);
             }
 
-            case 0xCD: // uint 16
+            case 0xCD: // buint 16
             {
                 std::uint16_t number{};
                 return get_number(input_format_t::msgpack, number) && sax->number_unsigned(number);
             }
 
-            case 0xCE: // uint 32
+            case 0xCE: // buint 32
             {
                 std::uint32_t number{};
                 return get_number(input_format_t::msgpack, number) && sax->number_unsigned(number);
             }
 
-            case 0xCF: // uint 64
+            case 0xCF: // buint 64
             {
                 std::uint64_t number{};
                 return get_number(input_format_t::msgpack, number) && sax->number_unsigned(number);
@@ -15395,25 +15395,25 @@ class binary_writer
                     }
                     else if (j.m_value.number_unsigned <= (std::numeric_limits<std::uint8_t>::max)())
                     {
-                        // uint 8
+                        // buint 8
                         oa->write_character(to_char_type(0xCC));
                         write_number(static_cast<std::uint8_t>(j.m_value.number_integer));
                     }
                     else if (j.m_value.number_unsigned <= (std::numeric_limits<std::uint16_t>::max)())
                     {
-                        // uint 16
+                        // buint 16
                         oa->write_character(to_char_type(0xCD));
                         write_number(static_cast<std::uint16_t>(j.m_value.number_integer));
                     }
                     else if (j.m_value.number_unsigned <= (std::numeric_limits<std::uint32_t>::max)())
                     {
-                        // uint 32
+                        // buint 32
                         oa->write_character(to_char_type(0xCE));
                         write_number(static_cast<std::uint32_t>(j.m_value.number_integer));
                     }
                     else if (j.m_value.number_unsigned <= (std::numeric_limits<std::uint64_t>::max)())
                     {
-                        // uint 64
+                        // buint 64
                         oa->write_character(to_char_type(0xCF));
                         write_number(static_cast<std::uint64_t>(j.m_value.number_integer));
                     }
@@ -15466,25 +15466,25 @@ class binary_writer
                 }
                 else if (j.m_value.number_unsigned <= (std::numeric_limits<std::uint8_t>::max)())
                 {
-                    // uint 8
+                    // buint 8
                     oa->write_character(to_char_type(0xCC));
                     write_number(static_cast<std::uint8_t>(j.m_value.number_integer));
                 }
                 else if (j.m_value.number_unsigned <= (std::numeric_limits<std::uint16_t>::max)())
                 {
-                    // uint 16
+                    // buint 16
                     oa->write_character(to_char_type(0xCD));
                     write_number(static_cast<std::uint16_t>(j.m_value.number_integer));
                 }
                 else if (j.m_value.number_unsigned <= (std::numeric_limits<std::uint32_t>::max)())
                 {
-                    // uint 32
+                    // buint 32
                     oa->write_character(to_char_type(0xCE));
                     write_number(static_cast<std::uint32_t>(j.m_value.number_integer));
                 }
                 else if (j.m_value.number_unsigned <= (std::numeric_limits<std::uint64_t>::max)())
                 {
-                    // uint 64
+                    // buint 64
                     oa->write_character(to_char_type(0xCF));
                     write_number(static_cast<std::uint64_t>(j.m_value.number_integer));
                 }

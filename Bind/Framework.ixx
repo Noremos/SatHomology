@@ -1,131 +1,21 @@
 module;
 
 #include <assert.h>
-
+#include <initializer_list>
+#include <iostream>
 // Side
 #include "PortFileDialog.h"
 #include "sago/platform_folders.h"
-
-#include "fpng/fpng.h"
-
+#include "Usings.h"
 export module Platform;
 
 import BackBind;
-import SideBind;
 import BackTypes;
-import MatrModule;
-
-export using MemImgData = std::vector<uint8_t>;
-export
-{
-	void FrameworkInit()
-	{
-		fpng::fpng_init();
-	}
-
-	BackImage imread(const BackString& path);
-	BackImage imread(const BackPathStr& path);
-	BackImage imreadFromMemory(const uchar* data, size_t size);
-
-	void imwrite(const BackString& path, const BackImage& mat);
-	void imwrite(const BackPathStr& path, const BackImage& mat);
-
-	MemImgData imwriteToMemory(const BackImage& mat);
-
-	BackPathStr getDicumnetPath();
-
-	BackPathStr getSavePath(std::initializer_list<std::string> exts);
-	BackPathStr openImageOrProject();
-	BackPathStr openProject();
-	BackPathStr openImage();
-}
 
 
 //#define GL_RGB                            0x1907
 
-BackImage imread(const BackString& path)
-{
-	int width, height, chls;
-	unsigned char* image_data = stbi_load(path.c_str(), &width, &height, &chls, 0);
-	if (image_data == NULL)
-		return BackImage(0, 0, 0, NULL, false, false);
-
-	// if (chls == 4)
-	// {
-	// 	const int req = 3;
-	// 	unsigned int length = width * height;
-	// 	unsigned char* fixedData = new uchar[length * req];
-	// 	//memcpy(fixedData, image_data, length * req);
-	// 	for (size_t i = 0, destinationIndex = 0; i < length * chls; i += chls, destinationIndex += req)
-	// 	{
-	// 		fixedData[destinationIndex + 0] = image_data[i + 0];
-	// 		fixedData[destinationIndex + 1] = image_data[i + 1];
-	// 		fixedData[destinationIndex + 2] = image_data[i + 2];
-
-	// 		/*for (size_t j = 0; j < i + req; ++j)
-	// 		{
-	// 			fixedData[j] = image_data[destinationIndexj];
-	// 		}*/
-	// 	}
-	// 	delete[] image_data;
-	// 	image_data = fixedData;
-	// 	chls = req;
-	// }
-	return BackImage(width, height, chls, image_data, false, true);
-}
-
-BackImage imread(const BackPathStr& path)
-{
-	return imread(path.string());
-}
-
-void imwrite(const BackString& path, const BackImage& mat)
-{
-	fpng::fpng_encode_image_to_file(path.c_str(), mat.data, mat.width(), mat.height(), mat.channels());
-	// stbi_write_png(path.c_str(), mat.width(), mat.height(), mat.channels(), mat.data, 0); // so slow...
-}
-
-void imwrite(const BackPathStr& path, const BackImage& mat)
-{
-	imwrite(path.string(), mat);
-}
-
-
-BackImage imreadFromMemory(const uchar* data, size_t size)
-{
-	int width, height, chls;
-	unsigned char* image_data = stbi_load_from_memory(data, size, &width, &height, &chls, 0);
-	if (image_data == NULL)
-		return BackImage(0, 0, 0, NULL, false, false);
-
-	if (chls == 4)
-	{
-		const int req = 3;
-		unsigned int length = width * height;
-		unsigned char* fixedData = new uchar[length * req];
-		//memcpy(fixedData, image_data, length * req);
-		for (size_t i = 0, destinationIndex = 0; i < length * chls; i += chls, destinationIndex += req)
-		{
-			fixedData[destinationIndex + 0] = image_data[i + 0];
-			fixedData[destinationIndex + 1] = image_data[i + 1];
-			fixedData[destinationIndex + 2] = image_data[i + 2];
-		}
-		delete[] image_data;
-		image_data = fixedData;
-		chls = req;
-	}
-	return BackImage(width, height, chls, image_data, false, true);
-}
-
-MemImgData imwriteToMemory(const BackImage& mat)
-{
-	MemImgData out_buf;
-	bool r = fpng::fpng_encode_image_to_memory(mat.getData(), mat.width(), mat.height(), mat.channels(), out_buf);
-	assert(r);
-	return out_buf;
-}
-
-BackPathStr openImageOrProject()
+export BackPathStr openImageOrProject()
 {
 	// File open
 	auto f = pfd::open_file("Choose files to read", pfd::path::home(),
@@ -143,7 +33,7 @@ BackPathStr openImageOrProject()
 	return f.result().size() == 0 ? "" : f.result()[0];
 }
 
-BackPathStr openImage()
+export BackPathStr openImage()
 {
 	// File open
 	auto f = pfd::open_file("Choose files to read", pfd::path::home(),
@@ -162,7 +52,7 @@ BackPathStr openImage()
 }
 
 
-BackPathStr openProject()
+export BackPathStr openProject()
 {
 	// File open
 	auto f = pfd::open_file("Choose files to read", pfd::path::home(),
@@ -180,7 +70,7 @@ BackPathStr openProject()
 	return f.result().size() == 0 ? "" : f.result()[0];
 }
 
-BackPathStr getSavePath(std::initializer_list<std::string> exts)
+export BackPathStr getSavePath(std::initializer_list<BackString> exts)
 {
 	auto fs = pfd::save_file("Choose file to save", pfd::path::home(), exts, pfd::opt::none);
 
@@ -189,7 +79,7 @@ BackPathStr getSavePath(std::initializer_list<std::string> exts)
 	return fs.result().size() == 0 ? "" : fs.result();
 }
 
-BackPathStr getDicumnetPath()
+export BackPathStr getDicumnetPath()
 {
 	return sago::getDocumentsFolder();
 }

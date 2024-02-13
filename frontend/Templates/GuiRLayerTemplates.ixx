@@ -2,8 +2,11 @@ module;
 #include "../DrawCommon.h"
 #include <memory>
 #include <future>
+#include "Barcode/PrjBarlib/include/barstrucs.h"
 
 export module GuiRLayersTemplates;
+
+import BackBind;
 import IItemModule;
 import GuiWidgets;
 import RasterLayers;
@@ -12,6 +15,8 @@ import GuiOverlap;
 import DynamicSettings;
 import Exp;
 import CoreLoaders;
+import LayersCore;
+import DrawUtils;
 
 int maxThreadCount, minThreadCount;
 
@@ -306,7 +311,7 @@ public:
 			}
 
 			ImGui::Separator();
-			if (ImGui::Button("Запустить"))
+			if (ImGui::Button("Run"))
 			{
 				GuiLayerData<T>::data->prov.tileSize = newTileSize;
 				GuiLayerData<T>::data->tileOffset = newOffsetSize;
@@ -320,7 +325,7 @@ public:
 			}
 
 			ImGui::SameLine();
-			if (ImGui::Button("Отмена"))
+			if (ImGui::Button("Cancel"))
 			{
 				ImGui::CloseCurrentPopup();
 			}

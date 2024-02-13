@@ -31,7 +31,7 @@ namespace glm
 
 	//! Returns x raised to the y power.
 	//! From GLM_GTX_integer extension.
-	GLM_FUNC_DECL int pow(int x, uint y);
+	GLM_FUNC_DECL int pow(int x, buint y);
 
 	//! Returns the positive square root of x.
 	//! From GLM_GTX_integer extension.
@@ -56,19 +56,19 @@ namespace glm
 
 	//! Returns x raised to the y power.
 	//! From GLM_GTX_integer extension.
-	GLM_FUNC_DECL uint pow(uint x, uint y);
+	GLM_FUNC_DECL buint pow(buint x, buint y);
 
 	//! Returns the positive square root of x.
 	//! From GLM_GTX_integer extension.
-	GLM_FUNC_DECL uint sqrt(uint x);
+	GLM_FUNC_DECL buint sqrt(buint x);
 
 	//! Modulus. Returns x - y * floor(x / y) for each component in x using the floating point value y.
 	//! From GLM_GTX_integer extension.
-	GLM_FUNC_DECL uint mod(uint x, uint y);
+	GLM_FUNC_DECL buint mod(buint x, buint y);
 
 	//! Returns the number of leading zeros.
 	//! From GLM_GTX_integer extension.
-	GLM_FUNC_DECL uint nlz(uint x);
+	GLM_FUNC_DECL buint nlz(buint x);
 
 	/// @}
 }//namespace glm

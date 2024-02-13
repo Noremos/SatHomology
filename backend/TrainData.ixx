@@ -6,6 +6,8 @@
 #include <cassert>
 #include <functional>
 //#include <iostream>
+#include "Usings.h"
+#include "../Bind/Json.h"
 
 export module TrainIO;
 
@@ -398,18 +400,18 @@ private:
 		{
 			const void* file = sqlite3_column_blob(stmt, counterId);
 			int binfileSize = sqlite3_column_bytes(stmt, counterId);
-			bbfFile.copyDataFrom(reinterpret_cast<const uchar*>(file), binfileSize);
+			bbfFile.copyDataFrom(reinterpret_cast<const buchar*>(file), binfileSize);
 
 			++counterId;
 		}
 		if (filter & LF_ICON)
 		{
-			StaticArray<const uchar> imgBuff;
+			StaticBuffer<const buchar> imgBuff;
 
 			const void* imgData = sqlite3_column_blob(stmt, counterId);
 			int imgSize = sqlite3_column_bytes(stmt, counterId);
 
-			preview = imreadFromMemory(reinterpret_cast<const uchar*>(imgData), imgSize);
+			preview = imreadFromMemory(reinterpret_cast<const buchar*>(imgData), imgSize);
 			++counterId;
 		}
 	}

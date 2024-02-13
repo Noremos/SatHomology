@@ -7,12 +7,17 @@ module;
 #include "DrawCommon.h"
 #include <glew.h>
 
+#include "stb_image.h"
+
+#include "Barcode/PrjBarlib/include/barscalar.h"
+
 export module DrawUtils;
 
+import Platform;
 import MatrModule;
 import CSBind;
-import SideBind;
 import BackBind;
+// import BarScalarModule;
 
 export void ResizeImage(int& width, int& height, int max_width, int max_height)
 {
@@ -180,7 +185,7 @@ public:
 				const auto ewf = [](int p1, int p2, int p3, int p4)
 				{
 					int a = static_cast<int>((float)p1 * 0.25 + p2 * 0.25 + p3 * 0.25 + p4 * 0.25);
-					return static_cast<uchar>(std::max(std::min(a, 255), 0));
+					return static_cast<buchar>(std::max(std::min(a, 255), 0));
 				};
 
 				Barscalar p_interp;

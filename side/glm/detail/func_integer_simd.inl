@@ -6,9 +6,9 @@ namespace glm{
 namespace detail
 {
 	template<qualifier Q>
-	struct compute_bitfieldReverseStep<4, uint, Q, true, true>
+	struct compute_bitfieldReverseStep<4, buint, Q, true, true>
 	{
-		GLM_FUNC_QUALIFIER static vec<4, uint, Q> call(vec<4, uint, Q> const& v, uint Mask, uint Shift)
+		GLM_FUNC_QUALIFIER static vec<4, buint, Q> call(vec<4, buint, Q> const& v, buint Mask, buint Shift)
 		{
 			__m128i const set0 = v.data;
 
@@ -27,9 +27,9 @@ namespace detail
 	};
 
 	template<qualifier Q>
-	struct compute_bitfieldBitCountStep<4, uint, Q, true, true>
+	struct compute_bitfieldBitCountStep<4, buint, Q, true, true>
 	{
-		GLM_FUNC_QUALIFIER static vec<4, uint, Q> call(vec<4, uint, Q> const& v, uint Mask, uint Shift)
+		GLM_FUNC_QUALIFIER static vec<4, buint, Q> call(vec<4, buint, Q> const& v, buint Mask, buint Shift)
 		{
 			__m128i const set0 = v.data;
 
@@ -46,7 +46,7 @@ namespace detail
 
 #	if GLM_ARCH & GLM_ARCH_AVX_BIT
 	template<>
-	GLM_FUNC_QUALIFIER int bitCount(uint x)
+	GLM_FUNC_QUALIFIER int bitCount(buint x)
 	{
 		return _mm_popcnt_u32(x);
 	}

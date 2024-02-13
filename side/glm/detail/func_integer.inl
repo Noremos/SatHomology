@@ -173,56 +173,56 @@ namespace detail
 }//namespace detail
 
 	// uaddCarry
-	GLM_FUNC_QUALIFIER uint uaddCarry(uint const& x, uint const& y, uint & Carry)
+	GLM_FUNC_QUALIFIER buint uaddCarry(buint const& x, buint const& y, buint & Carry)
 	{
 		detail::uint64 const Value64(static_cast<detail::uint64>(x) + static_cast<detail::uint64>(y));
 		detail::uint64 const Max32((static_cast<detail::uint64>(1) << static_cast<detail::uint64>(32)) - static_cast<detail::uint64>(1));
 		Carry = Value64 > Max32 ? 1u : 0u;
-		return static_cast<uint>(Value64 % (Max32 + static_cast<detail::uint64>(1)));
+		return static_cast<buint>(Value64 % (Max32 + static_cast<detail::uint64>(1)));
 	}
 
 	template<length_t L, qualifier Q>
-	GLM_FUNC_QUALIFIER vec<L, uint, Q> uaddCarry(vec<L, uint, Q> const& x, vec<L, uint, Q> const& y, vec<L, uint, Q>& Carry)
+	GLM_FUNC_QUALIFIER vec<L, buint, Q> uaddCarry(vec<L, buint, Q> const& x, vec<L, buint, Q> const& y, vec<L, buint, Q>& Carry)
 	{
 		vec<L, detail::uint64, Q> Value64(vec<L, detail::uint64, Q>(x) + vec<L, detail::uint64, Q>(y));
 		vec<L, detail::uint64, Q> Max32((static_cast<detail::uint64>(1) << static_cast<detail::uint64>(32)) - static_cast<detail::uint64>(1));
-		Carry = mix(vec<L, uint, Q>(0), vec<L, uint, Q>(1), greaterThan(Value64, Max32));
-		return vec<L, uint, Q>(Value64 % (Max32 + static_cast<detail::uint64>(1)));
+		Carry = mix(vec<L, buint, Q>(0), vec<L, buint, Q>(1), greaterThan(Value64, Max32));
+		return vec<L, buint, Q>(Value64 % (Max32 + static_cast<detail::uint64>(1)));
 	}
 
 	// usubBorrow
-	GLM_FUNC_QUALIFIER uint usubBorrow(uint const& x, uint const& y, uint & Borrow)
+	GLM_FUNC_QUALIFIER buint usubBorrow(buint const& x, buint const& y, buint & Borrow)
 	{
-		Borrow = x >= y ? static_cast<uint>(0) : static_cast<uint>(1);
+		Borrow = x >= y ? static_cast<buint>(0) : static_cast<buint>(1);
 		if(y >= x)
 			return y - x;
 		else
-			return static_cast<uint>((static_cast<detail::int64>(1) << static_cast<detail::int64>(32)) + (static_cast<detail::int64>(y) - static_cast<detail::int64>(x)));
+			return static_cast<buint>((static_cast<detail::int64>(1) << static_cast<detail::int64>(32)) + (static_cast<detail::int64>(y) - static_cast<detail::int64>(x)));
 	}
 
 	template<length_t L, qualifier Q>
-	GLM_FUNC_QUALIFIER vec<L, uint, Q> usubBorrow(vec<L, uint, Q> const& x, vec<L, uint, Q> const& y, vec<L, uint, Q>& Borrow)
+	GLM_FUNC_QUALIFIER vec<L, buint, Q> usubBorrow(vec<L, buint, Q> const& x, vec<L, buint, Q> const& y, vec<L, buint, Q>& Borrow)
 	{
-		Borrow = mix(vec<L, uint, Q>(1), vec<L, uint, Q>(0), greaterThanEqual(x, y));
-		vec<L, uint, Q> const YgeX(y - x);
-		vec<L, uint, Q> const XgeY(vec<L, uint, Q>((static_cast<detail::int64>(1) << static_cast<detail::int64>(32)) + (vec<L, detail::int64, Q>(y) - vec<L, detail::int64, Q>(x))));
+		Borrow = mix(vec<L, buint, Q>(1), vec<L, buint, Q>(0), greaterThanEqual(x, y));
+		vec<L, buint, Q> const YgeX(y - x);
+		vec<L, buint, Q> const XgeY(vec<L, buint, Q>((static_cast<detail::int64>(1) << static_cast<detail::int64>(32)) + (vec<L, detail::int64, Q>(y) - vec<L, detail::int64, Q>(x))));
 		return mix(XgeY, YgeX, greaterThanEqual(y, x));
 	}
 
 	// umulExtended
-	GLM_FUNC_QUALIFIER void umulExtended(uint const& x, uint const& y, uint & msb, uint & lsb)
+	GLM_FUNC_QUALIFIER void umulExtended(buint const& x, buint const& y, buint & msb, buint & lsb)
 	{
 		detail::uint64 Value64 = static_cast<detail::uint64>(x) * static_cast<detail::uint64>(y);
-		msb = static_cast<uint>(Value64 >> static_cast<detail::uint64>(32));
-		lsb = static_cast<uint>(Value64);
+		msb = static_cast<buint>(Value64 >> static_cast<detail::uint64>(32));
+		lsb = static_cast<buint>(Value64);
 	}
 
 	template<length_t L, qualifier Q>
-	GLM_FUNC_QUALIFIER void umulExtended(vec<L, uint, Q> const& x, vec<L, uint, Q> const& y, vec<L, uint, Q>& msb, vec<L, uint, Q>& lsb)
+	GLM_FUNC_QUALIFIER void umulExtended(vec<L, buint, Q> const& x, vec<L, buint, Q> const& y, vec<L, buint, Q>& msb, vec<L, buint, Q>& lsb)
 	{
 		vec<L, detail::uint64, Q> Value64(vec<L, detail::uint64, Q>(x) * vec<L, detail::uint64, Q>(y));
-		msb = vec<L, uint, Q>(Value64 >> static_cast<detail::uint64>(32));
-		lsb = vec<L, uint, Q>(Value64);
+		msb = vec<L, buint, Q>(Value64 >> static_cast<detail::uint64>(32));
+		lsb = vec<L, buint, Q>(Value64);
 	}
 
 	// imulExtended
@@ -369,4 +369,3 @@ namespace detail
 #if GLM_CONFIG_SIMD == GLM_ENABLE
 #	include "func_integer_simd.inl"
 #endif
-

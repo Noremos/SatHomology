@@ -1,10 +1,12 @@
 module;
 #include <cstdint>
 #include <vector>
+#include "../Bind/Json.h"
+#include "Usings.h"
 
 export module MLSettings;
 
-import JsonCore;
+// import JsonCore;
 import BackBind;
 
 export struct OptionEnum

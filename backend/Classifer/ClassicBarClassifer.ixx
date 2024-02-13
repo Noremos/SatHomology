@@ -5,11 +5,14 @@ module;
 #include <functional>
 #include <vector>
 #include <assert.h>
+#include "Barcode/PrjBarlib/include/barcodeCreator.h"
 
 
 export module Classifiers;
 
-import BarcodeModule;
+// import BarcodeModule;
+import StateBinIO;
+import BackBind;
 import IItemModule;
 import ClassifierInterface;
 
@@ -165,10 +168,10 @@ public:
 
 		// index = state->pInt(index); // Index
 		item->setType((BarType)state->pType(item->getType())); // BarType
-		size_t linesCount = state->pArray(static_cast<uint>(vec.size()));
+		size_t linesCount = state->pArray(static_cast<buint>(vec.size()));
 
 		// Parent read/write stuff
-		uint counterId = 0;
+		buint counterId = 0;
 
 		const bool use32index = state->pInt(sizeof(bc::BIndex) == 4 ? 1 : 0) == 1;
 
@@ -184,7 +187,7 @@ public:
 				// Write
 				line = vec[i];
 
-				uint couId = line->id;
+				buint couId = line->id;
 				state->pInt(line->id);
 				state->pInt(line->parentId);
 			}
@@ -193,12 +196,12 @@ public:
 				// Read
 
 				// Main line
-				uint couId = state->pInt(0);
+				buint couId = state->pInt(0);
 				line = new bc::barline();
 				line->id = couId;
 				line->root = item.get();
 
-				uint parentId = state->pInt(0);
+				buint parentId = state->pInt(0);
 				auto* parentLine = vec[line->parentId];
 				if (parentLine == nullptr)
 				{
@@ -214,12 +217,12 @@ public:
 			line->m_end = state->pBarscalar(line->end());
 
 			//act matrSize = state->pFixedArray(line->matr, 4 + typeSize);
-			uint matrSize = state->pArray(line->matr.size());
+			buint matrSize = state->pArray(line->matr.size());
 			state->beginArray(line->matr, matrSize);
 
 			if (use32index)
 			{
-				for (uint j = 0; j < matrSize; ++j)
+				for (buint j = 0; j < matrSize; ++j)
 				{
 					bc::barvalue& v = line->matr[j];
 					v.setX(state->pShort(v.getX()));
@@ -229,7 +232,7 @@ public:
 			}
 			else
 			{
-				for (uint j = 0; j < matrSize; ++j)
+				for (buint j = 0; j < matrSize; ++j)
 				{
 					bc::barvalue& v = line->matr[j];
 					v.setX(state->pInt(v.getX()));

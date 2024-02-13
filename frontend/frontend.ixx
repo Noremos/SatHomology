@@ -8,12 +8,15 @@ module;
 #include "sago/platform_folders.h"
 
 #include "../frontend/DrawCommon.h"
+#include "Barcode/PrjBarlib/include/barscalar.h"
+#include "Barcode/PrjBarlib/include/barline.h"
+#include "Barcode/PrjBarlib/include/barcodeCreator.h"
 
 export module FrontendBind;
 
 import ProjectModule;
 import Platform;
-import BarcodeModule;
+// import BarcodeModule;
 import RasterLayers;
 
 import GuiWidgets;
@@ -22,8 +25,8 @@ import VectorLayers;
 import CSBind;
 import LayersCore;
 import MetadataCoreIO;
-import BarTypes;
-import BarScalarModule;
+// import BarTypes;
+// import BarScalarModule;
 import RasterLineLayerModule;
 import CoreLoaders;
 import BackBind;
@@ -86,7 +89,7 @@ public:
 		return proj->addLayerData<VectorLayer>();
 	}
 
-	void removeLayer(uint id)
+	void removeLayer(buint id)
 	{
 		proj->layers.remove(id);
 	}

@@ -6,6 +6,8 @@ module;
 #include <chrono>
 #include <algorithm>
 #include <mutex>
+#include "../Bind/Json.h"
+#include "Usings.h"
 //#include <iostream>
 
 //#include "../side/Barcode/PrjBarlib/include/CellEater.h"
@@ -16,7 +18,7 @@ export module ProjectModule;
 import Platform;
 
 import LayersCore;
-import JsonCore;
+// import JsonCore;
 import MetadataCoreIO;
 import CSBind;
 import Settings;

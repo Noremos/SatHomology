@@ -56,8 +56,8 @@ namespace detail
 		{
 			vec<L, float, lowp> tmp(x);
 			vec<L, float, lowp> xhalf(tmp * 0.5f);
-			vec<L, uint, lowp>* p = reinterpret_cast<vec<L, uint, lowp>*>(const_cast<vec<L, float, lowp>*>(&x));
-			vec<L, uint, lowp> i = vec<L, uint, lowp>(0x5f375a86) - (*p >> vec<L, uint, lowp>(1));
+			vec<L, buint, lowp>* p = reinterpret_cast<vec<L, buint, lowp>*>(const_cast<vec<L, float, lowp>*>(&x));
+			vec<L, buint, lowp> i = vec<L, buint, lowp>(0x5f375a86) - (*p >> vec<L, buint, lowp>(1));
 			vec<L, float, lowp>* ptmp = reinterpret_cast<vec<L, float, lowp>*>(&i);
 			tmp = *ptmp;
 			tmp = tmp * (1.5f - xhalf * tmp * tmp);
@@ -149,4 +149,3 @@ namespace detail
 #if GLM_CONFIG_SIMD == GLM_ENABLE
 #	include "func_exponential_simd.inl"
 #endif
-

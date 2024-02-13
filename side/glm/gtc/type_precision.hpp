@@ -1542,53 +1542,53 @@ namespace glm
 
 	/// Low qualifier unsigned integer vector of 1 component type.
 	/// @see gtc_type_precision
-	typedef vec<1, uint, lowp>		lowp_uvec1;
+	typedef vec<1, buint, lowp>		lowp_uvec1;
 
 	/// Low qualifier unsigned integer vector of 2 components type.
 	/// @see gtc_type_precision
-	typedef vec<2, uint, lowp>		lowp_uvec2;
+	typedef vec<2, buint, lowp>		lowp_uvec2;
 
 	/// Low qualifier unsigned integer vector of 3 components type.
 	/// @see gtc_type_precision
-	typedef vec<3, uint, lowp>		lowp_uvec3;
+	typedef vec<3, buint, lowp>		lowp_uvec3;
 
 	/// Low qualifier unsigned integer vector of 4 components type.
 	/// @see gtc_type_precision
-	typedef vec<4, uint, lowp>		lowp_uvec4;
+	typedef vec<4, buint, lowp>		lowp_uvec4;
 
 
 	/// Medium qualifier unsigned integer vector of 1 component type.
 	/// @see gtc_type_precision
-	typedef vec<1, uint, mediump>	mediump_uvec1;
+	typedef vec<1, buint, mediump>	mediump_uvec1;
 
 	/// Medium qualifier unsigned integer vector of 2 components type.
 	/// @see gtc_type_precision
-	typedef vec<2, uint, mediump>	mediump_uvec2;
+	typedef vec<2, buint, mediump>	mediump_uvec2;
 
 	/// Medium qualifier unsigned integer vector of 3 components type.
 	/// @see gtc_type_precision
-	typedef vec<3, uint, mediump>	mediump_uvec3;
+	typedef vec<3, buint, mediump>	mediump_uvec3;
 
 	/// Medium qualifier unsigned integer vector of 4 components type.
 	/// @see gtc_type_precision
-	typedef vec<4, uint, mediump>	mediump_uvec4;
+	typedef vec<4, buint, mediump>	mediump_uvec4;
 
 
 	/// High qualifier unsigned integer vector of 1 component type.
 	/// @see gtc_type_precision
-	typedef vec<1, uint, highp>		highp_uvec1;
+	typedef vec<1, buint, highp>		highp_uvec1;
 
 	/// High qualifier unsigned integer vector of 2 components type.
 	/// @see gtc_type_precision
-	typedef vec<2, uint, highp>		highp_uvec2;
+	typedef vec<2, buint, highp>		highp_uvec2;
 
 	/// High qualifier unsigned integer vector of 3 components type.
 	/// @see gtc_type_precision
-	typedef vec<3, uint, highp>		highp_uvec3;
+	typedef vec<3, buint, highp>		highp_uvec3;
 
 	/// High qualifier unsigned integer vector of 4 components type.
 	/// @see gtc_type_precision
-	typedef vec<4, uint, highp>		highp_uvec4;
+	typedef vec<4, buint, highp>		highp_uvec4;
 
 
 	/// Low qualifier 8 bit unsigned integer scalar type.

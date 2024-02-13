@@ -7,6 +7,7 @@ module;
 #include <memory>
 #include <utility>
 #include <mutex>
+#include "Barcode/PrjBarlib/include/barstrucs.h"
 
 #ifdef __linux__
 #include <pthread.h>
@@ -18,6 +19,8 @@ module;
 
 export module RasterLineLayerModule;
 
+import BackBind;
+import MatrModule;
 import LayersCore;
 import RasterLayers;
 import MetadataCoreIO;
@@ -30,7 +33,7 @@ import ClusterInterface;
 export class BarLineWorker
 {
 protected:
-	std::unique_ptr<std::jthread> thread;
+	std::unique_ptr<std::thread> thread;
 	int& counter;
 	IdGrater parentne;
 
@@ -43,6 +46,10 @@ public:
 	BarLineWorker(int& counter) : counter(counter)
 	{ }
 
+	virtual ~BarLineWorker()
+	{
+		join();
+	}
 	void runTask()
 	{
 		busy = true;
@@ -74,7 +81,7 @@ public:
 
 	void runAsync()
 	{
-		thread.reset(new std::jthread([this] {this->runLoop(); }));
+		thread.reset(new std::thread([this] {this->runLoop(); }));
 	}
 
 	virtual void runSync() = 0;
@@ -103,14 +110,14 @@ public:
 
 
 
-template<typename TWorker>
+// template<typename TWorker>
 class WorkerPool
 {
-	std::vector<std::unique_ptr<TWorker>> workers;
-	std::unique_ptr<TWorker> syncWorker;
+	std::vector<std::unique_ptr<BarLineWorker>> workers;
+	std::unique_ptr<BarLineWorker> syncWorker;
 
 public:
-	void add(TWorker* worker, bool allowSync)
+	void add(BarLineWorker* worker, bool allowSync)
 	{
 		if (allowSync && !syncWorker)
 		{
@@ -119,20 +126,20 @@ public:
 		}
 
 		worker->runAsync();
-		workers.push_back(std::unique_ptr<TWorker>(worker));
+		workers.push_back(std::unique_ptr<BarLineWorker>(worker));
 	}
 
-	void addSync(TWorker* worker)
+	void addSync(BarLineWorker* worker)
 	{
 		syncWorker.reset(worker);
 	}
 
-	TWorker* getSyncWorker()
+	BarLineWorker* getSyncWorker()
 	{
 		return syncWorker.get();
 	}
 
-	TWorker* getFreeWorker(bool& isAsync)
+	BarLineWorker* getFreeWorker(bool& isAsync)
 	{
 		//while(true)
 		{
@@ -369,7 +376,7 @@ public:
 			sl->root = &holder;
 			holder.holder[curIdKey].reset(sl);
 		}
-		
+
 		{
 			sl->parent = curLine->getParentId();
 			//if (holder.holder.size() <= sl->parent)
@@ -625,7 +632,7 @@ RetLayers RasterLineLayer::createCacheBarcode(IRasterLayer* inLayer, const Barco
 
 	if (filter)
 	{
-		const uint fullTile = tileSize + tileOffset;
+		const buint fullTile = tileSize + tileOffset;
 		filter->imgLen = fullTile * fullTile;
 	}
 	// End Input Layer
@@ -683,7 +690,7 @@ RetLayers RasterLineLayer::createCacheBarcode(IRasterLayer* inLayer, const Barco
 	}
 
 	const bool allowSyncInAsync = true;
-	WorkerPool<CreateBarThreadWorker> wpool;
+	WorkerPool wpool;
 	for (unsigned short i = 0; i < curthreadsCount; i++)
 	{
 		CreateBarThreadWorker* worker = new CreateBarThreadWorker(cacherMutex, constr, inLayer, cacher, counter);
@@ -692,7 +699,7 @@ RetLayers RasterLineLayer::createCacheBarcode(IRasterLayer* inLayer, const Barco
 	}
 
 	// Run
-	uint iwid, ihei;
+	buint iwid, ihei;
 	bc::point offset;
 
 	const auto start = std::chrono::steady_clock::now();
@@ -707,7 +714,7 @@ RetLayers RasterLineLayer::createCacheBarcode(IRasterLayer* inLayer, const Barco
 			auto rect = inLayer->getRect(offset.x, offset.y, iwid, ihei);
 
 			bool isAsyncl;
-			auto* worker = wpool.getFreeWorker(isAsyncl);
+			CreateBarThreadWorker* worker = static_cast<CreateBarThreadWorker*>(wpool.getFreeWorker(isAsyncl));
 			worker->updateTask(rect, tileProv);
 
 			if (isAsyncl)
@@ -724,7 +731,7 @@ RetLayers RasterLineLayer::createCacheBarcode(IRasterLayer* inLayer, const Barco
 			TileProvider tileProv = prov.tileByOffset(offset.x, offset.y);
 			auto rect = inLayer->getRect(offset.x, offset.y, iwid, ihei);
 
-			auto* worker = wpool.getSyncWorker();
+			CreateBarThreadWorker* worker = static_cast<CreateBarThreadWorker*>(wpool.getSyncWorker());
 			worker->updateTask(rect, tileProv);
 			worker->runSync();
 		}
@@ -749,7 +756,7 @@ RetLayers RasterLineLayer::processCachedBarcode(IItemFilter* filter)
 
 	if (filter)
 	{
-		const uint fullTile = tileSize + tileOffset;
+		const buint fullTile = tileSize + tileOffset;
 		filter->imgLen = fullTile * fullTile;
 	}
 
@@ -796,7 +803,7 @@ RetLayers RasterLineLayer::processCachedBarcode(IItemFilter* filter)
 	}
 
 	const bool allowSyncInAsync = true;
-	WorkerPool<ProcessCacheBarThreadWorker> wpool;
+	WorkerPool wpool;
 	for (unsigned short i = 0; i < curthreadsCount; i++)
 	{
 		ProcessCacheBarThreadWorker* worker = new ProcessCacheBarThreadWorker(counter, outLayer, filter);
@@ -811,7 +818,7 @@ RetLayers RasterLineLayer::processCachedBarcode(IItemFilter* filter)
 		while (cacher.canRead())
 		{
 			bool isAsync;
-			auto* worker = wpool.getFreeWorker(isAsync);
+			auto* worker = static_cast<ProcessCacheBarThreadWorker*>(wpool.getFreeWorker(isAsync));
 
 			cacher.load(tileIndex, &worker->holder);
 
@@ -832,7 +839,7 @@ RetLayers RasterLineLayer::processCachedBarcode(IItemFilter* filter)
 		int tileIndex = 0;
 		while (cacher.canRead())
 		{
-			ProcessCacheBarThreadWorker* worker = wpool.getSyncWorker();
+			ProcessCacheBarThreadWorker* worker =  static_cast<ProcessCacheBarThreadWorker*>(wpool.getSyncWorker());
 			cacher.load(tileIndex, &worker->holder);
 
 			TileProvider tileProv = inLayer->prov.tileByIndex(tileIndex);

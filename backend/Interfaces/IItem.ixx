@@ -3,13 +3,17 @@ module;
 #include <functional>
 #include <vector>
 #include <memory>
+#include "Barcode/PrjBarlib/include/barscalar.h"
+#include "Barcode/PrjBarlib/include/barline.h"
+#include "Usings.h"
 
 export module IItemModule;
 
-import BarScalarModule;
-import BarTypes;
+// import BarScalarModule;
+// import BarTypes;
 import MetadataCoreIO;
 import BackBind;
+import StateBinIO;
 
 export class IClassItem : public IBffIO
 {
@@ -381,7 +385,7 @@ class GlobalRegister
 public:
 	GlobalRegister(TFactory& factory, BackStringView name)
 	{
-		id = factory.Register<TClass, TClassHolder, TML>(name);
+		id = factory.template Register<TClass, TClassHolder, TML>(name);
 	}
 	int getId() const
 	{

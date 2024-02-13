@@ -1,6 +1,7 @@
 module;
 #include "../DrawCommon.h"
 
+#include "Usings.h"
 export module DynamicSettings;
 
 import MLSettings;
@@ -30,8 +31,10 @@ bool MyInputText(const char* label, BackString* my_str, const ImVec2& size = ImV
 
 export void drawDynamicSettings(MLSettings& settings)
 {
-	for (auto& set : settings.values)
+	for (size_t i = 0; i < settings.values.size(); i++)
 	{
+		OptionValue& set = settings.values[i];
+
 		const char* label = set.name.c_str();
 		switch (set.type)
 		{

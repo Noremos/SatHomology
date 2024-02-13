@@ -1,5 +1,6 @@
 module;
 #include "../../side/kde.h"
+#include "Barcode/PrjBarlib/include/barstrucs.h"
 
 export module TreeSignClass;
 

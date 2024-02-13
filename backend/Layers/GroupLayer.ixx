@@ -8,6 +8,8 @@ module;
 
 export module GroupLayer;
 
+import BackBind;
+import MetadataCoreIO;
 import LayersCore;
 
 export class GroupLayer : public ILayer

@@ -6,6 +6,7 @@ module;
 
 export module VectorLayers;
 //import std.core;
+import BackBind;
 import LayersCore;
 
 import Platform;
@@ -125,9 +126,9 @@ public:
 	{
 		state->beginItem();
 
-		color.r = (uchar)state->pInt(color.r);
-		color.g = (uchar)state->pInt(color.g);
-		color.b = (uchar)state->pInt(color.b);
+		color.r = (buchar)state->pInt(color.r);
+		color.g = (buchar)state->pInt(color.g);
+		color.b = (buchar)state->pInt(color.b);
 
 		int size = state->pInt(points.size());
 		if (state->isReading())

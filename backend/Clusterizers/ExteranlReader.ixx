@@ -9,6 +9,7 @@ module;
 #include <iostream>
 #include <string>
 #include <algorithm>
+#include "Usings.h"
 
 export module ExteranlReader;
 
@@ -92,7 +93,11 @@ export bool exec(BackStringView cmd, std::vector<unsigned long>& assigments, int
 {
 	std::cout << cmd << std::endl;
 	std::string outputString;
+#ifdef __APPLE__
+	std::shared_ptr<FILE> pipe(popen(cmd.data(), "rt"), pclose);
+#else
 	std::shared_ptr<FILE> pipe(_popen(cmd.data(), "rt"), _pclose);
+#endif
 	if (!pipe) throw std::runtime_error("_popen() failed!");
 
 	char buffer[128];
@@ -104,7 +109,7 @@ export bool exec(BackStringView cmd, std::vector<unsigned long>& assigments, int
 		}
 	}
 
-	printf(outputString.c_str());
+	printf("%s", outputString.c_str());
 	if (outputString.length() == 0)
 		return false;
 

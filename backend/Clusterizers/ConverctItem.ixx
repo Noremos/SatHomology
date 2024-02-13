@@ -8,6 +8,7 @@ module;
 #include <iostream>
 #include <cmath>
 #include <algorithm>
+#include "Barcode/PrjBarlib/include/barstrucs.h"
 
 export module ConvertItem;
 
@@ -15,7 +16,7 @@ import ClusterInterface;
 import Platform;
 import BackBind;
 import ExteranlReader;
-
+import CachedBarcode;
 
 
 struct landres
@@ -271,7 +272,7 @@ public:
 				}
 			}
 
-	
+
 			cl.add(beginning, end);
 		}
 	}

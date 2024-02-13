@@ -14,6 +14,7 @@ import GuiWidgets;
 import IItemModule;
 import ClusterInterface;
 import CachedBarcode;
+import CSBind;
 
 export class TemPreview
 {

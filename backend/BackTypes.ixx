@@ -6,7 +6,7 @@ export module BackTypes;
 
 
 export template<class T>
-struct StaticArray
+struct StaticBuffer
 {
 private:
 	T* m_buffer = nullptr;
@@ -14,8 +14,8 @@ private:
 	bool drop = true;
 
 public:
-	StaticArray() {}
-	StaticArray(const StaticArray& other) /*: s(other.s)*/
+	StaticBuffer() {}
+	StaticBuffer(const StaticBuffer& other) //: s(other.s)
 	{
 		allocate(other.m_size);
 		drop = other.drop;
@@ -31,8 +31,8 @@ public:
 			m_size = other.m_size;
 		}
 	}
-	/*std::cout << "move failed!\n";*/
-	StaticArray(StaticArray&& other) /*: s(std::move(o.s))*/
+	//std::cout << "move failed!\n";
+	StaticBuffer(StaticBuffer&& other) //: s(std::move(o.s))
 	{
 		m_buffer = std::exchange(other.m_buffer, nullptr); // leave other in valid state
 		m_size = std::exchange(other.m_size, 0);
@@ -46,7 +46,7 @@ public:
 
 	size_t size() const { return m_size; }
 
-	T* extract() const
+	T* extract()
 	{
 		T* temp = std::exchange(m_buffer, nullptr);
 		m_size = 0;
@@ -90,7 +90,7 @@ public:
 	}
 
 	// copy assignment
-	StaticArray& operator=(const StaticArray& other)
+	StaticBuffer& operator=(const StaticBuffer& other)
 	{
 		// Guard self assignment
 		if (this == &other)
@@ -111,7 +111,7 @@ public:
 	}
 
 	// move assignment
-	StaticArray& operator=(StaticArray&& other) noexcept
+	StaticBuffer& operator=(StaticBuffer&& other) noexcept
 	{
 		// Guard self assignment
 		if (this == &other)
@@ -134,13 +134,13 @@ public:
 		drop = false;
 	}
 
-	~StaticArray()
+	~StaticBuffer()
 	{
 		release();
 	}
 };
 
-export using vbuffer = StaticArray<unsigned char>;
+export using vbuffer = StaticBuffer<unsigned char>;
 
 
 

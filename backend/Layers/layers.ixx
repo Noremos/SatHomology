@@ -4,17 +4,19 @@ module;
 #include <algorithm>
 #include <functional>
 #include <cassert>
+#include "Barcode/PrjBarlib/include/barline.h"
+#include "Barcode/PrjBarlib/modules/tiffreader.h"
 
 
 export module RasterLayers;
 import LayersCore;
 
-import BarTypes;
+// import BarTypes;
 import Platform;
 
 import MetadataCoreIO;
 
-import ImgReader;
+// import ImgReader;
 import SimpleImgReaderModule;
 import MHashMap;
 import MLSettings;
@@ -336,27 +338,27 @@ public:
 	}
 };
 
-struct SimpleLine;
+export struct SimpleLine;
 export struct SimpleLineHolder
 {
 	//std::vector<std::unique_ptr<SimpleLine>> holder;
 	std::unordered_map<size_t, std::unique_ptr<SimpleLine>> holder;
 };
 
-export struct SimpleLine
+struct SimpleLine
 {
 	int tileId, barlineIndex;
 	SimpleLine(int tileId = 0, int barlineIndex = 0) :
 	tileId(tileId), barlineIndex(barlineIndex), start(0), end(0), depth(0), matrSrcSize(0)
 	{}
-	//	ushort counter = 0;
+	//	bushort counter = 0;
 	Barscalar start, end;
 
 	int depth;
 	int matrSrcSize;
 
-	uint parent = -1;
-	std::vector<uint> children;
+	buint parent = -1;
+	std::vector<buint> children;
 
 	bc::barvector matr;
 	SimpleLineHolder* root;
@@ -368,7 +370,7 @@ export struct SimpleLine
 
 		return root->holder[parent].get();
 	}
-	SimpleLine* getChild(uint id) const
+	SimpleLine* getChild(buint id) const
 	{
 		return root->holder[children[id]].get();
 	}

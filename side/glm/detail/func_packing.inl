@@ -6,12 +6,12 @@
 
 namespace glm
 {
-	GLM_FUNC_QUALIFIER uint packUnorm2x16(vec2 const& v)
+	GLM_FUNC_QUALIFIER buint packUnorm2x16(vec2 const& v)
 	{
 		union
 		{
 			unsigned short in[2];
-			uint out;
+			buint out;
 		} u;
 
 		vec<2, unsigned short, defaultp> result(round(clamp(v, 0.0f, 1.0f) * 65535.0f));
@@ -22,11 +22,11 @@ namespace glm
 		return u.out;
 	}
 
-	GLM_FUNC_QUALIFIER vec2 unpackUnorm2x16(uint p)
+	GLM_FUNC_QUALIFIER vec2 unpackUnorm2x16(buint p)
 	{
 		union
 		{
-			uint in;
+			buint in;
 			unsigned short out[2];
 		} u;
 
@@ -35,14 +35,14 @@ namespace glm
 		return vec2(u.out[0], u.out[1]) * 1.5259021896696421759365224689097e-5f;
 	}
 
-	GLM_FUNC_QUALIFIER uint packSnorm2x16(vec2 const& v)
+	GLM_FUNC_QUALIFIER buint packSnorm2x16(vec2 const& v)
 	{
 		union
 		{
 			signed short in[2];
-			uint out;
+			buint out;
 		} u;
- 
+
 		vec<2, short, defaultp> result(round(clamp(v, -1.0f, 1.0f) * 32767.0f));
 
 		u.in[0] = result[0];
@@ -51,11 +51,11 @@ namespace glm
 		return u.out;
 	}
 
-	GLM_FUNC_QUALIFIER vec2 unpackSnorm2x16(uint p)
+	GLM_FUNC_QUALIFIER vec2 unpackSnorm2x16(buint p)
 	{
 		union
 		{
-			uint in;
+			buint in;
 			signed short out[2];
 		} u;
 
@@ -64,12 +64,12 @@ namespace glm
 		return clamp(vec2(u.out[0], u.out[1]) * 3.0518509475997192297128208258309e-5f, -1.0f, 1.0f);
 	}
 
-	GLM_FUNC_QUALIFIER uint packUnorm4x8(vec4 const& v)
+	GLM_FUNC_QUALIFIER buint packUnorm4x8(vec4 const& v)
 	{
 		union
 		{
 			unsigned char in[4];
-			uint out;
+			buint out;
 		} u;
 
 		vec<4, unsigned char, defaultp> result(round(clamp(v, 0.0f, 1.0f) * 255.0f));
@@ -82,11 +82,11 @@ namespace glm
 		return u.out;
 	}
 
-	GLM_FUNC_QUALIFIER vec4 unpackUnorm4x8(uint p)
+	GLM_FUNC_QUALIFIER vec4 unpackUnorm4x8(buint p)
 	{
 		union
 		{
-			uint in;
+			buint in;
 			unsigned char out[4];
 		} u;
 
@@ -95,12 +95,12 @@ namespace glm
 		return vec4(u.out[0], u.out[1], u.out[2], u.out[3]) * 0.0039215686274509803921568627451f;
 	}
 
-	GLM_FUNC_QUALIFIER uint packSnorm4x8(vec4 const& v)
+	GLM_FUNC_QUALIFIER buint packSnorm4x8(vec4 const& v)
 	{
 		union
 		{
 			signed char in[4];
-			uint out;
+			buint out;
 		} u;
 
 		vec<4, signed char, defaultp> result(round(clamp(v, -1.0f, 1.0f) * 127.0f));
@@ -113,11 +113,11 @@ namespace glm
 		return u.out;
 	}
 
-	GLM_FUNC_QUALIFIER glm::vec4 unpackSnorm4x8(uint p)
+	GLM_FUNC_QUALIFIER glm::vec4 unpackSnorm4x8(buint p)
 	{
 		union
 		{
-			uint in;
+			buint in;
 			signed char out[4];
 		} u;
 
@@ -130,7 +130,7 @@ namespace glm
 	{
 		union
 		{
-			uint   in[2];
+			buint   in[2];
 			double out;
 		} u;
 
@@ -145,7 +145,7 @@ namespace glm
 		union
 		{
 			double in;
-			uint   out[2];
+			buint   out[2];
 		} u;
 
 		u.in = v;
@@ -153,12 +153,12 @@ namespace glm
 		return uvec2(u.out[0], u.out[1]);
 	}
 
-	GLM_FUNC_QUALIFIER uint packHalf2x16(vec2 const& v)
+	GLM_FUNC_QUALIFIER buint packHalf2x16(vec2 const& v)
 	{
 		union
 		{
 			signed short in[2];
-			uint out;
+			buint out;
 		} u;
 
 		u.in[0] = detail::toFloat16(v.x);
@@ -167,11 +167,11 @@ namespace glm
 		return u.out;
 	}
 
-	GLM_FUNC_QUALIFIER vec2 unpackHalf2x16(uint v)
+	GLM_FUNC_QUALIFIER vec2 unpackHalf2x16(buint v)
 	{
 		union
 		{
-			uint in;
+			buint in;
 			signed short out[2];
 		} u;
 
@@ -186,4 +186,3 @@ namespace glm
 #if GLM_CONFIG_SIMD == GLM_ENABLE
 #	include "func_packing_simd.inl"
 #endif
-
