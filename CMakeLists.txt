@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.28)
-project(SatHomology CXX)
+if (DEFINED RUN_TEST)
+    set(BTARGET SatTests)
+else()
+    set(BTARGET SatHomology)
+endif()
+project(${BTARGET})
 
 # Turning off extensions avoids an issue with the clang 16 compiler
 # clang 17 and greater can avoid this setting
@@ -66,19 +71,59 @@ include_directories(
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release")
 set(CXX_SCAN_FOR_MODULES TRUE)
 
-# Добавление исполняемого файла
-add_executable(SatHomology ${SOURCES} ${SIDE_SOURCES})
-target_sources(SatHomology
-  PUBLIC
+if (DEFINED RUN_TEST)
+    enable_testing()
+
+    list(FILTER SOURCES EXCLUDE REGEX ".*\\Application\\.cpp$")
+    list(FILTER SOURCES EXCLUDE REGEX ".*\\Application\\.h$")
+    list(FILTER SOURCES EXCLUDE REGEX ".*\\main\\.cpp$")
+
+    find_package(GTest REQUIRED)
+    add_executable(${BTARGET}
+        ${SOURCES}
+        ${SIDE_SOURCES}
+        Tests/test.cpp
+    )
+
+    set_target_properties(${BTARGET} PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../
+    )
+
+    target_include_directories(${BTARGET}
+        PUBLIC
+        Tests/googletest)
+
+    target_link_libraries(${BTARGET} PUBLIC GTest::GTest GTest::Main)
+
+    include(GoogleTest)
+    gtest_discover_tests(${BTARGET})
+else()
+    # Добавление исполняемого файла
+    add_executable(${BTARGET} ${SOURCES} ${SIDE_SOURCES})
+
+    set_target_properties(${BTARGET} PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../${CMAKE_BUILD_TYPE}
+    )
+
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        target_compile_definitions(${BTARGET} PRIVATE DEBUG)
+        target_compile_options(${BTARGET} PRIVATE -g)
+    else()
+        target_compile_definitions(${BTARGET} PRIVATE NDEBUG)
+        target_compile_options(${BTARGET} PRIVATE -O2)
+    endif()
+
+    file(GLOB RES_FILES
+     "Build/Resurses/*"
+    )
+    file(COPY ${RES_FILES} DESTINATION ${CMAKE_BINARY_DIR}/../${CMAKE_BUILD_TYPE})
+endif()
+
+target_sources(${BTARGET}
+    PUBLIC
     FILE_SET all_my_modules TYPE CXX_MODULES FILES
     ${SOURCES_MODULES}
 )
-
-
-set_target_properties(SatHomology PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}
-)
-
 
 # add_library(foo)
 # # Add the module file to the library
@@ -92,32 +137,18 @@ set_target_properties(SatHomology PROPERTIES
 
 # this is heuristically generated, and may not be correct
 find_package(glfw3 CONFIG REQUIRED)
-target_link_libraries(SatHomology PRIVATE glfw)
+target_link_libraries(${BTARGET} PRIVATE glfw)
 
 # this is heuristically generated, and may not be correct
 find_package(jsoncpp CONFIG REQUIRED)
-target_link_libraries(SatHomology PRIVATE JsonCpp::JsonCpp)
+target_link_libraries(${BTARGET} PRIVATE JsonCpp::JsonCpp)
 
 find_package(Lua REQUIRED)
-target_include_directories(SatHomology PRIVATE ${LUA_INCLUDE_DIR})
-target_link_libraries(SatHomology PRIVATE ${LUA_LIBRARIES})
+target_include_directories(${BTARGET} PRIVATE ${LUA_INCLUDE_DIR})
+target_link_libraries(${BTARGET} PRIVATE ${LUA_LIBRARIES})
 
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
-target_link_libraries(SatHomology PRIVATE unofficial::sqlite3::sqlite3)
+target_link_libraries(${BTARGET} PRIVATE unofficial::sqlite3::sqlite3)
 
 find_package(GLEW REQUIRED)
-target_link_libraries(SatHomology PRIVATE GLEW::GLEW)
-
-
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_compile_definitions(SatHomology PRIVATE DEBUG)
-    target_compile_options(SatHomology PRIVATE -g)
-else()
-    target_compile_definitions(SatHomology PRIVATE NDEBUG)
-    target_compile_options(SatHomology PRIVATE -O2)
-endif()
-
-file(GLOB RES_FILES
-  "Build/Resurses/*"
-)
-file(COPY ${RES_FILES} DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE})
+target_link_libraries(${BTARGET} PRIVATE GLEW::GLEW)

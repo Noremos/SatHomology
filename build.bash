@@ -7,17 +7,28 @@ export CXXFLAGS='-fdiagnostics-color'
 export CFLAGS='-fdiagnostics-color'
 # export PATH="/opt/homebrew/opt/llvm/bin:$PATH"
 
+export EXTRA=''
+export OUT='Build/Temp'
+
 # Проверяем передан ли аргумент
 if [ -z "$1" ]; then
     # Если аргумент не передан, задаем значение по умолчанию
     build_type="Debug"
 else
+    if [ "$1" == "tests" ]; then
+        EXTRA='-DRUN_TEST:BOOL=true'
+        OUT='Tests/Temp'
+        echo "RUN TESTS..."
+    else
+        echo "RUN {$1} Build..."
+    fi
+
     # Иначе, используем переданный аргумент
     build_type="$1"
 fi
 
-cmake -B Build -S . -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake -G Ninja -DCMAKE_BUILD_TYPE="${build_type}"
-cmake --build Build
+cmake -B "${OUT}" -S . -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake -G Ninja -DCMAKE_BUILD_TYPE="${build_type}" "${EXTRA}"
+cmake --build "${OUT}"
 # cmake -B Build -S . -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake
 # cmake --build Build
 

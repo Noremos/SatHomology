@@ -31,9 +31,5 @@ side/KmeansPlusPlus
 packages
 Tests/x64
 x64
-Build/CMakeFiles
-Build/cmake*
-Build/*ninja*
-Build/Makefile
-Build/vcpkg-manifest-install.log
-obj
+Tests/Temp
+Build/Temp
