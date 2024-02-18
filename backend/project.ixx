@@ -6,6 +6,7 @@ module;
 #include <chrono>
 #include <algorithm>
 #include <mutex>
+#include <filesystem>
 #include "../Bind/Json.h"
 #include "Usings.h"
 //#include <iostream>
@@ -273,7 +274,7 @@ public:
 public:
 	void setProjectPath(const BackPathStr& path, bool recreateMeta = false)
 	{
-		// projectPath = std::filesystem::absolute(path).parent_path();
+		projectPath = std::filesystem::absolute(path).parent_path();
 
 		settupMeta(recreateMeta);
 
