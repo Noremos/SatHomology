@@ -146,12 +146,12 @@ public:
 		return dynamic_cast<const ICluster*>(&items[id]);
 	}
 
-	size_t getItemsCount() const
+	size_t getItemsCount() const override
 	{
 		return items.size();
 	}
 
-	virtual void clear()
+	virtual void clear() override
 	{
 		items.clear();
 	}

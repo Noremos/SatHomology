@@ -89,7 +89,11 @@ public:
 		}
 		tempFile.close();
 
+#ifdef _WIN32
 		BackString execCmd = "python.exe ";
+#else
+		BackString execCmd = "python ";
+#endif
 		execCmd += (Variables::metaPath / "cluster.py").string() + " ";
 		execCmd += filePath + " ";
 		execCmd += settings.getEnum("method");

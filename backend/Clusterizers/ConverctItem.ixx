@@ -19,7 +19,7 @@ import ExteranlReader;
 import CachedBarcode;
 
 
-struct landres
+export struct landres
 {
 	//float x; // satrt
 	//float y; // height
@@ -40,7 +40,7 @@ public:
 	std::vector<landres> path;
 //	bool addMiddleDepth;
 //
-	const bc::barvector& getMatrix() const
+	const bc::barvector& getMatrix() const override
 	{
 		return matrix;
 	}
@@ -157,14 +157,20 @@ struct Landscape
 		return lands.size();
 	}
 };
+
+template<class T>
+constexpr bool between(const T& a, const T& minNotEnc, const T& maxNotEncl)
+{
+	return minNotEnc < a && a < maxNotEncl;
+}
 //
 export class ConvertCollection : public IClusterItemValuesHolder<ConvertClass>
 {
 	using Base = IClusterItemValuesHolder<ConvertClass>;
 protected:
 //
-
 public:
+	float maxEnd = 0;
 	ConvertCollection() : Base(false)
 	{
 	}
@@ -178,37 +184,55 @@ public:
 			auto* line = &landscape.get(i);
 
 			float start = line->getStart();
-			float middle = line->getMiddle();
-			float h = line->getHeight();
 			float end = line->getEnd();
-			float minLength = 0;
-			float matrstart = start;
+			// float matrstart = start;
 			float beginning = start;
-			float ending = end;
-			float lastMin = beginning;
+			float crossWithPrev = start;
+			// float ending = end;
+			// float lastMin = beginning;
+			// float lastStart = start;
 
 			//std::vector<landres> landPath = { {start, 0}, {middle, h} };
 
 			Base::items.push_back({});
 			ConvertClass& cl = Base::items.back();
 			cl.id = i;
+			cl.add(start, 0);
+
 			//cl.matrix = line.matrix;
 
 			size_t startI = 0;
 			int curI = i;
+			int prevId = -1;
 			bool curLineCatechd = false;
 			while (true)
 			{
 				// Asc
+				bool reachedPeak = true;
 				for (int ascI = curI - 1; ascI >= 0; --ascI)
 				{
+					// c - crossWithPrev
+					//  CUR->                C-------------E
+					//  PRV->   S-------------E
+
+					//  CUR->                C-------M------E
+					//  PRV->   S-----------M-------------E
+					// if (ascI == prevId)
+					// 	continue;
+
 					auto& prevLine = landscape.get(ascI);
-					if (prevLine.getStart() < beginning && prevLine.getEnd() < end && prevLine.getEnd() > lastMin)
+					if (prevLine.getStart() < start && between(prevLine.getEnd(), crossWithPrev, end))
 					{
+						float cross = prevLine.getEnd() - start;
+						cl.add(start + cross / 2, cross / 2);
 						end = prevLine.getEnd();
+						reachedPeak = false;
 						break;
 					}
 				}
+
+				float len = end - start;
+				float middle = start + len / 2;
 
 				// Select common values (all when there is no prev)
 				// from line.satrt to prevLine.end
@@ -224,12 +248,24 @@ public:
 				curLineCatechd = true;
 
 
-				// dsc
-				startI = static_cast<size_t>(curI) + 1;
-				bool found = false;
-				for (; startI < landscape.size(); startI++)
+				if (reachedPeak)
 				{
-					auto& nextLine = landscape.get(startI);
+					auto len = end - start;
+					cl.add(middle, len / 2);
+				}
+
+				// dsc
+				prevId = curI;
+				size_t nextI = static_cast<size_t>(curI) + 1;
+
+				for (; nextI < landscape.size(); nextI++)
+				{
+					//  CUR->      |-------M------|
+					//  NEXT->                   |-------M-------|
+
+					//  CUR->      |-------M------|
+					//  NEXT->      |-------M-------|
+					auto& nextLine = landscape.get(nextI);
 					if (nextLine.getStart() > end)
 					{
 						break;
@@ -242,15 +278,19 @@ public:
 
 						// from line matrstart(cur line start) to nextLine.start
 						// From this line start to the next line start
-						lastMin = end;
-						minLength = end - nextLine.getStart();
+
+						float cross = end - nextLine.getStart();
+						crossWithPrev = end;
+						cl.add(end - cross / 2, cross / 2);
+
+						// lastMin = end;
 						start = nextLine.getStart();
 						end = nextLine.getEnd();
-						found = true;
 						curLineCatechd = false;
-						curI = startI;
-						line = &landscape.get(curI);
-						matrstart = line->getStart();
+						curI = nextI;
+						line = &landscape.get(nextI);
+						// matrstart = line->getStart();
+
 						break;
 					}
 
@@ -259,8 +299,12 @@ public:
 					//cl.paths.push_back({ lastH.x + lastH.y, 0 });
 					//cl.paths.push_back({ lastH.x + lastH.y, 0 });
 				}
-				if (!found)
+				if (prevId == curI)
+				{
+					maxEnd = std::max(maxEnd, end);
+					cl.add(end, 0);
 					break;
+				}
 			}
 
 			if (!curLineCatechd)
@@ -271,9 +315,6 @@ public:
 					cl.matrix.push_back(val);
 				}
 			}
-
-
-			cl.add(beginning, end);
 		}
 	}
 
@@ -330,7 +371,7 @@ public:
 
 	const BackString name() const
 	{
-		return "Land";
+		return "Land All To New";
 	}
 
 	void setClassesCount(int size)
@@ -423,7 +464,8 @@ public:
 		const ConvertCollection& allItems = dynamic_cast<const ConvertCollection&>(iallItems);
 
 		BackString filePath = get_temp_file_path();
-		BackFileWriter tempFile(filePath, BackFileWriter::out | BackFileWriter::trunc);
+		BackFileWriter tempFile;
+		tempFile.open(filePath, BackFileWriter::out | BackFileWriter::trunc);
 		if (!tempFile.is_open())
 		{
 			std::cerr << "Unable to open temporary file for writing." << std::endl;
@@ -434,10 +476,25 @@ public:
 		{
 			auto& item = allItems.getRItem(i);
 
-			for (const auto& num : item.path)
+			int startX = 0;
+			float startY = 0;
+
+			for (const auto& land : item.path)
 			{
-				tempFile << num.getLength() << " ";
+				float iter = (land.y - startY) / (land.x * 100 - startX);
+				for (size_t i = startX; i < land.x * 100; i++)
+				{
+					tempFile << startY << " ";
+					startY += iter;
+				}
+				startX = land.y;
 			}
+
+			while (startX < allItems.maxEnd)
+			{
+				tempFile << "0 ";
+			}
+
 			tempFile.seekp(-1, tempFile.cur); // ������� ��������� �������
 			tempFile << std::endl;
 
@@ -455,8 +512,13 @@ public:
 
 		//return 0;
 
+#ifdef _WIN32
 		BackString execCmd = "python.exe ";
+#else
+		BackString execCmd = "python ";
+#endif
 		execCmd += (Variables::metaPath / "landscape.py").string() + " ";
+
 		execCmd += filePath;
 		execCmd += " 'a' ";
 
@@ -476,4 +538,5 @@ public:
 };
 
 
-GlobalClusterRegister<ConvertClass, ConvertCollection, LandClassifier> c("Land");
+GlobalClusterRegister<ConvertClass, ConvertCollection, LandClassifier> c("Land All To New");
+// TODO: Land projection of line
