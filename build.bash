@@ -7,7 +7,7 @@ export CXXFLAGS='-fdiagnostics-color'
 export CFLAGS='-fdiagnostics-color'
 # export PATH="/opt/homebrew/opt/llvm/bin:$PATH"
 
-export EXTRA=''
+export EXTRA='-DBUILD_TEST:BOOL=false'
 export OUT='Build/Temp'
 
 # Проверяем передан ли аргумент
@@ -16,11 +16,11 @@ if [ -z "$1" ]; then
     build_type="Debug"
 else
     if [ "$1" == "tests" ]; then
-        EXTRA='-DRUN_TEST:BOOL=true'
+        EXTRA='-DBUILD_TEST:BOOL=true'
         OUT='Tests/Temp'
         echo "RUN TESTS..."
     else
-        echo "RUN {$1} Build..."
+        echo "RUN $1 Build..."
     fi
 
     # Иначе, используем переданный аргумент

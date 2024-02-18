@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.28)
-if (DEFINED RUN_TEST)
+if (BUILD_TEST)
     set(BTARGET SatTests)
 else()
     set(BTARGET SatHomology)
@@ -71,7 +71,7 @@ include_directories(
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release")
 set(CXX_SCAN_FOR_MODULES TRUE)
 
-if (DEFINED RUN_TEST)
+if (BUILD_TEST)
     enable_testing()
 
     list(FILTER SOURCES EXCLUDE REGEX ".*\\Application\\.cpp$")
@@ -105,7 +105,7 @@ else()
     add_executable(${BTARGET} ${SOURCES} ${SIDE_SOURCES})
 
     set_target_properties(${BTARGET} PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../${CMAKE_BUILD_TYPE}
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../${CMAKE_BUILD_TYPE}/
     )
 
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -119,7 +119,7 @@ else()
     file(GLOB RES_FILES
      "Build/Resurses/*"
     )
-    file(COPY ${RES_FILES} DESTINATION ${CMAKE_BINARY_DIR}/../${CMAKE_BUILD_TYPE})
+    file(COPY ${RES_FILES} DESTINATION ${CMAKE_BINARY_DIR}/../${CMAKE_BUILD_TYPE}/)
 endif()
 
 target_sources(${BTARGET}
