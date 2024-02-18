@@ -95,6 +95,9 @@ if (DEFINED RUN_TEST)
 
     target_link_libraries(${BTARGET} PUBLIC GTest::GTest GTest::Main)
 
+    target_compile_definitions(${BTARGET} PRIVATE DEBUG)
+    target_compile_options(${BTARGET} PRIVATE -g)
+
     include(GoogleTest)
     gtest_discover_tests(${BTARGET})
 else()

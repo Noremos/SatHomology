@@ -33,3 +33,5 @@ Tests/x64
 x64
 Tests/Temp
 Build/Temp
+Tests/SatTests
+Build/SatTests

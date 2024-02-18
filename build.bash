@@ -29,6 +29,10 @@ fi
 
 cmake -B "${OUT}" -S . -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake -G Ninja -DCMAKE_BUILD_TYPE="${build_type}" "${EXTRA}"
 cmake --build "${OUT}"
+
+if [ "${EXTRA}" ]; then
+    ./Tests/SatTests
+fi
 # cmake -B Build -S . -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake
 # cmake --build Build
 
