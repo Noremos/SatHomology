@@ -18,6 +18,22 @@
                 "reveal": "silent"
             },
             "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Test",
+            "type": "shell",
+            "command": "./build.bash",
+            "args": [
+                "tests"
+            ],
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher": "$gcc"
         }
     ]
 }
