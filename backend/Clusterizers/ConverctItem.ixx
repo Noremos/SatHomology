@@ -19,7 +19,6 @@ import ExteranlReader;
 import CachedBarcode;
 import Sklearn;
 
-constexpr int AddE = 10;
 
 
 export struct landres
@@ -178,7 +177,8 @@ public:
 	{
 		Base::settings =
 		{
-			{"Compare Only Mode", true}
+			{"Compare Only Mode", true},
+			{"Resolution", 10}
 		};
 	}
 
@@ -349,6 +349,8 @@ public:
 
 	void fillDate(size_t id, BackFileWriter& out) const
 	{
+		const int AddE =  *Base::settings.getInt("Resolution");;
+
 		std::vector<float> total;
 		total.resize(maxEnd * AddE);
 		std::fill(total.begin(), total.end(), 0);
