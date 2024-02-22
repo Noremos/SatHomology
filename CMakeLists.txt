@@ -104,22 +104,28 @@ else()
     # Добавление исполняемого файла
     add_executable(${BTARGET} ${SOURCES} ${SIDE_SOURCES})
 
-    set_target_properties(${BTARGET} PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../${CMAKE_BUILD_TYPE}/
-    )
+
 
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        set(OUT_FOLTE "Debug")
+
         target_compile_definitions(${BTARGET} PRIVATE DEBUG)
         target_compile_options(${BTARGET} PRIVATE -g)
     else()
+        set(OUT_FOLTE "Release")
+
         target_compile_definitions(${BTARGET} PRIVATE NDEBUG)
-        target_compile_options(${BTARGET} PRIVATE -O2)
+        target_compile_options(${BTARGET} PRIVATE -O3)
     endif()
+
+    set_target_properties(${BTARGET} PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../${OUT_FOLTE}/
+    )
 
     file(GLOB RES_FILES
      "Build/Resurses/*"
     )
-    file(COPY ${RES_FILES} DESTINATION ${CMAKE_BINARY_DIR}/../${CMAKE_BUILD_TYPE}/)
+    file(COPY ${RES_FILES} DESTINATION ${CMAKE_BINARY_DIR}/../${OUT_FOLTE}/)
 endif()
 
 target_sources(${BTARGET}
