@@ -17,6 +17,9 @@ import Platform;
 import BackBind;
 import ExteranlReader;
 import CachedBarcode;
+import Sklearn;
+
+constexpr int AddE = 10;
 
 
 export struct landres
@@ -37,7 +40,7 @@ export class ConvertClass : public ICluster
 {
 public:
 	bc::barvector matrix;
-	std::vector<landres> path;
+	std::vector<std::vector<landres>> pathset;
 //	bool addMiddleDepth;
 //
 	const bc::barvector& getMatrix() const override
@@ -47,7 +50,7 @@ public:
 
 	void add(float x, float y)
 	{
-		path.push_back({x, y});
+		pathset.back().push_back({x, y});
 	}
 //
 	size_t id;
@@ -68,24 +71,24 @@ public:
 	{
 		id = other.id;
 		matrix = other.matrix;
-		path = other.path;
+		pathset = other.pathset;
 	}
 
 	explicit ConvertClass(ConvertClass&& other) //: id(id)
 	{
 		id = other.id;
 		matrix = std::move(other.matrix);
-		path =   std::move(other.path);
+		pathset =   std::move(other.pathset);
 	}
 
 	Barscalar start() const override
 	{
-		return path[0].x;
+		return pathset[0][0].x;
 	}
 
 	Barscalar end() const override
 	{
-		return path[0].y;
+		return pathset[0][0].y;
 	}
 
 private:
@@ -173,9 +176,19 @@ public:
 	float maxEnd = 0;
 	ConvertCollection() : Base(false)
 	{
+		Base::settings =
+		{
+			{"Compare Only Mode", true}
+		};
 	}
 
-	void convert(Landscape& landscape)
+	bool isCmpMode() const
+	{
+		bool cmpMode = *Base::settings.getBool("Compare Only Mode");
+		return cmpMode;
+	}
+
+	void convert(Landscape& landscape, ConvertClass* source = nullptr)
 	{
 		landscape.sort();
 		// �� birth
@@ -194,9 +207,12 @@ public:
 
 			//std::vector<landres> landPath = { {start, 0}, {middle, h} };
 
-			Base::items.push_back({});
-			ConvertClass& cl = Base::items.back();
+			if (source == nullptr)
+				Base::items.push_back({});
+
+			ConvertClass& cl = source ? *source : Base::items.back();
 			cl.id = i;
+			cl.pathset.push_back({});
 			cl.add(start, 0);
 
 			//cl.matrix = line.matrix;
@@ -265,27 +281,27 @@ public:
 
 					//  CUR->      |-------M------|
 					//  NEXT->      |-------M-------|
-					auto& nextLine = landscape.get(nextI);
-					if (nextLine.getStart() > end)
+					auto& convertLand = landscape.get(nextI);
+					if (convertLand.getStart() > end)
 					{
 						break;
 					}
 
-					if (nextLine.getStart() < end && nextLine.getEnd() > end)
+					if (convertLand.getStart() < end && convertLand.getEnd() > end)
 					{
-						//float crossGip = end - nextLine->getStart();
+						//float crossGip = end - convertLand->getStart();
 						//float leh = crossGip / 2;
 
-						// from line matrstart(cur line start) to nextLine.start
+						// from line matrstart(cur line start) to convertLand.start
 						// From this line start to the next line start
 
-						float cross = end - nextLine.getStart();
+						float cross = end - convertLand.getStart();
 						crossWithPrev = end;
 						cl.add(end - cross / 2, cross / 2);
 
 						// lastMin = end;
-						start = nextLine.getStart();
-						end = nextLine.getEnd();
+						start = convertLand.getStart();
+						end = convertLand.getEnd();
 						curLineCatechd = false;
 						curI = nextI;
 						line = &landscape.get(nextI);
@@ -294,7 +310,7 @@ public:
 						break;
 					}
 
-					//landPath.push_back({ nextLine->getStart() +  leh, leh});
+					//landPath.push_back({ convertLand->getStart() +  leh, leh});
 					//auto lastH = landPath.back();
 					//cl.paths.push_back({ lastH.x + lastH.y, 0 });
 					//cl.paths.push_back({ lastH.x + lastH.y, 0 });
@@ -319,24 +335,78 @@ public:
 	}
 
 
-	Landscape nextLine;
+	void collectChildren(const CachedBarline& line)
+	{
+		convertLand.addExpr(line.start().getAvgFloat(), line.end().getAvgFloat());
+		convertLand.lands.back().matrix = line.getMatrix();
+
+		for (int i = 0; i < line.getChildrenCount(); i++)
+		{
+			collectChildren(*line.getChild(i));
+		}
+	}
+
+
+	void fillDate(size_t id, BackFileWriter& out) const
+	{
+		std::vector<float> total;
+		total.resize(maxEnd * AddE);
+		std::fill(total.begin(), total.end(), 0);
+
+		auto& item = getRItem(id);
+		float N = item.pathset.size();
+
+		for (const auto& landset : item.pathset)
+		{
+			int startX = landset[0].x * AddE;
+			float startY = landset[0].y;
+			for (size_t j = 1; j < landset.size(); j++)
+			{
+				const auto& land = landset[j];
+
+				const size_t endX = land.x * AddE;
+				float iter = (land.y - startY) / (endX - startX);
+				for (size_t i = startX; i < endX; i++)
+				{
+					total[i] += startY;
+					startY += iter;
+				}
+				startX = endX;
+			}
+		}
+
+		for (size_t i = 0; i < total.size(); i++)
+		{
+			// total[i] /= N;
+			out << total[i] / N << " ";
+		}
+	}
+
+	Landscape convertLand;
 	virtual void addItem(const CachedBarline& line)
 	{
-		//lines.addUpdateRoot(line);
-		//lines.getLastItem().root = &lines;
-		//for (int i = 0; i < line.getChildrenCount(); i++)
-		//{
-		//	CachedBarline* child = line.getChild(i);
-		//	nextLine.addExpr(child->start().getAvgFloat(), child->end().getAvgFloat());
-		//}
+		bool cmpMode = *Base::settings.getBool("Compare Only Mode");
 
-		nextLine.addExpr(line.start().getAvgFloat(), line.end().getAvgFloat());
-		nextLine.lands.back().matrix = line.getMatrix();
+		if (cmpMode)
+		{
+			collectChildren(line);
+			Base::items.push_back({});
+			auto& source = Base::items.back();
+			convert(convertLand, &source);
+
+			convertLand.lands.clear();
+			source.matrix = line.getMatrix();
+		}
+		else
+		{
+			convertLand.addExpr(line.start().getAvgFloat(), line.end().getAvgFloat());
+			convertLand.lands.back().matrix = line.getMatrix();
+		}
 	}
 
 	virtual void perform()
 	{
-		convert(nextLine);
+		convert(convertLand);
 	}
 
 	/*const CachedBarline* getRItem(size_t id) const
@@ -356,34 +426,8 @@ public:
 };
 
 
-export class LandClassifier : public IBarClusterizer
+export class LandClassifier : public ISklearnClassifier
 {
-	int n;
-	std::vector<unsigned long> cachedAssignments;
-public:
-	LandClassifier()
-	{
-		IBarClusterizer::settings =
-		{
-			{"n_clusters", 3},
-		};
-	}
-
-	const BackString name() const
-	{
-		return "Land All To New";
-	}
-
-	void setClassesCount(int size)
-	{
-		n = size;
-	}
-
-	int getClusters()
-	{
-		return n;
-	}
-
 	//// ������� ��� ���������� ��������� K-means
 	//void kmeans(const std::vector<Point>& data, int k)
 	//{
@@ -459,47 +503,16 @@ public:
 
 
 
-	bool predict(const IClusterItemHolder& iallItems)
+	virtual void writeToTemp(const IClusterItemHolder& iallItems, BackFileWriter &tempFile)
 	{
 		const ConvertCollection& allItems = dynamic_cast<const ConvertCollection&>(iallItems);
-
-		BackString filePath = get_temp_file_path();
-		BackFileWriter tempFile;
-		tempFile.open(filePath, BackFileWriter::out | BackFileWriter::trunc);
-		if (!tempFile.is_open())
-		{
-			std::cerr << "Unable to open temporary file for writing." << std::endl;
-			exit(EXIT_FAILURE);
-		}
-
 		for (size_t i = 0; i < allItems.getItemsCount(); i++)
 		{
-			auto& item = allItems.getRItem(i);
-
-			int startX = 0;
-			float startY = 0;
-
-			for (const auto& land : item.path)
-			{
-				float iter = (land.y - startY) / (land.x * 100 - startX);
-				for (size_t i = startX; i < land.x * 100; i++)
-				{
-					tempFile << startY << " ";
-					startY += iter;
-				}
-				startX = land.y;
-			}
-
-			while (startX < allItems.maxEnd)
-			{
-				tempFile << "0 ";
-			}
+			allItems.fillDate(i, tempFile);
 
 			tempFile.seekp(-1, tempFile.cur); // ������� ��������� �������
 			tempFile << std::endl;
-
 		}
-		tempFile.close();
 
 
 		//// ������� ��� ���������� ����������� ���������� ����� ����� �������
@@ -512,31 +525,17 @@ public:
 
 		//return 0;
 
-#ifdef _WIN32
-		BackString execCmd = "python.exe ";
-#else
-		BackString execCmd = "python ";
-#endif
-		execCmd += (Variables::metaPath / "landscape.py").string() + " ";
+		// execCmd += (Variables::metaPath / "landscape.py").string() + " ";
 
-		execCmd += filePath;
-		execCmd += " 'a' ";
+		// execCmd += filePath;
+		// execCmd += " 'a' ";
 
-		execCmd += " '";
-		execCmd += getPythonSettings(settings);
-		execCmd += "'";
-		return exec(execCmd, cachedAssignments, n);
-	}
-
-	int test(size_t itemId)
-	{
-		if (itemId >= cachedAssignments.size())
-			return -1;
-
-		return cachedAssignments[itemId];
+		// execCmd += " '";
+		// execCmd += getPythonSettings(settings);
+		// execCmd += "'";
+		// return exec(execCmd, cachedAssignments, n);
 	}
 };
-
 
 GlobalClusterRegister<ConvertClass, ConvertCollection, LandClassifier> c("Land All To New");
 // TODO: Land projection of line

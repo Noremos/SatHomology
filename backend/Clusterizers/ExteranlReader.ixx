@@ -9,6 +9,7 @@ module;
 #include <iostream>
 #include <string>
 #include <algorithm>
+#include "../side/subprocess.h"
 #include "Usings.h"
 
 export module ExteranlReader;
@@ -29,6 +30,14 @@ export BackString get_temp_file_path()
 }
 
 
+export const char* getPythonExe()
+{
+#ifdef _WIN32
+		return "python.exe";
+#else
+		return "/usr/bin/python3";
+#endif
+}
 
 export BackString getPythonSettings(const MLSettings& settings)
 {
@@ -37,7 +46,7 @@ export BackString getPythonSettings(const MLSettings& settings)
 	{
 		if (set.name == "method")
 			continue;
-		const BackStringView quote = "\\\"";
+		const BackStringView quote = "\"";
 		json += quote;
 		json += set.name;
 		json += quote;
@@ -89,21 +98,30 @@ export BackString getPythonSettings(const MLSettings& settings)
 }
 
 
-export bool exec(BackStringView cmd, std::vector<unsigned long>& assigments, int& n)
+export bool exec(const std::vector<BackString>& cmd, std::vector<unsigned long>& assigments, int& n)
 {
-	std::cout << cmd << std::endl;
-	std::string outputString;
-#ifdef __APPLE__
-	std::shared_ptr<FILE> pipe(popen(cmd.data(), "rt"), pclose);
-#else
-	std::shared_ptr<FILE> pipe(_popen(cmd.data(), "rt"), _pclose);
-#endif
-	if (!pipe) throw std::runtime_error("_popen() failed!");
-
-	char buffer[128];
-	while (!feof(pipe.get()))
+	std::vector<const char*> args;
+	for (size_t i = 0; i < cmd.size(); i++)
 	{
-		if (fgets(buffer, sizeof(buffer), pipe.get()) != nullptr)
+		args.push_back(cmd[i].c_str());
+		std::cout << cmd[i] << " ";
+	}
+	args.push_back(NULL);
+
+	std::cout << std::endl;
+
+	std::string outputString;
+	struct subprocess_s subprocess;
+	int result = subprocess_create(static_cast<const char**>(&args[0]), 0, &subprocess);
+	if (0 != result) {
+		throw std::runtime_error("subprocess_create failed!");
+	}
+
+	char buffer[256];
+	FILE* p_stdout = subprocess_stdout(&subprocess);
+	while (!feof(p_stdout))
+	{
+		if (fgets(buffer, sizeof(buffer), p_stdout) != nullptr)
 		{
 			outputString += buffer;
 		}

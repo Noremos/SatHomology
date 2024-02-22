@@ -74,17 +74,12 @@ public:
 		}
 		tempFile.close();
 
-#ifdef _WIN32
-		BackString execCmd = "python.exe ";
-#else
-		BackString execCmd = "python ";
-#endif
-		execCmd += (Variables::metaPath / "tslearn.py").string() + " ";
-		execCmd += filePath + " ";
-		execCmd += settings.getEnum("method");
-		execCmd += " '";
-		execCmd += getPythonSettings(settings);
-		execCmd += "'";
+		std::vector<BackString> execCmd;
+		execCmd.push_back(getPythonExe());
+		execCmd.push_back((Variables::metaPath / "tslearn.py").string());
+		execCmd.push_back(filePath);
+		execCmd.push_back(BackString(settings.getEnum("method").data()));
+		execCmd.push_back(getPythonSettings(settings));
 		return exec(execCmd, cachedAssignments, n);
 	}
 
