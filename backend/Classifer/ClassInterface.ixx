@@ -223,7 +223,9 @@ class GlobalClassRegister : public GlobalRegister<ClassFactory, TClass, TClassHo
 {
 public:
 	GlobalClassRegister(std::string_view name = "") : GlobalRegister<ClassFactory, TClass, TClassHolder, TClassifier>(classFactory, name)
-	{ }
+	{
+		printf(" for class\n");
+	}
 };
 
 //export template<class TClass, class TClassHolder, class TClassifier>

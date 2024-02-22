@@ -14,12 +14,12 @@ import ClusterInterface;
 import TreeSignClass;
 import ExteranlReader;
 
-export class SklearnClassifier : public IBarClusterizer
+export class ISklearnClassifier : public IBarClusterizer
 {
 	int n;
 	std::vector<unsigned long> cachedAssignments;
 public:
-	SklearnClassifier()
+	ISklearnClassifier()
 	{
 		IBarClusterizer::settings =
 		{
@@ -63,9 +63,9 @@ public:
 		return n;
 	}
 
+	virtual void writeToTemp(const IClusterItemHolder& iallItems, BackFileWriter &tempFile) = 0;
 	bool predict(const IClusterItemHolder& iallItems)
 	{
-		const TreeSignatureCollection& allItems = dynamic_cast<const TreeSignatureCollection&>(iallItems);
 
 		BackString filePath = get_temp_file_path();
 		BackFileWriter tempFile(filePath, BackFileWriter::out | BackFileWriter::trunc);
@@ -75,31 +75,17 @@ public:
 			exit(EXIT_FAILURE);
 		}
 
-		for (size_t i = 0; i < allItems.getItemsCount(); i++)
-		{
-			auto& sign = allItems.getRItem(i).signature;
+		writeToTemp(iallItems, tempFile);
 
-			for (const auto& num : sign)
-			{
-				tempFile << num << " ";
-			}
-			tempFile.seekp(-1, tempFile.cur); // ������� ��������� �������
-			tempFile << std::endl;
-
-		}
 		tempFile.close();
 
-#ifdef _WIN32
-		BackString execCmd = "python.exe ";
-#else
-		BackString execCmd = "python ";
-#endif
-		execCmd += (Variables::metaPath / "cluster.py").string() + " ";
-		execCmd += filePath + " ";
-		execCmd += settings.getEnum("method");
-		execCmd += " '";
-		execCmd += getPythonSettings(settings);
-		execCmd += "'";
+
+		std::vector<BackString> execCmd;
+		execCmd.push_back(getPythonExe());
+		execCmd.push_back((Variables::metaPath / "cluster.py").string());
+		execCmd.push_back(filePath);
+		execCmd.push_back(BackString(settings.getEnum("method").data()));
+		execCmd.push_back(getPythonSettings(settings));
 		return exec(execCmd, cachedAssignments, n);
 
 		//test.set_number_of_centers(n);
@@ -114,5 +100,31 @@ public:
 	}
 };
 
+
+
+class SklearnClassifier : public ISklearnClassifier
+{
+public:
+	SklearnClassifier()
+	{
+	}
+
+	virtual void writeToTemp(const IClusterItemHolder& iallItems, BackFileWriter &tempFile)
+	{
+		const TreeSignatureCollection& allItems = dynamic_cast<const TreeSignatureCollection&>(iallItems);
+		for (size_t i = 0; i < allItems.getItemsCount(); i++)
+		{
+			auto& sign = allItems.getRItem(i).signature;
+
+			for (const auto& num : sign)
+			{
+				tempFile << num << " ";
+			}
+			tempFile.seekp(-1, tempFile.cur); // ������� ��������� �������
+			tempFile << std::endl;
+
+		}
+	}
+};
 
 GlobalClusterRegister<TreeClass, TreeSignatureCollection, SklearnClassifier> c("SKLearn");

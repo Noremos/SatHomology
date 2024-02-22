@@ -40,6 +40,7 @@ export struct ProjectSettings
 		return *metaprov.get();
 	}
 
+	static ProjectSettings globalSettings;
 private:
 	SettingsIO settings =
 	{
@@ -61,12 +62,11 @@ private:
 		//{jsn_tileSize, this->tileSize},
 		//{jsn_tileOffset, this->tileOffset}
 	};
-
-
-
 };
+
+ProjectSettings ProjectSettings::globalSettings;
+
 export ProjectSettings& getSettings()
 {
-	static ProjectSettings settings;
-	return settings;
+	return ProjectSettings::globalSettings;
 }

@@ -386,6 +386,7 @@ public:
 	GlobalRegister(TFactory& factory, BackStringView name)
 	{
 		id = factory.template Register<TClass, TClassHolder, TML>(name);
+		printf("%s class registered", name.data());
 	}
 	int getId() const
 	{

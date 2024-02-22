@@ -162,6 +162,7 @@ public:
 };
 
 
+
 export class IBarClusterizer
 {
 public:
@@ -187,14 +188,17 @@ public:
 	}
 };
 
-
-
 using ClusterFactory = ImlFactory<ICluster, IClusterItemHolder, IBarClusterizer>;
+
+struct Dummy
+{
+	static ClusterFactory clusterFactory;
+};
+ClusterFactory Dummy::clusterFactory;
 
 export ClusterFactory& getClusterFactory()
 {
-	static ClusterFactory clusterFactory;
-	return clusterFactory;
+	return Dummy::clusterFactory;
 }
 
 export template<class TClass, class TClassHolder, class TClassifier>
@@ -202,6 +206,10 @@ class GlobalClusterRegister : public GlobalRegister<ClusterFactory, TClass, TCla
 {
 public:
 	GlobalClusterRegister(BackStringView name = "") : GlobalRegister<ClusterFactory, TClass, TClassHolder, TClassifier>(getClusterFactory(), name)
-	{ }
+	{
+		printf(" for cluster\n");
+	}
 };
+
+
 //using GlobalClusterRegister = GlobalRegister<TClass, TClassHolder, TClassifier, ClusterFactory>;
