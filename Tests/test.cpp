@@ -36,10 +36,12 @@ struct TestOut
 		for (size_t i = 0; i < result.getItemsCount(); i++)
 		{
 			auto* col = result.getRItem(i);
-			for (size_t j = 0; j <  col->path.size(); j++)
+			auto& path = col->pathset[0];
+			EXPECT_EQ(col->pathset.size(), 1);
+			for (size_t j = 0; j <  path.size(); j++)
 			{
-				EXPECT_EQ(col->path[j].x, expected[i][j].x);
-				EXPECT_EQ(col->path[j].y, expected[i][j].y);
+				EXPECT_EQ(path[j].x, expected[i][j].x);
+				EXPECT_EQ(path[j].y, expected[i][j].y);
 			}
 		}
 	}
@@ -56,12 +58,12 @@ struct TestOut
 
 
 
-TEST(TestBubenickName, TestName)
+TEST(Landscape, TestBubenick)
 {
 	ConvertCollection col;
-	col.nextLine.addExpr(3, 9);
-	col.nextLine.addExpr(4, 6);
-	col.nextLine.addExpr(5, 11);
+	col.convertLand.addExpr(3, 9);
+	col.convertLand.addExpr(4, 6);
+	col.convertLand.addExpr(5, 11);
 	col.perform();
 
 	TestOut bubenic;
@@ -71,13 +73,13 @@ TEST(TestBubenickName, TestName)
 	bubenic.compare(col);
 }
 
-TEST(TestMdpikName, TestName)
+TEST(Landscape, TestMdpikName)
 {
 	ConvertCollection mdpiTests;
-	mdpiTests.nextLine.addExpr(0.5, 2.5);
-	mdpiTests.nextLine.addExpr(2, 6);
-	mdpiTests.nextLine.addExpr(3, 5);
-	mdpiTests.nextLine.addExpr(5, 7);
+	mdpiTests.convertLand.addExpr(0.5, 2.5);
+	mdpiTests.convertLand.addExpr(2, 6);
+	mdpiTests.convertLand.addExpr(3, 5);
+	mdpiTests.convertLand.addExpr(5, 7);
 
 	mdpiTests.perform();
 
@@ -104,4 +106,19 @@ TEST(TestMdpikName, TestName)
 	// 	EXPECT_EQ(col.getRItem(i)->start().getAvgFloat(), expected[i].first);
 	// 	EXPECT_EQ(col.getRItem(i)->end().getAvgFloat(), expected[i].second);
 	// }
+}
+
+TEST(Landscape, SameStart)
+{
+	ConvertCollection col;
+	col.convertLand.addExpr(60, 62);
+	col.convertLand.addExpr(60, 84);
+	col.convertLand.addExpr(60, 186);
+	col.perform();
+
+	TestOut expected;
+	expected.buildexpectedource({{60,0},{61,1}, {62,0}});
+	expected.buildexpectedource({{60,0},{72,12}, {84,0}});
+	expected.buildexpectedource({{60,0},{123,63}, {196,0}});
+	expected.compare(col);
 }

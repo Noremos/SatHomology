@@ -631,6 +631,7 @@ export const LFID VECTOR_LAYER_FID = 3;
 export const LFID MULTIPOLY_VECTOR_LAYER_FID = 4;// ILayer::getCountId();
 export const LFID TREE_VECTOR_LAYER_FID = 5;
 export const LFID GROUP_LAYER = 6;
+export const LFID TREE_VECTOR_CLASS_LAYER = 7;
 
 export class CoreLayerFactory
 {

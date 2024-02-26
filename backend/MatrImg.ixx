@@ -95,8 +95,8 @@ protected:
 				assert(_channels == 4);
 				break;
 			case BarType::BYTE8_3:
-				TSize = 3;
-				assert(_channels == 3);
+				TSize = _channels;
+				assert(_channels == 3 || _channels == 4);
 				break;
 			case BarType::BYTE8_1:
 				TSize = 1;

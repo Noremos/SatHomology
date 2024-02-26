@@ -69,6 +69,10 @@ public:
 		return sqrt(sqr(a1 - a2) + sqr(b1 - b2));
 	}
 
+	void getSignature(BackString& line) const override
+	{
+	}
+
 	const bc::barvector& getMatrix() const
 	{
 		return getBar().getMatrix();
@@ -176,7 +180,7 @@ public:
 
 	void setClassesCount(int size)
 	{
-		n = size;
+		// n = size;
 	}
 
 	int getClusters()
@@ -200,6 +204,8 @@ public:
 
 	bool predict(const IClusterItemHolder& allItems)
 	{
+		n = *IBarClusterizer::settings.getInt("n_clusters");
+
 		const SortCollection* col = dynamic_cast<const SortCollection*>(&allItems);
 		float avgDiff = 0; int diffc = 0;
 		std::vector<std::pair<int, int>> biggestRadius;
@@ -228,7 +234,6 @@ public:
 				return a.second > b.second;
 			});
 
-		n = *IBarClusterizer::settings.getInt("n_clusters");
 		if (n == 0)
 		{
 			float radius = *IBarClusterizer::settings.getInt("radius");

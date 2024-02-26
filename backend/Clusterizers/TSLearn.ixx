@@ -24,14 +24,14 @@ public:
 			{
 				"method",
 				{
-				//"AffinityPropagation",
-				"kmeans",
-				"tskmeans_dtw",
-				"tskmeans_softdtw",
-				"silhouette_score",
-			}
-		},
-		{"n_clusters", 3}
+					//"AffinityPropagation",
+					"kmeans",
+					"tskmeans_dtw",
+					"tskmeans_softdtw",
+					"silhouette_score",
+				}
+			},
+			{"n_clusters", 3}
 		};
 	}
 	const BackString name() const
@@ -41,7 +41,7 @@ public:
 
 	void setClassesCount(int size)
 	{
-		n = size;
+		// n = size;
 	}
 
 	int getClusters()
@@ -51,6 +51,8 @@ public:
 
 	bool predict(const IClusterItemHolder& iallItems)
 	{
+		n = *IBarClusterizer::settings.getInt("n_clusters");
+
 		const TreeSignatureCollection& allItems = dynamic_cast<const TreeSignatureCollection&>(iallItems);
 		BackString filePath = get_temp_file_path();
 		BackFileWriter tempFile(filePath, BackFileWriter::out | BackFileWriter::trunc);

@@ -13,6 +13,7 @@ import Platform;
 
 import MetadataCoreIO;
 import StateBinIO;
+import ClusterInterface;
 
 using LayerMetaProvider = MetadataProvider;
 
@@ -317,5 +318,16 @@ public:
 	virtual const LFID getFactoryId() const
 	{
 		return TREE_VECTOR_LAYER_FID;
+	}
+};
+
+export class ClassVectorLayer : public VectorLayer
+{
+public:
+	std::shared_ptr<IClusterItemHolder> collection;
+
+	virtual const LFID getFactoryId() const
+	{
+		return TREE_VECTOR_CLASS_LAYER;
 	}
 };

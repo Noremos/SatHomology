@@ -120,3 +120,27 @@ void drawTree(const GuiDisplaySystem& ds, TreeVectorGuiLayer* layer, VecTree& tr
 			node_clicked = counter;
 	}
 }
+
+
+export class ClassVectorGuiLayer : public VectorBaseLayer<ClassVectorLayer>
+{
+	using Base = VectorBaseLayer<ClassVectorLayer>;
+public:
+	ClassVectorGuiLayer(ClassVectorLayer* fromCore) : Base(fromCore)
+	{ }
+
+	virtual void draw(const GuiDisplaySystem& ds)
+	{
+		Base::draw(ds);
+		if (Base::selectedId != -1)
+		{
+			if (ImGui::Begin("Abs"))
+			{
+				BackString line;
+				data->collection->getCItem(Base::selectedId)->getSignature(line);
+				ImGui::TextWrapped(line.c_str(), line.length());
+			}
+			ImGui::End();
+		}
+	}
+};

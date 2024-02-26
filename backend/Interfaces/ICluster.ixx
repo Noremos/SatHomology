@@ -59,6 +59,8 @@ public:
 		return 0;
 	}
 
+	virtual void getSignature(BackString& line) const = 0;
+
 	virtual ~ICluster()
 	{}
 };

@@ -26,25 +26,25 @@ public:
 			{
 				"method",
 				{
-				//"AffinityPropagation",
-				"OPTICS",
-				"KMeans",
-				"DBSCAN",
-				"AgglomerativeClustering",
-				"Birch",
-				"MiniBatchKMeans",
-				"MeanShift",
-				"SpectralClustering",
-				"SpectralBiclustering",
-				"SpectralCoclustering",
-				"FeatureAgglomeration",
-				"BisectingKMeans"
-			}
-		},
-		{"n_clusters", 2},
-		{"eps", 0.5},
-		{"min_samples", 3},
-		{"threshold", 0.5}
+					//"AffinityPropagation",
+					"OPTICS",
+					"KMeans",
+					"DBSCAN",
+					"AgglomerativeClustering",
+					"Birch",
+					"MiniBatchKMeans",
+					"MeanShift",
+					"SpectralClustering",
+					"SpectralBiclustering",
+					"SpectralCoclustering",
+					"FeatureAgglomeration",
+					"BisectingKMeans"
+				}
+			},
+			{"n_clusters", 2},
+			{"eps", 0.5},
+			{"min_samples", 3},
+			{"threshold", 0.5}
 		};
 	}
 
@@ -55,7 +55,7 @@ public:
 
 	void setClassesCount(int size)
 	{
-		n = size;
+		// n = size;
 	}
 
 	int getClusters()
@@ -66,6 +66,7 @@ public:
 	virtual void writeToTemp(const IClusterItemHolder& iallItems, BackFileWriter &tempFile) = 0;
 	bool predict(const IClusterItemHolder& iallItems)
 	{
+		n = *IBarClusterizer::settings.getInt("n_clusters");
 
 		BackString filePath = get_temp_file_path();
 		BackFileWriter tempFile(filePath, BackFileWriter::out | BackFileWriter::trunc);

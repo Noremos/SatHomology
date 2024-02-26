@@ -964,6 +964,7 @@ namespace MyApp
 		LayerFactory::RegisterFactory<VectorGuiLayer, VectorLayer>(VECTOR_LAYER_FID);
 		//LayerFactory::RegisterFactory<VectorGuiLayer, VetorLayer>(VECTOR_LAYER_FID);
 		LayerFactory::RegisterFactory<TreeVectorGuiLayer, TreeVectorLayer>(TREE_VECTOR_LAYER_FID);
+		LayerFactory::RegisterFactory<ClassVectorGuiLayer, ClassVectorLayer>(TREE_VECTOR_CLASS_LAYER);
 
 		//classerVals.ioLayer = layersVals.getIoLayer();
 		auto drawLine = [](const bc::point& p1, const bc::point& p2, bool finale)

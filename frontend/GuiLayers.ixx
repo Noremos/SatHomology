@@ -427,6 +427,8 @@ class VectorBaseLayer : public GuiLayerData<T>
 	std::vector<size_t> orders;
 
 public:
+	int selectedId = -1;
+
 	VectorBaseLayer(T* fromCore) : GuiLayerData<T>(fromCore),
 		addCB(checkState), editCB(checkState), removeCB(checkState)
 	{ }
@@ -589,7 +591,7 @@ public:
 	//	return false;
 	//}
 
-	void drawPolygon(const DrawPrimitive* d, const GuiDisplaySystem& ds, float tick = 3.0)
+	bool drawPolygon(const DrawPrimitive* d, const GuiDisplaySystem& ds, float tick = 3.0)
 	{
 		ImGuiWindow* window = ImGui::GetCurrentWindow();
 		ImDrawList* list = window->DrawList;
@@ -606,7 +608,7 @@ public:
 		ImU32 colRev = ImColor(255 - cscol.r, 255 - cscol.g, 255 - cscol.b);
 
 		if (points.size() < 3)
-			return;
+			return false;
 
 		BackPoint point = ds.cursorPos;
 		ImU32 cursorColor = ImColor(255 - cscol.r, 255 - cscol.g, 255 - cscol.b);
@@ -653,6 +655,7 @@ public:
 			}
 		}
 		displayPoints.clear();
+		return inside;
 	}
 
 	int spotId = -1;
@@ -667,7 +670,8 @@ public:
 		for (size_t& io : orders)
 		{
 			const DrawPrimitive* d = Base::data->primitives[io];
-			drawPolygon(d, ds, io == spotId ? 10.0 : 3.0);
+			if (drawPolygon(d, ds, io == spotId ? 10.0 : 3.0))
+				selectedId = io;
 		}
 	}
 

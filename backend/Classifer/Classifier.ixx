@@ -153,9 +153,9 @@ public:
 		return classId;
 	}
 
-	VectorLayer* addClassLayer(int classId, bool addToList = true)
+	ClassVectorLayer* addClassLayer(int classId, bool addToList = true)
 	{
-		VectorLayer* layer = Project::proj->addLayerData<VectorLayer>(Project::proj->getDisplay().sysProj.getId());
+		ClassVectorLayer* layer = Project::proj->addLayerData<ClassVectorLayer>(Project::proj->getDisplay().sysProj.getId());
 		layer->color = BackColor::random();
 		//layer->vecType = VectorLayer::VecType::circles;
 		layer->vecType = VectorLayer::VecType::polygons;

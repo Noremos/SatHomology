@@ -40,6 +40,8 @@ export class ConvertClass : public ICluster
 public:
 	bc::barvector matrix;
 	std::vector<std::vector<landres>> pathset;
+	int AddE = 0;
+	mutable int maxEnd = 0;
 //	bool addMiddleDepth;
 //
 	const bc::barvector& getMatrix() const override
@@ -49,6 +51,7 @@ public:
 
 	void add(float x, float y)
 	{
+		assert(pathset.back().size() == 0 || pathset.back().back().x != x);
 		pathset.back().push_back({x, y});
 	}
 //
@@ -71,6 +74,7 @@ public:
 		id = other.id;
 		matrix = other.matrix;
 		pathset = other.pathset;
+		AddE = other.AddE;
 	}
 
 	explicit ConvertClass(ConvertClass&& other) //: id(id)
@@ -78,6 +82,7 @@ public:
 		id = other.id;
 		matrix = std::move(other.matrix);
 		pathset =   std::move(other.pathset);
+		AddE = other.AddE;
 	}
 
 	Barscalar start() const override
@@ -88,6 +93,41 @@ public:
 	Barscalar end() const override
 	{
 		return pathset[0][0].y;
+	}
+
+	void getSignature(BackString& line) const override
+	{
+		std::vector<float> total;
+		total.resize(maxEnd * AddE);
+		std::fill(total.begin(), total.end(), 0);
+
+		float N = pathset.size();
+
+		for (const auto& landset : pathset)
+		{
+			size_t startX = round(landset[0].x * AddE);
+			float startY = landset[0].y;
+			for (size_t j = 1; j < landset.size(); j++)
+			{
+				const auto& land = landset[j];
+
+				const size_t endX = round(land.x * AddE);
+				float iter = (AddE * (land.y - startY)) / (endX - startX);
+				for (size_t i = startX; i < endX; i++)
+				{
+					total[i] += startY;
+					startY += iter;
+				}
+				startX = endX;
+			}
+		}
+
+		for (size_t i = 0; i < total.size(); i++)
+		{
+			// total[i] /= N;
+			line += std::to_string(total[i] / N);
+			line += " ";
+		}
 	}
 
 private:
@@ -214,6 +254,7 @@ public:
 			cl.id = i;
 			cl.pathset.push_back({});
 			cl.add(start, 0);
+			cl.AddE = *Base::settings.getInt("Resolution");
 
 			//cl.matrix = line.matrix;
 
@@ -346,44 +387,6 @@ public:
 		}
 	}
 
-
-	void fillDate(size_t id, BackFileWriter& out) const
-	{
-		const int AddE =  *Base::settings.getInt("Resolution");;
-
-		std::vector<float> total;
-		total.resize(maxEnd * AddE);
-		std::fill(total.begin(), total.end(), 0);
-
-		auto& item = getRItem(id);
-		float N = item.pathset.size();
-
-		for (const auto& landset : item.pathset)
-		{
-			int startX = landset[0].x * AddE;
-			float startY = landset[0].y;
-			for (size_t j = 1; j < landset.size(); j++)
-			{
-				const auto& land = landset[j];
-
-				const size_t endX = land.x * AddE;
-				float iter = (land.y - startY) / (endX - startX);
-				for (size_t i = startX; i < endX; i++)
-				{
-					total[i] += startY;
-					startY += iter;
-				}
-				startX = endX;
-			}
-		}
-
-		for (size_t i = 0; i < total.size(); i++)
-		{
-			// total[i] /= N;
-			out << total[i] / N << " ";
-		}
-	}
-
 	Landscape convertLand;
 	virtual void addItem(const CachedBarline& line)
 	{
@@ -408,7 +411,9 @@ public:
 
 	virtual void perform()
 	{
-		convert(convertLand);
+		bool cmpMode = *Base::settings.getBool("Compare Only Mode");
+		if (!cmpMode)
+			convert(convertLand);
 	}
 
 	/*const CachedBarline* getRItem(size_t id) const
@@ -510,7 +515,11 @@ export class LandClassifier : public ISklearnClassifier
 		const ConvertCollection& allItems = dynamic_cast<const ConvertCollection&>(iallItems);
 		for (size_t i = 0; i < allItems.getItemsCount(); i++)
 		{
-			allItems.fillDate(i, tempFile);
+			auto& item = allItems.getRItem(i);
+			BackString line;
+			item.maxEnd = allItems.maxEnd;
+			item.getSignature(line);
+			tempFile << line;
 
 			tempFile.seekp(-1, tempFile.cur); // ������� ��������� �������
 			tempFile << std::endl;

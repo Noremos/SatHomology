@@ -9,6 +9,7 @@ import Platform;
 
 import CachedBarcode;
 import MLSettings;
+import BackBind;
 
 using StgnType = float;
 
@@ -122,6 +123,16 @@ public:
 		signature = std::move(other.signature);
 		matrix = std::move(other.matrix);
 	}
+
+	void getSignature(BackString& line) const override
+	{
+		for (size_t i = 0; i < signature.size(); i++)
+		{
+			line += signature[i];
+			line += " ";
+		}
+	}
+
 	//virtual void saveLoadState(StateBinFile::BinState* state) override
 	//{
 	//	// Throw

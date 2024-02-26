@@ -97,7 +97,7 @@ public:
 
 	SelectableKeyValues<GuiClusterMethod> clsuterMethods;
 	SelectableKeyValues<GuiClass> classesLB;
-	std::unique_ptr<IClusterItemHolder> collectionToPredict = nullptr;
+	std::shared_ptr<IClusterItemHolder> collectionToPredict = nullptr;
 
 	bool show = false;
 	//InOutLayer* ioLayer;
@@ -325,16 +325,17 @@ public:
 					//clusterizer->
 					// backend.proj
 					//GroupLayer* group = backend.proj->addLayerData<GroupLayer>();
-					std::vector<VectorLayer*> layers(n);
+					std::vector<ClassVectorLayer*> layers(n);
 					for (int i = 0; i < n; i++)
 					{
 						//auto* layer = addClassLayer(classId);
 
-						VectorLayer* layer = core.addClassLayer(-1, false);
+						ClassVectorLayer* layer = core.addClassLayer(-1, false);
 						layer->name = "Class: ";
 						layer->name += classesLB.getItems()[i];
 						layer->color = BackColor::random(); //clusterCategs.get(i)->color;
 						layer->vecType = VectorLayer::VecType::polygons;
+						layer->collection = collectionToPredict;
 						//layer->isSystem = true;
 						// clusterCategs.
 						//layer->vecType = VectorLayer::VecType::circles;
@@ -368,9 +369,9 @@ public:
 						}
 					}
 
-					for (VectorLayer* layer : layers)
+					for (ClassVectorLayer* layer : layers)
 					{
-						context.addLayer<VectorGuiLayer, VectorLayer>(layer->name, layer);
+						context.addLayer<ClassVectorGuiLayer, ClassVectorLayer>(layer->name, layer);
 					}
 				}
 			}
