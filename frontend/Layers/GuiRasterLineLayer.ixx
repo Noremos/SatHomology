@@ -13,7 +13,7 @@ import GuiWidgets;
 import RasterLayers;
 import GuiOverlap;
 import RasterLineLayerModule;
-import GuiRLayersTemplates;
+import GuiRasterTools;
 import GuiClusterization;
 //import SimpleLine;
 import BarcodeChart;

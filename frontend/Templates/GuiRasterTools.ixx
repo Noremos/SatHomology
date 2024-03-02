@@ -4,7 +4,7 @@ module;
 #include <future>
 #include "Barcode/PrjBarlib/include/barstrucs.h"
 
-export module GuiRLayersTemplates;
+export module GuiRasterTools;
 
 import BackBind;
 import IItemModule;

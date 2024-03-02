@@ -269,12 +269,12 @@ export struct InOutLayer
 	int out;
 	bool skipOut = false;
 
-	bool skipOutput()
+	bool skipOutput() const
 	{
 		return skipOut;
 	}
 
-	bool isOutEmpty()
+	bool isOutEmpty() const
 	{
 		return out == -1 || in == out;
 	}

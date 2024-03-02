@@ -2,6 +2,7 @@ module;
 #include <memory>
 #include <unordered_set>
 #include <algorithm>
+#include <cassert>
 
 
 export module VectorLayers;
@@ -194,7 +195,7 @@ public:
 		return primitives.back();
 	}
 
-	virtual const LFID getFactoryId() const
+	virtual const LFID getFactoryId() const override
 	{
 		return VECTOR_LAYER_FID;
 	}
@@ -225,6 +226,9 @@ public:
 			case VecType::polygons:
 				safsd += primitives[i]->polygonAsGeojson();
 				break;
+			default:
+				assert(false);
+				throw;
 			}
 			safsd += "},";
 

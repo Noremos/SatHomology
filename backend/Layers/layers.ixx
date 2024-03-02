@@ -402,7 +402,7 @@ public:
 		closeImages();
 	}
 
-	virtual const LFID getFactoryId() const
+	virtual const LFID getFactoryId() const override
 	{
 		return RASTER_DISK_LAYER_FID;
 	}
@@ -530,7 +530,7 @@ public:
 		return -1;
 	}
 
-	std::vector<SubImgInf> getSubImageInfos()
+	std::vector<SubImgInf> getSubImageInfos() override
 	{
 		std::vector<SubImgInf> info;
 		if (imgType != ReadType::Tiff)
@@ -667,7 +667,7 @@ public:
 
 	// ������������ ����� IRasterLayer
 
-	virtual void setCache(size_t rowsSize)
+	virtual void setCache(size_t rowsSize) override
 	{
 		if (imgType == ReadType::Tiff)
 		{

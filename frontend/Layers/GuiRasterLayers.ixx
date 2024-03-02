@@ -10,7 +10,7 @@ import GuiWidgets;
 import RasterLayers;
 import GuiLayers;
 import GuiOverlap;
-import GuiRLayersTemplates;
+import GuiRasterTools;
 import Platform;
 import DrawUtils;
 import LayersCore;
