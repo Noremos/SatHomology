@@ -35,6 +35,8 @@ import RasterLineLayerModule;
 import DrawUtils;
 import RasterLayers;
 import LayersCore;
+import IGuiLayer;
+import GuiLayers;
 //import Lua;
 
 

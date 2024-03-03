@@ -15,6 +15,9 @@ import Platform;
 import DrawUtils;
 import LayersCore;
 
+import IGuiLayer;
+
+
 export class RasterGuiLayer : public RasterToolsLayer<RasterLayer>
 {
 public:

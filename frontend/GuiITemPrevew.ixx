@@ -16,6 +16,9 @@ import ClusterInterface;
 import CachedBarcode;
 import CSBind;
 
+import IGuiLayer;
+
+
 export class TemPreview
 {
 	std::unique_ptr<IClassItemHolder> collectionToPredict;

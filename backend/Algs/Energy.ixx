@@ -438,7 +438,7 @@ private:
 
 
 
-export RetLayers exeEnergyCells(InOutLayer& iol, const MLSettings& setting)
+RetLayers exeEnergyCells(InOutLayer iol, const MLSettings& setting)
 {
 	bc::ProcType type = setting.getEnumValue<bc::ProcType>("type");
 	float energyStart = *setting.getInt("energyStart");
@@ -520,7 +520,7 @@ export RetLayers exeEnergyCells(InOutLayer& iol, const MLSettings& setting)
 }
 
 
-export RetLayers exeEnergy(InOutLayer& iol, const MLSettings& setting)
+RetLayers exeEnergy(InOutLayer iol, const MLSettings& setting)
 {
 	bc::ProcType type = setting.getEnumValue<bc::ProcType>("type");
 	float energyStart = *setting.getInt("energyStart");
@@ -584,3 +584,27 @@ export RetLayers exeEnergy(InOutLayer& iol, const MLSettings& setting)
 
 	return ret;
 }
+
+
+
+MLSettings mkSettings()
+{
+	MLSettings settings;
+	OptionValue enr("energyStart", 100);
+	settings.values.push_back(enr);
+
+	OptionValue comp("type", {});
+	comp.data.e->add("firstEatSecond", bc::AttachMode::firstEatSecond);
+	comp.data.e->add("secondEatFirst", bc::AttachMode::secondEatFirst);
+	comp.data.e->add("createNew", bc::AttachMode::createNew);
+	comp.data.e->add("dontTouch", bc::AttachMode::dontTouch);
+	comp.data.e->add("morePointsEatLow", bc::AttachMode::morePointsEatLow);
+	comp.data.e->add("closer", bc::AttachMode::closer);
+	settings.values.push_back(comp);
+
+	return settings;
+}
+
+
+AlgFuncRegister a("exeEnergyCells", exeEnergyCells, mkSettings);
+AlgFuncRegister b("exeEnergy", exeEnergy, mkSettings);

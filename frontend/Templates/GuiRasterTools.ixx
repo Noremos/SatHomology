@@ -17,76 +17,16 @@ import Exp;
 import CoreLoaders;
 import LayersCore;
 import DrawUtils;
+import IAlgorithm;
+
+
+import GuiDataLayer;
+import GuiAlgo;
+import GuiFilter;
+import IGuiLayer;
 
 int maxThreadCount, minThreadCount;
 
-export struct GuiFilter
-{
-	RangeItemFilter valsFilter;
-	//ScriptFilterInfo scriptFilter;
-	char text[10000];
-
-	GuiFilter()
-	{
-		//const BackString re = ScriptFilterInfo::getScriptTemplate();
-		//memcpy(text, re.c_str(), re.length());
-	}
-
-	SelectableKeyValues<int> typeCB =
-	{
-		{0, "Без фильтра"},
-		{1, "Простой"},
-		{2, "Lua script"}
-	};
-
-	void _drawPair(const char* name1, const char* name2, RangeItemFilter::FRange& rng, int max = 256)
-	{
-		ImGui::SliderInt(name1, &rng.first, 0, max, "%d");
-		ImGui::SliderInt(name2, &rng.second, 0, max, "%d");
-	}
-
-	IItemFilter* getFilter()
-	{
-		int id = typeCB.currentValue();
-		switch (id)
-		{
-		case 0:
-			return nullptr;
-		case 1:
-			return &valsFilter;
-		//case 2:
-		//{
-		//	scriptFilter.setScript(text);
-		//	return &scriptFilter;
-		//}
-		}
-		return nullptr;
-	}
-
-	void draw()
-	{
-		typeCB.drawCombobox("Тип");
-		switch (typeCB.currentValue())
-		{
-		case 0:
-			break;
-		case 1:
-			ImGui::Text("Пороги отсеивания");
-			_drawPair("Мин. Начало", "Макс. Начало", valsFilter.start);
-			_drawPair("Мин. Длина", "Макс. Длина", valsFilter.len);
-			_drawPair("Мин. Размер матрицы в %", "Макс. размер матрицы в %", valsFilter.matrSizeProc, 100);
-			_drawPair("Мин. Глубина", "Макс. Глубина", valsFilter.depth, 200);
-			ImGui::InputInt("Мин. объем матрицы", &valsFilter.minPixelsSize); // matr size must be more then this
-
-			break;
-		//case 2:
-		//	ImGui::InputTextMultiline("Lua скрипт", text, 10000, ImVec2(500, 300));
-		//	break;
-		default:
-			break;
-		}
-	}
-};
 
 
 
@@ -331,6 +271,8 @@ public:
 			}
 			ImGui::EndPopup();
 		}
+
+			ImGui::Separator();
 	}
 };
 
@@ -381,73 +323,13 @@ public:
 	RasterToolsLayer(T* fromCore = nullptr) : TiledRasterGuiLayer<T>(fromCore)
 	{ }
 
+	GuiAlg guiAlg;
 	virtual void drawToolboxInner(ILayerWorker& context)
 	{
 		TiledRasterGuiLayer<T>::drawToolboxInner(context);
 
-		procCB.drawCombobox("Тип");
+		guiAlg.draw(context);
 
-		if (ImGui::Button("Функция активации"))
-		{
-			//auto rets = proj->exeFilter(context.iol, 0);
-			auto rets = exeFilter(context.iol, procCB.currentValue(), 0);
-			context.setLayers(rets, "filter");
-		}
-
-
-		if (ImGui::Button("Квадратичная"))
-		{
-			//auto rets = proj->exeFilter(context.iol, 0);
-			auto rets = exeFilter(context.iol, procCB.currentValue(), 1);
-			context.setLayers(rets, "new bar");
-		}
-
-		ImGui::Separator();
-		static int startEnergy = 100;
-		ImGui::InputInt("Начальная энергия", &startEnergy, 1);
-		if (ImGui::Button("Энергия"))
-		{
-			//auto rets = proj->exeFilter(context.iol, 0);
-			auto rets = exeEnergy(context.iol, procCB.currentValue(), startEnergy, true);
-			context.setLayers(rets, "new cells");
-		}
-		if (ImGui::Button("Энергия2"))
-		{
-			//auto rets = proj->exeFilter(context.iol, 0);
-			auto rets = exeEnergy(context.iol, procCB.currentValue(), startEnergy, false);
-			context.setLayers(rets, "new cells");
-		}
-		ImGui::Separator();
-
-		if (ImGui::Button("3d"))
-		{
-			//auto rets = proj->exeFilter(context.iol, 0);
-			exeFilter(context.iol, procCB.currentValue(), 3);
-		}
-
-		if (ImGui::Button("GUI"))
-		{
-			ImGui::OpenPopup("UpdateImage");
-		}
-
-		if (ImGui::BeginPopupModal("UpdateImage", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-		{
-			filtere.draw();
-
-			TiledRasterGuiLayer<T>::componentCB.drawCombobox("##Форма");
-			TiledRasterGuiLayer<T>::procCB.drawCombobox("##Обработка");
-			TiledRasterGuiLayer<T>::colorCB.drawCombobox("##Цвет");
-
-			if (ImGui::Button("Run"))
-			{
-				TiledRasterGuiLayer<T>::grabSets();
-				auto rets = exeGUI(context.iol, TiledRasterGuiLayer<T>::properties, filtere.getFilter());
-
-				ImGui::CloseCurrentPopup();
-				context.setLayers(rets, "Разложить");
-			}
-			ImGui::EndPopup();
-		}
 		//ImGui::SameLine();
 		//ImGui::Checkbox("Переключить вид", &heimap.enable);
 		//if (heimap.enable && !heimap.isInit())

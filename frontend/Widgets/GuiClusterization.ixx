@@ -22,6 +22,8 @@ import VectorLayers;
 import ClassifierCore;
 import DrawUtils;
 
+import IGuiLayer;
+import GuiDataLayer;
 
 struct StringBuffer
 {

@@ -120,6 +120,10 @@ public:
 	IAlgBaseSettings()
 	{ }
 
+	IAlgBaseSettings(const MLSettings& settings) :
+		settings(settings)
+	{ }
+
 	MLSettings* getSettings() override
 	{
 		return &settings;
@@ -130,7 +134,7 @@ protected:
 };
 
 
-using IAlgRun = RetLayers(InOutLayer& iol, const MLSettings& settings);
+export using IAlgRun = RetLayers(InOutLayer iol, const MLSettings& settings);
 
 
 export class AlgFactory
@@ -140,14 +144,33 @@ export class AlgFactory
 
 public:
 	std::vector<BackString> names;
-	static AlgFactory factory;
 
-	static int registerFactory(std::string_view name, IAlg* pointer)
+	AlgFactory()
+	{ }
+
+	void operator=(const AlgFactory&) = delete;
+	AlgFactory(const AlgFactory& right) = delete;
+	AlgFactory(AlgFactory&& right) = delete;
+
+	static AlgFactory& getRasterFactory()
 	{
-		factory.names.push_back(BackString(name.data(), name.length()));
-		factory.functions.push_back(std::unique_ptr<IAlg>(pointer));
+		static AlgFactory factory;
+		return factory;
+	}
+
+	static AlgFactory& getVectorFactory()
+	{
+		static AlgFactory factory;
+		return factory;
+	}
+
+
+	int registerFactory(std::string_view name, IAlg* pointer)
+	{
+		names.push_back(BackString(name.data(), name.length()));
+		functions.push_back(std::unique_ptr<IAlg>(pointer));
 		// creators.push_back([] { return new TWorker(); });
-		return factory.functions.size() - 1;
+		return functions.size() - 1;
 	}
 
 	IAlg* get(int id)
@@ -162,12 +185,30 @@ public:
 	// 	return functions[id](iol, settings);
 	// }
 
-	RetLayers Execute(int id, InOutLayer& iol)
+	RetLayers execute(int id, InOutLayer& iol)
 	{
 		assert(id >= 0 && id < functions.size());
 		return functions[id]->execute(iol);
 	}
 };
+
+
+class ProtoIAlgBaseSettings : public IAlgBaseSettings
+{
+	std::function<IAlgRun> funcPtr;
+
+public:
+
+	ProtoIAlgBaseSettings(std::function<IAlgRun> func, const MLSettings& settings)
+		: IAlgBaseSettings(settings), funcPtr(func)
+	{ }
+
+	RetLayers execute(InOutLayer iol) override
+	{
+		return funcPtr(iol, settings);
+	}
+};
+
 
 export template<class TAlg>
 class AlgRegister
@@ -175,6 +216,16 @@ class AlgRegister
 public:
 	AlgRegister(std::string_view name)
 	{
-		AlgFactory::registerFactory(name, new TAlg());
+		AlgFactory::getRasterFactory().registerFactory(name, new TAlg());
+	}
+};
+
+
+export class AlgFuncRegister
+{
+public:
+	AlgFuncRegister(std::string_view name, IAlgRun ptr, std::function<MLSettings()> settingCreation)
+	{
+		AlgFactory::getRasterFactory().registerFactory(name, new ProtoIAlgBaseSettings(ptr, settingCreation()));
 	}
 };

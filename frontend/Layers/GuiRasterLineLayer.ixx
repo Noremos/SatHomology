@@ -23,6 +23,8 @@ import GuiLayers;
 import DrawUtils;
 //GuiBackend backend;
 
+import IGuiLayer;
+import GuiFilter;
 
 export class RasterLineGuiLayer : public ITiledRasterGuiLayer<GuiDrawCloudPointClick, RasterLineLayer>
 {
