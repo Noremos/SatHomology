@@ -7,23 +7,19 @@ module;
 export module GuiRasterTools;
 
 import BackBind;
-import IItemModule;
 import GuiWidgets;
 import RasterLayers;
 import GuiLayers;
 import GuiOverlap;
 import DynamicSettings;
-import Exp;
-import CoreLoaders;
-import LayersCore;
-import DrawUtils;
-import IAlgorithm;
 
-
+import IGuiLayer;
 import GuiDataLayer;
 import GuiAlgo;
+import CoreLoaders;
+import LayersCore;
 import GuiFilter;
-import IGuiLayer;
+import DrawUtils;
 
 int maxThreadCount, minThreadCount;
 

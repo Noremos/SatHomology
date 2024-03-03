@@ -1,12 +1,10 @@
-﻿module;
-
+﻿
 #include <cassert>
 #include <algorithm>
 #include "Barcode/PrjBarlib/include/barline.h"
 #include "Barcode/PrjBarlib/include/barcodeCreator.h"
 #include "Usings.h"
 
-export module Exp;
 import LayersCore;
 import ProjectModule;
 import RasterLineLayerModule;
@@ -16,7 +14,7 @@ import VectorLayers;
 import RasterLayers;
 import Classifiers;
 import GeoprocessorModule;
-import EnergyModule;
+
 import IItemModule;
 import BackBind;
 import MatrModule;

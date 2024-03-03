@@ -1,11 +1,9 @@
-module;
+
 #include <vector>
 #include <memory>
 #include "Barcode/PrjBarlib/include/barline.h"
 #include "Barcode/PrjBarlib/include/barcodeCreator.h"
 #include "Usings.h"
-
-export module EnergyModule;
 
 import LayersCore;
 import RasterLayers;
@@ -32,7 +30,7 @@ Barscalar lerp(double t)
 }
 
 
-export class EnetrgyBarcode : public bc::BarcodeCreator
+class EnetrgyBarcode : public bc::BarcodeCreator
 {
 public:
 	float* run(const bc::DatagridProvider* src, bc::barstruct& str, float& startEnergy)
@@ -188,7 +186,7 @@ struct Cmp
 	std::vector<bc::point> pixels;
 };
 
-export class CellBarcode : public bc::BarcodeCreator
+class CellBarcode : public bc::BarcodeCreator
 {
 protected:
 	float maxEnergy = 0;
@@ -380,7 +378,7 @@ protected:
 	}
 };
 
-export class Worms : public CellBarcode
+class Worms : public CellBarcode
 {
 private:
 
@@ -606,5 +604,5 @@ MLSettings mkSettings()
 }
 
 
-AlgFuncRegister a("exeEnergyCells", exeEnergyCells, mkSettings);
-AlgFuncRegister b("exeEnergy", exeEnergy, mkSettings);
+AlgFuncRegister registerEnergyCells("exeEnergyCells", exeEnergyCells, mkSettings);
+AlgFuncRegister registerEnergy("exeEnergy", exeEnergy, mkSettings);
