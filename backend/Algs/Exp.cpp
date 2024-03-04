@@ -20,7 +20,7 @@ import BackBind;
 import MatrModule;
 import IAlgorithm;
 import MLSettings;
-
+import AlgUtils;
 
 class TreeWalk
 {
@@ -232,347 +232,297 @@ void getMod(BackPixelPoint& start, BackPixelPoint& end, BackPixelPoint p, BackSi
 	end.y = (int)mmmin<int>(round(ya + aspectY) + 1, size.hei);
 }
 
-class ExeQuadro : public IAlgBaseSettings
+
+RetLayers exeQuadro(InOutLayer iol, const MLSettings& settings)
 {
-public:
-	ExeQuadro()
+	Project* proj = Project::getProject();
+
+	IRasterLayer* input = proj->getInRaster(iol);
+	bc::ProcType type = settings.getEnumValue<bc::ProcType>("Сортировка");
+
+	RetLayers ret;
+	const BackImage& src = *(input->getCachedImage());
+
+	bc::barstruct constr;
+	constr.createBinaryMasks = true;
+	constr.createGraph = false;
+	constr.returnType = bc::ReturnType::barcode2d;
+
+
+	bc::BarcodeCreator bcc;
+
+	const BackSize srcsize(src.width(), src.height());
+	//BackSize b = srcsize;
+	int maskMin = 0;
+
+	BackSize b(4, 4);
+	BackSize imgSize(srcsize.wid, srcsize.hei);
+	ResizeAspect(imgSize, b);
+
+	BackImage mask(imgSize.wid, imgSize.hei, 4);
+	mask.reintAsInt();
+	mask.fill(0);
+
+
+	constr.addStructure(type, bc::ColorType::native, bc::ComponentType::Component);
+	constr.maskId = 0;
+	constr.mask = &mask;
+
+	bc::BarConstructor constHolder;
+	constHolder.structs.push_back(constr);
+
+	while (true)
 	{
-		OptionValue comp("Тип", {});
-		comp.data.e->clear();
-		comp.name = "Сортировка";
-		comp.data.e->add("firstEatSecond", bc::AttachMode::firstEatSecond);
-		comp.data.e->add("secondEatFirst", bc::AttachMode::secondEatFirst);
-		comp.data.e->add("createNew", bc::AttachMode::createNew);
-		comp.data.e->add("dontTouch", bc::AttachMode::dontTouch);
-		comp.data.e->add("morePointsEatLow", bc::AttachMode::morePointsEatLow);
-		comp.data.e->add("closer", bc::AttachMode::closer);
-		settings.values.push_back(comp);
-	}
-
-	RetLayers execute(InOutLayer iol) override
-	{
-		Project* proj = Project::getProject();
-
-		IRasterLayer* input = proj->getInRaster(iol);
-		bc::ProcType type = settings.getEnumValue<bc::ProcType>("Сортировка");
-
-		RetLayers ret;
-		const BackImage& src = *(input->getCachedImage());
-
-		bc::barstruct constr;
-		constr.createBinaryMasks = true;
-		constr.createGraph = false;
-		constr.returnType = bc::ReturnType::barcode2d;
+		BackImage imgin = src;
+		imgin.resize(imgSize.wid, imgSize.hei);
 
 
-		bc::BarcodeCreator bcc;
-
-		const BackSize srcsize(src.width(), src.height());
-		//BackSize b = srcsize;
-		int maskMin = 0;
-
-		BackSize b(4, 4);
-		BackSize imgSize(srcsize.wid, srcsize.hei);
-		ResizeAspect(imgSize, b);
-
-		BackImage mask(imgSize.wid, imgSize.hei, 4);
-		mask.reintAsInt();
-		mask.fill(0);
+		RasterLayer* rasterSpot = proj->addLayerData<RasterLayer>(input->cs.getProjId());
+		rasterSpot->initCSFrom(input->cs);
+		rasterSpot->init(srcsize.wid, srcsize.hei, 3);
+		ret.push_back(rasterSpot);
+		BackImage& out = rasterSpot->mat;
+		const float aspectX = static_cast<float>(srcsize.wid) / imgSize.wid;
+		const float aspectY = static_cast<float>(srcsize.hei) / imgSize.hei;
 
 
-		constr.addStructure(type, bc::ColorType::native, bc::ComponentType::Component);
-		constr.maskId = 0;
-		constr.mask = &mask;
+		//constr.
+		//if (constr.structure.size() == 0)
+		//	break;
+		assert(imgin.length() == mask.length());
+		std::unique_ptr<bc::Barcontainer> containner(bcc.createBarcode(&imgin, constHolder));
 
-		bc::BarConstructor constHolder;
-		constHolder.structs.push_back(constr);
+		constHolder.structs.clear();
+		maskMin = 0;
 
-		while (true)
+		b.wid *= 4;
+		b.hei *= 4;
+		imgSize = BackSize(srcsize.wid, srcsize.hei);
+
+		if (b.wid > src.width() || b.hei > src.height())
 		{
-			BackImage imgin = src;
-			imgin.resize(imgSize.wid, imgSize.hei);
+			b.wid = src.width();
+			b.hei = src.height();
+		}
+		else
+		{
+			ResizeAspect(imgSize, b);
+		}
+
+		mask.resize(imgSize.wid, imgSize.hei);
+		mask.fill(0);
+		const float maskAspectX = static_cast<float>(mask.width()) / imgin.width();
+		const float maskAspectY = static_cast<float>(mask.height()) / imgin.height();
 
 
-			RasterLayer* rasterSpot = proj->addLayerData<RasterLayer>(input->cs.getProjId());
-			rasterSpot->initCSFrom(input->cs);
-			rasterSpot->init(srcsize.wid, srcsize.hei, 3);
-			ret.push_back(rasterSpot);
-			BackImage& out = rasterSpot->mat;
-			const float aspectX = static_cast<float>(srcsize.wid) / imgSize.wid;
-			const float aspectY = static_cast<float>(srcsize.hei) / imgSize.hei;
+		for (size_t ci = 0; ci < containner->count(); ci++)
+		{
+			bc::Baritem* item = containner->getItem(0);
 
-
-			//constr.
-			//if (constr.structure.size() == 0)
-			//	break;
-			assert(imgin.length() == mask.length());
-			std::unique_ptr<bc::Barcontainer> containner(bcc.createBarcode(&imgin, constHolder));
-
-			constHolder.structs.clear();
-			maskMin = 0;
-
-			b.wid *= 4;
-			b.hei *= 4;
-			imgSize = BackSize(srcsize.wid, srcsize.hei);
-
-			if (b.wid > src.width() || b.hei > src.height())
+			for (size_t i = 0; i < item->barlines.size(); ++i)
 			{
-				b.wid = src.width();
-				b.hei = src.height();
-			}
-			else
-			{
-				ResizeAspect(imgSize, b);
-			}
+				const auto& matr = item->barlines[i]->matr;
 
-			mask.resize(imgSize.wid, imgSize.hei);
-			mask.fill(0);
-			const float maskAspectX = static_cast<float>(mask.width()) / imgin.width();
-			const float maskAspectY = static_cast<float>(mask.height()) / imgin.height();
+				//if (matr.size() < 5)
+				//	continue;
 
+				bc::barstruct bst = constr;
+				bst.maskId = i;
+				constHolder.structs.push_back(bst);
 
-			for (size_t ci = 0; ci < containner->count(); ci++)
-			{
-				bc::Baritem* item = containner->getItem(0);
+				// if (item->barlines[i]->len() < 10)
+				const auto randCol = BackColor::random();
+				const Barscalar rcol(randCol.r, randCol.g, randCol.b);
+				const Barscalar rid(i, BarType::INT32_1);
 
-				for (size_t i = 0; i < item->barlines.size(); ++i)
+				// BackSize maskSize = b;
+				for (const auto& pm : matr)
 				{
-					const auto& matr = item->barlines[i]->matr;
-
-					//if (matr.size() < 5)
-					//	continue;
-
-					bc::barstruct bst = constr;
-					bst.maskId = i;
-					constHolder.structs.push_back(bst);
-
-					// if (item->barlines[i]->len() < 10)
-					const auto randCol = BackColor::random();
-					const Barscalar rcol(randCol.r, randCol.g, randCol.b);
-					const Barscalar rid(i, BarType::INT32_1);
-
-					// BackSize maskSize = b;
-					for (const auto& pm : matr)
+					BackPixelPoint pix(pm.getX(), pm.getY());
+					BackPixelPoint start, end;
+					getMod(start, end, pix, srcsize, aspectX, aspectY);
+					for (size_t l = start.y; l < end.y; ++l)
 					{
-						BackPixelPoint pix(pm.getX(), pm.getY());
-						BackPixelPoint start, end;
-						getMod(start, end, pix, srcsize, aspectX, aspectY);
-						for (size_t l = start.y; l < end.y; ++l)
-						{
-							// end.x is a length
-							out.setRow(start.x, l, end.x, rcol);
-						}
+						// end.x is a length
+						out.setRow(start.x, l, end.x, rcol);
+					}
 
-						getMod(start, end, pix, imgSize, maskAspectX, maskAspectY);
+					getMod(start, end, pix, imgSize, maskAspectX, maskAspectY);
 
-						for (size_t l = start.y; l < end.y; ++l)
-						{
-							mask.setRow(start.x, l, end.x, rid);
-						}
+					for (size_t l = start.y; l < end.y; ++l)
+					{
+						mask.setRow(start.x, l, end.x, rid);
 					}
 				}
 			}
-
-
-			//if (b.wid < 8 && b.hei < 6)
-			//	break;
-			if (b.wid == src.width() && b.hei == src.height())
-				break;
-
-			////b.wid /= 2;
-			////b.hei /= 2;
-			//b.wid *= 2;
-			//b.hei *= 2;
-			//if (b.wid > src.width() || b.hei > src.height())
-			//{
-			//	b.wid = src.width();
-			//	b.hei = src.height();
-			//}
 		}
 
-		//std::reverse(ret.begin(), ret.end());
-		return ret;
+
+		//if (b.wid < 8 && b.hei < 6)
+		//	break;
+		if (b.wid == src.width() && b.hei == src.height())
+			break;
+
+		////b.wid /= 2;
+		////b.hei /= 2;
+		//b.wid *= 2;
+		//b.hei *= 2;
+		//if (b.wid > src.width() || b.hei > src.height())
+		//{
+		//	b.wid = src.width();
+		//	b.hei = src.height();
+		//}
 	}
-};
+
+	//std::reverse(ret.begin(), ret.end());
+	return ret;
+}
 
 
-
-class Exe3d : public IAlgBaseSettings
+RetLayers exe3d(InOutLayer iol, const MLSettings& settings)
 {
-public:
-	Exe3d() : IAlgBaseSettings()
+	Project* proj = Project::getProject();
+
+	IRasterLayer* input = proj->getInRaster(iol);
+	bc::ProcType type = settings.getEnumValue<bc::ProcType>("Сортировка");
+
+	const BackImage& src = *(input->getCachedImage());
+
+	bc::barstruct constr;
+	constr.createBinaryMasks = true;
+	constr.createGraph = false;
+	constr.returnType = bc::ReturnType::barcode3d;
+
+	bc::BarcodeCreator bcc;
+
+	constr.addStructure(type, bc::ColorType::native, bc::ComponentType::Component);
+
+	std::unique_ptr<bc::Baritem> item(bcc.createBarcode(&src, constr));
+
+	std::string globout = "";
+	for (size_t i = 0; i < item->barlines.size(); ++i)
 	{
-		OptionValue comp("Тип", {});
-		comp.data.e->clear();
-		comp.name = "Сортировка";
-		comp.data.e->add("firstEatSecond", bc::AttachMode::firstEatSecond);
-		comp.data.e->add("secondEatFirst", bc::AttachMode::secondEatFirst);
-		comp.data.e->add("createNew", bc::AttachMode::createNew);
-		comp.data.e->add("dontTouch", bc::AttachMode::dontTouch);
-		comp.data.e->add("morePointsEatLow", bc::AttachMode::morePointsEatLow);
-		comp.data.e->add("closer", bc::AttachMode::closer);
-		settings.values.push_back(comp);
-	}
-
-	RetLayers execute(InOutLayer iol) override
-	{
-		Project* proj = Project::getProject();
-
-		IRasterLayer* input = proj->getInRaster(iol);
-		bc::ProcType type = settings.getEnumValue<bc::ProcType>("Сортировка");
-
-		const BackImage& src = *(input->getCachedImage());
-
-		bc::barstruct constr;
-		constr.createBinaryMasks = true;
-		constr.createGraph = false;
-		constr.returnType = bc::ReturnType::barcode3d;
-
-		bc::BarcodeCreator bcc;
-
-		constr.addStructure(type, bc::ColorType::native, bc::ComponentType::Component);
-
-		std::unique_ptr<bc::Baritem> item(bcc.createBarcode(&src, constr));
-
-		std::string globout = "";
-		for (size_t i = 0; i < item->barlines.size(); ++i)
+		auto& counter = *item->barlines[i]->bar3d;
+		std::string outstr = "";
+		for (const auto& pm : counter)
 		{
-			auto& counter = *item->barlines[i]->bar3d;
-			std::string outstr = "";
-			for (const auto& pm : counter)
-			{
-				outstr += std::to_string(pm.cx);
-				outstr += " ";
-				outstr += std::to_string(pm.cy);
-				outstr += " ";
-				outstr += std::to_string(pm.rat);
-				outstr += "|";
-			}
-			globout += outstr + "\r\n";
+			outstr += std::to_string(pm.cx);
+			outstr += " ";
+			outstr += std::to_string(pm.cy);
+			outstr += " ";
+			outstr += std::to_string(pm.rat);
+			outstr += "|";
 		}
-		WriteFile("D:\\12.txt", globout);
-		return {};
+		globout += outstr + "\r\n";
 	}
-};
+	WriteFile("D:\\12.txt", globout);
+	return {};
+}
 
 
-class ExeFilter : public IAlgBaseSettings
+
+RetLayers exeFilter(InOutLayer iol, const MLSettings&)
 {
-public:
-	ExeFilter() : IAlgBaseSettings()
+	Project* proj = Project::getProject();
+	//if (u_displayFactor < 1.0)
+	//	throw std::exception();
+	IRasterLayer* input = proj->getInRaster(iol);
+
+
+	RetLayers ret;
+	RasterLayer* layer = proj->addOrUpdateOut<RasterLayer>(iol, input->cs.getProjId());
+	layer->initCSFrom(input->cs);
+
+	ret.push_back(layer);
+	layer->init(input);
+
+
+
+	const BackImage src = *(input->getCachedImage());
+
+	buint hist[256];//256
+	buint offs[256];//256
+	std::fill_n(hist, 256, 0);
+	std::fill_n(offs, 256, 0);
+	for (size_t i = 0; i < src.length(); i++)
 	{
-		OptionValue comp("Тип", {});
-		comp.data.e->clear();
-		comp.name = "Сортировка";
-		comp.data.e->add("firstEatSecond", bc::AttachMode::firstEatSecond);
-		comp.data.e->add("secondEatFirst", bc::AttachMode::secondEatFirst);
-		comp.data.e->add("createNew", bc::AttachMode::createNew);
-		comp.data.e->add("dontTouch", bc::AttachMode::dontTouch);
-		comp.data.e->add("morePointsEatLow", bc::AttachMode::morePointsEatLow);
-		comp.data.e->add("closer", bc::AttachMode::closer);
-		settings.values.push_back(comp);
+		auto p = (int)src.getLiner(i);
+		++hist[p];//����� vector, �� ��
 	}
 
-	RetLayers execute(InOutLayer iol)
+	for (size_t i = 1; i < 256; ++i)
 	{
-		Project* proj = Project::getProject();
-		//if (u_displayFactor < 1.0)
-		//	throw std::exception();
-		IRasterLayer* input = proj->getInRaster(iol);
+		hist[i] += hist[i - 1];
+		offs[i] = hist[i - 1];
+	}
 
+	std::unique_ptr<buint> ods;
+	buint* data = new buint[src.length()];//256
+	ods.reset(data);
 
-		RetLayers ret;
-		RasterLayer* layer = proj->addOrUpdateOut<RasterLayer>(iol, input->cs.getProjId());
-		layer->initCSFrom(input->cs);
+	for (size_t i = 0; i < src.length(); i++)
+	{
+		buchar p = src.getLiner(i).getAvgUchar();
+		data[offs[p]++] = i;
+	}
 
-		ret.push_back(layer);
-		layer->init(input);
+	//std::reverse(data, data + src.length());
 
+	std::vector<char> setted;
+	setted.resize(src.length());
+	std::fill(setted.begin(), setted.end(), 0);
 
+	BackImage& imgout = layer->mat = src;
 
-		const BackImage src = *(input->getCachedImage());
+	//.width(), src.hei(), src.channels());
+	//imgout.fill(0);
 
-		buint hist[256];//256
-		buint offs[256];//256
-		std::fill_n(hist, 256, 0);
-		std::fill_n(offs, 256, 0);
-		for (size_t i = 0; i < src.length(); i++)
+	const char poss[9][2] = { { -1,0 },{ -1,-1 },{ 0,-1 },{ 1,-1 },{ 1,0 },{ 1,1 },{ 0,1 },{ -1,1 },{ -1,0 } };
+	for (size_t i = 0; i < src.length(); i++)
+	{
+		auto dat = data[src.length() - i - 1];
+		auto p = bc::barvalue::getStatPoint(dat, src.width());
+		if (setted[i] == 10)
 		{
-			auto p = (int)src.getLiner(i);
-			++hist[p];//����� vector, �� ��
+			continue;
 		}
 
-		for (size_t i = 1; i < 256; ++i)
+		Barscalar val = imgout.getLiner(dat);
+
+		for (int u = 0; u < 8; ++u)
 		{
-			hist[i] += hist[i - 1];
-			offs[i] = hist[i - 1];
-		}
+			bc::point IcurPoint(p + poss[u]);
 
-		std::unique_ptr<buint> ods;
-		buint* data = new buint[src.length()];//256
-		ods.reset(data);
-
-		for (size_t i = 0; i < src.length(); i++)
-		{
-			buchar p = src.getLiner(i).getAvgUchar();
-			data[offs[p]++] = i;
-		}
-
-		//std::reverse(data, data + src.length());
-
-		std::vector<char> setted;
-		setted.resize(src.length());
-		std::fill(setted.begin(), setted.end(), 0);
-
-		BackImage& imgout = layer->mat = src;
-
-		//.width(), src.hei(), src.channels());
-		//imgout.fill(0);
-
-		const char poss[9][2] = { { -1,0 },{ -1,-1 },{ 0,-1 },{ 1,-1 },{ 1,0 },{ 1,1 },{ 0,1 },{ -1,1 },{ -1,0 } };
-		for (size_t i = 0; i < src.length(); i++)
-		{
-			auto dat = data[src.length() - i - 1];
-			auto p = bc::barvalue::getStatPoint(dat, src.width());
-			if (setted[i] == 10)
-			{
+			if (IcurPoint.x < 0 || IcurPoint.x >= src.width() || IcurPoint.y < 0 || IcurPoint.y >= src.height())
 				continue;
-			}
 
-			Barscalar val = imgout.getLiner(dat);
+			auto re = IcurPoint.getLiner(src.wid());
 
-			for (int u = 0; u < 8; ++u)
+			//if (setted[re] == 10)
+			//{
+			//	continue;
+			//}
+
+			Barscalar valNext = imgout.get(IcurPoint.x, IcurPoint.y);
+			if (valNext.absDiff(val) < 15)
+				imgout.set(IcurPoint.x, IcurPoint.y, val);
+			else
 			{
-				bc::point IcurPoint(p + poss[u]);
-
-				if (IcurPoint.x < 0 || IcurPoint.x >= src.width() || IcurPoint.y < 0 || IcurPoint.y >= src.height())
-					continue;
-
-				auto re = IcurPoint.getLiner(src.wid());
-
-				//if (setted[re] == 10)
-				//{
-				//	continue;
-				//}
-
-				Barscalar valNext = imgout.get(IcurPoint.x, IcurPoint.y);
-				if (valNext.absDiff(val) < 15)
-					imgout.set(IcurPoint.x, IcurPoint.y, val);
-				else
-				{
-					setted[re] = 10;
-					//imgout.set(IcurPoint.x, IcurPoint.y, 0);
-				}
+				setted[re] = 10;
+				//imgout.set(IcurPoint.x, IcurPoint.y, 0);
 			}
 		}
-
-		return ret;
 	}
-};
 
-AlgRegister<ExeQuadro> a("exeQuadro");
-AlgRegister<Exe3d> b("Exe3d");
-AlgRegister<ExeFilter> c("ExeFilter");
+	return ret;
+}
+
+
+static AlgRegister<ExeGUI> registerGUI("ExeGUI");
+
+static AlgFuncRegister registerQuadro("exeQuadro", exeQuadro, mkSettingsType);
+static AlgFuncRegister register3d("Exe3d", exe3d, mkSettingsType);
+static AlgFuncRegister registerFilter("ExeFilter", exeFilter, mkSettingsType);
 
 
 		// comp.name = "Присоединение";

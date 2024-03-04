@@ -12,6 +12,7 @@ import ProjectModule;
 import MLSettings;
 import MatrModule;
 import IAlgorithm;
+import AlgUtils;
 
 // Linear interpolation function
 Barscalar lerp(double t)
@@ -182,7 +183,7 @@ struct Cmp
 		return cachedMaxParent;
 	}
 
-	float energy;
+	float energy = 0;
 	std::vector<bc::point> pixels;
 };
 
@@ -378,12 +379,30 @@ protected:
 	}
 };
 
-class Worms : public CellBarcode
+class Worms : public EnetrgyBarcode
 {
+	std::vector<std::unique_ptr<Cmp>> comps;
+	std::vector<Cmp*> field;
 private:
-
-	virtual void runClassic(float& startEnergy)
+	std::vector<float> neck;
+	Cmp* getCmp(bc::poidex pid)
 	{
+		Cmp* c = field[pid];
+		if (c)
+			c = c->getMaxParent();
+		else
+			return nullptr;
+
+		return c->dead ? nullptr : c;
+	}
+
+	virtual float* runClassic(float& maxEnergy)
+	{
+		float* neck = new float[workingImg->length()];
+		memset(neck, 0, workingImg->length() * sizeof(float));
+		field.resize(bc::BarcodeCreator::totalSize);
+		std::fill(field.begin(), field.end(), nullptr);
+
 		int iwid = workingImg->wid();
 		bc::poidex* indexarr = sortedArr.get();
 		for (curIndexInSortedArr = 0; curIndexInSortedArr < processCount; ++curIndexInSortedArr)
@@ -392,7 +411,7 @@ private:
 			auto curpix = getPoint(curpoindex);
 			auto lin = curpix.getLiner(iwid);
 
-			// Barscalar high = workingImg->getLiner(lin);
+			Barscalar high = workingImg->getLiner(lin);
 
 			static char poss[9][2] = { { -1,0 },{ -1,-1 },{ 0,-1 },{ 1,-1 },{ 1,0 },{ 1,1 },{ 0,1 },{ -1,1 },{ -1,0 } };
 
@@ -408,49 +427,57 @@ private:
 				if (temp == nullptr)
 					continue;
 
-				if (temp->marked)
-					foundMarked = true;
+				// if (temp->marked)
+				// 	foundMarked = true;
 
 				found.push_back(temp);
 			}
 
-			if (found.size() >= 4 || foundMarked)
+			if (found.size() >= 2)
 			{
-				for (size_t i = 0; i < found.size(); i++)
+				std::sort(found.begin(), found.end(), [](Cmp * a, Cmp * b){ return a->energy / a->pixels.size() > b->energy / b->pixels.size(); });
+				for (size_t i = 1; i < found.size(); i++)
 				{
-					found[i]->marked = true;
+					float avg = found[i]->energy / found[i]->pixels.size();
+					for (auto& p : found[i]->pixels)
+					{
+						neck[p.getLiner(iwid)] += avg;
+						if (maxEnergy < neck[p.getLiner(iwid)])
+							maxEnergy = neck[p.getLiner(iwid)];
+					}
+					found[i]->parent = found[i-1];
+					found[i-1]->dead = true;
 				}
 			}
-
-			if (found.size() == 0)
+			else if (found.size() == 1)
+			{
+				found[0]->pixels.push_back(curpix);
+				found[0]->energy += high.getAvgFloat();
+			}
+			else //if (found.size() == 0)
 			{
 				comps.push_back(std::make_unique<Cmp>());
 				field[lin] = comps.back().get();
 				field[lin]->pixels.push_back(curpix);
-				field[lin]->energy = startEnergy;
+				field[lin]->energy += high.getAvgFloat();
 				continue;
 			}
 		}
+
+		return neck;
 	}
 };
 
-
-
-RetLayers exeEnergyCells(InOutLayer iol, const MLSettings& setting)
+RasterLayer* getSrcFromInput(InOutLayer iol , BackImage& out)
 {
-	bc::ProcType type = setting.getEnumValue<bc::ProcType>("type");
-	float energyStart = *setting.getInt("energyStart");
-
 	Project* proj = Project::getProject();
-
 	IRasterLayer* input = proj->getInRaster(iol);
 
-	RetLayers ret;
 	const BackImage& srcl = *(input->getCachedImage());
 	const BackSize srcsize(srcl.width(), srcl.height());
 	float aspect = 1.f;
 
-	BackImage src(srcsize.wid, srcsize.hei, input->getRect(0, 0, 1, 1).get(0, 0).type);
+	out = BackImage(srcsize.wid, srcsize.hei, input->getRect(0, 0, 1, 1).get(0, 0).type);
 	if (input->realWidth() != srcsize.wid)
 	{
 		aspect = static_cast<float>(input->realWidth()) / srcsize.wid;
@@ -458,12 +485,25 @@ RetLayers exeEnergyCells(InOutLayer iol, const MLSettings& setting)
 		{
 			for (int i = 0; i < srcsize.wid; ++i)
 			{
-				src.set(i, h, input->getRect(i * aspect, h * aspect, 1, 1).get(0, 0));
+				out.set(i, h, input->getRect(i * aspect, h * aspect, 1, 1).get(0, 0));
 			}
 		}
 	}
 	else
-		src = srcl;
+		out = srcl;
+
+	RasterLayer* rasterSpot = proj->addLayerData<RasterLayer>(input->cs.getProjId());
+	rasterSpot->initCSFrom(input->cs);
+	rasterSpot->aspect = aspect;
+	rasterSpot->init(srcsize.wid, srcsize.hei, 3);
+
+	return rasterSpot;
+}
+
+bc::barstruct getConstr(const MLSettings& setting)
+{
+	bc::ProcType type = setting.getEnumValue<bc::ProcType>("type");
+	const int* energyStart = setting.getInt("energyStart");
 
 	bc::barstruct constr;
 	constr.createBinaryMasks = true;
@@ -471,20 +511,23 @@ RetLayers exeEnergyCells(InOutLayer iol, const MLSettings& setting)
 	constr.attachMode = bc::AttachMode::morePointsEatLow;
 	//constr.attachMode = bc::AttachMode::closer;
 	constr.returnType = bc::ReturnType::barcode2d;
-	constr.energyStart = energyStart;
-
-	bc::BarcodeCreator bcc;
-
-	//BackSize b = srcsize;
-	int maskMin = 0;
+	if (energyStart)
+		constr.energyStart = *energyStart;
 
 	constr.addStructure(type, bc::ColorType::native, bc::ComponentType::Component);
 
-	RasterLayer* rasterSpot = proj->addLayerData<RasterLayer>(input->cs.getProjId());
-	rasterSpot->initCSFrom(input->cs);
-	rasterSpot->aspect = aspect;
-	rasterSpot->init(srcsize.wid, srcsize.hei, 3);
+	return constr;
+}
+
+RetLayers exeEnergyCells(InOutLayer iol, const MLSettings& setting)
+{
+	float energyStart = *setting.getInt("energyStart");
+
+	RetLayers ret;
+	BackImage src;
+	RasterLayer* rasterSpot = getSrcFromInput(iol, src);
 	ret.push_back(rasterSpot);
+
 
 	//bool useEmbeded = false;
 
@@ -499,6 +542,7 @@ RetLayers exeEnergyCells(InOutLayer iol, const MLSettings& setting)
 		}*/
 
 	CellBarcode bce;
+	bc::barstruct constr = getConstr(setting);
 	std::unique_ptr<bc::Baritem> containner(bce.run(&src, constr, energyStart));
 
 	bc::Baritem* item = containner.get();
@@ -528,51 +572,16 @@ RetLayers exeEnergy(InOutLayer iol, const MLSettings& setting)
 	IRasterLayer* input = proj->getInRaster(iol);
 
 	RetLayers ret;
-	const BackImage& srcl = *(input->getCachedImage());
-	const BackSize srcsize(srcl.width(), srcl.height());
-	float aspect = 1.f;
-
-	BackImage src(srcsize.wid, srcsize.hei, input->getRect(0, 0, 1, 1).get(0, 0).type);
-	if (input->realWidth() != srcsize.wid)
-	{
-		aspect = static_cast<float>(input->realWidth()) / srcsize.wid;
-		for (int h = 0; h < srcsize.hei; ++h)
-		{
-			for (int i = 0; i < srcsize.wid; ++i)
-			{
-				src.set(i, h, input->getRect(i * aspect, h * aspect, 1, 1).get(0, 0));
-			}
-		}
-	}
-	else
-		src = srcl;
-
-	bc::barstruct constr;
-	constr.createBinaryMasks = true;
-	constr.createGraph = false;
-	constr.attachMode = bc::AttachMode::morePointsEatLow;
-	//constr.attachMode = bc::AttachMode::closer;
-	constr.returnType = bc::ReturnType::barcode2d;
-	constr.energyStart = energyStart;
-
-	bc::BarcodeCreator bcc;
-
-	//BackSize b = srcsize;
-	int maskMin = 0;
-
-	constr.addStructure(type, bc::ColorType::native, bc::ComponentType::Component);
-
-	RasterLayer* rasterSpot = proj->addLayerData<RasterLayer>(input->cs.getProjId());
-	rasterSpot->initCSFrom(input->cs);
-	rasterSpot->aspect = aspect;
-	rasterSpot->init(srcsize.wid, srcsize.hei, 3);
+	BackImage src;
+	RasterLayer* rasterSpot = getSrcFromInput(iol, src);
 	ret.push_back(rasterSpot);
 
-	//bool useEmbeded = false;
+	CellBarcode bce;
 
 	BackImage& out = rasterSpot->mat;
 
 	EnetrgyBarcode eb;
+	bc::barstruct constr = getConstr(setting);
 	float* outenergy = eb.run(&src, constr, energyStart);
 	for (size_t i = 0; i < src.length(); i++)
 	{
@@ -585,24 +594,39 @@ RetLayers exeEnergy(InOutLayer iol, const MLSettings& setting)
 
 
 
-MLSettings mkSettings()
+RetLayers exeWorms(InOutLayer iol, const MLSettings& setting)
 {
-	MLSettings settings;
+	RetLayers ret;
+	BackImage src;
+	RasterLayer* rasterSpot = getSrcFromInput(iol, src);
+	ret.push_back(rasterSpot);
+
+	BackImage& out = rasterSpot->mat;
+
+	Worms bcc;
+	float dummy = 0;
+	bc::barstruct constr = getConstr(setting);
+	float* outenergy = bcc.run(&src, constr, dummy);
+	for (size_t i = 0; i < src.length(); i++)
+	{
+		out.setLiner(i, lerp(outenergy[i] / static_cast<float>(dummy)));
+	}
+	delete[] outenergy;
+
+	return ret;
+}
+
+
+MLSettings mkSettingsTypeEnergy()
+{
+	MLSettings settings = mkSettingsType();
 	OptionValue enr("energyStart", 100);
 	settings.values.push_back(enr);
-
-	OptionValue comp("type", {});
-	comp.data.e->add("firstEatSecond", bc::AttachMode::firstEatSecond);
-	comp.data.e->add("secondEatFirst", bc::AttachMode::secondEatFirst);
-	comp.data.e->add("createNew", bc::AttachMode::createNew);
-	comp.data.e->add("dontTouch", bc::AttachMode::dontTouch);
-	comp.data.e->add("morePointsEatLow", bc::AttachMode::morePointsEatLow);
-	comp.data.e->add("closer", bc::AttachMode::closer);
-	settings.values.push_back(comp);
-
 	return settings;
 }
 
 
-AlgFuncRegister registerEnergyCells("exeEnergyCells", exeEnergyCells, mkSettings);
-AlgFuncRegister registerEnergy("exeEnergy", exeEnergy, mkSettings);
+
+static AlgFuncRegister registerEnergyCells("exeEnergyCells", exeEnergyCells, mkSettingsTypeEnergy);
+static AlgFuncRegister registerEnergy("exeEnergy", exeEnergy, mkSettingsTypeEnergy);
+static AlgFuncRegister registerWorms("Worms", exeWorms, mkSettingsType);
