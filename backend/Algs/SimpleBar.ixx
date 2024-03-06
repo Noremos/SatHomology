@@ -170,6 +170,11 @@ export struct Cmp
 
 	float energy = 0;
 	std::vector<bc::point> pixels;
+
+	float getAvg() const
+	{
+		return pixels.size() == 0 ? 0 : (energy / pixels.size());
+	}
 };
 
 export class CellBarcode : public bc::BarcodeCreator
