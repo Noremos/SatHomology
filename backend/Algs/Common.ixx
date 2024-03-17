@@ -25,8 +25,8 @@ export MLSettings mkSettingsType()
 
 export Barscalar lerp(double t)
 {
-	if (t < 0)
-		t = 0;
+	// if (t < 0)
+	// 	t = 0;
 
 	assert(t <= 1.0 && t >= 0);
 	//t = log(1 + t);
@@ -58,13 +58,13 @@ export bc::barstruct getConstr(const MLSettings& setting)
 }
 
 
-export RasterLayer* getSrcFromInput(InOutLayer iol, BackImage& out)
+export RasterLayer* getSrcFromInput(InOutLayer iol, BackImage& out, std::optional<BackSize> newSize = {})
 {
 	Project* proj = Project::getProject();
 	IRasterLayer* input = proj->getInRaster(iol);
 
 	const BackImage& srcl = *(input->getCachedImage());
-	const BackSize srcsize(srcl.width(), srcl.height());
+	const BackSize srcsize = newSize.value_or(BackSize(srcl.width(), srcl.height()));
 	float aspect = 1.f;
 
 	out = BackImage(srcsize.wid, srcsize.hei, input->getRect(0, 0, 1, 1).get(0, 0).type);

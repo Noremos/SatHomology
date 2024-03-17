@@ -18,7 +18,7 @@ import SimpleBar;
 
 // Linear interpolation function
 
-class Swarm : public CellBarcode
+class Swarm2 : public CellBarcode
 {
 public:
 	bc::Baritem* run(const bc::DatagridProvider* src, bc::barstruct& str, float& startEnergy)
@@ -27,6 +27,7 @@ public:
 		init(src, str.proctype);
 		field.resize(bc::BarcodeCreator::totalSize);
 
+		int iwid = workingImg->wid();
 		neck.resize(workingImg->length());
 		std::fill(neck.begin(), neck.end(), 0.5);
 		for (size_t i = 0; i < 10; i++)
@@ -34,11 +35,22 @@ public:
 			std::fill(field.begin(), field.end(), nullptr);
 			comps.clear();
 			runClassic(startEnergy);
+
+			for (auto& c : comps)
+			{
+				// comm
+				double avg = c->getAvg();
+				for (auto& p : c->pixels)
+				{
+					neck[p.y * iwid + p.x] += (1.0 / c->getAvg());
+				}
+			}
+
+			// !for
 		}
 		maxEnergy = *std::max_element(neck.begin(), neck.end());
 
 
-		int iwid = workingImg->wid();
 		bc::Baritem* itm = new bc::Baritem(iwid, type);
 
 		static std::vector<Barscalar> colors;
@@ -96,64 +108,53 @@ private:
 
 			static char poss[9][2] = { { -1,0 },{ -1,-1 },{ 0,-1 },{ 1,-1 },{ 1,0 },{ 1,1 },{ 0,1 },{ -1,1 },{ -1,0 } };
 
-			std::vector<Cmp*> found;
-			bool foundMarked = false;
+			struct Chanse{
+				int j;
+				double change;
+			};
+			std::vector<Chanse> chanses;
+			float totlaChanse = 0;
+
 			for (buchar j = 0; j < 8; ++j)
 			{
 				const bc::point IcurPoint2(curpix + poss[j]);
 				if (IS_OUT_OF_REG(IcurPoint2.x, IcurPoint2.y))
 					continue;
 
-				Cmp* temp = getCmp(IcurPoint2.getLiner(iwid));
-				if (temp == nullptr)
-					continue;
-
-				// if (temp->marked)
-				// 	foundMarked = true;
-
-				found.push_back(temp);
+				totlaChanse += neck[IcurPoint2.getLiner(iwid)];
+				chanses.push_back({ (int)j, neck[IcurPoint2.getLiner(iwid)] });
 			}
 
-			if (found.size() >= 2)
+			auto& neckCur = neck[curpoindex];
+
+			std::random_device rd;
+			std::mt19937 gen(rd());
+			std::uniform_real_distribution<double> dis(0, totlaChanse);
+			double randf = dis(gen);
+
+			double acum = 0;
+			for (size_t i = 0; i < chanses.size(); i++)
 			{
-				std::sort(found.begin(), found.end(), [](Cmp* a, Cmp* b){ return a->getAvg() > b->getAvg(); });
-				for (size_t i = 1; i < found.size(); i++)
+				acum += chanses[i].change;
+				if (randf < acum)
 				{
-					float avg = found[i]->getAvg();
-					for (auto& p : found[i]->pixels)
+					const bc::point IcurPoint2(curpix + poss[chanses[i].j]);
+
+					Cmp* temp = getCmp(IcurPoint2.getLiner(iwid));
+					if (temp != nullptr)
 					{
-						auto& neckCur = neck[p.getLiner(iwid)];
-
-						neckCur += 1. / avg;
+						temp->pixels.push_back(curpix);
+						temp->energy += high.getAvgFloat();;
 					}
-					found[i]->parent = found[i-1];
-					found[i-1]->dead = true;
-				}
+					else
+					{
+						comps.push_back(std::make_unique<Cmp>());
+						auto* p = comps.back().get();
+						p->pixels.push_back(curpix);
+						p->energy += high.getAvgFloat();
+					}
 
-				found.resize(1);
-			}
-			else if (found.size() == 0)
-			{
-				comps.push_back(std::make_unique<Cmp>());
-				field[lin] = comps.back().get();
-				field[lin]->pixels.push_back(curpix);
-				field[lin]->energy += high.getAvgFloat();
-				continue;
-			}
-
-			if (found.size() == 1)
-			{
-				auto& neckCur = neck[curpoindex];
-
-				// Generate random float value with new c++ 14 classes
-				std::random_device rd;
-				std::mt19937 gen(rd());
-				std::uniform_real_distribution<float> dis(0, neckCur + 1 / found[0]->getAvg());
-				float randf = dis(gen);
-				if (randf > neckCur)
-				{
-					found[0]->pixels.push_back(curpix);
-					found[0]->energy += high.getAvgFloat();;
+					break;
 				}
 			}
 		}
@@ -163,7 +164,7 @@ private:
 
 
 
-RetLayers exeSwarm(InOutLayer iol, const MLSettings& setting)
+RetLayers exeSwarm2(InOutLayer iol, const MLSettings& setting)
 {
 	RetLayers ret;
 	BackImage src;
@@ -172,7 +173,7 @@ RetLayers exeSwarm(InOutLayer iol, const MLSettings& setting)
 
 	BackImage& out = rasterSpot->mat;
 
-	Swarm bcc;
+	Swarm2 bcc;
 	float dummy = 0;
 	bc::barstruct constr = getConstr(setting);
 	// std::unique_ptr<bc::Baritem> containner(bcc.run(&src, constr, dummy));
@@ -197,4 +198,4 @@ RetLayers exeSwarm(InOutLayer iol, const MLSettings& setting)
 	return ret;
 }
 
-static AlgFuncRegister registerWorms("Swarm", exeSwarm, mkSettingsType);
+static AlgFuncRegister registerWorms2("Swarm2", exeSwarm2, mkSettingsType);

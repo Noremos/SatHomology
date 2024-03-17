@@ -127,13 +127,20 @@ export bool exec(const std::vector<BackString>& cmd, std::vector<unsigned long>&
 		}
 	}
 
-	printf("%s", outputString.c_str());
 	if (outputString.length() == 0)
+	{
+		std::cout << "Something wrong, the output is empty" << std::endl;
 		return false;
+	}
 
 	if (outputString.length() > 1 && outputString[0] == 'E' && outputString[1] == 'R')
 	{
+		std::cout << "An error occurred: " << std::endl << outputString << std::endl;
 		return false;
+	}
+	else
+	{
+		std::cout << outputString << std::endl;
 	}
 
 	outputString.resize(outputString.length() - 1); // Skip last '\n'

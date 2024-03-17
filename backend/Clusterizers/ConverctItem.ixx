@@ -51,7 +51,7 @@ public:
 
 	void add(float x, float y)
 	{
-		assert(pathset.back().size() == 0 || pathset.back().back().x != x);
+		// assert(pathset.back().size() == 0 || pathset.back().back().x != x);
 		pathset.back().push_back({x, y});
 	}
 //

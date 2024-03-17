@@ -168,12 +168,12 @@ export struct Cmp
 		return cachedMaxParent;
 	}
 
-	float energy = 0;
+	double energy = 0;
 	std::vector<bc::point> pixels;
 
-	float getAvg() const
+	double getAvg() const
 	{
-		return pixels.size() == 0 ? 0 : (energy / pixels.size());
+		return pixels.size() == 0 ? 0.0 : (energy / pixels.size());
 	}
 };
 
