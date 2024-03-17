@@ -24,9 +24,9 @@
             ],
             "defines": [],
             "macFrameworkPath": [
-                "/Library/Developer/CommandLineTools/SDKs/MacOSX14.sdk/System/Library/Frameworks"
+                "/Library/Developer/CommandLineTools/SDKs/MacOSX14.sdk"
             ],
-            "intelliSenseMode": "linux-clang-arm64",
+            "intelliSenseMode": "macos-clang-arm64",
             "compilerPath": "/opt/homebrew/opt/llvm/bin/clang++",
             "cStandard": "c17",
             "cppStandard": "c++20"
