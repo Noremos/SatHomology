@@ -55,7 +55,7 @@ public:
 
 		if (alg->hasFilter())
 		{
-			if (ImGui::Button("Фильтер"))
+			if (ImGui::Button("Фильтр"))
 			{
 				ImGui::OpenPopup("FilterModal");
 			}

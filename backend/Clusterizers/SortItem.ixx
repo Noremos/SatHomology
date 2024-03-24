@@ -73,7 +73,7 @@ public:
 	{
 	}
 
-	const bc::barvector& getMatrix() const
+	const bc::barvector& getMatrix() const override
 	{
 		return getBar().getMatrix();
 	}

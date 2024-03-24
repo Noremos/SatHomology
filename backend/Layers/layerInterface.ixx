@@ -6,7 +6,7 @@ module;
 
 #include <cassert>
 #include "../Bind/Json.h"
-#include "Barcode/PrjBarlib/include/barline.h"
+#include "Barcode/PrjBarlib/include/barstrucs.h"
 
 export module LayersCore;
 
@@ -504,7 +504,7 @@ public:
 	}
 
 
-	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder)
+	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder) override
 	{
 		state->scInt("coreId", id);
 		state->scStr("name", name);

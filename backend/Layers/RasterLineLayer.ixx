@@ -230,7 +230,7 @@ public:
 		return m.getSubFolder("cached.bff");
 	}
 
-	virtual void release(const MetadataProvider& metaFolder)
+	virtual void release(const MetadataProvider& metaFolder) override
 	{
 		// RasterLayer::release(metaFolder);
 		// if (cacheId != -1)
@@ -239,12 +239,12 @@ public:
 		// }
 	}
 
-	virtual const LFID getFactoryId() const
+	virtual const LFID getFactoryId() const override
 	{
 		return RASTER_LINE_LAYER_FID;
 	}
 
-	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder)
+	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder) override
 	{
 		RasterLayer::saveLoadState(state, metaFolder);
 		state->scInt("cacheId", cacheId);

@@ -18,7 +18,7 @@ export class GroupLayer : public ILayer
 public:
 	std::vector<int> subLayers;
 
-	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder)
+	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder) override
 	{
 		int arrSize = subLayers.size();
 		JsonArrayIOState* arr = state->arrayBegin("subIds", arrSize);
@@ -38,17 +38,17 @@ public:
 		}
 	}
 
-	virtual Type getType() const
+	virtual Type getType() const override
 	{
 		return Type::Group;
 	}
 
-	virtual const LFID getFactoryId() const
+	virtual const LFID getFactoryId() const override
 	{
 		return GROUP_LAYER;
 	}
 
-	virtual void release(const MetadataProvider&)
+	virtual void release(const MetadataProvider&) override
 	{
 		// BackString lname = getMetaLayerName();
 		// metaFolder.update(metaFolder.getSubMeta(lname));

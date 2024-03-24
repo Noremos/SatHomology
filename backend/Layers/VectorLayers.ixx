@@ -242,7 +242,7 @@ public:
 		WriteFile(savePath, json);
 	}
 
-	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder)
+	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder) override
 	{
 		IVectorLayer::saveLoadState(state, metaFolder);
 

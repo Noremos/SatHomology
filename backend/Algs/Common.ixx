@@ -68,9 +68,9 @@ export RasterLayer* getSrcFromInput(InOutLayer iol, BackImage& out, std::optiona
 	float aspect = 1.f;
 
 	out = BackImage(srcsize.wid, srcsize.hei, input->getRect(0, 0, 1, 1).get(0, 0).type);
-	if (input->realWidth() != srcsize.wid)
+	aspect = static_cast<float>(input->realWidth()) / srcsize.wid;
+	if (input->displayWidth() != srcsize.wid)
 	{
-		aspect = static_cast<float>(input->realWidth()) / srcsize.wid;
 		for (int h = 0; h < srcsize.hei; ++h)
 		{
 			for (int i = 0; i < srcsize.wid; ++i)

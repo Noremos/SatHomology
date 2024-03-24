@@ -1,9 +1,7 @@
-
 #include <vector>
 #include <memory>
 #include "Barcode/PrjBarlib/include/barline.h"
 #include "Barcode/PrjBarlib/include/barcodeCreator.h"
-#include "Usings.h"
 #include <random>
 
 import LayersCore;

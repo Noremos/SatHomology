@@ -1,7 +1,5 @@
 module;
 
-#include <memory>
-#include <functional>
 #include <vector>
 #include <cassert>
 #include <iostream>

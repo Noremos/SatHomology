@@ -267,7 +267,8 @@ RetLayers exeRecolor(InOutLayer iol, const MLSettings& setting)
 	{
 		for (int i = 0; i < src.width(); ++i)
 		{
-			auto colro = (src.get(i, h) / part) * part;
+			auto cur = src.get(i, h);
+			auto colro = cur - cur % part;
 			src.set(i, h, colro);
 		}
 	}

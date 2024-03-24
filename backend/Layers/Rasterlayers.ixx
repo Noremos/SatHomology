@@ -231,12 +231,12 @@ public:
 	BackImage mat;
 	float aspect = 1.f;
 
-	virtual const LFID getFactoryId() const
+	virtual const LFID getFactoryId() const override
 	{
 		return RASTER_LAYER_FID;
 	}
 
-	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder)
+	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder) override
 	{
 		IRasterLayer::saveLoadState(state, metaFolder);
 
@@ -288,7 +288,7 @@ public:
 
 
 	// ������������ ����� IRasterLayer
-	virtual void setCache(size_t)
+	virtual void setCache(size_t) override
 	{ }
 
 	virtual int realWidth() const override
@@ -309,7 +309,7 @@ public:
 		return mat.height();
 	}
 
-	virtual BackImage getRect(int stX, int stRow, int wid, int hei)
+	virtual BackImage getRect(int stX, int stRow, int wid, int hei) override
 	{
 		return mat.getRect(stX, stRow, wid, hei);
 	}
@@ -322,15 +322,15 @@ public:
 		return &mat;
 	}
 
-	virtual SubImgInf getSubImgInf()
+	virtual SubImgInf getSubImgInf() override
 	{
 		return SubImgInf(mat.width(), mat.height());
 	}
 
-	void setSubImage(int,bool = false) {}
-	int getSubImage() {return 0;}
-	int getFirstSmallIndex(const int maxSize = 2000) {return 0;}
-	std::vector<SubImgInf> getSubImageInfos()
+	void setSubImage(int,bool = false) override {}
+	int getSubImage() override {return 0;}
+	int getFirstSmallIndex(const int maxSize = 2000) override {return 0;}
+	std::vector<SubImgInf> getSubImageInfos() override
 	{
 		std::vector<SubImgInf> sub;
 		//sub.push_back({ mat.width(), mat.height()});
@@ -407,7 +407,7 @@ public:
 		return RASTER_DISK_LAYER_FID;
 	}
 
-	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder)
+	virtual void saveLoadState(JsonObjectIOState* state, const MetadataProvider& metaFolder) override
 	{
 		// this->mprov = &metaFolder;
 		IRasterLayer::saveLoadState(state, metaFolder);
@@ -447,17 +447,17 @@ public:
 		writeImages(metaPath);
 	}
 
-	int getSubImage()
+	int getSubImage() override
 	{
 		return subImageIndex;
 	}
 
-	SubImgInf getSubImgInf()
+	SubImgInf getSubImgInf() override
 	{
 		return SubImgInf(reader->width(), reader->height());
 	}
 
-	void setSubImage(int imgIndex, bool overrideCs = false)
+	void setSubImage(int imgIndex, bool overrideCs = false) override
 	{
 		int iwid = 2000;
 
@@ -507,7 +507,7 @@ public:
 		}
 	}
 
-	int getFirstSmallIndex(const int maxSize = 2000)
+	int getFirstSmallIndex(const int maxSize = 2000) override
 	{
 		if (!reader)
 			return -1;

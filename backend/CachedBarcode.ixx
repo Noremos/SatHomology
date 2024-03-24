@@ -124,12 +124,12 @@ public:
 		this->root = root;
 	}
 
-	virtual size_t getId() const
+	virtual size_t getId() const override
 	{
 		return id;
 	}
 
-	virtual size_t getParentId() const
+	virtual size_t getParentId() const override
 	{
 		return parentId;
 	}
@@ -149,14 +149,14 @@ public:
 		return endl;
 	}
 
-	virtual const bc::barvector& getMatrix() const
+	virtual const bc::barvector& getMatrix() const override
 	{
 		return matrix;
 		//static bc::barvector dummy;
 		//return dummy;
 	}
 
-	virtual const size_t getMatrixSize() const
+	virtual const size_t getMatrixSize() const override
 	{
 		//return matrix;
 		return matrix.size();
@@ -212,7 +212,7 @@ class CachedBaritemHolder : public IDataClassItemValueHolder<CachedBarline>
 	using Base = IDataClassItemValueHolder<CachedBarline>;
 	int root = 0;
 public:
-	void create(bc::DatagridProvider* img, const bc::barstruct& constr, const Base::ItemCallback& callback)
+	void create(bc::DatagridProvider* img, const bc::barstruct& constr, const Base::ItemCallback& callback) override
 	{
 		bc::BarcodeCreator creator;
 		std::unique_ptr<bc::Baritem> citem(creator.createBarcode(img, constr));

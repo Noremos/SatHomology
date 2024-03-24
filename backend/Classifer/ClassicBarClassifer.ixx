@@ -1,7 +1,6 @@
 module;
 #include <memory>
-#include <random>
-#include <iostream>
+
 #include <functional>
 #include <vector>
 #include <assert.h>
@@ -42,12 +41,12 @@ public:
 		}
 	}
 
-	virtual size_t getId() const
+	virtual size_t getId() const override
 	{
 		return line->id;
 	}
 
-	virtual size_t getParentId() const
+	virtual size_t getParentId() const override
 	{
 		return line->parentId;
 	}
@@ -67,12 +66,12 @@ public:
 		return line->end();
 	}
 
-	virtual const bc::barvector& getMatrix() const
+	virtual const bc::barvector& getMatrix() const override
 	{
 		return line->matr;
 	}
 
-	virtual const size_t getMatrixSize() const
+	virtual const size_t getMatrixSize() const override
 	{
 		return matrSize;
 	}
@@ -129,7 +128,7 @@ protected:
 	std::shared_ptr<bc::Baritem> item;
 public:
 
-	void create(bc::DatagridProvider* img, const bc::barstruct& constr, const Base::ItemCallback& callback)
+	void create(bc::DatagridProvider* img, const bc::barstruct& constr, const Base::ItemCallback& callback) override
 	{
 		bc::BarcodeCreator creator;
 		item.reset(creator.createBarcode(img, constr));
@@ -341,12 +340,12 @@ public:
 		}
 	}
 
-	virtual size_t getId() const
+	virtual size_t getId() const override
 	{
 		return line->id;
 	}
 
-	virtual size_t getParentId() const
+	virtual size_t getParentId() const override
 	{
 		return line->parentId;
 	}
@@ -366,12 +365,12 @@ public:
 		return line->end();
 	}
 
-	virtual const bc::barvector& getMatrix() const
+	virtual const bc::barvector& getMatrix() const override
 	{
 		return line->matr;
 	}
 
-	virtual const size_t getMatrixSize() const
+	virtual const size_t getMatrixSize() const override
 	{
 		return matrSize;
 	}

@@ -1,8 +1,6 @@
 module;
 //#include "../../side/kde.h"
 
-#include <memory>
-#include <functional>
 #include <vector>
 #include <cassert>
 #include <iostream>
@@ -548,5 +546,5 @@ export class LandClassifier : public ISklearnClassifier
 	}
 };
 
-GlobalClusterRegister<ConvertClass, ConvertCollection, LandClassifier> c("Land All To New");
+GlobalClusterRegister<ConvertClass, ConvertCollection, LandClassifier> c("Landscape");
 // TODO: Land projection of line
