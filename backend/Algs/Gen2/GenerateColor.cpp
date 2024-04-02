@@ -145,7 +145,6 @@ public:
 	{
 	}
 
-
 	ProcField(const ProcField& other) : Field(other.width, other.height)
 	{
 		std::copy(other.field.begin(), other.field.end(), field.begin());
@@ -410,7 +409,7 @@ MLSettings mkSettingsTypeColor()
 }
 
 
-static AlgFuncRegister registerExeGenColor("exeGenColor", exeGenColor, mkSettingsTypeColor);
+static AlgFuncRegister registerExeGenColor("exeGenColor", exeGenColor, mkSettingsTypeColor, "Diffusion");
 
 
 
@@ -496,4 +495,4 @@ static AlgFuncRegister registerExeGenColor("exeGenColor", exeGenColor, mkSetting
 // 	return ret;
 // }
 
-// static AlgFuncRegister registerExeGenColor2("exeGenColor2", exeGenColorPos, mkSettingsType);
+// static AlgFuncRegister registerExeGenColor2("exeGenColor2", exeGenColorPos, mkSettingsType, "Diffusion");

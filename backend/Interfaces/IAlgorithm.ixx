@@ -1,6 +1,7 @@
 module;
 
 #include <memory>
+#include <unordered_map>
 
 // #include <thread>
 // #ifdef __linux__
@@ -137,13 +138,19 @@ protected:
 export using IAlgRun = RetLayers(InOutLayer iol, const MLSettings& settings);
 
 
+struct AlgData
+{
+	BackString name;
+	std::unique_ptr<IAlg> creator;
+	int categoryId;
+};
+
 export class AlgFactory
 {
 	// using BaseCreator = std::function<IAlgRun>;
-	std::vector<std::unique_ptr<IAlg>> functions;
-
 public:
-	std::vector<BackString> names;
+	std::vector<AlgData> functions;
+	std::unordered_map<BackString, int> categories;
 
 	AlgFactory()
 	{ }
@@ -165,10 +172,17 @@ public:
 	}
 
 
-	int registerFactory(std::string_view name, IAlg* pointer)
+	int registerFactory(std::string_view name, std::string_view category, IAlg* pointer)
 	{
-		names.push_back(BackString(name.data(), name.length()));
-		functions.push_back(std::unique_ptr<IAlg>(pointer));
+		BackString bname(name);
+		BackString bcategory(category);
+		int catId = 0;
+		if (categories.count(bcategory))
+			catId = categories[bcategory];
+		else
+			catId = categories[bcategory] = categories.size();
+
+		functions.push_back({bname, std::unique_ptr<IAlg>(pointer), catId});
 		// creators.push_back([] { return new TWorker(); });
 		return functions.size() - 1;
 	}
@@ -176,7 +190,7 @@ public:
 	IAlg* get(int id)
 	{
 		assert(id >= 0 && id < functions.size());
-		return functions[id].get();
+		return functions[id].creator.get();
 	}
 
 	// RetLayers Execute(int id, InOutLayer& iol, const MLSettings& settings)
@@ -188,7 +202,7 @@ public:
 	RetLayers execute(int id, InOutLayer& iol)
 	{
 		assert(id >= 0 && id < functions.size());
-		return functions[id]->execute(iol);
+		return functions[id].creator->execute(iol);
 	}
 };
 
@@ -214,9 +228,9 @@ export template<class TAlg>
 class AlgRegister
 {
 public:
-	AlgRegister(std::string_view name)
+	AlgRegister(std::string_view name, std::string_view category = "Common")
 	{
-		AlgFactory::getRasterFactory().registerFactory(name, new TAlg());
+		AlgFactory::getRasterFactory().registerFactory(name, category, new TAlg());
 	}
 };
 
@@ -224,8 +238,8 @@ public:
 export class AlgFuncRegister
 {
 public:
-	AlgFuncRegister(std::string_view name, IAlgRun ptr, std::function<MLSettings()> settingCreation)
+	AlgFuncRegister(std::string_view name, IAlgRun ptr, std::function<MLSettings()> settingCreation, std::string_view category = "Common")
 	{
-		AlgFactory::getRasterFactory().registerFactory(name, new ProtoIAlgBaseSettings(ptr, settingCreation()));
+		AlgFactory::getRasterFactory().registerFactory(name, category, new ProtoIAlgBaseSettings(ptr, settingCreation()));
 	}
 };

@@ -89,7 +89,7 @@ MLSettings mkSettingsTypeInvSize()
 	return settings;
 }
 
-static AlgFuncRegister registerExeTestSizeInv("exeTestSizeInv", exeTestSizeInv, mkSettingsTypeInvSize);
+static AlgFuncRegister registerExeTestSizeInv("exeTestSizeInv", exeTestSizeInv, mkSettingsTypeInvSize, "Validate");
 
 
 RetLayers exeTestColorInv(InOutLayer iol, const MLSettings& setting)
@@ -178,4 +178,4 @@ RetLayers exeTestColorInv(InOutLayer iol, const MLSettings& setting)
 	return ret;
 }
 
-static AlgFuncRegister registerExeTestColorInv("exeTestColorInv", exeTestColorInv, mkSettingsTypeInvSize);
+static AlgFuncRegister registerExeTestColorInv("exeTestColorInv", exeTestColorInv, mkSettingsTypeInvSize, "Validate");
