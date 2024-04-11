@@ -518,11 +518,11 @@ RetLayers exeFilter(InOutLayer iol, const MLSettings&)
 }
 
 
-static AlgRegister<ExeGUI> registerGUI("ExeGUI");
+volatile static AlgRegister<ExeGUI> registerGUI("ExeGUI");
 
-static AlgFuncRegister registerQuadro("exeQuadro", exeQuadro, mkSettingsType);
-static AlgFuncRegister register3d("Exe3d", exe3d, mkSettingsType);
-static AlgFuncRegister registerFilter("ExeFilter", exeFilter, mkSettingsType);
+volatile static AlgFuncRegister registerQuadro("exeQuadro", exeQuadro, mkSettingsType);
+volatile static AlgFuncRegister register3d("Exe3d", exe3d, mkSettingsType);
+volatile static AlgFuncRegister registerFilter("ExeFilter", exeFilter, mkSettingsType);
 
 
 		// comp.name = "Присоединение";

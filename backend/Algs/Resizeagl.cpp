@@ -230,7 +230,7 @@ MLSettings mkResizeSettings()
 	return settings;
 }
 
-AlgFuncRegister registerResize("Resize", exeResize, mkResizeSettings);
+volatile static AlgFuncRegister registerResize("Resize", exeResize, mkResizeSettings);
 
 
 
@@ -299,4 +299,4 @@ RetLayers exeRecolor(InOutLayer iol, const MLSettings& setting)
 	return ret;
 }
 
-AlgFuncRegister registerRecolor("Recolor", exeRecolor, mkResizeSettings);
+volatile static AlgFuncRegister registerRecolor("Recolor", exeRecolor, mkResizeSettings);

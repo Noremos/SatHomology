@@ -197,4 +197,4 @@ RetLayers exeSwarm(InOutLayer iol, const MLSettings& setting)
 	return ret;
 }
 
-static AlgFuncRegister registerWorms("Swarm", exeSwarm, mkSettingsType);
+volatile static AlgFuncRegister registerWorms("Swarm", exeSwarm, mkSettingsType);

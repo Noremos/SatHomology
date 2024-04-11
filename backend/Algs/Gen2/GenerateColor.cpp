@@ -20,24 +20,9 @@ import SimpleBar;
 
 // Linear interpolation function
 
-enum CellState
-{
-	SourceColor = 0,
-	DirectionLeft = 1,
-	DirectionUpLeft,
-	DirectionUp,
-	DirectionUpRight,
-	DirectionRight,
-	DirectionDownRight,
-	DirectionDown,
-	DirectionDownLeft,
-	SourceGet
-};
-
 struct Cell
 {
 	Barscalar color;
-	CellState state = SourceColor;
 	float proc = 1.f;
 };
 
@@ -83,6 +68,8 @@ public:
 // Если нет похожих - приблизить к исходному
 
 // Меняем цвет на основе состояния?
+
+
 
 struct CellsField : public Field<Cell>
 {
@@ -178,19 +165,177 @@ struct MM
 {
 	float l = 1.0, u = 1.0;
 };
+
+// * * * * *
+// * # # # *
+// * # @ # *
+// * # # # *
+// * * * * *
+
+// constexpr int keylen = 24;
+// constexpr static char poss[keylen][2] = {
+// 	{-2,-2}, {-2, -1}, {-2, 0}, {-2, 1}, {-2, 2},
+// 	{-1,-2}, {-1, -1}, {-1, 0}, {-1, 1}, {-1, 2},
+// 	{0,-2}, {0, -1},         {0, 1}, {0, 2},
+// 	{1,-2}, {1, -1}, {1, 0}, {1, 1}, {1, 2},
+// 	{2,-2}, {2, -1}, {2, 0}, {2, 1}, {2, 2}
+// };
+
+constexpr int keylen = 8;
+constexpr static char poss[keylen][2] = { { -1,0 },{ -1,-1 },{ 0,-1 },{ 1,-1 },{ 1,0 },{ 1,1 },{ 0,1 },{ -1,1 }};
+
+// constexpr int keylen = 4;
+// constexpr static char poss[keylen][2] = { { -1,0 },{ 0,-1 },{ 1,0 },{ 0,1 },{ -1,0 } };
+
+
 struct HashK
 {
-	float key[9];
+	float key[keylen];
 	float sum;
 	void set()
 	{
 		sum = 0;
-		for (int i = 0; i < 9; ++i)
+		for (int i = 0; i < keylen; ++i)
 		{
 			sum += key[i];
 		}
 	}
 	float value;
+};
+
+class Trainer
+{
+	std::vector<HashK> train;
+public:
+	void add(const HashK& scase)
+	{
+		train.push_back(scase);
+	}
+
+	struct Line
+	{
+		// Node edge[keylen];
+		int id = 0;
+		int marks = 0;
+	};
+
+	struct Node
+	{
+		Line* line = nullptr;
+		float value;
+	};
+
+	struct KeyColumn
+	{
+		std::vector<Node> nodes;
+
+		void sort()
+		{
+			std::sort(nodes.begin(), nodes.end(), [](const auto& a,const auto& b) {
+				// for (int i = 0; i < 9; ++i)
+				// {
+				// 	if (a.key[i] != b.key[i])
+				// 		return a.key[i] < b.key[i];
+				// }
+				return a.value < b.value;
+			});
+		}
+
+		void findCloser(float value, std::vector<Line*>& clines)
+		{
+			Node* closer;
+			// Implement binary search
+			int l = 0, r = nodes.size() - 1;
+			while (l < r)
+			{
+				int m = (l + r) / 2;
+				if (nodes[m].value < value)
+					l = m + 1;
+				else
+					r = m;
+			}
+			closer = &nodes[l];
+
+			float diff = abs(value - closer->value);
+
+			int prev = l - 1;
+			while (prev >= 0 && abs(value - nodes[prev].value) <= diff)
+			{
+				auto line = nodes[prev--].line;
+				line->marks++;
+				clines.push_back(line);
+			}
+			while (l < nodes.size() && abs(value - nodes[l].value) <= diff)
+			{
+				auto line = nodes[l++].line;
+				line->marks++;
+				clines.push_back(line);
+				// break;
+			}
+		}
+	};
+
+	std::vector<Line> lines;
+	KeyColumn columns[keylen];
+
+	void traint()
+	{
+		lines.resize(train.size());
+		for (int i = 0; i < train.size(); i++)
+		{
+			Line* l = &lines[i];
+			l->id = i;
+			for (int j = 0; j < keylen; ++j)
+			{
+				columns[j].nodes.push_back({l, train[i].key[j]});
+			}
+		}
+
+		for (int j = 0; j < keylen; ++j)
+		{
+			columns[j].sort();
+		}
+	}
+
+	float getCloser(const HashK& scase)
+	{
+		// for (int i = 0; i < train.size(); i++)
+		// {
+		// 	lines[i].marks = 0;
+		// }
+
+		std::vector<Line*> closesLines;
+		for (int j = 0; j < keylen; ++j)
+		{
+			columns[j].findCloser(scase.key[j], closesLines);
+		}
+		// std::sort(closesLines.begin(), closesLines.end(), [](auto a, auto b) {
+		// 	return a->marks > b->marks;
+		// });
+
+		std::vector<std::pair<int, float>> diffs;
+		for (int j = 0; j < closesLines.size(); ++j)
+		{
+			float diff = 0;
+			auto& closestTraint = train[closesLines[j]->id];
+			for (int j = 0; j < keylen; ++j)
+			{
+				float a = closestTraint.key[j] - scase.key[j];
+				diff += a * a;
+			}
+			diff = sqrt(diff);
+			diffs.push_back({j, diff});
+
+			closesLines[j]->marks = 0;
+		}
+
+		auto y = std::min_element(diffs.begin(), diffs.end(), [](auto a, auto b) {
+			return a.second < b.second;
+		});
+
+
+		return train[y->first].value;
+	}
 };
 
 
@@ -201,6 +346,7 @@ RetLayers exeGenColor(InOutLayer iol, const MLSettings& setting)
 
 	RetLayers ret;
 	BackImage src;
+
 	RasterLayer* rasterSpot = getSrcFromInput(iol, src);
 	ret.push_back(rasterSpot);
 
@@ -211,26 +357,40 @@ RetLayers exeGenColor(InOutLayer iol, const MLSettings& setting)
 	// std::unique_ptr<bc::Baritem> containner(bcc.run(&src, constr, dummy));
 	// bc::Baritem* item = containner.get();
 
+	Barscalar imgmin;
+	Barscalar imgmax;
+	src.maxAndMin(imgmin, imgmax);
+	if (imgmin > imgmax)
+	{
+		std::swap(imgmin, imgmax);
+	}
+
+	Barscalar diffcolor = imgmax - imgmin;
+
+	float lower = imgmin.getAvgFloat();
+	float upper = imgmax.getAvgFloat();
+	float ludiff = upper - lower;
+
 	bc::Baritem* item = (bcc.createBarcode(&src, constr));
 
-
-	std::vector<HashK> train;
 
 	ProcField cells(src.width(), src.height());
 	cells.fillRandom();//out.getType());
 
 	BarField bar(src.width(), src.height());
-	Field<Barscalar> srcField(src.width(), src.height());
+	//Field<Barscalar> srcField(src.width(), src.height());
 
+	Trainer train;
 	for (size_t i = 0; i < item->barlines.size(); ++i)
 	{
 		auto line = item->barlines[i];
 		const auto& matr = line->matr;
 
-		float lower = line->start.getAvgFloat();
-		float upper = line->end().getAvgFloat();
-		if (lower > upper)
-			std::swap(lower, upper);
+		// float lower = line->start.getAvgFloat();
+		// float upper = line->end().getAvgFloat();
+		// if (lower > upper)
+		// 	std::swap(lower, upper);
+		// float ludiff = upper - lower;
 
 		// BackSize maskSize = b;
 		for (const auto& pm : matr)
@@ -238,33 +398,33 @@ RetLayers exeGenColor(InOutLayer iol, const MLSettings& setting)
 			int x = pm.getX();
 			int y = pm.getY();
 			bar.set(x, y, line);
-			srcField.set(x, y, pm.value);
+			//srcField.set(x, y, pm.value);
 			// out.set(pm.getX(), pm.getY(), lerp(pm.value.getAvgFloat() / dummy));
 			//out.set(pm.getX(), pm.getY(), pm.value.getAvgUchar());
 
+			auto rscal = src.get(x, y);
 			HashK h;
-			h.value = (pm.value.getAvgFloat() - lower) / (upper - lower);
-			static char poss[9][2] = { { -1,0 },{ -1,-1 },{ 0,-1 },{ 1,-1 },{ 1,0 },{ 1,1 },{ 0,1 },{ -1,1 },{ -1,0 } };
-			for (buchar j = 0; j < 8; ++j)
+			h.value = (rscal.getAvgFloat() - lower) / ludiff;
+			// cells.set(x, y, h.value);
+			for (buchar j = 0; j < keylen; ++j)
 			{
 				int xi = x + poss[j][0];
 				int yi = y + poss[j][1];
-				if (xi < 0 || xi >= cells.width || yi < 0 || yi >= cells.height)
+				if (xi < 0 || xi >= src.width() || yi < 0 || yi >= src.height())
 				{
 					h.key[j] = 0;
 					continue;
 				}
-				auto srcscalr = srcField.get(xi, yi);
 
-				h.key[j] = (srcscalr.getAvgFloat() - lower) / (upper - lower);
+				auto srcscalr = src.get(xi, yi);
+				h.key[j] = (srcscalr.getAvgFloat() - lower) / ludiff;
 			}
 			h.set();
-			train.push_back(h);
+			train.add(h);
 		}
 	}
 
-	// std::sort(train.begin(), train.end(), [](auto& a, auto& b) { return a.value < b.value; });
-
+	train.traint();
 
 	ProcField newCells(cells);
 
@@ -275,13 +435,11 @@ RetLayers exeGenColor(InOutLayer iol, const MLSettings& setting)
 			int x = i % cells.width;
 			int y = i / cells.width;
 
-			bc::barline* line = bar.get(x, y);
-			float& cell = cells.get(x, y);
-			static char poss[9][2] = { { -1,0 },{ -1,-1 },{ 0,-1 },{ 1,-1 },{ 1,0 },{ 1,1 },{ 0,1 },{ -1,1 },{ -1,0 } };
+			// bc::barline* line = bar.get(x, y);
+			float cell = cells.get(x, y);
 
 			HashK h;
-			h.value = cell;
-			for (buchar j = 0; j < 8; ++j)
+			for (buchar j = 0; j < keylen; ++j)
 			{
 				int xi = x + poss[j][0];
 				int yi = y + poss[j][1];
@@ -290,60 +448,22 @@ RetLayers exeGenColor(InOutLayer iol, const MLSettings& setting)
 					h.key[j] = 0;
 					continue;
 				}
-				auto srcscalr = cells.get(xi, yi);
 
+				float srcscalr = cells.get(xi, yi);
 				h.key[j] = srcscalr;
 			}
-			h.set();
-
-			// Find the closest value in the train by binary search
-			int minIndex = 0;
-			int left = 0;
-			int right = train.size() - 1;
-			while (left <= right)
-			{
-				int mid = (left + right) / 2;
-				float distance = train[mid].value - h.value;
-				if (distance < 0)
-					right = mid - 1;
-				else if (distance > 0)
-					left = mid + 1;
-				else
-				{
-					minIndex = mid;
-					break;
-				}
-			}
+			// h.set();
 
 
-			// float minDistance = 10000.0;
-			// int minIndex = -1;
-			// int j = 0;
-			// for (auto& t : train)
-			// {
-			// 	float distance = 0.0;
-			// 	// for (int off = 0; off < 9; off++)
-			// 	// {
+			float val = train.getCloser(h);
 
-			// 	// }
-			// 	for (int k = 0; k < 9; k++)
-			// 	{
-			// 		float diff = h.key[k] - t.key[k];
-			// 		distance += diff*diff;
-			// 	}
-			// 	distance = sqrt(distance);
-			// 	if (distance < minDistance)
-			// 	{
-			// 		minDistance = distance;
-			// 		minIndex = j;
-			// 	}
-			// 	j++;
-			// }
-
-			if (cell < train[minIndex].value)
-				cell += adj;
-			else
-				cell -= adj;
+			float& newCell = newCells.get(x, y);
+			newCell += abs(cell - val) * adj;
+			// newCell = val;
+			// if (cell < val)
+			// 	newCell += adj;
+			// else
+			// 	newCell -= adj;
 		}
 		cells = newCells;
 	}
@@ -367,32 +487,45 @@ RetLayers exeGenColor(InOutLayer iol, const MLSettings& setting)
 	// 	out.setLiner(i, cells.getLiner(i));
 	// }
 
-	for (size_t i = 0; i < item->barlines.size(); ++i)
+	for (int i = 0; i < cells.length(); i++)
 	{
-		float colorProc = cells.getLiner(i);
-		auto line = item->barlines[i];
-		const auto& matr = line->matr;
+	 	float colorProc = cells.getLiner(i);
+		if (colorProc > ludiff)
+			colorProc = ludiff;
+		else if (colorProc < 0)
+			colorProc = 0;
 
-		Barscalar upper = line->end().getAvgFloat();
-		Barscalar lower = line->start.getAvgFloat();
-		if (lower > upper)
-			std::swap(lower, upper);
-		Barscalar diff = upper - lower;
-		// Barscalar maxColor(255, item->getType());
-		// auto b = maxColor - lower;
-		// b /= colorProc;
-		// if ()
-
-
-
-		// BackSize maskSize = b;
-		for (const auto& pm : matr)
-		{
-			// float r = (pm.value.getAvgFloat() - lower) / (upper - lower);
-			auto newColor = lower + diff * colorProc;
-			out.set(pm.getX(), pm.getY(), newColor);
-		}
+		Barscalar newColor = imgmin + diffcolor * colorProc;
+		out.setLiner(i, newColor);
 	}
+
+
+	// for (size_t i = 0; i < item->barlines.size(); ++i)
+	// {
+	// 	float colorProc = cells.getLiner(i);
+	// 	auto line = item->barlines[i];
+	// 	const auto& matr = line->matr;
+
+	// 	Barscalar upper = line->end().getAvgFloat();
+	// 	Barscalar lower = line->start.getAvgFloat();
+	// 	if (lower > upper)
+	// 		std::swap(lower, upper);
+	// 	Barscalar diff = upper - lower;
+	// 	// Barscalar maxColor(255, item->getType());
+	// 	// auto b = maxColor - lower;
+	// 	// b /= colorProc;
+	// 	// if ()
+
+
+
+	// 	// BackSize maskSize = b;
+	// 	// for (const auto& pm : matr)
+	// 	// {
+	// 	// 	float r = (pm.value.getAvgFloat() - lower) / (upper - lower);
+	// 	// 	auto newColor = imgmax * colorProc;
+	// 	// 	out.set(pm.getX(), pm.getY(), newColor);
+	// 	// }
+	// }
 	return ret;
 }
 
@@ -409,9 +542,53 @@ MLSettings mkSettingsTypeColor()
 }
 
 
-static AlgFuncRegister registerExeGenColor("exeGenColor", exeGenColor, mkSettingsTypeColor, "Diffusion");
+volatile static AlgFuncRegister registerExeGenColor("exeGenColor", exeGenColor, mkSettingsTypeColor, "Diffusion");
 
 
+
+
+enum CellState
+{
+	SourceColor = 0,
+	Expance = 0
+};
+
+
+struct ExCell
+{
+	CellState state = SourceColor;
+};
+
+// struct ExpnField : public Field<ExCell>
+// {
+// public:
+// 	ExpnField(int w, int h) : Field(w, h)
+// 	{
+// 	}
+
+// 	void fillRandom(BarType type)
+// 	{
+// 		std::random_device rd;
+// 		std::mt19937 gen(rd());
+// 		std::uniform_int_distribution<> distrib(0, 255);
+// 		if (type == BarType::BYTE8_3)
+// 		{
+// 			for (auto& c : field)
+// 			{
+// 				c.color = Barscalar(distrib(gen), distrib(gen), distrib(gen));
+// 				// std::fill_n(c.pos, 8, 0);
+// 			}
+// 		}
+// 		else
+// 		{
+// 			for (auto& c : field)
+// 			{
+// 				c.color = Barscalar(distrib(gen),type);
+// 				// std::fill_n(c.pos, 8, 0);
+// 			}
+// 		}
+// 	}
+// };
 
 
 // RetLayers exeGenColorPos(InOutLayer iol, const MLSettings& setting)

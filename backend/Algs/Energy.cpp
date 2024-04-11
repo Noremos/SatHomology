@@ -218,6 +218,6 @@ MLSettings mkSettingsTypeEnergy()
 
 
 
-static AlgFuncRegister registerEnergyCells("exeEnergyCells", exeEnergyCells, mkSettingsTypeEnergy);
-static AlgFuncRegister registerEnergy("exeEnergy", exeEnergy, mkSettingsTypeEnergy);
-static AlgFuncRegister registerWorms("Worms", exeWorms, mkSettingsType);
+volatile static AlgFuncRegister registerEnergyCells("exeEnergyCells", exeEnergyCells, mkSettingsTypeEnergy);
+volatile static AlgFuncRegister registerEnergy("exeEnergy", exeEnergy, mkSettingsTypeEnergy);
+volatile static AlgFuncRegister registerWorms("Worms", exeWorms, mkSettingsType);
