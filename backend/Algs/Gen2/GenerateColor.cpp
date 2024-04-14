@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <unordered_map>
 #include <vector>
 #include <memory>
 #include "Barcode/PrjBarlib/include/barline.h"
@@ -214,34 +215,48 @@ public:
 
 	struct Line
 	{
-		// Node edge[keylen];
+		float value;
 		int id = 0;
 		int marks = 0;
 	};
 
-	struct Node
+	class Node
 	{
-		Line* line = nullptr;
-		float value;
+	public:
+		// Line* line = nullptr;
+		Node(Line* l, float edge)
+		{
+			addLine(l);
+			this->edge = edge;
+		}
+
+		void addLine(Line* l)
+		{
+			lines.push_back(l);
+		}
+		std::vector<Line*> lines;
+		float edge; // Edge
 	};
 
 	struct KeyColumn
 	{
-		std::vector<Node> nodes;
+		std::vector<Node*> nodes;
+		std::vector<float> trainValues;
+		std::vector<Line*> lines;
 
 		void sort()
 		{
-			std::sort(nodes.begin(), nodes.end(), [](const auto& a,const auto& b) {
+			std::sort(nodes.begin(), nodes.end(), [](const Node* a,const Node* b) {
 				// for (int i = 0; i < 9; ++i)
 				// {
 				// 	if (a.key[i] != b.key[i])
 				// 		return a.key[i] < b.key[i];
 				// }
-				return a.value < b.value;
+				return a->edge < b->edge;
 			});
 		}
 
-		void findCloser(float value, std::vector<Line*>& clines)
+		void findCloser(float value, std::unordered_map<int, int>& clines)
 		{
 			Node* closer;
 			// Implement binary search
@@ -249,34 +264,30 @@ public:
 			while (l < r)
 			{
 				int m = (l + r) / 2;
-				if (nodes[m].value < value)
+				if (nodes[m]->edge < value)
 					l = m + 1;
 				else
 					r = m;
 			}
-			closer = &nodes[l];
+			closer = nodes[l];
 
-			float diff = abs(value - closer->value);
-
-			int prev = l - 1;
-			while (prev >= 0 && abs(value - nodes[prev].value) <= diff)
+			float diff = abs(value - closer->edge);
+			for (auto* line : closer->lines)
 			{
-				auto line = nodes[prev--].line;
-				line->marks++;
-				clines.push_back(line);
-			}
-			while (l < nodes.size() && abs(value - nodes[l].value) <= diff)
-			{
-				auto line = nodes[l++].line;
-				line->marks++;
-				clines.push_back(line);
-				// break;
+				auto it = clines.find(line->id);
+				if (it != clines.end())
+				{
+					it->second++;
+				}
+				else
+					clines[line->id] = 1;
 			}
 		}
 	};
 
 	std::vector<Line> lines;
 	KeyColumn columns[keylen];
+	std::vector<std::unique_ptr<Node>> nodeCollector;
 
 	void traint()
 	{
@@ -285,15 +296,40 @@ public:
 		{
 			Line* l = &lines[i];
 			l->id = i;
+			l->value = train[i].value;
+
 			for (int j = 0; j < keylen; ++j)
 			{
-				columns[j].nodes.push_back({l, train[i].key[j]});
+				columns[j].trainValues.push_back(train[i].key[j]);
+				columns[j].lines.push_back(l);
 			}
 		}
 
 		for (int j = 0; j < keylen; ++j)
 		{
-			columns[j].sort();
+			auto& column = columns[j];
+			std::sort(column.trainValues.begin(), column.trainValues.end(), [](float a, float b){
+				return a < b;
+			});
+
+			// Aggregate
+			nodeCollector.push_back(std::make_unique<Node>(column.lines[0], train[0].key[j]));
+			column.nodes.push_back(nodeCollector.back().get());
+			for (int i = 1; i < column.trainValues.size(); i++)
+			{
+				float prevValue = column.trainValues[i - 1];
+				float curValue = column.trainValues[i];
+				auto* line = column.lines[i];
+				if (prevValue == curValue)
+				{
+					column.nodes.back()->addLine(line);
+				}
+				else
+				{
+					nodeCollector.push_back(std::make_unique<Node>(line, curValue));
+					column.nodes.push_back(nodeCollector.back().get());
+				}
+			}
 		}
 	}
 
@@ -304,37 +340,35 @@ public:
 		// 	lines[i].marks = 0;
 		// }
 
-		std::vector<Line*> closesLines;
+		std::unordered_map<int, int> closesLines;
 		for (int j = 0; j < keylen; ++j)
 		{
 			columns[j].findCloser(scase.key[j], closesLines);
 		}
-		// std::sort(closesLines.begin(), closesLines.end(), [](auto a, auto b) {
-		// 	return a->marks > b->marks;
+		//auto max = std::max_element(closesLines.begin(), closesLines.end());
+
+		// std::vector<std::pair<int, float>> diffs;
+		// for (int j = 0; j < closesLines.size(); ++j)
+		// {
+		// 	float diff = 0;
+		// 	auto& closestTrain = train[closesLines[j]->id];
+		// 	for (int j = 0; j < keylen; ++j)
+		// 	{
+		// 		float a = closestTrain.key[j] - scase.key[j];
+		// 		diff += a * a;
+		// 	}
+		// 	diff = sqrt(diff);
+		// 	diffs.push_back({j, diff});
+
+		// 	closesLines[j]->marks = 0;
+		// }
+
+		// auto y = std::min_element(diffs.begin(), diffs.end(), [](auto a, auto b) {
+		// 	return a.second < b.second;
 		// });
 
-		std::vector<std::pair<int, float>> diffs;
-		for (int j = 0; j < closesLines.size(); ++j)
-		{
-			float diff = 0;
-			auto& closestTraint = train[closesLines[j]->id];
-			for (int j = 0; j < keylen; ++j)
-			{
-				float a = closestTraint.key[j] - scase.key[j];
-				diff += a * a;
-			}
-			diff = sqrt(diff);
-			diffs.push_back({j, diff});
 
-			closesLines[j]->marks = 0;
-		}
-
-		auto y = std::min_element(diffs.begin(), diffs.end(), [](auto a, auto b) {
-			return a.second < b.second;
-		});
-
-
-		return train[y->first].value;
+		return lines[max->first].value;
 	}
 };
 
@@ -381,26 +415,26 @@ RetLayers exeGenColor(InOutLayer iol, const MLSettings& setting)
 	//Field<Barscalar> srcField(src.width(), src.height());
 
 	Trainer train;
-	for (size_t i = 0; i < item->barlines.size(); ++i)
+	for (size_t i = 0; i < src.length(); ++i)
 	{
-		auto line = item->barlines[i];
-		const auto& matr = line->matr;
+		// auto line = item->barlines[i];
+		// const auto& matr = line->matr;
 
-		// float lower = line->start.getAvgFloat();
-		// float upper = line->end().getAvgFloat();
-		// if (lower > upper)
-		// 	std::swap(lower, upper);
-		// float ludiff = upper - lower;
+		// // float lower = line->start.getAvgFloat();
+		// // float upper = line->end().getAvgFloat();
+		// // if (lower > upper)
+		// // 	std::swap(lower, upper);
+		// // float ludiff = upper - lower;
 
-		// BackSize maskSize = b;
-		for (const auto& pm : matr)
-		{
-			int x = pm.getX();
-			int y = pm.getY();
-			bar.set(x, y, line);
-			//srcField.set(x, y, pm.value);
-			// out.set(pm.getX(), pm.getY(), lerp(pm.value.getAvgFloat() / dummy));
-			//out.set(pm.getX(), pm.getY(), pm.value.getAvgUchar());
+		// // BackSize maskSize = b;
+		// for (const auto& pm : matr)
+		// {
+			int x = i % src.width();
+			int y = i / src.width();
+			// bar.set(x, y, line);
+			// //srcField.set(x, y, pm.value);
+			// // out.set(pm.getX(), pm.getY(), lerp(pm.value.getAvgFloat() / dummy));
+			// //out.set(pm.getX(), pm.getY(), pm.value.getAvgUchar());
 
 			auto rscal = src.get(x, y);
 			HashK h;
@@ -421,7 +455,7 @@ RetLayers exeGenColor(InOutLayer iol, const MLSettings& setting)
 			}
 			h.set();
 			train.add(h);
-		}
+		// }
 	}
 
 	train.traint();
@@ -458,7 +492,7 @@ RetLayers exeGenColor(InOutLayer iol, const MLSettings& setting)
 			float val = train.getCloser(h);
 
 			float& newCell = newCells.get(x, y);
-			newCell += abs(cell - val) * adj;
+			newCell = val;
 			// newCell = val;
 			// if (cell < val)
 			// 	newCell += adj;
@@ -487,11 +521,12 @@ RetLayers exeGenColor(InOutLayer iol, const MLSettings& setting)
 	// 	out.setLiner(i, cells.getLiner(i));
 	// }
 
+	float ludiffas = ludiff / upper;
 	for (int i = 0; i < cells.length(); i++)
 	{
 	 	float colorProc = cells.getLiner(i);
-		if (colorProc > ludiff)
-			colorProc = ludiff;
+		if (colorProc > 1.0)
+			colorProc = 1.0;
 		else if (colorProc < 0)
 			colorProc = 0;
 
