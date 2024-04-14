@@ -182,8 +182,8 @@ struct MM
 // 	{2,-2}, {2, -1}, {2, 0}, {2, 1}, {2, 2}
 // };
 
-constexpr int keylen = 8;
-constexpr static char poss[keylen][2] = { { -1,0 },{ -1,-1 },{ 0,-1 },{ 1,-1 },{ 1,0 },{ 1,1 },{ 0,1 },{ -1,1 }};
+constexpr int keylen = 9;
+constexpr static char poss[keylen][2] = { { -1,0 },{ -1,-1 },{ 0,-1 },{ 1,-1 },{ 1,0 },{ 1,1 },{ 0,1 },{ -1,1 }, {0,0}};
 
 // constexpr int keylen = 4;
 // constexpr static char poss[keylen][2] = { { -1,0 },{ 0,-1 },{ 1,0 },{ 0,1 },{ -1,0 } };
@@ -218,6 +218,7 @@ public:
 		float value;
 		int id = 0;
 		int marks = 0;
+		int nodesId[keylen];
 	};
 
 	class Node
@@ -322,10 +323,12 @@ public:
 				auto* line = column.lines[i];
 				if (prevValue == curValue)
 				{
+					line->nodesId[j] = nodeCollector.size() - 1;
 					column.nodes.back()->addLine(line);
 				}
 				else
 				{
+					line->nodesId[j] = nodeCollector.size();
 					nodeCollector.push_back(std::make_unique<Node>(line, curValue));
 					column.nodes.push_back(nodeCollector.back().get());
 				}
@@ -333,7 +336,7 @@ public:
 		}
 	}
 
-	float getCloser(const HashK& scase)
+	int getCloser(const HashK& scase)
 	{
 		// for (int i = 0; i < train.size(); i++)
 		// {
@@ -345,7 +348,7 @@ public:
 		{
 			columns[j].findCloser(scase.key[j], closesLines);
 		}
-		//auto max = std::max_element(closesLines.begin(), closesLines.end());
+		auto max = std::max_element(closesLines.begin(), closesLines.end());
 
 		// std::vector<std::pair<int, float>> diffs;
 		// for (int j = 0; j < closesLines.size(); ++j)
@@ -368,7 +371,7 @@ public:
 		// });
 
 
-		return lines[max->first].value;
+		return max->first;
 	}
 };
 
@@ -439,7 +442,7 @@ RetLayers exeGenColor(InOutLayer iol, const MLSettings& setting)
 			auto rscal = src.get(x, y);
 			HashK h;
 			h.value = (rscal.getAvgFloat() - lower) / ludiff;
-			// cells.set(x, y, h.value);
+			cells.set(x, y, h.value);
 			for (buchar j = 0; j < keylen; ++j)
 			{
 				int xi = x + poss[j][0];
@@ -462,15 +465,15 @@ RetLayers exeGenColor(InOutLayer iol, const MLSettings& setting)
 
 	ProcField newCells(cells);
 
+	int offset = 0;
 	for (int k = 0; k < step; k++)
 	{
-		for (int i = 0; i < cells.length(); i++)
+		for (int i = offset; i < cells.length(); i+= 3)
 		{
 			int x = i % cells.width;
 			int y = i / cells.width;
 
 			// bc::barline* line = bar.get(x, y);
-			float cell = cells.get(x, y);
 
 			HashK h;
 			for (buchar j = 0; j < keylen; ++j)
@@ -489,10 +492,25 @@ RetLayers exeGenColor(InOutLayer iol, const MLSettings& setting)
 			// h.set();
 
 
-			float val = train.getCloser(h);
+			int id = train.getCloser(h);
+			auto& line = train.lines[id];
+			float val = line.value;
 
-			float& newCell = newCells.get(x, y);
-			newCell = val;
+			// float& newCell = newCells.get(x, y);
+			// newCell += abs(cell - val) * adj;
+
+
+			for (int j = 0; j < keylen; j++)
+			{
+				val = train.nodeCollector[line.nodesId[j]]->edge;
+				int xi = x + poss[j][0];
+				int yi = y + poss[j][1];
+				float cell = cells.get(xi, yi);
+				float& newCell = newCells.get(x, y);
+
+				newCell += (val - cell) * adj;
+			}
+
 			// newCell = val;
 			// if (cell < val)
 			// 	newCell += adj;
@@ -500,6 +518,7 @@ RetLayers exeGenColor(InOutLayer iol, const MLSettings& setting)
 			// 	newCell -= adj;
 		}
 		cells = newCells;
+		offset = (offset + 1) % 3;
 	}
 
 	// for (int i = 0; i < cells.length(); i++)
