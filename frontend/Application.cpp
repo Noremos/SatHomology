@@ -37,6 +37,7 @@ import RasterLayers;
 import LayersCore;
 import IGuiLayer;
 import GuiLayers;
+import IAlgorithm;
 //import Lua;
 
 
@@ -1056,4 +1057,11 @@ namespace MyApp
 		drawLayout();
 		//ImGui::ShowDemoWindow();
 	}
+
+	void MyApp::Cleanup()
+	{
+		AlgFactory::deleteRaster();
+		AlgFactory::deleteVector();
+	}
+
 }
