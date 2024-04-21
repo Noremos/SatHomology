@@ -5,5 +5,5 @@ namespace MyApp
 	void drawBottomBar();
 	void Init(const char* root);
 	void RenderUI();
+	void Cleanup();
 }
-

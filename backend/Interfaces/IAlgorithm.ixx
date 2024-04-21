@@ -159,18 +159,37 @@ public:
 	AlgFactory(const AlgFactory& right) = delete;
 	AlgFactory(AlgFactory&& right) = delete;
 
+	static AlgFactory* raster;
 	static AlgFactory& getRasterFactory()
 	{
-		static AlgFactory factory;
-		return factory;
+		if(!raster)
+		{
+			raster = new AlgFactory();
+		}
+		return *raster;
 	}
 
+	static AlgFactory* vector;
 	static AlgFactory& getVectorFactory()
 	{
-		static AlgFactory factory;
-		return factory;
+		if(!vector)
+		{
+			vector = new AlgFactory();
+		}
+		return *vector;
 	}
 
+	static void deleteRaster()
+	{
+		delete raster;
+		raster = nullptr;
+	}
+
+	static void deleteVector()
+	{
+		delete vector;
+		vector = nullptr;
+	}
 
 	int registerFactory(std::string_view name, std::string_view category, IAlg* pointer)
 	{
@@ -206,6 +225,8 @@ public:
 	}
 };
 
+AlgFactory* AlgFactory::vector = nullptr;
+AlgFactory* AlgFactory::raster = nullptr;
 
 class ProtoIAlgBaseSettings : public IAlgBaseSettings
 {
