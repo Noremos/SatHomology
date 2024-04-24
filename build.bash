@@ -27,11 +27,13 @@ else
     build_type="$1"
 fi
 
-cmake -B "${OUT}" -S . -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake -G Ninja -DCMAKE_BUILD_TYPE="${build_type}" "${EXTRA}"
-cmake  --build "${OUT}"
-mv ./Build/Temp/compile_commands.json ./Build/compile_commands.json
+export OUT="Build/Temp/${build_type}"
 
-if [ "${OUT}" =  "Tests/Temp" ]; then
+cmake -B "${OUT}" -S . -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake -G Ninja -DCMAKE_BUILD_TYPE="${build_type}" "${EXTRA}"
+cmake --build "${OUT}"
+mv "${OUT}/compile_commands.json" ./Build/compile_commands.json
+
+if [ "${build_type}" = "Tests" ]; then
     ./Tests/SatTests
 fi
 # cmake -B Build -S . -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake

@@ -37,8 +37,5 @@ Tests/SatTests
 Build/SatTests
 Build/compile_commands.json
 .cache
-Build/CMakeFiles
-Build/.cmake
-Build/CMakeCache.txt
 imgui.ini
 .DS_Store

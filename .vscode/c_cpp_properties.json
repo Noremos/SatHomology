@@ -23,9 +23,6 @@
                 "${vcpkgRoot}/x86-windows/include"
             ],
             "defines": [],
-            "macFrameworkPath": [
-                "/Library/Developer/CommandLineTools/SDKs/MacOSX14.sdk"
-            ],
             "intelliSenseMode": "macos-clang-arm64",
             "compilerPath": "/opt/homebrew/opt/llvm/bin/clang++",
             "cStandard": "c17",

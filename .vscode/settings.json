@@ -133,7 +133,8 @@
         "__threading_support": "cpp",
         "__tree": "cpp",
         "__verbose_abort": "cpp",
-        "execution": "cpp"
+        "execution": "cpp",
+        "__memory": "cpp"
     },
     "C_Cpp.default.includePath": [
         "side",
@@ -142,5 +143,13 @@
         "frontend",
         "backend"
     ],
-    "C_Cpp.default.cppStandard": "c++20"
+    "C_Cpp.default.cppStandard": "c++20",
+    "lldb.displayFormat": "auto",
+    "lldb.dereferencePointers": true,
+    "lldb.consoleMode": "evaluate",
+    "lldb.showDisassembly": "auto",
+    "cSpell.words": [
+        "Barscalar"
+    ],
+    "C_Cpp.default.cStandard": "c17"
 }
