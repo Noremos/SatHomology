@@ -261,7 +261,7 @@ RetLayers exeQuadro(InOutLayer iol, const MLSettings& settings)
 
 	BackImage mask(imgSize.wid, imgSize.hei, 4);
 	mask.reintAsInt();
-	mask.fill(0);
+	mask.fill(uchar(0));
 
 
 	constr.addStructure(type, bc::ColorType::native, bc::ComponentType::Component);
@@ -310,7 +310,7 @@ RetLayers exeQuadro(InOutLayer iol, const MLSettings& settings)
 		}
 
 		mask.resize(imgSize.wid, imgSize.hei);
-		mask.fill(0);
+		mask.fill(uchar(0));
 		const float maskAspectX = static_cast<float>(mask.width()) / imgin.width();
 		const float maskAspectY = static_cast<float>(mask.height()) / imgin.height();
 

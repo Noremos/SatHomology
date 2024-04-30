@@ -32,7 +32,7 @@ public:
 
 	CachedBarline() : IClassItem(),
 		id(0), parentId(-1), children(nullptr), childrenCount(0),
-		startl(0), endl(0), matrix(), depth(0), root(nullptr)
+		startl(uchar(0)), endl(uchar(0)), matrix(), depth(0), root(nullptr)
 	{ }
 
 	CachedBarline(const CachedBarline& other)

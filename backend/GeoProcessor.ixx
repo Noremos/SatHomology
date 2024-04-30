@@ -100,7 +100,7 @@ inline void testC()
 	auto& a = ar2;
 	for (int i = 0; i < sizeof(a) / 4; i += 3)
 	{
-		points.push_back(bc::barvalue(a[i + 1], a[i], a[i + 2]));
+		points.push_back(bc::barvalue(a[i + 1], a[i], static_cast<uchar>(a[i + 2])));
 	}
 
 	mcountor cont;

@@ -349,7 +349,7 @@ struct SimpleLine
 {
 	int tileId, barlineIndex;
 	SimpleLine(int tileId = 0, int barlineIndex = 0) :
-	tileId(tileId), barlineIndex(barlineIndex), start(0), end(0), depth(0), matrSrcSize(0)
+	tileId(tileId), barlineIndex(barlineIndex), start(uchar(0)), end(uchar(0)), depth(0), matrSrcSize(0)
 	{}
 	//	bushort counter = 0;
 	Barscalar start, end;

@@ -83,7 +83,7 @@ if (BUILD_TEST)
     add_executable(${BTARGET}
         ${SOURCES}
         ${SIDE_SOURCES}
-        Tests/test.cpp
+        Tests/SatTests.cpp
     )
 
     set_target_properties(${BTARGET} PROPERTIES

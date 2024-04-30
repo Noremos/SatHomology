@@ -52,11 +52,11 @@ public:
 	}
 	virtual Barscalar start() const
 	{
-		return 0;
+		return Barscalar(uchar(0));
 	}
 	virtual Barscalar end() const
 	{
-		return 0;
+		return Barscalar(uchar(0));
 	}
 
 	virtual void getSignature(BackString& line) const = 0;

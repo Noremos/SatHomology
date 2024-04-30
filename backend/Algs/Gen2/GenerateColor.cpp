@@ -196,6 +196,10 @@ RetLayers exeGenColor(InOutLayer iol, const MLSettings& setting)
 	ProcField cells(src.width(), src.height());
 	cells.fillRandom();//out.getType());
 
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_int_distribution<> distrib(1, 100);
+
 	Trainer<keylen> train;
 	// for (size_t i = 0; i < src.length(); ++i)
 	for (size_t i = 0; i < item->barlines.size(); ++i)
@@ -226,7 +230,9 @@ RetLayers exeGenColor(InOutLayer iol, const MLSettings& setting)
 			h.value = (rscal.getAvgFloat() - lower) / ludiff;
 
 
-			// cells.set(x, y, h.value);
+			if (distrib(gen) >= 80)
+				cells.set(x, y, h.value);
+
 			for (buchar j = 0; j < keylen; ++j)
 			{
 				int xi = x + poss[j][0];
@@ -247,9 +253,6 @@ RetLayers exeGenColor(InOutLayer iol, const MLSettings& setting)
 	train.train();
 
 	ProcField newCells(cells);
-	std::random_device rd;
-	std::mt19937 gen(rd());
-	std::uniform_int_distribution<> distrib(0, 255);
 	//distrib(gen)
 
 	int offset = 0;
