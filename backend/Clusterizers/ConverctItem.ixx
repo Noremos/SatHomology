@@ -237,7 +237,7 @@ public:
 			float start = line->getStart();
 			float end = line->getEnd();
 			// float matrstart = start;
-			float beginning = start;
+			// float beginning = start;
 			float crossWithPrev = start;
 			// float ending = end;
 			// float lastMin = beginning;

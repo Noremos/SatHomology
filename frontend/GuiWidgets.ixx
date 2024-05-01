@@ -318,7 +318,7 @@ public:
 		{
 			auto* win = ImGui::GetCurrentWindow();
 			auto& pds = proj->getDisplay();
-			auto wpos = pds.csPos;
+			// auto wpos = pds.csPos;
 
 			auto& io = ImGui::GetIO();
 			auto mp = io.MousePos - win->Pos;
@@ -530,8 +530,8 @@ public:
 		//ImGui::ShowDemoWindow();
 		// ImGui::ShowMetricsWindow();
 
-		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings;
-		window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
+		// ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings;
+		// window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
 
 		ImGuiWindow* win = ImGui::GetCurrentWindow();
 		ImDrawList* list = win->DrawList;

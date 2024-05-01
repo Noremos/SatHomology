@@ -52,7 +52,7 @@ private:
 	PJ* proj = nullptr;
 	PJ_CONTEXT* ctx = nullptr;
 #endif
-	friend class CSBinding;
+	friend struct CSBinding;
 
 	int id = -1;
 public:
@@ -81,11 +81,9 @@ public:
 			return false;
 		}
 
-		const buchar* wtkContext = sqlite3_column_text(stmt, 0);
-
-		const char* cpath = Variables::prodDbPath.c_str();
-
 #ifdef GEOPROJ
+		const buchar* wtkContext = sqlite3_column_text(stmt, 0);
+		const char* cpath = Variables::prodDbPath.c_str();
 		ctx = proj_context_create();
 		proj_context_set_search_paths(ctx, 1, &cpath);
 		proj = proj_create_from_wkt(ctx, (const char*)wtkContext, nullptr, nullptr, nullptr);

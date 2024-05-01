@@ -236,7 +236,7 @@ public:
 
 		if (n == 0)
 		{
-			float radius = *IBarClusterizer::settings.getInt("radius");
+			[[maybe_unused]] float radius = *IBarClusterizer::settings.getInt("radius");
 			avgDiff /= diffc;
 			std::cout << "Avg diff: " << avgDiff << std::endl;
 			for (int i = 0; i < biggestRadius.size(); i++)

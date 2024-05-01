@@ -82,7 +82,7 @@ export BackPoint toBP(const ImVec2& p)
 export class GuiImage
 {
 public:
-	GuiImage() : textureId(nullptr), width(0), height(0), scaleFactor(1)
+	GuiImage() : textureId(nullptr)
 	{ }
 	// Copy constructor
 	GuiImage(const GuiImage& other) noexcept

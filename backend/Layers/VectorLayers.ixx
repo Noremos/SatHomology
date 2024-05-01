@@ -30,15 +30,13 @@ static void saveLoadChar(JsonObjectIOState* state, const char* name, FR& val)
 
 export class DrawPrimitive
 {
-	bool setted = false;
 public:
+	int id;
 	BackColor color;
 	std::vector<BackPoint> points;
-	int id;
 
 	DrawPrimitive(int id, const BackColor& bp = BackColor()) : id(id), color(bp)
-	{
-	}
+	{ }
 
 	void addPoint(BackPoint p)
 	{
@@ -116,9 +114,9 @@ public:
 		{
 			// prefix += std::format("[{},{}],", p.x, p.y);
 			prefix += "[";
-			prefix += intToStr(points[0].x);
+			prefix += intToStr(p.x);
 			prefix += ",";
-			prefix += intToStr(points[0].y);
+			prefix += intToStr(p.y);
 			prefix += "],";
 		}
 		prefix[prefix.length() - 1] = ' ';

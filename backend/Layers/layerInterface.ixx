@@ -366,7 +366,7 @@ public:
 
 	bool set(uint id, T* val)
 	{
-		auto t = layers.begin();
+		// auto t = layers.begin();
 
 		for (auto& layer : layers)
 		{
@@ -719,11 +719,6 @@ public:
 	virtual float displayHeight() const
 	{
 		return 0;
-	}
-
-	virtual void release()
-	{
-
 	}
 };
 

@@ -170,8 +170,6 @@ public:
 		size_t linesCount = state->pArray(static_cast<buint>(vec.size()));
 
 		// Parent read/write stuff
-		buint counterId = 0;
-
 		const bool use32index = state->pInt(sizeof(bc::BIndex) == 4 ? 1 : 0) == 1;
 
 		// Begin
@@ -483,14 +481,13 @@ public:
 	{
 		float maxc = 0;
 		// int maxId = 0;
-		float sum = 0;
 		for (size_t i = 0; i < data.size(); i++)
 		{
 			if (data[i] == nullptr)
 				continue;
 
 			float locd = data[i]->compaire(other, off);
-			sum += locd;
+			// sum += locd;
 			if (locd > maxc)
 			{
 				maxc = locd;

@@ -634,7 +634,7 @@ public:
 			{
 				int x_floor = (int)std::floor(x * x_ratio);
 				int y_floor = (int)std::floor(y * y_ratio);
-				int x_ceil = std::min(x_floor + 1, width() - 1);
+				// int x_ceil = std::min(x_floor + 1, width() - 1);
 				int y_ceil = std::min(y_floor + 1, height() - 1);
 				float x_weight = x * x_ratio - x_floor;
 				float y_weight = y * y_ratio - y_floor;
@@ -763,6 +763,7 @@ export using MemImgData = std::vector<uint8_t>;
 export MemImgData imwriteToMemory(const BackImage& mat)
 {
 	MemImgData out_buf;
+	[[maybe_unused]]
 	bool r = fpng::fpng_encode_image_to_memory(mat.getData(), mat.width(), mat.height(), mat.channels(), out_buf);
 	assert(r);
 	return out_buf;
