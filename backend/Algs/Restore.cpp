@@ -7,6 +7,7 @@
 #include "Barcode/PrjBarlib/include/barline.h"
 #include "Barcode/PrjBarlib/include/barcodeCreator.h"
 #include "Barcode/PrjBarlib/include/barscalar.h"
+#include "Barcode/PrjBarlib/include/barstrucs.h"
 #include <random>
 
 import LayersCore;
@@ -34,7 +35,7 @@ RetLayers exeRestore(InOutLayer iol, const MLSettings& setting)
 	bc::barstruct constr = getConstr(setting);
 	bc::Baritem* item = (bcc.createBarcode(&src, constr));
 
-	const bool normal = item->barlines[0]->start >item->barlines[0]->end();
+	const bool normal = constr.proctype != bc::ProcType::f255t0;
 
 	Barscalar minColor;
 	Barscalar maxColor;
@@ -47,9 +48,9 @@ RetLayers exeRestore(InOutLayer iol, const MLSettings& setting)
 	for (size_t i = 0; i < wid * hei; i++)
 	{
 		if (normal)
-			img.setLiner(i, minColor);
-		else
 			img.setLiner(i, maxColor);
+		else
+			img.setLiner(i, minColor);
 	}
 
 	for (size_t i = 0; i < item->barlines.size(); ++i)
@@ -61,9 +62,9 @@ RetLayers exeRestore(InOutLayer iol, const MLSettings& setting)
 			int x = pm.getX();
 			int y = pm.getY();
 			if (normal)
-				img.add(x, y, pm.value);
-			else
 				img.minus(x, y, pm.value);
+			else
+				img.add(x, y, pm.value);
 		}
 	}
 	rasterSpot->mat = img;
