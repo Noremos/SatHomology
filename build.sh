@@ -15,7 +15,7 @@ if [ -z "$1" ]; then
     # Если аргумент не передан, задаем значение по умолчанию
     build_type="Debug"
 else
-    if [ "$1" == "tests" ]; then
+    if [ "$1" == "Tests" ]; then
         EXTRA='-DBUILD_TEST:BOOL=true'
         OUT='Tests/Temp'
         echo "RUN TESTS..."
@@ -34,7 +34,7 @@ cmake --build "${OUT}"
 mv "${OUT}/compile_commands.json" ./Build/compile_commands.json
 
 if [ "${build_type}" = "Tests" ]; then
-    ./Tests/SatTests
+    ./Build/Temp/SatTests
 fi
 # cmake -B Build -S . -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake
 # cmake --build Build

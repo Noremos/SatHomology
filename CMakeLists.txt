@@ -83,6 +83,7 @@ if (BUILD_TEST)
     add_executable(${BTARGET}
         ${SOURCES}
         ${SIDE_SOURCES}
+        Tests/FindClosestTests.cpp
         Tests/SatTests.cpp
     )
 
