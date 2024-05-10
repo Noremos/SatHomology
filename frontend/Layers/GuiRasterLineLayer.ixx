@@ -137,7 +137,7 @@ public:
 			// 2. Cast to a real img via factor and save for draw
 
 			// (pos - origin) / factor
-			auto ps = data->cs.proj.getThisProj(ds.core.sysProj, pos, false);
+			// auto ps = data->cs.proj.getThisProj(ds.core.sysProj, pos, false);
 			const BackPixelPoint pix = data->cs.toLocal(pos);
 			auto points = click(pix.x / data->subToRealFactor, pix.y / data->subToRealFactor);
 			setPoints(ds, points);

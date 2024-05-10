@@ -292,7 +292,7 @@ namespace MyApp
 				ImGui::CloseCurrentPopup();
 				layersVals.getCurrentLayer()->applyPropertyChanges();
 
-				IRasterLayer* core = layersVals.getCurrentRasterCore();
+				// IRasterLayer* core = layersVals.getCurrentRasterCore();
 
 				// if (core)
 					// centerVals.tilemap.setTilesize(core.prov.tileSize);
@@ -314,7 +314,7 @@ namespace MyApp
 	void drawTopBar()
 	{
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar;
-		float heighto = ImGui::GetFrameHeight();
+		// float heighto = ImGui::GetFrameHeight();
 		if (ImGui::BeginViewportSideBar("##TopMenu", NULL, ImGuiDir_Up, 50, window_flags))
 		{
 			// GBl
@@ -348,6 +348,7 @@ namespace MyApp
 
 				if (ImGui::Button("OK", ImVec2(120, 0)))
 				{
+					[[maybe_unused]]
 					auto* core = backend.loadImageOrProject(path);
 					if (backend.isLoaded())
 					{
@@ -477,7 +478,7 @@ namespace MyApp
 
 	// How to do a toolbar in Dear ImGui.
 
-	const float toolbarSize = 50;
+	// const float toolbarSize = 50;
 	int menuBarHeight;
 
 	//// Get the size of the image
@@ -889,7 +890,7 @@ namespace MyApp
 		return ImVec2(static_cast<float>(p.x), static_cast<float>(p.y));
 	}
 
-	void MyApp::Init(const char* root)
+	void Init(const char* root)
 	{
 		// setlocale(LC_ALL, "ru_ru.utf-8");
 		srand(time(NULL));
@@ -924,6 +925,8 @@ namespace MyApp
 			0x0400, 0x044F, // Cyrillic
 			0,
 		};
+
+		[[maybe_unused]]
 		ImFont* font = io.Fonts->AddFontFromFileTTF(Variables::getDefaultFontPath().string().c_str(), 15.0f, &font_config, ranges);
 		IM_ASSERT(font != NULL);
 
@@ -970,6 +973,7 @@ namespace MyApp
 		LayerFactory::RegisterFactory<ClassVectorGuiLayer, ClassVectorLayer>(TREE_VECTOR_CLASS_LAYER);
 
 		//classerVals.ioLayer = layersVals.getIoLayer();
+		[[maybe_unused]]
 		auto drawLine = [](const bc::point& p1, const bc::point& p2, bool finale)
 		{
 			const std::lock_guard<std::mutex> lock(debugVals.drawMutex);
@@ -983,6 +987,7 @@ namespace MyApp
 			debugVals.debugDraw.push_back(p2);
 		};
 
+		[[maybe_unused]]
 		auto polyPoint = [](bc::PloyPoints& p1, bool finale)
 		{
 			const std::lock_guard<std::mutex> lock(debugVals.drawMutex);
@@ -1042,7 +1047,7 @@ namespace MyApp
 	}
 
 	// Main
-	void MyApp::RenderUI()
+	void RenderUI()
 	{
 		//ImGuiID dockspace_id = 0;
 		//ImGuiWindowFlags window_flags = 0;
@@ -1058,7 +1063,7 @@ namespace MyApp
 		//ImGui::ShowDemoWindow();
 	}
 
-	void MyApp::Cleanup()
+	void Cleanup()
 	{
 		AlgFactory::deleteRaster();
 		AlgFactory::deleteVector();
