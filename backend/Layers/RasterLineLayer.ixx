@@ -26,7 +26,7 @@ import RasterLayers;
 import MetadataCoreIO;
 import IItemModule;
 import GeoprocessorModule;
-import Settings;
+import RefSettings;
 import CachedBarcode;
 import ClusterInterface;
 

@@ -2,7 +2,7 @@ module;
 #include <memory>
 #include <thread>
 
-export module Settings;
+export module RefSettings;
 
 import MetadataCoreIO;
 

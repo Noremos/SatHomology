@@ -121,7 +121,7 @@
     <ClCompile Include="backend\Layers\SimpleLineDisplay.ixx" />
     <ClCompile Include="backend\Layers\VectorLayers.ixx" />
     <ClCompile Include="backend\CSBind.ixx" />
-    <ClCompile Include="backend\Settings.ixx" />
+    <ClCompile Include="backend\RefSettings.ixx" />
     <ClCompile Include="Bind\Common.ixx" />
     <ClCompile Include="Bind\MHashMap.ixx" />
     <ClCompile Include="frontend\GuiITemPrevew.ixx" />

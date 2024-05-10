@@ -28,7 +28,7 @@ import GuiVectorLayers;
 import ProjectModule;
 import GuiRasterLayers;
 import GuiRasterLineLayer;
-import Settings;
+import RefSettings;
 import BackBind;
 import RasterLineLayerModule;
 

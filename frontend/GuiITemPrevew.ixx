@@ -8,7 +8,7 @@ export module GuiITemPrevew;
 import LayersCore;
 import RasterLineLayerModule;
 import ProjectModule;
-import Settings;
+import RefSettings;
 import GuiLayers;
 import GuiWidgets;
 import IItemModule;
