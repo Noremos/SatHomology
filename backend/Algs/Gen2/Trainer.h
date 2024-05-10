@@ -1,9 +1,11 @@
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <memory>
 #include <random>
 #include <vector>
 #include <unordered_map>
+#include <iostream>
 
 #include "Barcode/PrjBarlib/include/barscalar.h"
 
@@ -111,17 +113,34 @@ class BST {
 
 	static node* findClosest(node* t, TKey x)
 	{
-		if(x < t->key)
+		float curDiff = abs(x - t->key);
+		if (curDiff == 0)
+			return t;
+
+
+		if (x < t->key)
 		{
 			if (t->left)
-				return findClosest(t->left, x);
+			{
+				node* node = findClosest(t->left, x);
+				if (abs(node->key - x) < curDiff)
+					return node;
+				else
+				 	return t;
+			}
 			else
 			 	return t;
 		}
 		else if(x > t->key)
 		{
 			if (t->right)
-				return findClosest(t->right, x);
+			{
+				node* node = findClosest(t->right, x);
+				if (abs(node->key - x) < curDiff)
+					return node;
+				else
+				 	return t;
+			}
 			else
 			 	return t;
 		}
@@ -226,35 +245,51 @@ struct HashK
 {
 	float key[TLen];
 
+	HashK() = default;
+	HashK(std::initializer_list<float> vals)
+	{
+		assert(vals.size() == TLen);
+		for (int i = 0; i < TLen; i++)
+		{
+			key[i] = vals.begin()[i];
+		}
+	}
+
 	float value;
 };
 
 template <int TLen>
 class Trainer
 {
+protected:
+	const bool debugDraw;
+
 public:
 	using Hash = HashK<TLen>;
+	Trainer(bool debugDraw = false) : debugDraw(debugDraw)
+	{ }
 
 	struct Line
 	{
 		GetByChance value;
 		int id = 0;
 		// int marks = 0;
-		// int nodesId[TLen];
+		float edge[TLen];
 	};
 
 	class Node
 	{
 	public:
 		// Line* line = nullptr;
-		Node(Line* l, float edge)
+		Node(Line* l, float edge, int id)
 		{
-			addLine(l);
+			addLine(l, id);
 			this->edge = edge;
 		}
 
-		void addLine(Line* l)
+		void addLine(Line* l, int id)
 		{
+			l->edge[id] = edge;
 			lines.push_back(l);
 		}
 		std::vector<Line*> lines;
@@ -263,27 +298,7 @@ public:
 
 	struct KeyColumn
 	{
-		std::vector<Node*> nodes;
-		// std::vector<Line*> lines;
 		BST<float, Node*> nodesIndex;
-
-		void addNode(Node* node, int) // id
-		{
-			nodes.push_back(node);
-			nodesIndex.insert(node->edge, node);
-		}
-
-		void sort()
-		{
-			std::sort(nodes.begin(), nodes.end(), [](const Node* a,const Node* b) {
-				// for (int i = 0; i < 9; ++i)
-				// {
-				// 	if (a.key[i] != b.key[i])
-				// 		return a.key[i] < b.key[i];
-				// }
-				return a->edge < b->edge;
-			});
-		}
 
 		void findCloser(float value, std::unordered_map<int, int>& clines)
 		{
@@ -315,7 +330,7 @@ public:
 		{
 			KeyColumn& column = columns[j];
 			Node** temp = column.nodesIndex.get(scase.key[j]);
-			Node* val = cache[j] = temp ? *temp : nullptr;
+			Node* val = cache[j] = (temp ? *temp : nullptr);
 
 			if (val == nullptr)
 			{
@@ -323,7 +338,7 @@ public:
 				break;
 			}
 
-			if (j == 0)
+			if (found.empty())
 			{
 				found = val->lines;
 				continue;
@@ -355,6 +370,15 @@ public:
 
 		if (same)
 		{
+			if (debugDraw)
+			{
+				std::cout << found[0]->id << "(same): ";
+				for (int j = 0; j < TLen; ++j)
+				{
+					std::cout << scase.key[j] << " ";
+				}
+				std::cout << "-> " << scase.value << std::endl;
+			}
 			assert(found.size() == 1);
 			found[0]->value.add(scase.value);  // TODO: reduce .00001 to 0.1
 			return;
@@ -365,57 +389,112 @@ public:
 		line->id = linesCollector.size() - 1;
 		line->value.add(scase.value);
 
+		if (debugDraw)
+		{
+			std::cout << line->id << " (new): ";
+			for (int j = 0; j < TLen; ++j)
+			{
+				std::cout << scase.key[j] << " ";
+			}
+			std::cout << "-> " << scase.value << std::endl;
+		}
+
 		for (int j = 0; j < TLen; ++j)
 		{
 			KeyColumn& column = columns[j];
 			Node* val = cache[j];
 			if (val == nullptr)
 			{
-				nodeCollector.push_back(std::make_unique<Node>(line, scase.key[j]));
-				val = nodeCollector.back().get();
-				column.nodesIndex.insert(scase.key[j], val);
+				// Search for existence line
+				Node** exists = column.nodesIndex.get(scase.key[j]);
+				if (exists)
+				{
+					val = *exists;
+					val->addLine(line, j);
+				}
+				else
+				{
+					// Create new
+					nodeCollector.push_back(std::make_unique<Node>(line, scase.key[j], j));
+					val = nodeCollector.back().get();
+					column.nodesIndex.insert(scase.key[j], val);
+				}
 			}
 			else
-				val->lines.push_back(line);
-
-			// line->nodesId[j] = val;
+				val->addLine(line, j);
 		}
 	}
 
 	void train()
 	{ }
 
+	// void calcDiff(Line* line, const Hash& scase)
+	// {
+	// 	float diff = 0;
+	// 	for (int j = 0; j < TLen; ++j)
+	// 	{
+	// 		float a = line->edge[j] - scase.value[j];
+	// 		diff += a * a;
+	// 	}
+
+	// 	diff = sqrt(double(diff));
+	// 	return diff;
+	// }
+
 	int getCloser(const Hash& scase)
 	{
 		std::unordered_map<int, int> closesLines;
 		for (int j = 0; j < TLen; ++j)
 		{
+			if (debugDraw)
+				std::cout << scase.key[j] << " ";
+
 			columns[j].findCloser(scase.key[j], closesLines);
 		}
-		auto max = std::max_element(closesLines.begin(), closesLines.end());
-
-		// std::vector<std::pair<int, float>> diffs;
-		// for (int j = 0; j < closesLines.size(); ++j)
-		// {
-		// 	float diff = 0;
-		// 	auto& closestTrain = train[closesLines[j]->id];
-		// 	for (int j = 0; j < TLen; ++j)
-		// 	{
-		// 		float a = closestTrain.key[j] - scase.key[j];
-		// 		diff += a * a;
-		// 	}
-		// 	diff = sqrt(diff);
-		// 	diffs.push_back({j, diff});
-
-		// 	closesLines[j]->marks = 0;
-		// }
-
-		// auto y = std::min_element(diffs.begin(), diffs.end(), [](auto a, auto b) {
-		// 	return a.second < b.second;
-		// });
+		// auto maxel = std::max_element(closesLines.begin(), closesLines.end(), [](auto a, auto b) {return a.second < b.second; });
+		// return maxel->first;
 
 
-		return max->first;
+		int minId = closesLines.begin()->first;
+		int minCounter = closesLines.begin()->second;
+		int minVal = 99999;
+		std::vector<std::pair<int, float>> diffs;
+		for (auto it : closesLines)
+		{
+			if (it.second > minCounter)
+			{
+				minId = it.first;
+				minCounter = it.second;
+				continue;
+			}
+			else if (it.second == minCounter)
+			{
+				if (it.first == minId)
+					continue;
+
+				float diff1 = 0;
+				float diff2 = 0;
+				Line* line1 = linesCollector[it.first].get();
+				Line* line2 = linesCollector[minId].get();
+				for (int j = 0; j < TLen; ++j)
+				{
+					float a = line1->edge[j] - scase.key[j];
+					diff1 += a * a;
+
+					a = line2->edge[j] - scase.key[j];
+					diff2 += a * a;
+				}
+				diff1 = sqrt(diff1);
+				diff2 = sqrt(diff2);
+				if (diff1 < diff2)
+				{
+					minId = it.first;
+					minCounter = it.second;
+				}
+			}
+		}
+
+		return minId;
 	}
 
 	// std::vector<Hash> trainData;

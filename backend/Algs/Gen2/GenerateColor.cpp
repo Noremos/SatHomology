@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <iostream>
 #include <unordered_map>
 #include <vector>
 #include <memory>
@@ -162,11 +163,22 @@ RetLayers exeGenColor(InOutLayer iol, const MLSettings& setting)
 {
 	float adj = *setting.getDouble("aje");
 	int step = *setting.getInt("step");
+	const bool debugDraw = *setting.getBool("DebugDraw");
+	const bool halfRand = *setting.getBool("HalfRand");
+	const bool skipNotFull = *setting.getBool("SkipNotFull");
+	const bool useImageAsNoise = *setting.getBool("UseImageAsNoise");
 
 	RetLayers ret;
 	BackImage src;
 
 	RasterLayer* rasterSpot = getSrcFromInput(iol, src);
+	RasterLayer* srcNoise;
+
+	if (!useImageAsNoise)
+	{
+		srcNoise = getSrcFromInput(iol, src);
+		ret.push_back(srcNoise);
+	}
 	ret.push_back(rasterSpot);
 
 	BackImage& out = rasterSpot->mat;
@@ -190,55 +202,60 @@ RetLayers exeGenColor(InOutLayer iol, const MLSettings& setting)
 	float upper = imgmax.getAvgFloat();
 	float ludiff = upper - lower;
 
-	bc::Baritem* item = (bcc.createBarcode(&src, constr));
 
 
 	ProcField cells(src.width(), src.height());
-	cells.fillRandom();//out.getType());
 
 	std::random_device rd;
+	std::default_random_engine genrd(0);
+	// std::mt19937 gen(genrd());
 	std::mt19937 gen(rd());
 	std::uniform_int_distribution<> distrib(1, 100);
 
-	Trainer<keylen> train;
-	// for (size_t i = 0; i < src.length(); ++i)
+	Trainer<keylen> train(debugDraw);
+	std::cout << "Training" << std::endl;
+	if (!useImageAsNoise)
+	{
+		cells.fillRandom();//out.getType());
+	}
+
+	bc::Baritem* item = (bcc.createBarcode(&src, constr));
 	for (size_t i = 0; i < item->barlines.size(); ++i)
 	{
 		auto line = item->barlines[i];
 		const auto& matr = line->matr;
 
-		// // float lower = line->start.getAvgFloat();
-		// // float upper = line->end().getAvgFloat();
-		// // if (lower > upper)
-		// // 	std::swap(lower, upper);
-		// // float ludiff = upper - lower;
-
-		// // BackSize maskSize = b;
 		for (const auto& pm : matr)
 		{
 			int x = pm.getX();
 			int y = pm.getY();
-			// int x = i % src.width();
-			// int y = i / src.width();
-			// bar.set(x, y, line);
-			// //srcField.set(x, y, pm.value);
-			// // out.set(pm.getX(), pm.getY(), lerp(pm.value.getAvgFloat() / dummy));
-			// //out.set(pm.getX(), pm.getY(), pm.value.getAvgUchar());
 
 			auto rscal = src.get(x, y);
 			Trainer<keylen>::Hash h;
 			h.value = (rscal.getAvgFloat() - lower) / ludiff;
 
-
-			if (distrib(gen) >= 80)
+			if (useImageAsNoise)
+			{
 				cells.set(x, y, h.value);
+			}
+			else if (halfRand)
+			{
+				if (distrib(gen) >= 80)
+					cells.set(x, y, h.value);
+			}
 
+			bool skipThis = false;
 			for (buchar j = 0; j < keylen; ++j)
 			{
 				int xi = x + poss[j][0];
 				int yi = y + poss[j][1];
 				if (xi < 0 || xi >= src.width() || yi < 0 || yi >= src.height())
 				{
+					if (skipNotFull)
+					{
+						skipThis = true;
+						break;
+					}
 					h.key[j] = 0;
 					continue;
 				}
@@ -246,7 +263,28 @@ RetLayers exeGenColor(InOutLayer iol, const MLSettings& setting)
 				auto srcscalr = src.get(xi, yi);
 				h.key[j] = (srcscalr.getAvgFloat() - lower) / ludiff;
 			}
-			train.add(h);
+
+			if (!skipThis)
+				train.add(h);
+		}
+	}
+
+
+	if (!useImageAsNoise)
+	{
+
+		BackImage& outn = srcNoise->mat;
+		float ludiffas = ludiff / upper;
+		for (int i = 0; i < cells.length(); i++)
+		{
+			float colorProc = cells.getLiner(i);
+			if (colorProc > 1.0)
+				colorProc = 1.0;
+			else if (colorProc < 0)
+				colorProc = 0;
+
+			Barscalar newColor = imgmin + diffcolor * colorProc;
+			outn.setLiner(i, newColor);
 		}
 	}
 
@@ -255,16 +293,18 @@ RetLayers exeGenColor(InOutLayer iol, const MLSettings& setting)
 	ProcField newCells(cells);
 	//distrib(gen)
 
+	std::cout << "Generating" << std::endl;
 	int offset = 0;
 	for (int k = 0; k < step; k++)
 	{
+		std::cout << "Step " << k + 1 << "/" << step << "..." << std::endl;
 		for (int i = offset; i < cells.length(); i++)
 		{
 			int x = i % cells.width;
 			int y = i / cells.width;
 
 			// bc::barline* line = bar.get(x, y);
-
+			bool skip = false;
 			HashK<keylen> h;
 			for (buchar j = 0; j < keylen; ++j)
 			{
@@ -273,12 +313,15 @@ RetLayers exeGenColor(InOutLayer iol, const MLSettings& setting)
 				if (xi < 0 || xi >= cells.width || yi < 0 || yi >= cells.height)
 				{
 					h.key[j] = 0;
-					continue;
+					skip = true;
+					break;
 				}
 
 				float srcscalr = cells.get(xi, yi);
 				h.key[j] = srcscalr;
 			}
+			if (skip)
+				continue;
 			// h.set();
 
 			int id = train.getCloser(h);
@@ -286,7 +329,10 @@ RetLayers exeGenColor(InOutLayer iol, const MLSettings& setting)
 			float val = line->value.get(gen);
 
 			float& newCell = newCells.get(x, y);
-			newCell += abs(newCell - val) * adj;
+			// newCell += abs(newCell - val) * adj;
+			newCell = val;
+			if (debugDraw)
+				std::cout << "id> " << id << "(" << val << "->" << newCell << ")" << std::endl;
 
 			// for (int j = 0; j < keylen; j++)
 			// {
@@ -321,19 +367,20 @@ RetLayers exeGenColor(InOutLayer iol, const MLSettings& setting)
 	// 	out.setLiner(i, cells.getLiner(i));
 	// }
 
-	float ludiffas = ludiff / upper;
-	for (int i = 0; i < cells.length(); i++)
-	{
-	 	float colorProc = cells.getLiner(i);
-		if (colorProc > 1.0)
-			colorProc = 1.0;
-		else if (colorProc < 0)
-			colorProc = 0;
+	{ // Restore
+		float ludiffas = ludiff / upper;
+		for (int i = 0; i < cells.length(); i++)
+		{
+			float colorProc = cells.getLiner(i);
+			if (colorProc > 1.0)
+				colorProc = 1.0;
+			else if (colorProc < 0)
+				colorProc = 0;
 
-		Barscalar newColor = imgmin + diffcolor * colorProc;
-		out.setLiner(i, newColor);
+			Barscalar newColor = imgmin + diffcolor * colorProc;
+			out.setLiner(i, newColor);
+		}
 	}
-
 
 	// for (size_t i = 0; i < item->barlines.size(); ++i)
 	// {
@@ -370,8 +417,16 @@ MLSettings mkSettingsTypeColor()
 
 	OptionValue comp2("step", 1);
 	OptionValue comp3("aje", 0.01);
+	OptionValue comp4("DebugDraw", false);
+	OptionValue comp5("HalfRand", false);
+	OptionValue comp6("SkipNotFull", false);
+	OptionValue comp7("UseImageAsNoise", false);
 	settings.values.push_back(comp2);
 	settings.values.push_back(comp3);
+	settings.values.push_back(comp4);
+	settings.values.push_back(comp5);
+	settings.values.push_back(comp6);
+	settings.values.push_back(comp7);
 
 	return settings;
 }
