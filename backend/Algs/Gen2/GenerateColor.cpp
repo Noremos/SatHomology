@@ -171,12 +171,12 @@ RetLayers exeGenColor(InOutLayer iol, const MLSettings& setting)
 	RetLayers ret;
 	BackImage src;
 
-	RasterLayer* rasterSpot = getSrcFromInput(iol, src);
+	RasterLayer* rasterSpot = genOutputFromInput(iol, src);
 	RasterLayer* srcNoise;
 
 	if (!useImageAsNoise)
 	{
-		srcNoise = getSrcFromInput(iol, src);
+		srcNoise = genOutputFromInput(iol, src);
 		ret.push_back(srcNoise);
 	}
 	ret.push_back(rasterSpot);

@@ -202,7 +202,7 @@ public:
 			clusterizer = getClusterFactory().CreateML(methodId);
 		}
 
-		ImGui::Text("RefSettings");
+		ImGui::Text("ProjectSettings");
 		drawDynamicSettings(clusterizer->settings);
 
 		ImGui::Text("Preprocessing");

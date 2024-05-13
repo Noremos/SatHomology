@@ -26,7 +26,7 @@ import RasterLayers;
 import MetadataCoreIO;
 import IItemModule;
 import GeoprocessorModule;
-import RefSettings;
+import ProjectSettings;
 import CachedBarcode;
 import ClusterInterface;
 
@@ -106,6 +106,7 @@ public:
 		}
 	}
 };
+using BarFunc = std::function<void(int id, TileProvider prov, CachedBarline*)>;
 
 
 
@@ -198,7 +199,6 @@ public:
 
 	//int layerCounter = 0;
 
-
 	RasterLineLayer()
 	{
 		if (colors.size() == 0)
@@ -218,6 +218,7 @@ public:
 
 	RetLayers createCacheBarcode(IRasterLayer* inLayer, const BarcodeProperies& propertices, IItemFilter* filter = nullptr);
 	RetLayers processCachedBarcode(IItemFilter* filter);
+	void processCachedBarcode(IItemFilter* filter, const BarFunc& func);
 
 	static const Barscalar& getRandColor(size_t id)
 	{
@@ -548,7 +549,6 @@ public:
 
 class ProcessCacheBarThreadWorker : public BarLineWorker
 {
-	RasterLineLayer* outLayer;
 	const IItemFilter* filter;
 	//Project* proj;
 
@@ -556,9 +556,10 @@ class ProcessCacheBarThreadWorker : public BarLineWorker
 
 public:
 	CachedBaritemHolder holder;
+	BarFunc func;
 
-	ProcessCacheBarThreadWorker(int& counter, RasterLineLayer* outLayer, const IItemFilter* filter/*, Project* proj*/) :
-		BarLineWorker(counter), outLayer(outLayer), filter(filter),// proj(proj),
+	ProcessCacheBarThreadWorker(int& counter, const IItemFilter* filter/*, Project* proj*/) :
+		BarLineWorker(counter), filter(filter),// proj(proj),
 		tileProv(0, 0)
 	{ }
 
@@ -566,34 +567,18 @@ public:
 	{
 		tileProv = itileProv;
 	}
+
 	bool addLine = true;
 	void runSync()
 	{
 		const auto start = std::chrono::steady_clock::now();
 
 		printf("Start run for tile %d\n", tileProv.index);
-		//outLayer->addHolder(*holder, tileProv, filter);
-		if (outLayer->collectionToPredict == nullptr)
+
+		for (size_t i = 0; i < holder.getItemsCount(); ++i)
 		{
-			for (size_t i = 0; i < holder.getItemsCount(); ++i)
-			{
-				auto* item = holder.getRItem(i);
-				if (outLayer->passLine(item, filter))
-				{
-					outLayer->addLine((int)i, item, tileProv);
-				}
-			}
-		}
-		else
-		{
-			for (size_t i = 0; i < holder.getItemsCount(); ++i)
-			{
-				auto* item = holder.getRItem(i);
-				if (outLayer->passLine(item, filter))
-				{
-					outLayer->collectionToPredict->addItem(*item);
-				}
-			}
+			CachedBarline* item = holder.getRItem(i);
+			func((int)i, tileProv, item);
 		}
 
 		const auto end = std::chrono::steady_clock::now();
@@ -654,16 +639,6 @@ RetLayers RasterLineLayer::createCacheBarcode(IRasterLayer* inLayer, const Barco
 
 	RetLayers ret;
 	ret.push_back(layer);
-	//
-	// Classes layers
-	//for (auto& i : classLayers)
-	//{
-	//	ret.push_back(i.second);
-	//	i.second->clear();
-	//	i.second->color = classCategs.get(i.first)->color;
-	//	i.second->initCSFrom(inLayer->cs);
-	//}
-	// -------------------
 
 	// Cacher
 	ItemHolderCache cacher;
@@ -675,8 +650,6 @@ RetLayers RasterLineLayer::createCacheBarcode(IRasterLayer* inLayer, const Barco
 	TileImgIterator tileIter(tileSize, tileOffset, curSize.wid, curSize.hei);
 
 	// Threads
-	std::mutex cacherMutex;
-
 	const bool curRunAsync = getSettings().runAsync;
 	int curthreadsCount = curRunAsync ? getSettings().threadsCount : 1;
 	int counter = 0;
@@ -691,6 +664,7 @@ RetLayers RasterLineLayer::createCacheBarcode(IRasterLayer* inLayer, const Barco
 
 	const bool allowSyncInAsync = true;
 	WorkerPool wpool;
+	std::mutex cacherMutex;
 	for (unsigned short i = 0; i < curthreadsCount; i++)
 	{
 		CreateBarThreadWorker* worker = new CreateBarThreadWorker(cacherMutex, constr, inLayer, cacher, counter);
@@ -740,7 +714,7 @@ RetLayers RasterLineLayer::createCacheBarcode(IRasterLayer* inLayer, const Barco
 	const auto end = std::chrono::steady_clock::now();
 	const auto diff = end - start;
 	const double len = std::chrono::duration<double, std::milli>(diff).count();
-	printf("All work ended in %dms\n", (int)len);
+	printf("All works ended in %dms\n", (int)len);
 
 	return ret;
 }
@@ -762,35 +736,59 @@ RetLayers RasterLineLayer::processCachedBarcode(IItemFilter* filter)
 
 	// -------
 	RetLayers ret;
-	//for (auto& i : classLayers)
-	//{
-	//	ret.push_back(i.second);
-	//	i.second->clear();
-	//	i.second->color = classCategs.get(i.first)->color;
-	//	i.second->initCSFrom(inLayer->cs);
-	//}
-
-	// RasterLineLayer* outLayer = addOrUpdateOut<RasterLineLayer>(iol);
-	// if (outLayer->cacheId == -1)
-	// 	outLayer->cacheId = metaprov->getUniqueId();
-	// ret.push_back(outLayer);
 	RasterLineLayer* outLayer = inLayer;
 
 	if (collectionToPredict == nullptr)
 		outLayer->clearResponser();
 
-	//ret.push_back(outLayer); // Do not recreate this node
+	BarFunc func;
+	if (outLayer->collectionToPredict == nullptr)
+	{
+		func = std::move([&outLayer, &filter](int id, TileProvider prov, CachedBarline* item)
+		{
+			if (outLayer->passLine(item, filter))
+			{
+				outLayer->addLine((int)id, item, prov);
+			}
+		});
+	}
+	else
+	{
+		func = std::move([&outLayer, &filter](int id, TileProvider prov, CachedBarline* item)
+		{
+			if (outLayer->passLine(item, filter))
+			{
+				outLayer->collectionToPredict->addItem(*item);
+			}
+		});
+	}
+
+	processCachedBarcode(filter, func);
+	return ret;
+}
+
+void RasterLineLayer::processCachedBarcode(IItemFilter* filter, const BarFunc& func)
+{
+	RasterLineLayer* inLayer = this;
+	int tileSize = inLayer->prov.tileSize;
+	int tileOffset = inLayer->tileOffset;
+
+	if (filter)
+	{
+		const buint fullTile = tileSize + tileOffset;
+		filter->imgLen = fullTile * fullTile;
+	}
+	auto& metaprov = getSettings().getMeta();
 
 	// Cacher
 	ItemHolderCache cacher;
-	cacher.openRead(inLayer->getCacheFilePath(*getSettings().metaprov));
-
+	cacher.openRead(inLayer->getCacheFilePath(metaprov));
 
 	// Thread
 	auto& prov = inLayer->prov;
 
 	const bool curRunAsync = getSettings().runAsync;
-	int curthreadsCount = 1;
+	int curthreadsCount = curRunAsync ? getSettings().threadsCount : 1;
 	int counter = 0;
 	if (curRunAsync)
 	{
@@ -806,8 +804,8 @@ RetLayers RasterLineLayer::processCachedBarcode(IItemFilter* filter)
 	WorkerPool wpool;
 	for (unsigned short i = 0; i < curthreadsCount; i++)
 	{
-		ProcessCacheBarThreadWorker* worker = new ProcessCacheBarThreadWorker(counter, outLayer, filter);
-		//worker->addLine = addLineMode;
+		ProcessCacheBarThreadWorker* worker = new ProcessCacheBarThreadWorker(counter, filter);
+		worker->func = func;
 		wpool.add(worker, allowSyncInAsync);
 	}
 
@@ -852,7 +850,5 @@ RetLayers RasterLineLayer::processCachedBarcode(IItemFilter* filter)
 	const auto end = std::chrono::steady_clock::now();
 	const auto diff = end - start;
 	const double len = std::chrono::duration<double, std::milli>(diff).count();
-	printf("All work ended in %dms\n", (int)len);
-
-	return ret;
+	printf("All works ended in %dms\n", (int)len);
 }

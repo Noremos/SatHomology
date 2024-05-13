@@ -183,7 +183,7 @@ RetLayers exeResize(InOutLayer iol, const MLSettings& setting)
 	inputSize.hei = 1.0 / aspect * resolution;
 
 
-	RasterLayer* rasterSpot = getSrcFromInput(iol, src, inputSize);
+	RasterLayer* rasterSpot = genOutputFromInput(iol, src, inputSize);
 	ret.push_back(rasterSpot);
 
 
@@ -245,7 +245,7 @@ RetLayers exeRecolor(InOutLayer iol, const MLSettings& setting)
 	RetLayers ret;
 	BackImage src;
 
-	RasterLayer* rasterSpot = getSrcFromInput(iol, src);
+	RasterLayer* rasterSpot = genOutputFromInput(iol, src);
 	ret.push_back(rasterSpot);
 
 

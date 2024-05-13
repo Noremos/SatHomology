@@ -28,6 +28,8 @@ else
 fi
 
 export OUT="Build/Temp/${build_type}"
+# export LDFLAGS="-L/opt/homebrew/opt/llvm/lib"
+# export CPPFLAGS="-I/opt/homebrew/opt/llvm/include"
 
 cmake -B "${OUT}" -S . -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake -G Ninja -DCMAKE_BUILD_TYPE="${build_type}" "${EXTRA}"
 cmake --build "${OUT}"
@@ -36,6 +38,8 @@ mv "${OUT}/compile_commands.json" ./Build/compile_commands.json
 if [ "${build_type}" = "Tests" ]; then
     ./Build/Temp/SatTests
 fi
+
+echo Done
 # cmake -B Build -S . -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake
 # cmake --build Build
 

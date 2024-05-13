@@ -60,7 +60,7 @@
     <ClCompile Include="..\backend\project.ixx">
       <Filter>Зависимости</Filter>
     </ClCompile>
-    <ClCompile Include="..\backend\RefSettings.ixx">
+    <ClCompile Include="..\backend\ProjectSettings.ixx">
       <Filter>Зависимости</Filter>
     </ClCompile>
     <ClCompile Include="..\Bind\Side.ixx">

@@ -38,6 +38,7 @@ export Barscalar lerp(double t)
 	return Barscalar(r, g, b);
 }
 
+
 export bc::barstruct getConstr(const MLSettings& setting)
 {
 	bc::ProcType type = setting.getEnumValue<bc::ProcType>("type");
@@ -58,7 +59,7 @@ export bc::barstruct getConstr(const MLSettings& setting)
 }
 
 
-export RasterLayer* getSrcFromInput(InOutLayer iol, BackImage& out, std::optional<BackSize> newSize = {})
+export BackSize getSrcFromInput(InOutLayer iol, BackImage& out, std::optional<BackSize> newSize = {})
 {
 	Project* proj = Project::getProject();
 	IRasterLayer* input = proj->getInRaster(iol);
@@ -81,6 +82,18 @@ export RasterLayer* getSrcFromInput(InOutLayer iol, BackImage& out, std::optiona
 	}
 	else
 		out = srcl;
+
+	return srcsize;
+}
+
+
+export RasterLayer* genOutputFromInput(InOutLayer iol, BackImage& out, std::optional<BackSize> newSize = {})
+{
+	BackSize srcsize = getSrcFromInput(iol, out, newSize);
+
+	Project* proj = Project::getProject();
+	IRasterLayer* input = proj->getInRaster(iol);
+	float aspect = static_cast<float>(input->realWidth()) / srcsize.wid;
 
 	RasterLayer* rasterSpot = proj->addLayerData<RasterLayer>(input->cs.getProjId());
 	rasterSpot->initCSFrom(input->cs);

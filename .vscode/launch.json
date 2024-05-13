@@ -8,7 +8,15 @@
             "name": "Tests",
             "type": "lldb",
             "request": "launch",
-            "program": "${workspaceFolder}/Tests/SatTests",
+            "program": "${workspaceFolder}/Build/Temp/SatTests",
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Test Bar",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/side/Barcode/PrjBarlib/Tests/Build/BarTests",
             "args": [],
             "cwd": "${workspaceFolder}"
         },

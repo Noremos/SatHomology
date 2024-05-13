@@ -2,10 +2,10 @@ module;
 #include <memory>
 #include <thread>
 
-export module RefSettings;
+export module ProjectSettings;
 
 import MetadataCoreIO;
-
+import RefSettings;
 
 const char* const jsn_displayFacto = "step";
 const char* const jsn_imgMinVal = "imgMinVal";
@@ -30,7 +30,7 @@ export struct ProjectSettings
 		threadsCount = std::thread::hardware_concurrency();
 	}
 
-	SettingsIO& getIO()
+	RefSettings& getIO()
 	{
 		return settings;
 	}
@@ -42,7 +42,7 @@ export struct ProjectSettings
 
 	static ProjectSettings globalSettings;
 private:
-	SettingsIO settings =
+	RefSettings settings =
 	{
 
 		//{jsn_displayFacto, u_displayFactor},

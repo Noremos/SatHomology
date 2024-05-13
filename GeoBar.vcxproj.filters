@@ -185,7 +185,7 @@
     <ClCompile Include="backend\Clusterizers\KmeansClassifer.ixx">
       <Filter>Backend\Impl</Filter>
     </ClCompile>
-    <ClCompile Include="backend\RefSettings.ixx" />
+    <ClCompile Include="backend\ProjectSettings.ixx" />
     <ClCompile Include="frontend\Widgets\DynamicSettings.ixx" />
     <ClCompile Include="side\Barcode\PrjBarlib\modules\StateBinFile.ixx">
       <Filter>Barcode\modules</Filter>

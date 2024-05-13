@@ -167,7 +167,7 @@ RetLayers exeSwarm(InOutLayer iol, const MLSettings& setting)
 {
 	RetLayers ret;
 	BackImage src;
-	RasterLayer* rasterSpot = getSrcFromInput(iol, src);
+	RasterLayer* rasterSpot = genOutputFromInput(iol, src);
 	ret.push_back(rasterSpot);
 
 	BackImage& out = rasterSpot->mat;

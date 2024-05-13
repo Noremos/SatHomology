@@ -22,7 +22,17 @@ public:
 		field[y * width + x] = c;
 	}
 
+	void setLiner(int i, const T& c)
+	{
+		field[i] = c;
+	}
+
 	T& getLiner(int pos)
+	{
+		return field[pos];
+	}
+
+	const T& getLiner(int pos) const
 	{
 		return field[pos];
 	}
