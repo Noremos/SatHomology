@@ -6,6 +6,7 @@
 #include <vector>
 #include <unordered_map>
 #include <iostream>
+#include <set>
 
 #include "Barcode/PrjBarlib/include/barscalar.h"
 
@@ -290,30 +291,49 @@ public:
 		void addLine(Line* l, int id)
 		{
 			l->edge[id] = edge;
+			linesMark.insert(l->id);
 			lines.push_back(l);
 		}
 		std::vector<Line*> lines;
+		std::set<int> linesMark;
 		float edge; // Edge
+	};
+
+	struct MaxFindBlock
+	{
+		std::unordered_map<int, int> lines;
+		int maxCounter = 0;
+		int maxId = -1;
+
+		void addLine(int lineId)
+		{
+			auto it = lines.find(lineId);
+			if (it != lines.end())
+			{
+				if (++it->second > maxCounter)
+				{
+					maxCounter = ++it->second;
+					maxId = it->first;
+				}
+			}
+			else
+				lines.insert({lineId, 1});
+
+		}
 	};
 
 	struct KeyColumn
 	{
 		BST<float, Node*> nodesIndex;
 
-		void findCloser(float value, std::unordered_map<int, int>& clines)
+		void findCloser(float value, MaxFindBlock& clines)
 		{
 			Node* fnd = nodesIndex.search(value);
 
 			// float diff = abs(value - closer->edge);
 			for (auto* line : fnd->lines)
 			{
-				auto it = clines.find(line->id);
-				if (it != clines.end())
-				{
-					it->second++;
-				}
-				else
-					clines[line->id] = 1;
+				clines.addLine(line->id);
 			}
 		}
 	};
@@ -347,13 +367,10 @@ public:
 			std::vector<Line*> cross;
 			for (int i = 0; i < found.size(); i++)
 			{
-				for (int j = 0; j < val->lines.size();++j)
+				if (val->linesMark.count(found[i]->id))
 				{
-					if (found[i] == val->lines[j])
-					{
-						cross.push_back(found[i]);
-						break;
-					}
+					cross.push_back(found[i]);
+					break;
 				}
 			}
 
@@ -441,9 +458,9 @@ public:
 	// 	return diff;
 	// }
 
-	int getCloser(const Hash& scase)
+	int getCloser(const Hash& scase, const bool strict = false)
 	{
-		std::unordered_map<int, int> closesLines;
+		MaxFindBlock closesLines;
 		for (int j = 0; j < TLen; ++j)
 		{
 			if (debugDraw)
@@ -454,47 +471,47 @@ public:
 		// auto maxel = std::max_element(closesLines.begin(), closesLines.end(), [](auto a, auto b) {return a.second < b.second; });
 		// return maxel->first;
 
-
-		int minId = closesLines.begin()->first;
-		int minCounter = closesLines.begin()->second;
-		int minVal = 99999;
+		// int minVal = 99999;
 		std::vector<std::pair<int, float>> diffs;
-		for (auto it : closesLines)
+		if (strict || closesLines.maxId == -1)
 		{
-			if (it.second > minCounter)
+			if (closesLines.maxCounter == 0)
 			{
-				minId = it.first;
-				minCounter = it.second;
-				continue;
+				closesLines.maxId = closesLines.lines.begin()->first;
+				closesLines.maxCounter = 1;
 			}
-			else if (it.second == minCounter)
+
+			for (auto it : closesLines.lines)
 			{
-				if (it.first == minId)
-					continue;
-
-				float diff1 = 0;
-				float diff2 = 0;
-				Line* line1 = linesCollector[it.first].get();
-				Line* line2 = linesCollector[minId].get();
-				for (int j = 0; j < TLen; ++j)
+				if (it.second == closesLines.maxCounter)
 				{
-					float a = line1->edge[j] - scase.key[j];
-					diff1 += a * a;
+					int sameByCounterId = it.first;
+					if (sameByCounterId == closesLines.maxId)
+						continue;
 
-					a = line2->edge[j] - scase.key[j];
-					diff2 += a * a;
-				}
-				diff1 = sqrt(diff1);
-				diff2 = sqrt(diff2);
-				if (diff1 < diff2)
-				{
-					minId = it.first;
-					minCounter = it.second;
+					float diff1 = 0;
+					float diff2 = 0;
+					Line* line1 = linesCollector[sameByCounterId].get();
+					Line* line2 = linesCollector[closesLines.maxId].get();
+					for (int j = 0; j < TLen; ++j)
+					{
+						float a = line1->edge[j] - scase.key[j];
+						diff1 += a * a;
+
+						a = line2->edge[j] - scase.key[j];
+						diff2 += a * a;
+					}
+					diff1 = sqrt(diff1);
+					diff2 = sqrt(diff2);
+					if (diff1 < diff2)
+					{
+						closesLines.maxId = sameByCounterId;
+					}
 				}
 			}
 		}
 
-		return minId;
+		return closesLines.maxId;
 	}
 
 	// std::vector<Hash> trainData;

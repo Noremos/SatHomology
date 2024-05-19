@@ -6,16 +6,16 @@ export module DynamicSettings;
 import MLSettings;
 import BackTypes;
 import BackBind;
-
+import RefSettings;
 
 static int MyResizeCallback(ImGuiInputTextCallbackData* data)
 {
 	if (data->EventFlag == ImGuiInputTextFlags_CallbackResize)
 	{
 		BackString* my_str = (BackString*)data->UserData;
-		IM_ASSERT(my_str->c_str() == data->Buf);
+		IM_ASSERT(my_str->data() == data->Buf);
 		my_str->resize(data->BufSize); // NB: On resizing calls, generally data->BufSize == data->BufTextLen + 1
-		data->Buf = (char*)my_str->c_str();
+		data->Buf = (char*)my_str->data();
 	}
 	return 0;
 }
@@ -65,6 +65,38 @@ export void drawDynamicSettings(MLSettings& settings)
 			}
 			break;
 		case OptionValue::sv_path:
+			break;
+		}
+	}
+	ImGui::Separator();
+}
+
+
+export void drawDynamicRefSettings(RefSettings& settings)
+{
+	for (size_t i = 0; i < settings.values.size(); i++)
+	{
+		SettingValue& set = settings.values[i];
+
+		const char* label = set.name.data();
+		switch (set.type)
+		{
+		case SettingValue::sv_bool:
+			ImGui::Checkbox(label, set.data.b);
+			break;
+		case SettingValue::sv_int:
+			ImGui::InputInt(label, set.data.i);
+			break;
+		case SettingValue::sv_float:
+			ImGui::InputFloat(label, set.data.f);
+			break;
+		case SettingValue::sv_double:
+			ImGui::InputDouble(label, set.data.d);
+			break;
+		case SettingValue::sv_str:
+			MyInputText(label, set.data.s);
+			break;
+		case SettingValue::sv_path:
 			break;
 		}
 	}

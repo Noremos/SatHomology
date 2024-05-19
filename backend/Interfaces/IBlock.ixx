@@ -28,7 +28,7 @@ public:
 	}
 
 	virtual void addInput(InOutLayer iol) = 0;
-	virtual void execute() = 0;
+	virtual RetLayers execute(InOutLayer iol) = 0;
 
 	virtual const BackString name() const = 0;
 
@@ -42,34 +42,29 @@ public:
 
 
 // Ml for machine learning
-class BlockFactory
+export class BlockFactory
 {
 private:
-	template<class Interface>
-	using BaseCreator = std::function<std::unique_ptr<Interface>()>;
+	using BaseHolder = std::unique_ptr<IBlock>;
 
 	// using ItemCreator = BaseCreator<IClassItem>;
 	// using HolderCreator = BaseCreator<IClassItemHolder>;
 	// using ClassifierCreator = BaseCreator<IBarClassifier>;
 
 	template<class IF>
-	using FunctionHolder = std::vector<BaseCreator<IF>>;
-	FunctionHolder<IBlock> blockCreators;
+	using FunctionHolder = std::vector<BaseHolder>;
+	FunctionHolder<IBlock> blockHolder;
 	std::vector<BackString> names;
 
-	template<class IF>
-	std::unique_ptr<IF> Create(int id, FunctionHolder<IF>& creators)
+public:
+	IBlock* get(int id)
 	{
-		//auto it = creators.find(id);
-		//if (it != creators.end())
-		//	return it->second();
-		//else
-		//	return nullptr;
-		assert(id >= 0 && id < creators.size());
-		return creators[id]();
+		if (id >= 0 && id < blockHolder.size())
+			return blockHolder[id].get();
+		else
+			return nullptr;
 	}
 
-public:
 	const std::vector<BackString>& getNames() const
 	{
 		return names;
@@ -83,10 +78,10 @@ public:
 	int idCounter = 0;
 
 	template <typename Block>
-	int Register(BackStringView name)
+	int Register()
 	{
-		blockCreators.push_back([]() { return std::make_unique<Block>(); });
-		names.push_back(BackString(name.data(), name.length()));
+		blockHolder.push_back(std::make_unique<Block>());
+		names.push_back(blockHolder.back()->name());
 		return idCounter++;
 	}
 };
@@ -109,15 +104,15 @@ public:
 };
 
 
-struct Dummy
+struct Dummy2
 {
-	static BlockFactory clusterFactory;
+	static BlockFactory blockFactory;
 };
-BlockFactory Dummy::clusterFactory;
+BlockFactory Dummy2::blockFactory;
 
-export BlockFactory& getClusterFactory()
+export BlockFactory& getBlockFactory()
 {
-	return Dummy::clusterFactory;
+	return Dummy2::blockFactory;
 }
 
 export template<class TClass>
@@ -125,9 +120,9 @@ class BlockRegister
 {
 	int id;
 public:
-	BlockRegister(BackStringView name)
+	BlockRegister()
 	{
-		id = Dummy::clusterFactory.Register<TClass>(name);
+		id = Dummy2::blockFactory.Register<TClass>();
 	}
 	int getId() const
 	{

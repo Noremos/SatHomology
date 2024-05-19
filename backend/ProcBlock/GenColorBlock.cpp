@@ -72,6 +72,18 @@ public:
 		ludiff = upper - lower;
 	}
 
+	MinMax()
+	{
+		imgmin = Barscalar(0,0,0);
+		imgmax = Barscalar(255,255,255);
+
+		diffcolor = imgmax - imgmin;
+
+		lower = imgmin.getAvgFloat();
+		upper = imgmax.getAvgFloat();
+		ludiff = upper - lower;
+	}
+
 	float getValue(const Barscalar& val) const
 	{
 		return (val.getAvgFloat() - lower) / ludiff;
@@ -88,6 +100,16 @@ public:
 		return newColor;
 	}
 
+	void restoreImage(BackImage& out, const ProcField& cells)
+	{
+		for (int i = 0; i < cells.length(); i++)
+		{
+			float colorProc = cells.getLiner(i);
+			Barscalar newColor = getColor(colorProc);
+			out.setLiner(i, newColor);
+		}
+	}
+
 private:
 	Barscalar diffcolor;
 	Barscalar imgmin;
@@ -99,30 +121,48 @@ private:
 
 class GenColorBlock : public IBlock
 {
-	int step;
-	float adj;
-	bool debugDraw;
-	bool halfRand;
-	bool skipNotFull;
-	bool useImageAsNoise;
+	int step = 1;
+	// float adj;
+	bool debugDraw = false;
+	bool halfRand = true;
+	bool skipNotFull = true;
+	bool useImageAsNoise = false;
+	int swid = 30, shei = 30;
 
 	Trainer<keylen> train;
+	MinMax globmm;
 public:
 	GenColorBlock()
 	{
 		IBlock::settings = {
-			{"aje", adj},
-			{"step", step},
-			{"DebugDraw", debugDraw},
-			{"HalfRand", halfRand},
-			{"SkipNotFull", skipNotFull},
-			{"UseImageAsNoise", useImageAsNoise}
+			// {"Aje", adj},
+			{"Step", step},
+			{"Size w", swid},
+			{"Size h", shei},
+			{"Debug Draw", debugDraw},
+			{"Half Rand", halfRand},
+			{"Skip Not Full", skipNotFull},
+			{"Use Image As Noise", useImageAsNoise},
 		};
 	}
 
+	virtual const BackString name() const override
+	{
+		return "Generate Color";
+	}
+
+	virtual RetLayers execute(InOutLayer iol) override
+	{
+		if (useImageAsNoise)
+			return generateFromSource(iol);
+		else
+			return generateFromNoise(iol);
+	}
+
+
 	void addInput(InOutLayer iol) override
 	{
-		Project* proj = Project::getProject();
+		// Project* proj = Project::getProject();
 		addToTrain(iol);
 		// proj->saveProject();
 	}
@@ -133,7 +173,6 @@ public:
 		BackImage src;
 
 		getSrcFromInput(iol, src);
-		RasterLayer* srcNoise;
 
 		bc::BarcodeCreator bcc;
 		bc::barstruct constr;// = getConstr(setting);
@@ -180,16 +219,6 @@ public:
 		}
 
 		std::cout << "Done" << std::endl;
-	}
-
-	void restoreImage(BackImage& out, const ProcField& cells, const MinMax& mm)
-	{
-		for (int i = 0; i < cells.length(); i++)
-		{
-			float colorProc = cells.getLiner(i);
-			Barscalar newColor = mm.getColor(colorProc);
-			out.setLiner(i, newColor);
-		}
 	}
 
 	void trainByImage(BackImage& src, const MinMax& mm)
@@ -240,8 +269,12 @@ public:
 		}
 	}
 
-	void generateByImage(ProcField& cells, const MinMax& mm)
+	void diffuse(ProcField& cells, const MinMax& mm)
 	{
+		train.train();
+		if (train.linesCollector.empty())
+			return;
+
 		std::random_device rd;
 		std::mt19937 gen(rd());
 
@@ -288,37 +321,43 @@ public:
 			}
 			cells = newCells;
 		}
+		std::cout << "Done" << std::endl;
 	}
 
-	RetLayers generateFromNoise(InOutLayer iol, BackSize size)
+	RetLayers generateFromNoise(InOutLayer iol)
 	{
+		Project* proj = Project::getProject();
+
+		BackSize size(swid, shei);
 		RetLayers ret;
 
-		BackImage src;
-		RasterLayer* srcNoise = genOutputFromInput(iol, src);
-		ret.push_back(srcNoise);
-		MinMax mm(src);
 
+		// Gen nosie
 		ProcField cells(size);
 		cells.fillRandom();//out.getType());
 
-		// Train
-		trainByImage(src, mm);
-
-		train.train();
+		// Create nosie layer
+		RasterLayer* srcNoise = proj->addLayerData<RasterLayer>();
+		srcNoise->aspect = 1.f;
+		srcNoise->init(size.wid, size.hei, 3);
+		ret.push_back(srcNoise);
+		MinMax mm;
+		mm.restoreImage(srcNoise->mat, cells);
 
 		// Generate
-		generateByImage(cells, mm);
+		diffuse(cells, mm);
 
 		// Output
-		Project* proj = Project::getProject();
-		RasterLayer* rasterSpot = proj->addLayerData<RasterLayer>();
-		rasterSpot->aspect = 1.f;
-		rasterSpot->init(size.wid, size.hei, 3);
-		ret.push_back(rasterSpot);
+		{
+			RasterLayer* rasterSpot = proj->addLayerData<RasterLayer>();
+			rasterSpot->aspect = 1.f;
+			rasterSpot->init(size.wid, size.hei, 3);
+			ret.push_back(rasterSpot);
+
+			mm.restoreImage(rasterSpot->mat, cells);
+		}
 
 		// Restore
-		restoreImage(rasterSpot->mat, cells, mm);
 		return ret;
 	}
 
@@ -327,8 +366,7 @@ public:
 		RetLayers ret;
 		BackImage src;
 
-		RasterLayer* rasterSpot = genOutputFromInput(iol, src);
-		BackImage& out = rasterSpot->mat;
+		RasterLayer* noiseLayer = genOutputFromInput(iol, src);
 
 		bc::BarcodeCreator bcc;
 		bc::barstruct constr;// = getConstr(setting);
@@ -336,9 +374,6 @@ public:
 		MinMax mm(src);
 
 		ProcField cells(src.width(), src.height());
-
-		// Train
-		trainByImage(src, mm);
 
 		{ // Generage noise
 			std::random_device rd;
@@ -358,21 +393,26 @@ public:
 					cells.setLiner(i, val);
 			}
 
-			RasterLayer* noiseLayer = genOutputFromInput(iol, src);
-			BackImage& outNoise = noiseLayer->mat;
-			restoreImage(outNoise, cells, mm);
+			mm.restoreImage(noiseLayer->mat, cells);
 			ret.push_back(noiseLayer);
 		}
 
 
-		train.train();
-
 		// Generate iamge
-		generateByImage(cells, mm);
+		diffuse(cells, mm);
 
 		// Restore
-		ret.push_back(rasterSpot);
-		restoreImage(out, cells, mm);
+		Project* proj = Project::getProject();
+		RasterLayer* rasterSpot = proj->addLayerData<RasterLayer>();
+		{
+			rasterSpot->aspect = 1.f;
+			rasterSpot->init(src.width(), src.height(), 3);
+			ret.push_back(rasterSpot);
+		}
+
+		mm.restoreImage(rasterSpot->mat, cells);
 		return ret;
 	}
 };
+
+BlockRegister<GenColorBlock> regblockGenColor;

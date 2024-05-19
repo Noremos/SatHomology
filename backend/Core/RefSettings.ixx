@@ -24,12 +24,11 @@ export union SettVariant
 	BackPathStr* p;
 };
 
-struct SettingValue
+export struct SettingValue
 {
 	SettVariant data;
 	BackString name;
 
-private:
 	enum SettVariantType
 	{
 		sv_bool,
@@ -134,27 +133,28 @@ public:
 
 export class RefSettings
 {
-	std::vector<SettingValue> settings;
 public:
+	std::vector<SettingValue> values;
+
 	std::function<void(BackJson& json)> extraWrite;
 	std::function<void(const BackJson& json)> extraRead;
 
-	RefSettings(std::initializer_list<SettingValue> l = {}) : settings(l)
+	RefSettings(std::initializer_list<SettingValue> l = {}) : values(l)
 	{ }
 
 	void add(std::initializer_list<SettingValue> l)
 	{
-		settings.insert(settings.end(), l.begin(), l.end());
+		values.insert(values.end(), l.begin(), l.end());
 	}
 
 	void add(const SettingValue& l)
 	{
-		settings.push_back(l);
+		values.push_back(l);
 	}
 
 	void write(BackJson& json) const
 	{
-		for (auto& set : settings)
+		for (auto& set : values)
 		{
 			set.writeData(json);
 		}
@@ -164,7 +164,7 @@ public:
 	}
 	void read(const BackJson& json)
 	{
-		for (auto& set : settings)
+		for (auto& set : values)
 		{
 			set.readData(json);
 		}

@@ -38,6 +38,7 @@ import LayersCore;
 import IGuiLayer;
 import GuiLayers;
 import IAlgorithm;
+import GuiBlock;
 //import Lua;
 
 
@@ -600,12 +601,14 @@ namespace MyApp
 			// {
 			// 	backend.showResultPics(bottomVals.drawPics);
 			// }
-
 			ImGui::SameLine(0, 30);
-			//if (ImGui::Button("Классификатор"))
-			//{
-			//	classerVals.show = true;
-			//}
+			static GuiBlock guiblock;
+
+			if (ImGui::Button("Блоки"))
+			{
+				guiblock.show = true;
+			}
+			guiblock.draw(layersVals);
 
 			// ImGui::Text(bottomVals.debug.c_str());
 
