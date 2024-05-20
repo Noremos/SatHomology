@@ -52,24 +52,32 @@ public:
 			// std::fill_n(c.pos, 8, 0);
 		}
 	}
+
+	void setRandom(size_t i)
+	{
+		static std::random_device rd;
+		static std::mt19937 gen(rd());
+		static std::uniform_real_distribution<> distrib(0, 1.0);
+		field[i] = distrib(gen);
+	}
 };
 
 class MinMax
 {
 public:
-	MinMax(BackImage& src)
+	MinMax(BackImage& src) : MinMax()
 	{
-		src.maxAndMin(imgmin, imgmax);
-		if (imgmin > imgmax)
-		{
-			std::swap(imgmin, imgmax);
-		}
+		// src.maxAndMin(imgmin, imgmax);
+		// if (imgmin > imgmax)
+		// {
+		// 	std::swap(imgmin, imgmax);
+		// }
 
-		diffcolor = imgmax - imgmin;
+		// diffcolor = imgmax - imgmin;
 
-		lower = imgmin.getAvgFloat();
-		upper = imgmax.getAvgFloat();
-		ludiff = upper - lower;
+		// lower = imgmin.getAvgFloat();
+		// upper = imgmax.getAvgFloat();
+		// ludiff = upper - lower;
 	}
 
 	MinMax()
@@ -124,7 +132,7 @@ class GenColorBlock : public IBlock
 	int step = 1;
 	// float adj;
 	bool debugDraw = false;
-	bool halfRand = true;
+	int noiseProcent = 80;
 	bool skipNotFull = true;
 	bool useImageAsNoise = false;
 	int swid = 30, shei = 30;
@@ -140,7 +148,7 @@ public:
 			{"Size w", swid},
 			{"Size h", shei},
 			{"Debug Draw", debugDraw},
-			{"Half Rand", halfRand},
+			{"Noise procent", noiseProcent},
 			{"Skip Not Full", skipNotFull},
 			{"Use Image As Noise", useImageAsNoise},
 		};
@@ -340,9 +348,9 @@ public:
 		RasterLayer* srcNoise = proj->addLayerData<RasterLayer>();
 		srcNoise->aspect = 1.f;
 		srcNoise->init(size.wid, size.hei, 3);
-		ret.push_back(srcNoise);
 		MinMax mm;
 		mm.restoreImage(srcNoise->mat, cells);
+		ret.push_back(srcNoise);
 
 		// Generate
 		diffuse(cells, mm);
@@ -384,11 +392,8 @@ public:
 			for (int i = 0; i < src.length(); i++)
 			{
 				float val = mm.getValue(src.getLiner(i));
-				if (halfRand)
-				{
-					if (distrib(gen) >= 80)
-						cells.setLiner(i, val);
-				}
+				if (distrib(gen) < noiseProcent)
+					cells.setRandom(i);
 				else
 					cells.setLiner(i, val);
 			}
