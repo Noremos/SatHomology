@@ -396,11 +396,11 @@ public:
 			ImGui::BeginGroup();
 
 			// int selHei = getPngSize().y;
-			auto selSize = getPngSize() * 1.3;
-			float off = (selSize.x - getPngSize().x) / 2;
+			// auto selSize = getPngSize() * 1.3;
+			// float off = (selSize.x - getPngSize().x) / 2;
 			//auto& pngs = getClassImagesData().imgs;
 
-			float winWid = ImGui::GetCurrentWindow()->Size.x;
+			// float winWid = ImGui::GetCurrentWindow()->Size.x;
 
 			//if (ImGui::BeginListBox("##ClassDataList", ImVec2(winWid, 0)))
 			//{

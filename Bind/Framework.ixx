@@ -15,7 +15,7 @@ import BackTypes;
 
 //#define GL_RGB                            0x1907
 
-export BackPathStr openImageOrProject()
+export std::vector<BackPathStr> openImagesOrProject()
 {
 	// File open
 	auto f = pfd::open_file("Choose files to read", pfd::path::home(),
@@ -23,14 +23,21 @@ export BackPathStr openImageOrProject()
 		"Images (.png .jpg, .tif)", "*.png *.jpg *.tiff *tif",
 		"Project (.qwr)", "*.qwr",
 		},
-		pfd::opt::none);
+		pfd::opt::multiselect);
 
 	std::cout << "Selected files:";
 	for (auto const& name : f.result())
 		std::cout << " " + name;
 	std::cout << "\n";
 
-	return f.result().size() == 0 ? "" : f.result()[0];
+	std::vector<BackPathStr> output;
+	const auto r = f.result();
+	for (auto &s : r)
+	{
+		output.push_back(s);
+	}
+
+	return output;
 }
 
 export BackPathStr openImage()

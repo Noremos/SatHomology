@@ -168,7 +168,7 @@ int main(int, char** argv)
 	}
 
 	// Cleanup
-	MyApp::Cleanup();
+	MyApp::Close();
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImPlot::DestroyContext();

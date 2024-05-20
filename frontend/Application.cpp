@@ -370,15 +370,15 @@ namespace MyApp
 				ImGui::EndPopup();
 			}
 
-			static RasterFromDiskLayer* layer;
+			static std::queue<RasterFromDiskLayer*> layers;
 
 			ImGui::SameLine();
 			if (ImGui::Button(BU8("Open...")))
 			{
-				BackPathStr path = openImageOrProject();
-				if (!path.empty())
+				std::vector<BackPathStr> paths = openImagesOrProject();
+				for (auto& path : paths)
 				{
-					layer = backend.loadImageOrProject(path);
+					RasterFromDiskLayer* layer = backend.loadImageOrProject(path);
 					if (backend.isLoaded())
 					{
 						if (layer)
@@ -388,13 +388,13 @@ namespace MyApp
 								tbVals.enableProcessBtn = true;
 								auto* guiLayer = layersVals.addLayer<RasterFromDiskGuiLayer>("Loaded", layer);
 								guiLayer->lockAtThis(layersVals.lastRealSize);
-								layer = nullptr;
 							}
 							else
 							{
 								layer->cs.init(DEFAULT_PROJECTION);
 								tbVals.projset.setup(layer->cs);
 								ImGui::OpenPopup(BU8("Coord System"));
+								layers.push(layer);
 							}
 						}
 						else
@@ -413,28 +413,31 @@ namespace MyApp
 			if (ImGui::BeginPopupModal(BU8("Coord System"), NULL, ImGuiWindowFlags_AlwaysAutoResize))
 			{
 				//tbVals.projset.draw();
-
-				ImGui::Separator();
-				//if (ImGui::Button("OK", ImVec2(120, 0)))
+				while (!layers.empty())
 				{
-					tbVals.projset.apply(layer->cs);
-					layer->cache(backend.getMeta());
+					ImGui::Separator();
+					//if (ImGui::Button("OK", ImVec2(120, 0)))
+					{
+						auto* layer = layers.front();
+						tbVals.projset.apply(layer->cs);
+						layer->cache(backend.getMeta());
 
-					auto* guiLayer = layersVals.addLayer<RasterFromDiskGuiLayer>("Loaded", layer);
-					guiLayer->lockAtThis(layersVals.lastRealSize);
-					layer = nullptr;
+						auto* guiLayer = layersVals.addLayer<RasterFromDiskGuiLayer>("Loaded", layer);
+						guiLayer->lockAtThis(layersVals.lastRealSize);
+						layers.pop();
 
-					tbVals.enableProcessBtn = true;
-					ImGui::CloseCurrentPopup();
-				}
+						tbVals.enableProcessBtn = true;
+						ImGui::CloseCurrentPopup();
+					}
 
-				ImGui::SameLine();
-				if (ImGui::Button(BU8("Cancel"), ImVec2(120, 0)))
-				{
-					backend.removeLayer(layer->id);
-					layer = nullptr;
+					ImGui::SameLine();
+					if (ImGui::Button(BU8("Cancel"), ImVec2(120, 0)))
+					{
+						backend.removeLayer(layers.front()->id);
+						layers.pop();
 
-					ImGui::CloseCurrentPopup();
+						ImGui::CloseCurrentPopup();
+					}
 				}
 
 				ImGui::EndPopup();
@@ -1066,10 +1069,10 @@ namespace MyApp
 		//ImGui::ShowDemoWindow();
 	}
 
-	void Cleanup()
+	void Close()
 	{
+		backend.save();
 		AlgFactory::deleteRaster();
 		AlgFactory::deleteVector();
 	}
-
 }
