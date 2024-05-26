@@ -10,8 +10,8 @@ import AlgUtils;
 import BackBind;
 import MatrModule;
 
-constexpr int keylen = 9;
-constexpr static char poss[keylen][2] = { { -1,0 },{ -1,-1 },{ 0,-1 },{ 1,-1 },{ 1,0 },{ 1,1 },{ 0,1 },{ -1,1 }, {0,0}};
+constexpr int keylen = 8;
+constexpr static char poss[9][2] = { { -1,0 },{ -1,-1 },{ 0,-1 },{ 1,-1 },{ 1,0 },{ 1,1 },{ 0,1 },{ -1,1 }, {0,0}};
 
 
 struct ProcField : public Field<float>
