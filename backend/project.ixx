@@ -275,8 +275,8 @@ public:
 	void setProjectPath(const BackPathStr& path, bool recreateMeta = false)
 	{
 		projectPath = std::filesystem::absolute(path).parent_path();
-
 		settupMeta(recreateMeta);
+		prjCreate = true;
 
 		/*		projectPath = (char*)dir.c_str();
 				projectPath.string
