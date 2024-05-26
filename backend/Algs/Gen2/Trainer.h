@@ -9,6 +9,7 @@
 #include <set>
 
 #include "Barcode/PrjBarlib/include/barscalar.h"
+#include "../side/emhash/thirdparty/ska/flat_hash_map.hpp"
 
 /*
 ** Binary Search Tree implementation in C++
@@ -212,6 +213,79 @@ public:
 	{
 		return getNodeChanceValue(root, val);
 	}
+
+	// TValue* end()
+	// {
+	// 	return nullptr;
+	// }
+
+	class Iterator
+	{
+		enum class Move
+		{
+			left,
+			right,
+			back
+		};
+
+		node* cur;
+		std::stack<std::pair<node*, Move>> parents;
+		Move move = Move::left;
+
+	public:
+		Iterator(node* c) : cur(c)
+		{ }
+
+		void operator++()
+		{
+			if (move == Move::left && cur->left)
+			{
+				parents.push({cur, Move::right});
+				cur = cur->left;
+			}
+			else if (move == Move::right && cur->right)
+			{
+				parents.push({cur, Move::back});
+				cur = cur->right;
+			}
+			else if (!parents.empty())
+			{
+				auto [cur, move] = parents.top();
+				parents.pop();
+			}
+			else
+			{
+				cur = nullptr;
+			}
+		}
+
+		bool operator==(const Iterator& rhs) const
+		{
+			return cur == rhs.cur;
+		}
+
+		std::pair<TKey, TValue> operator*() const
+		{
+			assert(cur);
+			return {cur->key, cur->value};
+		}
+
+		std::pair<TKey, TValue> operator->() const
+		{
+			assert(cur);
+			return {cur->key, cur->value};
+		}
+	};
+
+	Iterator begin() const
+	{
+		return Iterator{root};
+	}
+
+	Iterator end() const
+	{
+		return Iterator{nullptr};
+	}
 };
 
 
@@ -301,7 +375,7 @@ public:
 
 	struct MaxFindBlock
 	{
-		std::unordered_map<int, int> lines;
+		ska::flat_hash_map<int, int> lines;
 		int maxCounter = 0;
 		int maxId = -1;
 
