@@ -312,8 +312,8 @@ public:
 			{
 				if (++it->second > maxCounter)
 				{
-					maxCounter = ++it->second;
-					maxId = it->first;
+					maxCounter = it->second;
+					maxId = lineId;
 				}
 			}
 			else
