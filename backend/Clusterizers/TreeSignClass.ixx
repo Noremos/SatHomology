@@ -1,6 +1,7 @@
 module;
 #include "../../side/kde.h"
 #include "Barcode/PrjBarlib/include/barstrucs.h"
+#include "Common.h"
 
 export module TreeSignClass;
 
@@ -9,7 +10,7 @@ import Platform;
 
 import CachedBarcode;
 import MLSettings;
-import BackBind;
+//import BackBind;
 
 using StgnType = float;
 

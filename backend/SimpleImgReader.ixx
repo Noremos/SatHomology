@@ -7,7 +7,7 @@ export module SimpleImgReaderModule;
 
 import Platform;
 // import ImgReader;
-import BackBind;
+//import BackBind;
 import MatrModule;
 
 

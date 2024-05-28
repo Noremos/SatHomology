@@ -6,7 +6,7 @@ module;
 
 export module GuiRasterTools;
 
-import BackBind;
+//import BackBind;
 import GuiWidgets;
 import RasterLayers;
 import GuiLayers;

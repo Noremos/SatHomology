@@ -14,11 +14,12 @@ module;
 #include <cassert>
 #include <vector>
 #include <functional>
+#include "Common.h"
 
 export module IAlgorithm;
 
 import RasterLayers;
-import BackBind;
+//import BackBind;
 import LayersCore;
 import IItemModule;
 import MLSettings;

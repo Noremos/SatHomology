@@ -14,7 +14,7 @@ export module TrainIO;
 import BackTypes;
 import MetadataCoreIO;
 import Platform;
-import BackBind;
+//import BackBind;
 import MatrModule;
 
 //enum ClassCategType

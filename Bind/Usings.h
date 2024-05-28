@@ -15,3 +15,4 @@
 // using buint = unsigned int;
 // using buchar = unsigned char;
 // using bushort = unsigned short;
+#include "Common.h"

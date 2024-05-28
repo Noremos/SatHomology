@@ -5,7 +5,7 @@ module;
 
 export module IBlock;
 
-import BackBind;
+//import BackBind;
 import ProjectSettings;
 import LayersCore;
 import RefSettings;

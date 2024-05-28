@@ -12,7 +12,7 @@ export module IItemModule;
 // import BarScalarModule;
 // import BarTypes;
 import MetadataCoreIO;
-import BackBind;
+//import BackBind;
 import StateBinIO;
 
 export class IClassItem : public IBffIO

@@ -29,7 +29,7 @@ import MetadataCoreIO;
 // import BarScalarModule;
 import RasterLineLayerModule;
 import CoreLoaders;
-import BackBind;
+//import BackBind;
 
 // Todo.
 // 2 режима

@@ -15,7 +15,7 @@ module;
 export module ExteranlReader;
 
 import MLSettings;
-import BackBind;
+//import BackBind;
 
 export BackString get_temp_file_path()
 {

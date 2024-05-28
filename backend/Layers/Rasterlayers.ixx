@@ -6,6 +6,7 @@ module;
 #include <cassert>
 #include "Barcode/PrjBarlib/include/barline.h"
 #include "Barcode/PrjBarlib/modules/tiffreader.h"
+#include "Common.h"
 
 
 export module RasterLayers;
@@ -20,7 +21,7 @@ import MetadataCoreIO;
 import SimpleImgReaderModule;
 import MHashMap;
 import MLSettings;
-import BackBind;
+//import BackBind;
 import MatrModule;
 
 using LayerMetaProvider = MetadataProvider;

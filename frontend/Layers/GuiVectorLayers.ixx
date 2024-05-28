@@ -4,7 +4,7 @@ module;
 #include <numeric>
 
 export module GuiVectorLayers;
-import BackBind;
+//import BackBind;
 import VectorLayers;
 import GuiWidgets;
 import GuiLayers;

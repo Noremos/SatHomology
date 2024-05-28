@@ -4,10 +4,11 @@ module;
 #include <memory>
 #include "Barcode/PrjBarlib/include/barline.h"
 #include "Barcode/PrjBarlib/include/barcodeCreator.h"
+#include "Common.h"
 
 import LayersCore;
 import RasterLayers;
-import BackBind;
+//import BackBind;
 import ProjectModule;
 import MLSettings;
 import MatrModule;

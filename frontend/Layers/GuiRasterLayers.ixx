@@ -4,7 +4,7 @@ module;
 #include <future>
 
 export module GuiRasterLayers;
-import BackBind;
+//import BackBind;
 import IItemModule;
 import GuiWidgets;
 import RasterLayers;

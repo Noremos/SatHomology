@@ -1,4 +1,5 @@
 #include "DiffuseCommon.h"
+#include "Common.h"
 
 #include "Barcode/PrjBarlib/include/barcodeCreator.h"
 
@@ -7,7 +8,7 @@ import IBlock;
 import LayersCore;
 import ProjectModule;
 import AlgUtils;
-import BackBind;
+//import BackBind;
 import MatrModule;
 
 class GenLayersBlock : public IBlock

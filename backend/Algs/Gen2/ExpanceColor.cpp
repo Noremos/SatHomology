@@ -2,10 +2,11 @@
 #include "Barcode/PrjBarlib/include/barcodeCreator.h"
 #include "Barcode/PrjBarlib/include/barscalar.h"
 #include <random>
+#include "Common.h"
 
 import LayersCore;
 import RasterLayers;
-import BackBind;
+//import BackBind;
 import ProjectModule;
 import MLSettings;
 import MatrModule;
@@ -127,7 +128,7 @@ RetLayers exeGenColorPos(InOutLayer iol, const MLSettings& setting)
 			Barscalar maxcol(0, BarType::BYTE8_3);
 			int cee = 0;
 			std::vector<int> toChange;
-			for (buchar j = 0; j < keylen; ++j)
+			for (uchar j = 0; j < keylen; ++j)
 			{
 				int xi = x + poss[j][0];
 				int yi = y + poss[j][1];

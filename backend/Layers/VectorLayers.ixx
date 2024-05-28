@@ -3,11 +3,12 @@ module;
 #include <unordered_set>
 #include <algorithm>
 #include <cassert>
+#include "Common.h"
 
 
 export module VectorLayers;
 //import std.core;
-import BackBind;
+//import BackBind;
 import LayersCore;
 
 import Platform;

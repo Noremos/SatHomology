@@ -7,12 +7,13 @@ module;
 #include <cmath>
 #include <algorithm>
 #include "Barcode/PrjBarlib/include/barstrucs.h"
+#include "Common.h"
 
 export module ConvertItem;
 
 import ClusterInterface;
 import Platform;
-import BackBind;
+//import BackBind;
 import ExteranlReader;
 import CachedBarcode;
 import Sklearn;

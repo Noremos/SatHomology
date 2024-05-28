@@ -7,7 +7,7 @@ module;
 
 export module GuiRasterLineLayer;
 
-import BackBind;
+//import BackBind;
 import IItemModule;
 import GuiWidgets;
 import RasterLayers;

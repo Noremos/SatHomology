@@ -11,11 +11,11 @@ module;
 
 export module GeoprocessorModule;
 
-import BackBind;
+//import BackBind;
 import Platform;
 // import BarTypes;
 import MHashMap;
-import BackBind;
+//import BackBind;
 import MatrModule;
 
 

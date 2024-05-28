@@ -13,7 +13,7 @@ module;
 export module CSBind;
 
 import MetadataCoreIO;
-import BackBind;
+//import BackBind;
 
 #ifdef GEOPROJ
 

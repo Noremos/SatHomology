@@ -4,10 +4,12 @@ module;
 #include <vector>
 #include <iostream>
 #include "Barcode/PrjBarlib/include/barstrucs.h"
+#include "Common.h"
+
 export module SortItem;
 
 
-import BackBind;
+//import BackBind;
 import ClusterInterface;
 import Platform;
 //
