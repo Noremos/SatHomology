@@ -29,6 +29,7 @@ public:
 
 	virtual void addInput(InOutLayer iol) = 0;
 	virtual RetLayers execute(InOutLayer iol) = 0;
+	virtual void clear() = 0;
 
 	virtual const BackString name() const = 0;
 

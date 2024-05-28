@@ -1,7 +1,7 @@
-#include "../Algs/Gen2/GenCommon.h"
-#include "../Algs/Gen2/Trainer.h"
-#include "Barcode/PrjBarlib/include/barcodeCreator.h"
 
+#include "DiffuseCommon.h"
+
+#include "Barcode/PrjBarlib/include/barcodeCreator.h"
 import RasterLayers;
 import IBlock;
 import LayersCore;
@@ -9,123 +9,6 @@ import ProjectModule;
 import AlgUtils;
 import BackBind;
 import MatrModule;
-
-constexpr int keylen = 8;
-constexpr static char poss[9][2] = { { -1,0 },{ -1,-1 },{ 0,-1 },{ 1,-1 },{ 1,0 },{ 1,1 },{ 0,1 },{ -1,1 }, {0,0}};
-
-
-struct ProcField : public Field<float>
-{
-public:
-	ProcField(int w, int h) : Field(w, h)
-	{
-	}
-
-	ProcField(BackSize size) : Field(size.wid, size.hei)
-	{
-	}
-
-	ProcField(const ProcField& other) : Field(other.width, other.height)
-	{
-		std::copy(other.field.begin(), other.field.end(), field.begin());
-	}
-
-	void operator=(ProcField&& other)
-	{
-		field = std::move(other.field);
-	}
-
-	void operator=(const ProcField& other)
-	{
-		field = other.field;
-	}
-
-	void fillRandom()
-	{
-		std::random_device rd;
-		std::mt19937 gen(rd());
-		std::uniform_real_distribution<> distrib(0, 1.0);
-
-		for (auto& c : field)
-		{
-			c = distrib(gen);
-			// std::fill_n(c.pos, 8, 0);
-		}
-	}
-
-	void setRandom(size_t i)
-	{
-		static std::random_device rd;
-		static std::mt19937 gen(rd());
-		static std::uniform_real_distribution<> distrib(0, 1.0);
-		field[i] = distrib(gen);
-	}
-};
-
-class MinMax
-{
-public:
-	MinMax(BackImage& src) : MinMax()
-	{
-		// src.maxAndMin(imgmin, imgmax);
-		// if (imgmin > imgmax)
-		// {
-		// 	std::swap(imgmin, imgmax);
-		// }
-
-		// diffcolor = imgmax - imgmin;
-
-		// lower = imgmin.getAvgFloat();
-		// upper = imgmax.getAvgFloat();
-		// ludiff = upper - lower;
-	}
-
-	MinMax()
-	{
-		imgmin = Barscalar(0,0,0);
-		imgmax = Barscalar(255,255,255);
-
-		diffcolor = imgmax - imgmin;
-
-		lower = imgmin.getAvgFloat();
-		upper = imgmax.getAvgFloat();
-		ludiff = upper - lower;
-	}
-
-	float getValue(const Barscalar& val) const
-	{
-		return (val.getAvgFloat() - lower) / ludiff;
-	}
-
-	Barscalar getColor(float colorProc) const
-	{
-		if (colorProc > 1.0)
-			colorProc = 1.0;
-		else if (colorProc < 0)
-			colorProc = 0;
-
-		Barscalar newColor = imgmin + diffcolor * colorProc;
-		return newColor;
-	}
-
-	void restoreImage(BackImage& out, const ProcField& cells)
-	{
-		for (int i = 0; i < cells.length(); i++)
-		{
-			float colorProc = cells.getLiner(i);
-			Barscalar newColor = getColor(colorProc);
-			out.setLiner(i, newColor);
-		}
-	}
-
-private:
-	Barscalar diffcolor;
-	Barscalar imgmin;
-	Barscalar imgmax;
-	float lower;
-	float upper;
-	float ludiff;
-};
 
 class GenColorBlock : public IBlock
 {
@@ -136,6 +19,7 @@ class GenColorBlock : public IBlock
 	bool skipNotFull = true;
 	bool useImageAsNoise = false;
 	int swid = 30, shei = 30;
+	bool withputBar = false;
 
 	Trainer<keylen> train;
 	MinMax globmm;
@@ -151,15 +35,16 @@ public:
 			{"Noise procent", noiseProcent},
 			{"Skip Not Full", skipNotFull},
 			{"Use Image As Noise", useImageAsNoise},
+			{"Without barcode", withputBar}
 		};
 	}
 
-	virtual const BackString name() const override
+	const BackString name() const override
 	{
 		return "Generate Color";
 	}
 
-	virtual RetLayers execute(InOutLayer iol) override
+	RetLayers execute(InOutLayer iol) override
 	{
 		if (useImageAsNoise)
 			return generateFromSource(iol);
@@ -167,6 +52,10 @@ public:
 			return generateFromNoise(iol);
 	}
 
+	void clear() override
+	{
+		train.clear();
+	}
 
 	void addInput(InOutLayer iol) override
 	{
@@ -187,6 +76,46 @@ public:
 
 		MinMax mm(src);
 		std::cout << "Training..." << std::endl;
+
+		if (withputBar)
+		{
+			std::cout << "Withput bar..." << std::endl;
+
+			for (size_t i = 0; i < src.length(); ++i)
+			{
+				int x = i % src.width();
+				int y = i / src.width();
+
+				Trainer<keylen>::Hash h;
+				h.value = mm.getValue(src.getLiner(i));
+
+				bool skipThis = false;
+				for (buchar j = 0; j < keylen; ++j)
+				{
+					int xi = x + poss[j][0];
+					int yi = y + poss[j][1];
+					if (xi < 0 || xi >= src.width() || yi < 0 || yi >= src.height())
+					{
+						if (skipNotFull)
+						{
+							skipThis = true;
+							break;
+						}
+						h.key[j] = 0;
+						continue;
+					}
+
+					h.key[j] = mm.getValue(src.get(xi, yi));
+				}
+
+				if (!skipThis)
+					train.add(h);
+			}
+			std::cout << "Done" << std::endl;
+			return;
+		}
+
+		std::cout << "With barcode..." << std::endl;
 
 		bc::Baritem* item = (bcc.createBarcode(&src, constr));
 		for (size_t i = 0; i < item->barlines.size(); ++i)
@@ -229,109 +158,6 @@ public:
 		std::cout << "Done" << std::endl;
 	}
 
-	void trainByImage(BackImage& src, const MinMax& mm)
-	{
-		bc::BarcodeCreator bcc;
-		bc::barstruct constr;// = getConstr(setting);
-		std::cout << "Creating barcode..." << std::endl;
-		bc::Baritem* item = (bcc.createBarcode(&src, constr));
-
-		std::cout << "Training..." << std::endl;
-		for (size_t i = 0; i < item->barlines.size(); ++i)
-		{
-			auto line = item->barlines[i];
-			const auto& matr = line->matr;
-
-			for (const auto& pm : matr)
-			{
-				int x = pm.getX();
-				int y = pm.getY();
-
-				auto rscal = src.get(x, y);
-				Trainer<keylen>::Hash h;
-				h.value = mm.getValue(rscal);
-
-				bool skipThis = false;
-				for (buchar j = 0; j < keylen; ++j)
-				{
-					int xi = x + poss[j][0];
-					int yi = y + poss[j][1];
-					if (xi < 0 || xi >= src.width() || yi < 0 || yi >= src.height())
-					{
-						if (skipNotFull)
-						{
-							skipThis = true;
-							break;
-						}
-						h.key[j] = 0;
-						continue;
-					}
-
-					auto srcscalr = src.get(xi, yi);
-					h.key[j] = mm.getValue(srcscalr);
-				}
-
-				if (!skipThis)
-					train.add(h);
-			}
-		}
-	}
-
-	void diffuse(ProcField& cells, const MinMax& mm)
-	{
-		train.train();
-		if (train.linesCollector.empty())
-			return;
-
-		std::random_device rd;
-		std::mt19937 gen(rd());
-
-		ProcField newCells(cells);
-		std::cout << "Generating..." << std::endl;
-		int offset = 0;
-		for (int k = 0; k < step; k++)
-		{
-			std::cout << "Step " << k + 1 << "/" << step << "..." << std::endl;
-			for (int i = offset; i < cells.length(); i++)
-			{
-				int x = i % cells.width;
-				int y = i / cells.width;
-
-				bool skip = false;
-				HashK<keylen> h;
-				for (buchar j = 0; j < keylen; ++j)
-				{
-					int xi = x + poss[j][0];
-					int yi = y + poss[j][1];
-					if (xi < 0 || xi >= cells.width || yi < 0 || yi >= cells.height)
-					{
-						h.key[j] = 0;
-						skip = true;
-						break;
-					}
-
-					float srcscalr = cells.get(xi, yi);
-					h.key[j] = srcscalr;
-				}
-
-				if (skip)
-					continue;
-
-				int id = train.getCloser(h);
-				auto* line = train.linesCollector[id].get();
-				float val = line->value.get(gen);
-
-				float& newCell = newCells.get(x, y);
-				// newCell += abs(newCell - val) * adj;
-				newCell = val;
-				if (debugDraw)
-					std::cout << "id> " << id << "(" << val << "->" << newCell << ")" << std::endl;
-			}
-			cells = newCells;
-		}
-		std::cout << "Done" << std::endl;
-	}
-
 	RetLayers generateFromNoise(InOutLayer iol)
 	{
 		Project* proj = Project::getProject();
@@ -353,7 +179,7 @@ public:
 		ret.push_back(srcNoise);
 
 		// Generate
-		diffuse(cells, mm);
+		diffuse(train, step, cells);
 
 		// Output
 		{
@@ -404,7 +230,7 @@ public:
 
 
 		// Generate iamge
-		diffuse(cells, mm);
+		diffuse(train, step, cells);
 
 		// Restore
 		Project* proj = Project::getProject();

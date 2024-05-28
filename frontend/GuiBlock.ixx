@@ -90,10 +90,16 @@ public:
 			block->addInput(context.iol);
 		}
 
+		ImGui::SameLine();
 		if (ImGui::Button("Выполнить"))
 		{
 			auto ret = block->execute(context.iol);
 			context.setLayers(ret, names[selectedId].data());
+		}
+
+		if (ImGui::Button("Очистить"))
+		{
+			block->clear();
 		}
 		ImGui::End();
 	}

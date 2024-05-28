@@ -168,9 +168,9 @@ class BST {
 		if (val <= 0)
 			return t->key;
 
-		if (t->left)
+		if (t->left && t->left->value > val)
 			return getNodeChanceValue(t->left, val);
-		else if (t->right)
+		else if (t->right && t->left->value > val)
 			return getNodeChanceValue(t->right, val);
 		else
 			return t->key;
@@ -306,11 +306,31 @@ struct GetByChance
 		int* count = values.get(value);
 		if (count != nullptr)
 		{
-			++count;
+			++(*count);
 			return;
 		}
 
 		values.insert(value, 1);
+	}
+};
+
+
+struct GetByChanceFixed
+{
+	// BST<float, int> values;
+	std::vector<float> values;
+	int totalChanges;
+
+	float get(std::mt19937& gen)
+	{
+		std::uniform_int_distribution<> distrib(0, totalChanges - 1);
+		return values[distrib(gen)];
+	}
+
+	void add(float value)
+	{
+		++totalChanges;
+		values.push_back(value);
 	}
 };
 
@@ -344,9 +364,25 @@ public:
 	Trainer(bool debugDraw = false) : debugDraw(debugDraw)
 	{ }
 
+	bool needDebugDraw() const
+	{
+		return debugDraw;
+	}
+
+	void clear()
+	{
+		for (auto &c : columns)
+		{
+			c.nodesIndex.~BST();
+		}
+
+		linesCollector.clear();
+		nodeCollector.clear();
+	}
+
 	struct Line
 	{
-		GetByChance value;
+		GetByChanceFixed value;
 		int id = 0;
 		// int marks = 0;
 		float edge[TLen];
