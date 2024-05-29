@@ -302,7 +302,7 @@ public:
 			if (ImGui::Button("Run"))
 			{
 				collectionToPredict->clear();
-				auto methodId = clsuterMethods.currentValue().methodId;
+				// auto methodId = clsuterMethods.currentValue().methodId;
 				line->collectionToPredict = collectionToPredict.get();
 				line->processCachedBarcode(nullptr);
 				clusterizer->setClassesCount(classesLB.getSize());

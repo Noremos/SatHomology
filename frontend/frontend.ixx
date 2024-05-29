@@ -136,17 +136,7 @@ private:
 private:
 
 private:
-	int imgNumber = -1;
-
 	GuiState state = GuiState::Empty;
-
-	//int curImgInd;
-	//int curDisplayImgInd;
-
-	//std::unique_ptr<bc::Barcontainer> barcode = nullptr;
-
-	bc::ColorType col;
-	int lastIndex = 0;
 };
 
 int GuiBackend::opens = 0;
