@@ -7,6 +7,7 @@ import MLSettings;
 import BackTypes;
 import BackBind;
 import RefSettings;
+import Platform;
 
 static int MyResizeCallback(ImGuiInputTextCallbackData* data)
 {
@@ -97,6 +98,32 @@ export void drawDynamicRefSettings(RefSettings& settings)
 			MyInputText(label, set.data.s);
 			break;
 		case SettingValue::sv_path:
+			if (ImGui::Button(label))
+			{
+				if (set.data.p->isFile)
+				{
+					*set.data.p->path = openFile(set.data.p->filter);
+				}
+				else
+					*set.data.p->path = openFolder();
+			}
+			ImGui::SameLine();
+			ImGui::LabelText("##Path", "%s", set.data.p->path->string().data());
+			break;
+		case SettingValue::sv_enum:
+			if (ImGui::BeginCombo(label, set.data.e->getSelectedName().data()))
+			{
+				for (size_t i = 0; i < set.data.e->enums.size(); i++)
+				{
+					bool is_selected = (*set.data.e->selected == i); // You can store your selection however you want, outside or inside your objects
+					if (ImGui::Selectable(set.data.e->enums[i].name.data(), is_selected))
+						*set.data.e->selected = i;
+
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+				}
+				ImGui::EndCombo();
+			}
 			break;
 		}
 	}
