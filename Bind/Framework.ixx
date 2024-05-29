@@ -59,6 +59,50 @@ export BackPathStr openImage()
 }
 
 
+export BackPathStr openFile(BackStringView filter)
+{
+	// Split filter by the '|' character
+	std::vector<BackString> filters;
+	for (auto& s : filter)
+	{
+		if (s == '|')
+		{
+			filters.push_back("");
+		}
+		else
+		{
+			filters.back() += s;
+		}
+	}
+	if (filters.size() == 0)
+	{
+		filters.push_back("All Files");
+		filters.push_back("*");
+
+	}
+	// File open
+	auto f = pfd::open_file("Choose files to read", pfd::path::home(),
+		filters,
+		pfd::opt::none);
+
+	std::cout << "Selected files:";
+	for (auto const& name : f.result())
+		std::cout << " " + name;
+	std::cout << "\n";
+
+	return f.result().size() == 0 ? "" : f.result()[0];
+}
+
+
+export BackPathStr openFolder()
+{
+	// File open
+	auto f = pfd::select_folder("Choose folder to read", pfd::path::home(),
+		pfd::opt::none);
+
+	return f.result();
+}
+
 export BackPathStr openProject()
 {
 	// File open
