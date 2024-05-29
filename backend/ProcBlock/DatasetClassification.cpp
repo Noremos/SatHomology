@@ -102,7 +102,7 @@ public:
 
 	const BackString name() const override
 	{
-		return "Generate Color";
+		return "Dataset Classification";
 	}
 
 	RetLayers execute(InOutLayer iol) override
