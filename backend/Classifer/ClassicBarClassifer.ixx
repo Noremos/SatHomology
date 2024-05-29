@@ -469,7 +469,7 @@ public:
 	{
 		BettyVal* val = data[i];
 		data[i] = nullptr;
-		return data[i];
+		return val;
 	}
 
 	size_t count() const
