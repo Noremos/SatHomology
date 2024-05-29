@@ -220,7 +220,22 @@ public:
 		auto* item = citem.get();
 		int size = (int)item->barlines.size();
 
-		root = item->getRootNode() ? item->getRootNode()->id : -1;
+		if (item->getRootNode())
+			root = item->getRootNode()->id;
+		else
+		{
+
+			if (item->barlines.size() > 0)
+			{
+				auto lp = item->barlines[0];
+				while (lp->parentId != UINT_MAX)
+				{
+					lp = item->barlines[lp->parentId];
+				}
+				root = lp->id;
+			}
+		}
+
 		for (int i = 0; i < size; i++)
 		{
 			bc::barline* line = item->barlines[i];
@@ -243,7 +258,8 @@ public:
 					id.children[k++] = child;
 				}
 			}
-			callback(&id);
+			if (callback)
+				callback(&id);
 		}
 	}
 
@@ -263,6 +279,11 @@ public:
 	CachedBarline* getRItem(int cid)
 	{
 		return &Base::items[cid];
+	}
+
+	CachedBarline* getRoot()
+	{
+		return &Base::items[root];
 	}
 
 	virtual void saveLoadState(StateBinFile::BinState* state) override
