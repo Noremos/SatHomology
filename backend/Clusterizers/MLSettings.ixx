@@ -292,6 +292,19 @@ public:
 		return nullptr;
 	}
 
+	int* getInt(BackStringView name)
+	{
+		for (auto& value : values)
+		{
+			if (StrEquals(value.name, name))
+			{
+				return &value.data.i;
+			}
+		}
+
+		return nullptr;
+	}
+
 	const double* getDouble(BackStringView name) const
 	{
 		for (auto& value : values)

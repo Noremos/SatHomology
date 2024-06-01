@@ -326,7 +326,7 @@ RetLayers exeGenColor(InOutLayer iol, const MLSettings& setting)
 
 			int id = train.getCloser(h);
 			auto* line = train.linesCollector[id].get();
-			float val = line->value.get(gen);
+			float val = line->chanceValue.getChanceValue(gen);
 
 			float& newCell = newCells.get(x, y);
 			// newCell += abs(newCell - val) * adj;

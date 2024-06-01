@@ -10,19 +10,28 @@ import AlgUtils;
 import BackBind;
 import MatrModule;
 
+
+enum class Source
+{
+	Noise = 0,
+	InputWithBlackBox,
+	InputWithPointNoise,
+	InputWithBoxNoise
+};
+
 class GenColorBlock : public IBlock
 {
 	int step = 1;
 	// float adj;
-	bool debugDraw = false;
-	int noiseProcent = 80;
+	int noiseProcent = 50;
 	bool skipNotFull = true;
-	bool useImageAsNoise = false;
 	int swid = 30, shei = 30;
 	bool withputBar = false;
 
 	Trainer<keylen> train;
 	MinMax globmm;
+	Source inputType;
+
 public:
 	GenColorBlock()
 	{
@@ -31,11 +40,18 @@ public:
 			{"Step", step},
 			{"Size w", swid},
 			{"Size h", shei},
-			{"Debug Draw", debugDraw},
+			{"Debug Draw", train.debugDraw},
 			{"Noise procent", noiseProcent},
 			{"Skip Not Full", skipNotFull},
-			{"Use Image As Noise", useImageAsNoise},
-			{"Without barcode", withputBar}
+			{"Without barcode", withputBar},
+			{"Source", inputType,
+				{
+					{"Noise", Source::Noise},
+					{"Input with black black", Source::InputWithBlackBox},
+					{"Input with point noise", Source::InputWithPointNoise},
+					{"Input with box noise", Source::InputWithBoxNoise}
+				}
+			}
 		};
 	}
 
@@ -46,10 +62,10 @@ public:
 
 	RetLayers execute(InOutLayer iol) override
 	{
-		if (useImageAsNoise)
-			return generateFromSource(iol);
-		else
+		if (inputType == Source::Noise)
 			return generateFromNoise(iol);
+		else
+			return generateFromSource(iol);
 	}
 
 	void clear() override
@@ -215,14 +231,62 @@ public:
 			// std::mt19937 gen(genrd());
 			std::mt19937 gen(rd());
 			std::uniform_int_distribution<> distrib(1, 100);
-			for (int i = 0; i < src.length(); i++)
+
+			if (inputType == Source::InputWithPointNoise)
 			{
-				float val = mm.getValue(src.getLiner(i));
-				if (distrib(gen) < noiseProcent)
-					cells.setRandom(i);
-				else
-					cells.setLiner(i, val);
+				for (int i = 0; i < src.length(); i++)
+				{
+					float val = mm.getValue(src.getLiner(i));
+					if (distrib(gen) < noiseProcent)
+						cells.setRandom(i);
+					else
+						cells.setLiner(i, val);
+				}
 			}
+			else
+			{
+				for (int i = 0; i < src.length(); i++)
+				{
+					float val = mm.getValue(src.getLiner(i));
+					cells.setLiner(i, val);
+				}
+
+				size_t N = 3;
+				for (size_t i = 0; i < N; i++)
+				{
+					// Generate random x,y, withd and height for a rectangle
+					std::random_device rd;
+					std::default_random_engine genrd(0);
+					std::mt19937 gen(rd());
+					std::uniform_int_distribution<> distrib(0, src.width() - 1);
+					int rx = distrib(gen);
+					distrib = std::uniform_int_distribution<>(0, src.height() - 1);
+					int ry = distrib(gen);
+
+					distrib = std::uniform_int_distribution<>(0, 50);
+
+					int rw = distrib(gen);
+					int rh = distrib(gen);
+
+					for (size_t x = rx, total = std::min(rx + rw, src.width()); x < total; x++)
+					{
+						for (size_t y = ry, total = std::min(ry + rh, src.height()); y < total; y++)
+						{
+							if (inputType == Source::InputWithBoxNoise)
+							{
+								cells.setRandom(y * src.width() + x);
+							}
+							else
+							{
+								assert(inputType == Source::InputWithBlackBox);
+								cells.set(x, y, 0);
+							}
+						}
+					} // x for
+
+				} // N for
+
+			} // if
 
 			mm.restoreImage(noiseLayer->mat, cells);
 			ret.push_back(noiseLayer);

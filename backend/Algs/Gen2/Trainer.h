@@ -294,13 +294,13 @@ struct GetByChance
 	BST<float, int> values;
 	int totalChanges;
 
-	float get(std::mt19937& gen)
+	float getChanceValue(std::mt19937& gen)
 	{
 		static std::uniform_int_distribution<> distrib(0, totalChanges);
 		return values.getChanceValue(distrib(gen));
 	}
 
-	void add(float value)
+	void addChanceValue(float value)
 	{
 		++totalChanges;
 		int* count = values.get(value);
@@ -321,13 +321,13 @@ struct GetByChanceFixed
 	std::vector<float> values;
 	int totalChanges;
 
-	float get(std::mt19937& gen)
+	float getChanceValue(std::mt19937& gen)
 	{
 		std::uniform_int_distribution<> distrib(0, totalChanges - 1);
 		return values[distrib(gen)];
 	}
 
-	void add(float value)
+	void addChanceValue(float value)
 	{
 		++totalChanges;
 		values.push_back(value);
@@ -357,9 +357,9 @@ template <int TLen>
 class Trainer
 {
 protected:
-	const bool debugDraw;
 
 public:
+	bool debugDraw;
 	using Hash = HashK<TLen>;
 	Trainer(bool debugDraw = false) : debugDraw(debugDraw)
 	{ }
@@ -382,7 +382,7 @@ public:
 
 	struct Line
 	{
-		GetByChanceFixed value;
+		GetByChanceFixed chanceValue;
 		int id = 0;
 		// int marks = 0;
 		float edge[TLen];
@@ -460,9 +460,9 @@ public:
 		{
 			KeyColumn& column = columns[j];
 			Node** temp = column.nodesIndex.get(scase.key[j]);
-			Node* val = cache[j] = (temp ? *temp : nullptr);
+			Node* edge = cache[j] = (temp ? *temp : nullptr);
 
-			if (val == nullptr)
+			if (edge == nullptr)
 			{
 				same = false;
 				break;
@@ -470,17 +470,16 @@ public:
 
 			if (found.empty())
 			{
-				found = val->lines;
+				found = edge->lines;
 				continue;
 			}
 
 			std::vector<Line*> cross;
 			for (int i = 0; i < found.size(); i++)
 			{
-				if (val->linesMark.count(found[i]->id))
+				if (edge->linesMark.count(found[i]->id))
 				{
 					cross.push_back(found[i]);
-					break;
 				}
 			}
 
@@ -507,14 +506,14 @@ public:
 				std::cout << "-> " << scase.value << std::endl;
 			}
 			assert(found.size() == 1);
-			found[0]->value.add(scase.value);  // TODO: reduce .00001 to 0.1
+			found[0]->chanceValue.addChanceValue(scase.value);  // TODO: reduce .00001 to 0.1
 			return;
 		}
 
 		linesCollector.push_back(std::make_unique<Line>());
 		Line* line = linesCollector.back().get();
 		line->id = linesCollector.size() - 1;
-		line->value.add(scase.value);
+		line->chanceValue.addChanceValue(scase.value);
 
 		if (debugDraw)
 		{

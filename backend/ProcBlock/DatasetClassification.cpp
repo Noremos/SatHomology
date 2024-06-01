@@ -1,5 +1,9 @@
 #include "Barcode/PrjBarlib/include/barcodeCreator.h"
 #include <filesystem>
+#include <unordered_map>
+#include <fstream>
+#include <algorithm>
+
 namespace fs = std::filesystem;
 
 import RasterLayers;
@@ -33,7 +37,7 @@ public:
 	{
 		bc::barstruct constr;
 		constr.createBinaryMasks = true;
-		constr.createGraph = false;
+		constr.createGraph = true;
 		constr.attachMode = bc::AttachMode::morePointsEatLow;
 		//constr.attachMode = bc::AttachMode::closer;
 		constr.returnType = bc::ReturnType::barcode2d;
@@ -87,6 +91,9 @@ void moveMlToRef(MLSettings& in, RefSettings& out)
 class DatasetClassificationBlock : public IBlock
 {
 	BackPathStr filesRoot = "/Users/sam/Edu/datasets/hirise-map-proj-v3/map-proj-v3/";
+	// BackPathStr filesRoot = "/Users/sam/Edu/papers/landscape/set/";
+	int limit = 150;
+	int resolution = 1;
 
 public:
 	BarSettings bar;
@@ -94,7 +101,9 @@ public:
 	DatasetClassificationBlock()
 	{
 		IBlock::settings = {
-			{"Path", filesRoot, false}
+			{"Path", filesRoot, false},
+			// {"Limit", limit},
+			{"Resolution", resolution}
 		};
 		bar.adjustSettings(IBlock::settings);
 		moveMlToRef(cluster.settings, IBlock::settings);
@@ -105,34 +114,97 @@ public:
 		return "Dataset Classification";
 	}
 
-	RetLayers execute(InOutLayer iol) override
+	RetLayers execute(InOutLayer) override
 	{
 		// Enumerate each file in filesRoot
 
-		Project* proj = Project::getProject();
-
-
 		ConvertCollection landscapes;
+		*landscapes.settings.getInt("Resolution") = resolution;
 		bc::BarcodeCreator bcc;
-		std::vector<BackString> paths;
-		for (const auto & entry : fs::directory_iterator(filesRoot))
+		if (limit <= 0)
+			limit = INT_MAX;
+
+
+		std::ifstream res("/Users/sam/Edu/datasets/hirise-map-proj-v3/labels-map-proj-v3.txt");
+		// Read file line by line
+
+		std::unordered_map<std::string, int> sourceFiles;
+		std::string line;
+		int counter[7] = { 0, 0, 0, 0, 0, 0, 0 };
+
+		while (std::getline(res, line))
 		{
-			BackImage main = imread(entry.path());
-			paths.push_back(entry.path());
+			int p = line.find_last_of(' ');
+			std::string name = line.substr(0, p);
+			int id = std::stoi(line.substr(p + 1));
+			counter[id]++;
+			sourceFiles.insert(std::pair(name, id));
+		}
+
+
+		for (size_t i = 0; i < 7; i++)
+		{
+			std::cout << i + 1 << ": " << counter[i] << std::endl;
+		}
+
+		int maxAllowed = *std::min_element(counter, counter + 7);
+		std::fill_n(counter, 7, 0);
+
+
+		std::cout << "Sample " << maxAllowed << " elements from each cluster" << std::endl;
+
+
+		int added = 0;
+		std::vector<BackString> names;
+		for (auto& entry : sourceFiles)
+		{
+			int correctId = entry.second;
+			if (counter[correctId] > maxAllowed)
+				continue;
+
+			BackString path = filesRoot / entry.first;
+			// assert(pathExists(path));
+
+			counter[correctId]++;
+
+			BackImage main = imread(path);
 
 			bc::barstruct constr = bar.getConstr();
 
 			CachedBaritemHolder cache;
 			cache.create(&main, constr, nullptr);
 
-			landscapes.addItem(cache.getRoot());
+			landscapes.addItem(*cache.getRoot());
+
+			names.push_back(entry.first);
+			added++;
+			// if (i++ >= limit)
+			// 	break;
 		}
 		// cluster.perform();
 		cluster.predict(landscapes);
-		for (size_t i = 0; i < paths.size(); i++)
+
+		int correctCount = 0;
+		for (size_t i = 0; i < added; i++)
 		{
-			std::cout << paths[i] << " -> " << cluster.test(i) << std::endl;
+			int prediction = cluster.test(i);
+			int correctId = sourceFiles[names[i]];
+			bool correct = prediction == correctId;
+			if (correct)
+				correctCount++;
+			// std::cout << paths[i] << " -> " << cluster.test(i);
+			// if (correct)
+			// {
+			// 	std::cout << " (correct)";
+			// }
+			// else
+			// {
+			// 	std::cout << " (incorrect, " << prediction << " vs " << correctId << ")";
+			// }
+			// std::cout << std::endl;
 		}
+
+		std::cout << "Correct: " << correctCount << "/" << added << " (" << correctCount * 100.0 / added << "%)" << std::endl;
 
 		return {};
 	}
