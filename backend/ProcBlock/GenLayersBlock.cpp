@@ -18,7 +18,7 @@ class GenLayersBlock : public IBlock
 	int noiseProcent = 80;
 	bool useImageAsNoise = false;
 	int swid = 30, shei = 30;
-	bool withputBar = false;
+
 
 	std::vector<Trainer<keylen>> trains;
 	MinMax globmm;
