@@ -68,7 +68,6 @@ public:
 
 			auto* line = new bc::barline(workingImg->get(c->pixels[0]), workingImg->get(c->pixels.back()));
 			line->initRoot(itm);
-			itm->barlines.push_back(line);
 			for (auto& p : c->pixels)
 			{
 				// line->matr.push_back(bc::barvalue(p, {neck[p.y * iwid + p.x], BarType::FLOAT32_1}));

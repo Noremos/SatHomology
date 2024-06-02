@@ -68,6 +68,7 @@ public:
 
 		bc::BarcodeCreator bcc;
 		bc::barstruct constr;// = getConstr(setting);
+		constr.createGraph = true;
 
 		MinMax mm(src);
 		std::cout << "Training..." << std::endl;
