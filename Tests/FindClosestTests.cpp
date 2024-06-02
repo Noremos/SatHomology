@@ -4,7 +4,7 @@
 #include <vector>
 #include "../backend/Algs/Gen2/Trainer.h"
 
-
+constexpr bool DEBUGY = false;
 TEST(TrainerTest, FindCloser)
 {
 	Trainer<4> train;
@@ -119,16 +119,16 @@ void add(TrainerTese& train, std::initializer_list<float> vals)
 void get(TrainerTese& train, std::initializer_list<float> vals, int id)
 {
 	const HashK<8> h(vals);
-	int optFind = train.getCloser(h);
+	int getFromCloser = train.getCloser(h);
 	// int foundId = train.findRealCloser(h);
 
 	// ASSERT_EQ(foundId, optFind);
-	ASSERT_EQ(id, optFind);
+	ASSERT_EQ(id, getFromCloser);
 }
 
 TEST(TrainerTest, FindCloser2)
 {
-	TrainerTese train(true);
+	TrainerTese train(DEBUGY);
 
 	add(train, {0,0.520325, 1, 1, 1, 1, 1, 0}); // 0
 	add(train, {0, 0.520325, 0.520325, 0.520325, 0, 0, 0.520325, 0.520325}); // 1
@@ -157,9 +157,9 @@ TEST(TrainerTest, FindCloser2)
 	add(train, {1, 0.520325, 1, 0, 0, 0, 0, 0}); // 24
 	// add(train, {0, 0, 0, 0, 1, 1, 0.6, 0}); // 25
 
-	get(train, {0, 0, 0, 0, 0.915217, 0.5, 0.704789, 0}, 10);
+	// get(train, {0, 0, 0, 0, 0.915217, 0.5, 0.704789, 0}, 10);
 	get(train, {0.614422, 0, 0, 1, 0.798862, 0.779357, 0.926643, 0.704789}, 8);
-	get(train, {0.614422, 0, 0, 0, 0.798862, 0.779357, 0.926643, 0.704789}, 12);
+	// get(train, {0.614422, 0, 0, 0, 0.798862, 0.779357, 0.926643, 0.704789}, 12);
 	// get(train, {0.915217, 0, 0, 0, 0.928, 0.561712, 0.779357, 0.926643}, 13);
 	// get(train, {0.798862, 0, 0, 0, 0.638018, 0.55119, 0.561712, 0.779357}, 13);
 	// get(train, {0.928, 0, 0, 0, 0, 0, 0.55119, 0.561712}, 13);

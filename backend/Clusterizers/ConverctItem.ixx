@@ -18,7 +18,6 @@ import CachedBarcode;
 import Sklearn;
 
 
-
 export struct landres
 {
 	//float x; // satrt
@@ -38,8 +37,8 @@ export class ConvertClass : public ICluster
 public:
 	bc::barvector matrix;
 	std::vector<std::vector<landres>> pathset;
-	int AddE = 0;
-	mutable int maxEnd = 0;
+	float AddE = 0;
+	mutable float maxEnd = 0;
 //	bool addMiddleDepth;
 //
 	const bc::barvector& getMatrix() const override
@@ -73,6 +72,7 @@ public:
 		matrix = other.matrix;
 		pathset = other.pathset;
 		AddE = other.AddE;
+		maxEnd = other.maxEnd;
 	}
 
 	explicit ConvertClass(ConvertClass&& other) //: id(id)
@@ -81,6 +81,7 @@ public:
 		matrix = std::move(other.matrix);
 		pathset =   std::move(other.pathset);
 		AddE = other.AddE;
+		maxEnd = other.maxEnd;
 	}
 
 	Barscalar start() const override
@@ -95,35 +96,42 @@ public:
 
 	void getSignature(BackString& line) const override
 	{
+		// SumLyambda
 		std::vector<float> total;
 		total.resize(maxEnd * AddE);
 		std::fill(total.begin(), total.end(), 0);
 
 		float N = pathset.size();
 
+		// For each lyambda
 		for (const auto& landset : pathset)
 		{
-			size_t startX = round(landset[0].x * AddE);
-			float startY = landset[0].y;
 			for (size_t j = 1; j < landset.size(); j++)
 			{
-				const auto& land = landset[j];
+				const auto& prev = landset[j - 1];
+				const auto& cur = landset[j];
+				float startY = prev.y;
 
-				const size_t endX = round(land.x * AddE);
-				float iter = (AddE * (land.y - startY)) / (endX - startX);
+				const size_t startX = round(prev.x * AddE); // Из-за округления может быть равным с предыдущем
+				const size_t endX = round(cur.x * AddE);
+				const float width = endX - startX;
+				const float height = cur.y - prev.y;
+				float iter = height / (width);
+
+				float y = startY;
 				for (size_t i = startX; i < endX; i++)
 				{
-					total[i] += startY;
-					startY += iter;
+					total[i] += y;
+					y += iter;
 				}
-				startX = endX;
 			}
 		}
 
+		line.clear();
 		for (size_t i = 0; i < total.size(); i++)
 		{
 			// total[i] /= N;
-			line += std::to_string(total[i] / N);
+			line += std::to_string(total[i]);
 			line += " ";
 		}
 	}
@@ -220,6 +228,11 @@ public:
 		};
 	}
 
+	void performOnPerform()
+	{
+		Base::settings.setBool("Compare Only Mode", false);
+	}
+
 	bool isCmpMode() const
 	{
 		bool cmpMode = *Base::settings.getBool("Compare Only Mode");
@@ -228,6 +241,9 @@ public:
 
 	void convert(Landscape& landscape, ConvertClass* source = nullptr)
 	{
+		if (source)
+			source->maxEnd = maxEnd;
+
 		landscape.sort();
 		// �� birth
 		for (size_t i = 0; i < landscape.size(); i++)
@@ -236,6 +252,7 @@ public:
 
 			float start = line->getStart();
 			float end = line->getEnd();
+			// std::cout << start << " " << end << std::endl;
 			// float matrstart = start;
 			// float beginning = start;
 			float crossWithPrev = start;
@@ -246,13 +263,17 @@ public:
 			//std::vector<landres> landPath = { {start, 0}, {middle, h} };
 
 			if (source == nullptr)
+			{
 				Base::items.push_back({});
+				Base::items.back().maxEnd = maxEnd;
+			}
 
 			ConvertClass& cl = source ? *source : Base::items.back();
 			cl.id = i;
 			cl.pathset.push_back({});
 			cl.add(start, 0);
 			cl.AddE = *Base::settings.getInt("Resolution");
+
 
 			//cl.matrix = line.matrix;
 
@@ -262,7 +283,7 @@ public:
 			bool curLineCatechd = false;
 			while (true)
 			{
-				// Asc
+				// Asc, началось до текущего, окончилос внутри
 				bool reachedPeak = true;
 				for (int ascI = curI - 1; ascI >= 0; --ascI)
 				{
@@ -276,7 +297,7 @@ public:
 					// 	continue;
 
 					auto& prevLine = landscape.get(ascI);
-					if (prevLine.getStart() < start && between(prevLine.getEnd(), crossWithPrev, end))
+					if (prevLine.getStart() < start && between(prevLine.getEnd(), crossWithPrev, end)) // Между концом предыдущего и концном текущего
 					{
 						float cross = prevLine.getEnd() - start;
 						cl.add(start + cross / 2, cross / 2);
@@ -309,7 +330,7 @@ public:
 					cl.add(middle, len / 2);
 				}
 
-				// dsc
+				// dsc, те, которые начались внутри и окончились снаружи текущего
 				prevId = curI;
 				size_t nextI = static_cast<size_t>(curI) + 1;
 
@@ -325,8 +346,13 @@ public:
 					{
 						break;
 					}
+					if (convertLand.getStart() == start)
+					{
+						// Когда начинается с одинакового значения
+						continue;
+					}
 
-					if (convertLand.getStart() < end && convertLand.getEnd() > end)
+					if (convertLand.getStart() < end && end < convertLand.getEnd())
 					{
 						//float crossGip = end - convertLand->getStart();
 						//float leh = crossGip / 2;
@@ -334,8 +360,8 @@ public:
 						// from line matrstart(cur line start) to convertLand.start
 						// From this line start to the next line start
 
-						float cross = end - convertLand.getStart();
-						crossWithPrev = end;
+						float cross = end - convertLand.getStart(); // длина пересечения
+						crossWithPrev = end; // Смотрим предыдущий, который до окончания текущего
 						cl.add(end - cross / 2, cross / 2);
 
 						// lastMin = end;
@@ -356,7 +382,6 @@ public:
 				}
 				if (prevId == curI)
 				{
-					maxEnd = std::max(maxEnd, end);
 					cl.add(end, 0);
 					break;
 				}
@@ -378,6 +403,7 @@ public:
 	{
 		convertLand.addExpr(line.start().getAvgFloat(), line.end().getAvgFloat());
 		convertLand.lands.back().matrix = line.getMatrix();
+		maxEnd = std::max(maxEnd, line.end().getAvgFloat());
 
 		for (int i = 0; i < line.getChildrenCount(); i++)
 		{
@@ -404,7 +430,26 @@ public:
 		{
 			convertLand.addExpr(line.start().getAvgFloat(), line.end().getAvgFloat());
 			convertLand.lands.back().matrix = line.getMatrix();
+			maxEnd = std::max(maxEnd, line.end().getAvgFloat());
 		}
+	}
+
+	void addAllLines(const CachedBaritemHolder& holder)
+	{
+		bool cmpMode = *Base::settings.getBool("Compare Only Mode");
+		for (size_t i = 0; i < holder.getItemsCount(); i++)
+		{
+			auto& line = holder.getItems()[i];
+			convertLand.addExpr(line.start().getAvgFloat(), line.end().getAvgFloat());
+			maxEnd = std::max(maxEnd, line.end().getAvgFloat());
+		}
+
+		Base::items.push_back({});
+		auto& source = Base::items.back();
+		convert(convertLand, &source);
+
+		convertLand.lands.clear();
+		// source.matrix = line.getMatrix();
 	}
 
 	virtual void perform()

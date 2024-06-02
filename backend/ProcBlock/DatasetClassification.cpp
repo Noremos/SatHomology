@@ -151,8 +151,10 @@ public:
 		std::fill_n(counter, 7, 0);
 
 
+		maxAllowed = 50;
 		std::cout << "Sample " << maxAllowed << " elements from each cluster" << std::endl;
 
+		landscapes.performOnPerform();
 
 		int added = 0;
 		std::vector<BackString> names;
@@ -174,15 +176,18 @@ public:
 			CachedBaritemHolder cache;
 			cache.create(&main, constr, nullptr);
 
-			landscapes.addItem(*cache.getRoot());
+			landscapes.addAllLines(cache);
 
 			names.push_back(entry.first);
 			added++;
 			// if (i++ >= limit)
 			// 	break;
 		}
+
 		// cluster.perform();
 		cluster.predict(landscapes);
+		int results[7] = { 0, 0, 0, 0, 0, 0, 0 };
+		std::fill_n(results, 7, 0);
 
 		int correctCount = 0;
 		for (size_t i = 0; i < added; i++)
@@ -191,7 +196,10 @@ public:
 			int correctId = sourceFiles[names[i]];
 			bool correct = prediction == correctId;
 			if (correct)
+			{
+				results[correctId]++;
 				correctCount++;
+			}
 			// std::cout << paths[i] << " -> " << cluster.test(i);
 			// if (correct)
 			// {
@@ -205,6 +213,10 @@ public:
 		}
 
 		std::cout << "Correct: " << correctCount << "/" << added << " (" << correctCount * 100.0 / added << "%)" << std::endl;
+		for (size_t i = 0; i < 7; i++)
+		{
+			std::cout << i + 1 << ": " << results[i] << "/" << counter[i] << std::endl;
+		}
 
 		return {};
 	}

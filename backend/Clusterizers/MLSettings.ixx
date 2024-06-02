@@ -266,6 +266,17 @@ public:
 		return nullptr;
 	}
 
+	void setBool(BackStringView name, bool val)
+	{
+		for (auto& value : values)
+		{
+			if (StrEquals(value.name, name))
+			{
+				value.data.b = val;
+			}
+		}
+	}
+
 	const BackString* getString(BackStringView name) const
 	{
 		for (auto& value : values)
