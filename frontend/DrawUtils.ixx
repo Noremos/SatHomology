@@ -16,7 +16,7 @@ export module DrawUtils;
 import Platform;
 import MatrModule;
 import CSBind;
-import BackBind;
+//import BackBind;
 // import BarScalarModule;
 
 export void ResizeImage(int& width, int& height, int max_width, int max_height)

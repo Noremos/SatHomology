@@ -1,13 +1,14 @@
 
 #include "DiffuseCommon.h"
-
+#include "Common.h"
 #include "Barcode/PrjBarlib/include/barcodeCreator.h"
+
 import RasterLayers;
 import IBlock;
 import LayersCore;
 import ProjectModule;
 import AlgUtils;
-import BackBind;
+//import BackBind;
 import MatrModule;
 
 

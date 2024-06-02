@@ -18,6 +18,7 @@ set(CMAKE_COLOR_DIAGNOSTICS ON)
 file(GLOB_RECURSE SOURCES
     "frontend/*.cpp"
     "backend/*.cpp"
+    "Bind/*.cpp"
     "side/imgui/backends/imgui_impl_glfw.cpp"
     "side/imgui/backends/imgui_impl_opengl3.cpp"
     "side/barcode/PrjBarlib/source/*.cpp"

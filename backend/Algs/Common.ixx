@@ -1,12 +1,13 @@
 module;
 #include "Barcode/PrjBarlib/include/barline.h"
+#include "Common.h"
 
 export module AlgUtils;
 
 import MLSettings;
 import RasterLayers;
 import ProjectModule;
-import BackBind;
+//import BackBind;
 import MatrModule;
 import LayersCore;
 

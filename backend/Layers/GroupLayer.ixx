@@ -3,12 +3,13 @@ module;
 #include <functional>
 #include <memory>
 #include <list>
+#include "Common.h"
 
 #include <cassert>
 
 export module GroupLayer;
 
-import BackBind;
+//import BackBind;
 import MetadataCoreIO;
 import LayersCore;
 

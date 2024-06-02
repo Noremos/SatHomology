@@ -17,7 +17,7 @@ module;
 export module Obejct3DModule;
 // import ImgReader;
 import BackTypes;
-import BackBind;
+//import BackBind;
 
 
 typedef unsigned char buchar;

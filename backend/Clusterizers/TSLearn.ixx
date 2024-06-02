@@ -4,13 +4,14 @@ module;
 #include <vector>
 #include <cassert>
 #include <iostream>
+#include "Common.h"
 
 export module TSLearn;
 
 import ClusterInterface;
 import TreeSignClass;
 import ExteranlReader;
-import BackBind;
+//import BackBind;
 
 export class TSlearnClassifier : public IBarClusterizer
 {

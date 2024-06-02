@@ -10,7 +10,7 @@ module;
 export module StatChart;
 
 import BackTypes;
-import BackBind;
+//import BackBind;
 import MatrModule;
 
 import LayersCore;

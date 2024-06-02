@@ -10,7 +10,7 @@ export module CachedBarcode;
 import IItemModule;
 import MHashMap;
 // import BarcodeModule;
-import BackBind;
+//import BackBind;
 import StateBinIO;
 
 export class CachedBaritemHolder;

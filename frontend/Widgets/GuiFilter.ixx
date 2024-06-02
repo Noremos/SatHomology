@@ -2,7 +2,7 @@ module;
 #include "../DrawCommon.h"
 
 export module GuiFilter;
-import BackBind;
+//import BackBind;
 import IItemModule;
 import GuiWidgets;
 

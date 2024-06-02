@@ -8,6 +8,7 @@ module;
 #include <utility>
 #include <mutex>
 #include "Barcode/PrjBarlib/include/barstrucs.h"
+#include "Common.h"
 
 #ifdef __linux__
 #include <pthread.h>
@@ -19,7 +20,7 @@ module;
 
 export module RasterLineLayerModule;
 
-import BackBind;
+//import BackBind;
 import MatrModule;
 import LayersCore;
 import RasterLayers;

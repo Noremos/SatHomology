@@ -1,40 +1,52 @@
+// #define USE_MODULE
+
+#ifdef USE_MODULE
+#define MEXPORT export
 module;
+#else
+#pragma once
+#define MEXPORT
+#endif
 
 #include <filesystem>
 #include <string>
 #include <string_view>
 //#include <random>
 #include <fstream>
+
+#ifdef USE_MODULE
 export module BackBind;
+#endif
 
-export using BackStringView = std::string_view;
-export using BackString = std::string;
-export using BackDirStr = std::filesystem::path;
-export using BackPathStr = std::filesystem::path;
-export using BackFileReader = std::ifstream;
-export using BackFileWriter = std::ofstream;
+MEXPORT using BackStringView = std::string_view;
+MEXPORT using BackString = std::string;
+MEXPORT using BackDirStr = std::filesystem::path;
+MEXPORT using BackPathStr = std::filesystem::path;
+MEXPORT using BackFileReader = std::ifstream;
+MEXPORT using BackFileWriter = std::ofstream;
 
-export using buint = unsigned int;
-export using buchar = unsigned char;
-export using bushort = unsigned short;
+MEXPORT using buint = unsigned int;
+MEXPORT using buchar = unsigned char;
+MEXPORT using bushort = unsigned short;
 
-
-export BackString operator+(const BackString& left, BackStringView right)
+#ifdef USE_MODULE
+MEXPORT BackString operator+(const BackString& left, BackStringView right)
 {
 	return left + right;
 }
 
-export BackString operator+(const BackString& left, const BackString& right)
+MEXPORT BackString operator+(const BackString& left, const BackString& right)
 {
 	return left + right;
 }
+#endif
 
-export bool StrEquals(const BackString& str, BackStringView view)
+MEXPORT bool StrEquals(const BackString& str, BackStringView view)
 {
 	return str == view;
 }
 
-export void WriteFile(const BackPathStr& fileName, const BackString& content)
+MEXPORT void WriteFile(const BackPathStr& fileName, const BackString& content)
 {
 	BackFileWriter w;
 	w.open(fileName, std::ios::out | std::ios::trunc);
@@ -42,10 +54,10 @@ export void WriteFile(const BackPathStr& fileName, const BackString& content)
 	w.close();
 }
 
-export constexpr int DEFAULT_PROJECTION = 4326;
-export constexpr const char* const DEFAULT_PROJECTION_STR = "4326";
+MEXPORT constexpr int DEFAULT_PROJECTION = 4326;
+MEXPORT constexpr const char* const DEFAULT_PROJECTION_STR = "4326";
 
-export struct BackSize
+MEXPORT struct BackSize
 {
 	int wid, hei;
 	BackSize(int _wid, int _hei)
@@ -56,7 +68,7 @@ export struct BackSize
 };
 
 
-export struct BackColor
+MEXPORT struct BackColor
 {
 	buchar r = 0;
 	buchar g = 0;
@@ -79,7 +91,7 @@ export struct BackColor
 	}
 };
 
-export template<typename T>
+MEXPORT template<typename T>
 struct TPoint
 {
 	T x, y;
@@ -172,10 +184,10 @@ struct TPoint
 	}
 };
 
-export using BackPixelPoint = TPoint<int>;
-export using BackPoint = TPoint<double>;
+MEXPORT using BackPixelPoint = TPoint<int>;
+MEXPORT using BackPoint = TPoint<double>;
 
-export class Variables
+MEXPORT class Variables
 {
 public:
 	static BackPathStr rootPath;
@@ -200,12 +212,8 @@ public:
 	}
 };
 
-BackPathStr Variables::rootPath;
-BackPathStr Variables::metaPath;
-BackString Variables::prodDbPath;
 
-
-export struct toStdStr
+MEXPORT struct toStdStr
 {
 	using STRTYPE = std::string;
 
@@ -217,7 +225,7 @@ export struct toStdStr
 };
 
 
-export struct TileIterator
+MEXPORT struct TileIterator
 {
 	buint start;
 	buint tileSize;
@@ -281,7 +289,7 @@ export struct TileIterator
 	}
 };
 
-export int strToInt(const BackString& string, bool& ready)
+MEXPORT int strToInt(const BackString& string, bool& ready)
 {
 	char* endptr;
 	int numI = std::strtol(string.c_str(), &endptr, 10);
@@ -289,25 +297,25 @@ export int strToInt(const BackString& string, bool& ready)
 
 	return numI;
 }
-export int strToInt(const BackString& string)
+MEXPORT int strToInt(const BackString& string)
 {
 	char* endptr;
 	return std::strtol(string.c_str(), &endptr, 10);
 }
 
-export template<class T>
+MEXPORT template<class T>
 BackString intToStr(T value)
 {
 	return std::to_string(value);
 }
 
 
-export bool pathExists(const BackPathStr& filePath)
+MEXPORT bool pathExists(const BackPathStr& filePath)
 {
 	return std::filesystem::exists(filePath);
 }
 
-export template<class StrT>
+MEXPORT template<class StrT>
 bool mkdir(const StrT& path)
 {
 	BackDirStr filePath(path);
@@ -315,7 +323,7 @@ bool mkdir(const StrT& path)
 }
 
 
-export void mkDirIfNotExists(const BackDirStr& dirPath)
+MEXPORT void mkDirIfNotExists(const BackDirStr& dirPath)
 {
 	if (!pathExists(dirPath))
 	{
@@ -323,12 +331,12 @@ export void mkDirIfNotExists(const BackDirStr& dirPath)
 	}
 }
 
-export void dropDir(const BackDirStr& dirPath)
+MEXPORT void dropDir(const BackDirStr& dirPath)
 {
 	std::filesystem::remove_all(dirPath);
 }
 
-export void dropDirIfExists(const BackDirStr& dirPath)
+MEXPORT void dropDirIfExists(const BackDirStr& dirPath)
 {
 	if (pathExists(dirPath))
 	{
@@ -337,7 +345,7 @@ export void dropDirIfExists(const BackDirStr& dirPath)
 }
 
 
-export bool endsWith(const BackString& string, const BackString endl)
+MEXPORT bool endsWith(const BackString& string, const BackString endl)
 {
 	signed long long pos = string.length() - endl.length();
 	if (pos <= 0)

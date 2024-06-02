@@ -5,13 +5,14 @@ module;
 #include <vector>
 #include <assert.h>
 #include "Barcode/PrjBarlib/include/barcodeCreator.h"
+#include "Common.h"
 
 
 export module Classifiers;
 
 // import BarcodeModule;
 import StateBinIO;
-import BackBind;
+//import BackBind;
 import IItemModule;
 import ClassifierInterface;
 

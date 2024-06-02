@@ -2,9 +2,10 @@
 
 #include "../Algs/Gen2/GenCommon.h"
 #include "../Algs/Gen2/Trainer.h"
+#include "Common.h"
 
 import MatrModule;
-import BackBind;
+//import BackBind;
 
 constexpr int keylen = 8;
 constexpr static char poss[9][2] = { { -1,0 },{ -1,-1 },{ 0,-1 },{ 1,-1 },{ 1,0 },{ 1,1 },{ 0,1 },{ -1,1 }, {0,0}};

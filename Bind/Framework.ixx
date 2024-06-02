@@ -9,7 +9,7 @@ module;
 #include "Usings.h"
 export module Platform;
 
-import BackBind;
+//import BackBind;
 import BackTypes;
 
 

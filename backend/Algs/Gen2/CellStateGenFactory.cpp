@@ -9,10 +9,11 @@
 #include "Barcode/PrjBarlib/include/barscalar.h"
 #include <random>
 #include "GenCommon.h"
+#include "Common.h"
 
 import LayersCore;
 import RasterLayers;
-import BackBind;
+//import BackBind;
 import ProjectModule;
 import MLSettings;
 import MatrModule;
@@ -113,7 +114,7 @@ RetLayers exeGenColor3(InOutLayer iol, const MLSettings& setting)
 			int y = i / cells.width;
 
 			BackImage img(3, 3, 1, BarType::FLOAT32_1);
-			for (buchar j = 0; j < keylen; ++j)
+			for (uchar j = 0; j < keylen; ++j)
 			{
 				int xi = x + poss[j][0];
 				int yi = y + poss[j][1];

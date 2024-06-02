@@ -6,7 +6,7 @@
 
 import LayersCore;
 import RasterLayers;
-import BackBind;
+//import BackBind;
 import ProjectModule;
 import MLSettings;
 import MatrModule;
@@ -112,7 +112,7 @@ private:
 			std::vector<Chanse> chanses;
 			float totlaChanse = 0;
 
-			for (buchar j = 0; j < 8; ++j)
+			for (uchar j = 0; j < 8; ++j)
 			{
 				const bc::point IcurPoint2(curpix + poss[j]);
 				if (IS_OUT_OF_REG(IcurPoint2.x, IcurPoint2.y))
