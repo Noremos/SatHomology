@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <fstream>
 #include <algorithm>
+#include "Common.h"
 
 namespace fs = std::filesystem;
 
@@ -11,7 +12,6 @@ import IBlock;
 import LayersCore;
 import ProjectModule;
 import AlgUtils;
-import BackBind;
 import MatrModule;
 import ConvertItem;
 import CachedBarcode;

@@ -41,12 +41,12 @@ MEXPORT BackString operator+(const BackString& left, const BackString& right)
 }
 #endif
 
-MEXPORT bool StrEquals(const BackString& str, BackStringView view)
+MEXPORT inline bool StrEquals(const BackString& str, BackStringView view)
 {
 	return str == view;
 }
 
-MEXPORT void WriteFile(const BackPathStr& fileName, const BackString& content)
+MEXPORT inline void WriteFile(const BackPathStr& fileName, const BackString& content)
 {
 	BackFileWriter w;
 	w.open(fileName, std::ios::out | std::ios::trunc);
@@ -289,7 +289,7 @@ MEXPORT struct TileIterator
 	}
 };
 
-MEXPORT int strToInt(const BackString& string, bool& ready)
+MEXPORT inline int strToInt(const BackString& string, bool& ready)
 {
 	char* endptr;
 	int numI = std::strtol(string.c_str(), &endptr, 10);
@@ -297,33 +297,32 @@ MEXPORT int strToInt(const BackString& string, bool& ready)
 
 	return numI;
 }
-MEXPORT int strToInt(const BackString& string)
+MEXPORT inline int strToInt(const BackString& string)
 {
 	char* endptr;
 	return std::strtol(string.c_str(), &endptr, 10);
 }
 
 MEXPORT template<class T>
-BackString intToStr(T value)
+inline BackString intToStr(T value)
 {
 	return std::to_string(value);
 }
 
-
-MEXPORT bool pathExists(const BackPathStr& filePath)
+MEXPORT inline bool pathExists(const BackPathStr& filePath)
 {
 	return std::filesystem::exists(filePath);
 }
 
 MEXPORT template<class StrT>
-bool mkdir(const StrT& path)
+inline bool mkdir(const StrT& path)
 {
 	BackDirStr filePath(path);
 	return std::filesystem::create_directory(filePath);
 }
 
 
-MEXPORT void mkDirIfNotExists(const BackDirStr& dirPath)
+MEXPORT inline void mkDirIfNotExists(const BackDirStr& dirPath)
 {
 	if (!pathExists(dirPath))
 	{
@@ -331,12 +330,12 @@ MEXPORT void mkDirIfNotExists(const BackDirStr& dirPath)
 	}
 }
 
-MEXPORT void dropDir(const BackDirStr& dirPath)
+MEXPORT inline void dropDir(const BackDirStr& dirPath)
 {
 	std::filesystem::remove_all(dirPath);
 }
 
-MEXPORT void dropDirIfExists(const BackDirStr& dirPath)
+MEXPORT inline void dropDirIfExists(const BackDirStr& dirPath)
 {
 	if (pathExists(dirPath))
 	{
@@ -345,7 +344,7 @@ MEXPORT void dropDirIfExists(const BackDirStr& dirPath)
 }
 
 
-MEXPORT bool endsWith(const BackString& string, const BackString endl)
+MEXPORT inline bool endsWith(const BackString& string, const BackString endl)
 {
 	signed long long pos = string.length() - endl.length();
 	if (pos <= 0)
