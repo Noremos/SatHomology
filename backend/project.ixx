@@ -14,15 +14,17 @@ module;
 //#include "../side/Barcode/PrjBarlib/include/CellEater.h"
 
 
+#include "CSBind.h"
+#include "ProjectSettings.h"
 export module ProjectModule;
 
 import Platform;
 
 import LayersCore;
 // import JsonCore;
-import MetadataCoreIO;
-import CSBind;
-import ProjectSettings;
+// import MetadataCoreIO;
+// import CSBind;
+// import ProjectSettings;
 //import BackBind;
 
 

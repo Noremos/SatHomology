@@ -2,11 +2,12 @@ module;
 #include <algorithm>
 #include "DrawCommon.h"
 
+#include "../backend/MatrImg.h"
 export module GuiClassifierModule;
 
 import BackTypes;
 //import BackBind;
-import MatrModule;
+// import MatrModule;
 
 import Platform;
 import GuiWidgets;

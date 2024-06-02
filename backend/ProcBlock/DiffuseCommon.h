@@ -3,8 +3,9 @@
 #include "../Algs/Gen2/GenCommon.h"
 #include "../Algs/Gen2/Trainer.h"
 #include "Common.h"
+#include "../MatrImg.h"
 
-import MatrModule;
+// import MatrModule;
 //import BackBind;
 
 constexpr int keylen = 8;

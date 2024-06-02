@@ -11,11 +11,14 @@ module;
 
 #include "Barcode/PrjBarlib/include/barscalar.h"
 
+
+#include "../backend/CSBind.h"
+#include "../backend/MatrImg.h"
 export module DrawUtils;
 
 import Platform;
-import MatrModule;
-import CSBind;
+// import MatrModule;
+// import CSBind;
 //import BackBind;
 // import BarScalarModule;
 

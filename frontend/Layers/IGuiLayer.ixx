@@ -5,13 +5,14 @@ module;
 #include <algorithm>
 #include "Usings.h"
 
+#include "../../backend/CSBind.h"
 export module IGuiLayer;
 
 import LayersCore;
 import RasterLayers;
 import ProjectModule;
 // import BarcodeModule
-import CSBind;
+// import CSBind;
 //import BackBind;
 //import LuaStates;
 

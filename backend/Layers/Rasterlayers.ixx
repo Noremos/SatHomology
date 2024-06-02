@@ -9,20 +9,22 @@ module;
 #include "Common.h"
 
 
+#include "../MetadataIO.h"
+#include "../MatrImg.h"
 export module RasterLayers;
 import LayersCore;
 
 // import BarTypes;
 import Platform;
 
-import MetadataCoreIO;
+// import MetadataCoreIO;
 
 // import ImgReader;
 import SimpleImgReaderModule;
 import MHashMap;
 import MLSettings;
 //import BackBind;
-import MatrModule;
+// import MatrModule;
 
 using LayerMetaProvider = MetadataProvider;
 

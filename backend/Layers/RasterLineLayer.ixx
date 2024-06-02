@@ -18,16 +18,19 @@ module;
 #include <windows.h>
 #endif
 
+#include "../MetadataIO.h"
+#include "../ProjectSettings.h"
+#include "../MatrImg.h"
 export module RasterLineLayerModule;
 
 //import BackBind;
-import MatrModule;
+// import MatrModule;
 import LayersCore;
 import RasterLayers;
-import MetadataCoreIO;
+// import MetadataCoreIO;
 import IItemModule;
 import GeoprocessorModule;
-import ProjectSettings;
+// import ProjectSettings;
 import CachedBarcode;
 import ClusterInterface;
 

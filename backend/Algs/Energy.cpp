@@ -5,12 +5,15 @@
 #include "Barcode/PrjBarlib/include/barcodeCreator.h"
 #include "Usings.h"
 
+
+#include "../MatrImg.h"
+
 import LayersCore;
 import RasterLayers;
 //import BackBind;
 import ProjectModule;
 import MLSettings;
-import MatrModule;
+// import MatrModule;
 import IAlgorithm;
 import AlgUtils;
 import SimpleBar;

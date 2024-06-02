@@ -9,13 +9,15 @@
 #include "Usings.h"
 #include "../Bind/Json.h"
 
+#include "MetadataIO.h"
+#include "MatrImg.h"
 export module TrainIO;
 
 import BackTypes;
-import MetadataCoreIO;
+// import MetadataCoreIO;
 import Platform;
 //import BackBind;
-import MatrModule;
+// import MatrModule;
 
 //enum ClassCategType
 //{

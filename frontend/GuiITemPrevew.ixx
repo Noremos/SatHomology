@@ -4,17 +4,19 @@ module;
 #include "../side/implot/implot.h"
 #include <vector>
 
+#include "../backend/CSBind.h"
+#include "../../backend/ProjectSettings.h"
 export module GuiITemPrevew;
 import LayersCore;
 import RasterLineLayerModule;
 import ProjectModule;
-import ProjectSettings;
+// import ProjectSettings;
 import GuiLayers;
 import GuiWidgets;
 import IItemModule;
 import ClusterInterface;
 import CachedBarcode;
-import CSBind;
+// import CSBind;
 
 import IGuiLayer;
 

@@ -3,11 +3,12 @@ module;
 #include "DrawCommon.h"
 #include "../backend/Interfaces/IBlock.h"
 
+#include "../backend/MatrImg.h"
 export module GuiBlock;
 
 import BackTypes;
 //import BackBind;
-import MatrModule;
+// import MatrModule;
 
 import Platform;
 import GuiWidgets;

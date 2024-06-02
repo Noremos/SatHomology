@@ -3,13 +3,14 @@
 #include "Barcode/PrjBarlib/include/barcodeCreator.h"
 #include "../Interfaces/IBlock.h"
 
+#include "../MatrImg.h"
 import RasterLayers;
 // import IBlock;
 import LayersCore;
 import ProjectModule;
 import AlgUtils;
 //import BackBind;
-import MatrModule;
+// import MatrModule;
 
 
 enum class Source

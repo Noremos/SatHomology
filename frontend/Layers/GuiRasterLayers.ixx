@@ -3,6 +3,7 @@ module;
 #include <memory>
 #include <future>
 
+#include "../../backend/MatrImg.h"
 export module GuiRasterLayers;
 //import BackBind;
 import IItemModule;

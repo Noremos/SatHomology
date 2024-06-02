@@ -12,6 +12,8 @@ module;
 #include "Barcode/PrjBarlib/include/barline.h"
 #include "Barcode/PrjBarlib/include/barcodeCreator.h"
 
+
+#include "../backend/CSBind.h"
 export module FrontendBind;
 
 import ProjectModule;
@@ -22,9 +24,9 @@ import RasterLayers;
 import GuiWidgets;
 import IItemModule;
 import VectorLayers;
-import CSBind;
+// import CSBind;
 import LayersCore;
-import MetadataCoreIO;
+// import MetadataCoreIO;
 // import BarTypes;
 // import BarScalarModule;
 import RasterLineLayerModule;

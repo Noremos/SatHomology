@@ -5,6 +5,9 @@
 #include "Barcode/PrjBarlib/include/barcodeCreator.h"
 #include "Usings.h"
 
+
+#include "../MatrImg.h"
+
 import LayersCore;
 import ProjectModule;
 import RasterLineLayerModule;
@@ -17,7 +20,7 @@ import GeoprocessorModule;
 
 import IItemModule;
 //import BackBind;
-import MatrModule;
+// import MatrModule;
 import IAlgorithm;
 import MLSettings;
 import AlgUtils;

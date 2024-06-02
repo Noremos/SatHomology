@@ -5,6 +5,9 @@ module;
 #include "Usings.h"
 #include "Barcode/PrjBarlib/include/barstrucs.h"
 
+#include "../CSBind.h"
+
+#include "../MatrImg.h"
 export module ClassifierCore;
 import IItemModule; //
 import Classifiers;
@@ -14,9 +17,9 @@ import GeoprocessorModule;
 import VectorLayers;
 import RasterLineLayerModule;
 import ProjectModule; // BackImage
-import CSBind; // csbind
+// import CSBind; // csbind
 //import BackBind;
-import MatrModule;
+// import MatrModule;
 
 // BarClassses
 import ClassifierInterface;

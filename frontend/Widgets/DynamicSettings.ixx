@@ -1,12 +1,13 @@
 module;
 #include "../DrawCommon.h"
 
+#include "../../backend/Core/RefSettings.h"
 export module DynamicSettings;
 
 import MLSettings;
 import BackTypes;
 //import BackBind;
-import RefSettings;
+// import RefSettings;
 import Platform;
 
 static int MyResizeCallback(ImGuiInputTextCallbackData* data)

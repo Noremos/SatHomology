@@ -6,10 +6,12 @@ module;
 #include <limits>
 #include "Barcode/PrjBarlib/include/barstrucs.h"
 
+
+#include "../backend/CSBind.h"
 export module GuiWidgets;
 
 //import BackBind;
-import CSBind;
+// import CSBind;
 import ProjectModule;
 import DrawUtils;
 

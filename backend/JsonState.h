@@ -1,16 +1,26 @@
+#ifdef USE_MODULE
+#define MEXPORT export
 module;
+#else
+#pragma once
+#define MEXPORT
+#endif
+
+
 #include "../Bind/Json.h"
 
-export module JsonState:interface_part;
+#ifdef USE_MODULE
+export module JsonState;
+#endif
 
 
 //import BackBind;
 
-export class JsonObjectIOState;
+MEXPORT class JsonObjectIOState;
 
-export class JsonArrayIOState;
-export class JsonArrayIOStateReader;
-export class JsonArrayIOStateWriter;
+MEXPORT class JsonArrayIOState;
+MEXPORT class JsonArrayIOStateReader;
+MEXPORT class JsonArrayIOStateWriter;
 
 class JsonObjectIOState
 {
@@ -329,5 +339,5 @@ public:
 };
 
 
-export using JsonObjectIOStateReader = TJsonObjectIOStateReader<JsonArrayIOStateReader>;
-export using JsonObjectIOStateWriter = TJsonObjectIOStateWriter<JsonArrayIOStateWriter>;
+MEXPORT using JsonObjectIOStateReader = TJsonObjectIOStateReader<JsonArrayIOStateReader>;
+MEXPORT using JsonObjectIOStateWriter = TJsonObjectIOStateWriter<JsonArrayIOStateWriter>;

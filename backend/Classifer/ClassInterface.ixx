@@ -6,6 +6,8 @@ module;
 #include "Barcode/PrjBarlib/include/barcodeCreator.h"
 #include "Usings.h"
 
+#include "../MetadataIO.h"
+#include "../MatrImg.h"
 export module ClassifierInterface;
 // import std.core;
 
@@ -14,12 +16,11 @@ import Platform;
 // import BarcodeModule;
 
 import BackTypes;
-import MetadataCoreIO;
 import TrainIO;
 import MHashMap;
 import IItemModule;
 //import BackBind;
-import MatrModule;
+// import MatrModule;
 
 
 // Classifer

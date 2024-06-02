@@ -7,11 +7,12 @@ module;
 #include "Barcode/PrjBarlib/include/barstrucs.h"
 #include "Barcode/PrjBarlib/include/barline.h"
 #include "DrawCommon.h"
+#include "../backend/MatrImg.h"
 export module StatChart;
 
 import BackTypes;
 //import BackBind;
-import MatrModule;
+// import MatrModule;
 
 import LayersCore;
 import GuiWidgets;

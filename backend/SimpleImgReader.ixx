@@ -3,12 +3,13 @@ module;
 #include "Barcode/PrjBarlib/include/barstrucs.h"
 #include "Usings.h"
 #include "Barcode/PrjBarlib/modules/tiffreader.h"
+#include "MatrImg.h"
 export module SimpleImgReaderModule;
 
 import Platform;
 // import ImgReader;
 //import BackBind;
-import MatrModule;
+// import MatrModule;
 
 
 export class SimpleImgReader : public ImageReader

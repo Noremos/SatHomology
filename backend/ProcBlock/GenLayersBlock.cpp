@@ -3,6 +3,7 @@
 #include "../Interfaces/IBlock.h"
 
 #include "Barcode/PrjBarlib/include/barcodeCreator.h"
+#include "../MatrImg.h"
 
 import RasterLayers;
 // import IBlock;
@@ -10,7 +11,7 @@ import LayersCore;
 import ProjectModule;
 import AlgUtils;
 //import BackBind;
-import MatrModule;
+// import MatrModule;
 
 class GenLayersBlock : public IBlock
 {

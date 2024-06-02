@@ -1,4 +1,11 @@
+#ifdef USE_MODULE
+#define MEXPORT export
 module;
+#else
+#pragma once
+#define MEXPORT
+#endif
+
 #include <cassert>
 #include <iostream>
 #include <vector>
@@ -10,10 +17,16 @@ module;
 #include <sqlite3.h>
 #include "Usings.h"
 
+#ifdef USE_MODULE
 export module CSBind;
 
 import MetadataCoreIO;
 //import BackBind;
+#else
+#include "CSBind.h"
+#include "MetadataIO.h"
+#endif
+
 
 #ifdef GEOPROJ
 
@@ -44,7 +57,7 @@ void ioPoint(JsonObjectIOState* state, BackString name, P& p)
 	state->scDouble(name + "_y", p.y);
 }
 
-export class BackProj
+MEXPORT class BackProj
 {
 private:
 
@@ -227,7 +240,7 @@ public:
 
 
 //
-//export class CoordSystem
+//MEXPORT class CoordSystem
 //{
 //	float stX, stY;
 //	float maxX, maxY;
@@ -252,7 +265,7 @@ public:
 //};
 
 
-export struct CSBinding : public IJsonIO
+MEXPORT struct CSBinding : public IJsonIO
 {
 	// Projection of the local image for coord system
 	BackProj proj;
@@ -388,9 +401,9 @@ export struct CSBinding : public IJsonIO
 	}
 };
 
-export using CoordSystem = CSBinding;
+MEXPORT using CoordSystem = CSBinding;
 
-export struct DisplaySystem : public IJsonIO
+MEXPORT struct DisplaySystem : public IJsonIO
 {
 	BackPoint csPos; // glob
 	// static BackPoint

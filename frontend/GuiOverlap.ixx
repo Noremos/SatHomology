@@ -3,10 +3,11 @@ module;
 #include "DrawCommon.h"
 #include "Barcode/PrjBarlib/include/barscalar.h"
 
+#include "../backend/MatrImg.h"
 export module GuiOverlap;
 
 //import BackBind;
-import MatrModule;
+// import MatrModule;
 import LayersCore;
 import GuiWidgets;
 // import BarScalarModule;

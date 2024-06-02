@@ -2,13 +2,17 @@ module;
 #include <cassert>
 #include "Barcode/PrjBarlib/include/barline.h"
 #include "Usings.h"
+
+
+
+#include "../../side/Barcode/PrjBarlib/modules/StateBinFile.h"
 export module ClusterInterface;
 
 //import BackBind;
 import IItemModule;
 import CachedBarcode;
 import MLSettings;
-import StateBinIO;
+// import StateBinIO;
 // import BarTypes;
 //export class IClasterItem
 //{

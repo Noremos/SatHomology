@@ -6,6 +6,8 @@
 #include "Common.h"
 #include "../Interfaces/IBlock.h"
 
+#include "../Core/RefSettings.h"
+#include "../MatrImg.h"
 namespace fs = std::filesystem;
 
 import RasterLayers;
@@ -13,11 +15,11 @@ import RasterLayers;
 import LayersCore;
 import ProjectModule;
 import AlgUtils;
-import MatrModule;
+// import MatrModule;
 import ConvertItem;
 import CachedBarcode;
 import MLSettings;
-import RefSettings;
+// import RefSettings;
 
 class BarSettings
 {

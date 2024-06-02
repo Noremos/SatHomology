@@ -8,10 +8,11 @@ module;
 #include "Common.h"
 
 
+#include "../../side/Barcode/PrjBarlib/modules/StateBinFile.h"
 export module Classifiers;
 
 // import BarcodeModule;
-import StateBinIO;
+// import StateBinIO;
 //import BackBind;
 import IItemModule;
 import ClassifierInterface;

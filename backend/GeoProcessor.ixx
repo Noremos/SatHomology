@@ -9,6 +9,7 @@ module;
 #include "Barcode/PrjBarlib/include/barline.h"
 #include "Usings.h"
 
+#include "MatrImg.h"
 export module GeoprocessorModule;
 
 //import BackBind;
@@ -16,7 +17,7 @@ import Platform;
 // import BarTypes;
 import MHashMap;
 //import BackBind;
-import MatrModule;
+// import MatrModule;
 
 
 export struct Cound

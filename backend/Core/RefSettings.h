@@ -1,4 +1,11 @@
+#ifdef USE_MODULE
+#define MEXPORT export
 module;
+#else
+#pragma once
+#define MEXPORT
+#endif
+
 
 #include <memory>
 #include <functional>
@@ -7,13 +14,14 @@ module;
 #include "../Bind/Json.h"
 #include "Usings.h"
 
+#ifdef USE_MODULE
 export module RefSettings;
-
-// import JsonCore;
 import StateBinIO;
-//import BackBind;
+#else
+#include "../../side/Barcode/PrjBarlib/modules/StateBinFile.h"
+#endif
 
-export struct PathBlock
+MEXPORT struct PathBlock
 {
 	BackPathStr* path;
 	bool isFile;
@@ -27,13 +35,13 @@ export struct PathBlock
 };
 
 
-export struct EnumNameValue
+MEXPORT struct EnumNameValue
 {
 	BackString name;
 	int value;
 };
 
-export struct EnumBlock
+MEXPORT struct EnumBlock
 {
 	int* selected = nullptr;
 	int64_t filter = INT64_MAX;
@@ -119,7 +127,7 @@ export struct EnumBlock
 	}
 };
 
-export union SettVariant
+MEXPORT union SettVariant
 {
 	bool* b;
 	int* i;
@@ -130,7 +138,7 @@ export union SettVariant
 	EnumBlock* e;
 };
 
-export struct SettingValue
+MEXPORT struct SettingValue
 {
 	BackString name;
 	SettVariant data;
@@ -329,7 +337,7 @@ public:
 	}
 };
 
-export class RefSettings
+MEXPORT class RefSettings
 {
 public:
 	std::vector<SettingValue> values;

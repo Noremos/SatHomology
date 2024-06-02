@@ -6,6 +6,7 @@ module;
 #include "Barcode/PrjBarlib/include/barcodeCreator.h"
 #include "Usings.h"
 
+#include "../../backend/CSBind.h"
 export module GuiLayers;
 
 import LayersCore;
@@ -15,7 +16,7 @@ import ProjectModule;
 import GuiWidgets;
 import GuiOverlap;
 import VectorLayers;
-import CSBind;
+// import CSBind;
 import Platform;
 import DrawUtils;
 //import BackBind;

@@ -8,16 +8,18 @@ module;
 #include "../Bind/Json.h"
 #include "Barcode/PrjBarlib/include/barstrucs.h"
 
+#include "../CSBind.h"
+#include "../MatrImg.h"
 export module LayersCore;
 
 // import BarTypes;
 import Platform;
 // import JsonCore;
-import MetadataCoreIO;
-import CSBind;
+// import MetadataCoreIO;
+// import CSBind;
 import MHashMap;
 //import BackBind;
-import MatrModule;
+// import MatrModule;
 
 export const int DEF_TILE_SIZE = 1000;
 export const int DEF_TILE_OFFSET = 300;

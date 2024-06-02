@@ -5,13 +5,14 @@ module;
 #include "Barcode/PrjBarlib/include/barcodeCreator.h"
 #include "Usings.h"
 
+#include "../../side/Barcode/PrjBarlib/modules/StateBinFile.h"
 export module CachedBarcode;
 
 import IItemModule;
 import MHashMap;
 // import BarcodeModule;
 //import BackBind;
-import StateBinIO;
+// import StateBinIO;
 
 export class CachedBaritemHolder;
 

@@ -6,6 +6,8 @@ module;
 #include "Common.h"
 
 
+#include "../MetadataIO.h"
+#include "../../side/Barcode/PrjBarlib/modules/StateBinFile.h"
 export module VectorLayers;
 //import std.core;
 //import BackBind;
@@ -13,8 +15,8 @@ import LayersCore;
 
 import Platform;
 
-import MetadataCoreIO;
-import StateBinIO;
+// import MetadataCoreIO;
+// import StateBinIO;
 import ClusterInterface;
 
 using LayerMetaProvider = MetadataProvider;

@@ -7,13 +7,16 @@ module;
 #include "Barcode/PrjBarlib/include/barline.h"
 #include "Usings.h"
 
+
+#include "../MetadataIO.h"
 export module IItemModule;
 
 // import BarScalarModule;
 // import BarTypes;
-import MetadataCoreIO;
+// import MetadataCoreIO;
 //import BackBind;
-import StateBinIO;
+// import StateBinIO;
+
 
 export class IClassItem : public IBffIO
 {

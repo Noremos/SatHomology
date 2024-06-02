@@ -46,7 +46,7 @@ file(GLOB_RECURSE SOURCES_MODULES
     "frontend/*.ixx"
     "backend/*.ixx"
     # "side/Barcode/PrjBarlib/modules/*.ixx"
-    "side/Barcode/PrjBarlib/modules/StateBinFile.ixx"
+    # "side/Barcode/PrjBarlib/modules/StateBinFile.ixx"
     # "side/Barcode/PrjBarlib/modules/TiffReader.ixx"
 )
 

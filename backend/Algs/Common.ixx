@@ -2,13 +2,14 @@ module;
 #include "Barcode/PrjBarlib/include/barline.h"
 #include "Common.h"
 
+#include "../MatrImg.h"
 export module AlgUtils;
 
 import MLSettings;
 import RasterLayers;
 import ProjectModule;
 //import BackBind;
-import MatrModule;
+// import MatrModule;
 import LayersCore;
 
 export MLSettings mkSettingsType()

@@ -15,6 +15,7 @@
 //
 //#include <GLFW/glfw3.h>
 //#include "../libs/glew/include/GL/glew.h"
+#include "../../backend/ProjectSettings.h"
 
 import FrontendBind;
 import Platform;
@@ -28,7 +29,7 @@ import GuiVectorLayers;
 import ProjectModule;
 import GuiRasterLayers;
 import GuiRasterLineLayer;
-import ProjectSettings;
+// import ProjectSettings;
 //import BackBind;
 import RasterLineLayerModule;
 

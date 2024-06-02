@@ -13,12 +13,15 @@ module;
 
 #ifdef USE_MODULE
 export module IBlock;
+import ProjectSettings;
+import RefSettings;
+#else
+#include "../ProjectSettings.h"
+#include "../Core/RefSettings.h"
 #endif
 
 //import BackBind;
-import ProjectSettings;
 import LayersCore;
-import RefSettings;
 // import BarTypes;
 //export class IClasterItem
 //{
