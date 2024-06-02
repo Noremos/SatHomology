@@ -1,10 +1,10 @@
-
 #include "DiffuseCommon.h"
 #include "Common.h"
 #include "Barcode/PrjBarlib/include/barcodeCreator.h"
+#include "../Interfaces/IBlock.h"
 
 import RasterLayers;
-import IBlock;
+// import IBlock;
 import LayersCore;
 import ProjectModule;
 import AlgUtils;

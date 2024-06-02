@@ -1,9 +1,19 @@
+
+#ifdef USE_MODULE
+#define MEXPORT export
 module;
+#else
+#pragma once
+#define MEXPORT
+#endif
+
 #include <cassert>
 #include "Barcode/PrjBarlib/include/barline.h"
 #include "Usings.h"
 
+#ifdef USE_MODULE
 export module IBlock;
+#endif
 
 //import BackBind;
 import ProjectSettings;
@@ -16,7 +26,7 @@ import RefSettings;
 //	{}
 //};
 
-export class IBlock
+MEXPORT class IBlock
 {
 public:
 	BackPathStr dbPath;
@@ -43,7 +53,7 @@ public:
 
 
 // Ml for machine learning
-export class BlockFactory
+MEXPORT class BlockFactory
 {
 private:
 	using BaseHolder = std::unique_ptr<IBlock>;
@@ -87,43 +97,20 @@ public:
 	}
 };
 
-
-export template<class TFactory, class TClass, class TClassHolder, class TML>
-class GlobalRegister
-{
-	int id;
-public:
-	GlobalRegister(TFactory& factory, BackStringView name)
-	{
-		id = factory.template Register<TClass, TClassHolder, TML>(name);
-		printf("%s class registered", name.data());
-	}
-	int getId() const
-	{
-		return id;
-	}
-};
-
-
-struct Dummy2
+MEXPORT inline BlockFactory& getBlockFactory()
 {
 	static BlockFactory blockFactory;
-};
-BlockFactory Dummy2::blockFactory;
-
-export BlockFactory& getBlockFactory()
-{
-	return Dummy2::blockFactory;
+	return blockFactory;
 }
 
-export template<class TClass>
+MEXPORT template<class TClass>
 class BlockRegister
 {
 	int id;
 public:
 	BlockRegister()
 	{
-		id = Dummy2::blockFactory.Register<TClass>();
+		id = getBlockFactory().Register<TClass>();
 	}
 	int getId() const
 	{

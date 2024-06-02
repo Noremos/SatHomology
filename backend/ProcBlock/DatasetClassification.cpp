@@ -4,11 +4,12 @@
 #include <fstream>
 #include <algorithm>
 #include "Common.h"
+#include "../Interfaces/IBlock.h"
 
 namespace fs = std::filesystem;
 
 import RasterLayers;
-import IBlock;
+// import IBlock;
 import LayersCore;
 import ProjectModule;
 import AlgUtils;

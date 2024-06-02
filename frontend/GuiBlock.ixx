@@ -1,6 +1,7 @@
 module;
 #include <algorithm>
 #include "DrawCommon.h"
+#include "../backend/Interfaces/IBlock.h"
 
 export module GuiBlock;
 
@@ -13,7 +14,7 @@ import GuiWidgets;
 import TrainIO;
 import StatChart;
 import DrawUtils;
-import IBlock;
+// import IBlock;
 
 import ClassifierCore;
 import ProjectModule;
