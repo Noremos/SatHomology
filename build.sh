@@ -33,6 +33,12 @@ export OUT="Build/Temp/${build_type}"
 
 cmake -B "${OUT}" -S . -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake -G Ninja -DCMAKE_BUILD_TYPE="${build_type}" "${EXTRA}"
 cmake --build "${OUT}"
+retVal=$?
+if [ $retVal -ne 0 ]; then
+    echo "Error"
+    exit $retVal
+fi
+
 mv "${OUT}/compile_commands.json" ./Build/compile_commands.json
 
 if [ "${build_type}" = "Tests" ]; then
