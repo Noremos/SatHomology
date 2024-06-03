@@ -1,13 +1,14 @@
 module;
 #include "Common.h"
 
+#include "../Interfaces/IItem.h"
 export module CoreLoaders;
 //import BackBind;
 import LayersCore;
 import RasterLineLayerModule;
 import RasterLayers;
 import ProjectModule;
-import IItemModule;
+// import IItemModule;
 
 
 export RetLayers createCacheBarcode(InOutLayer& iol, const BarcodeProperies& propertices, IItemFilter* filter = nullptr)

@@ -12,12 +12,13 @@
 
 
 #include "../MatrImg.h"
+#include "../Clusterizers/MLSettings.h"
 
 import LayersCore;
 import RasterLayers;
 //import BackBind;
 import ProjectModule;
-import MLSettings;
+// import MLSettings;
 // import MatrModule;
 import IAlgorithm;
 import AlgUtils;

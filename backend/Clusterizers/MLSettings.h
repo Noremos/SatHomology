@@ -1,15 +1,25 @@
+#ifdef USE_MODULE
 module;
+#else
+#pragma once
+#endif
+
 #include <cstdint>
 #include <vector>
 #include "../Bind/Json.h"
 #include "Usings.h"
 
+#ifdef USE_MODULE
 export module MLSettings;
+#define MEXPORT export
+#else
+#define MEXPORT
+#endif
 
 // import JsonCore;
 //import BackBind;
 
-export struct OptionEnum
+MEXPORT struct OptionEnum
 {
 	OptionEnum(std::initializer_list<BackString> val)
 	{
@@ -49,7 +59,7 @@ export struct OptionEnum
 	int64_t filter = INT64_MAX;
 };
 
-export union OptionVariant
+MEXPORT union OptionVariant
 {
 	bool b;
 	int i;
@@ -60,7 +70,7 @@ export union OptionVariant
 };
 
 
-export struct OptionValue
+MEXPORT struct OptionValue
 {
 	OptionVariant data;
 	BackString name;
@@ -248,7 +258,7 @@ public:
 	}
 };
 
-export class MLSettings
+MEXPORT class MLSettings
 {
 public:
 	std::vector<OptionValue> values;

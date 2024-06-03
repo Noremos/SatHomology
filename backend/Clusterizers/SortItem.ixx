@@ -6,15 +6,18 @@ module;
 #include "Barcode/PrjBarlib/include/barstrucs.h"
 #include "Common.h"
 
+#include "../CachedBarcode.h"
+#include "../Clusterizers/MLSettings.h"
+#include "../Interfaces/ICluster.h"
 export module SortItem;
 
 
 //import BackBind;
-import ClusterInterface;
+// import ClusterInterface;
 import Platform;
 //
-import CachedBarcode;
-import MLSettings;
+// import CachedBarcode;
+// import MLSettings;
 //
 //
 //using SortClass = CachedBarline;

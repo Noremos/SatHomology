@@ -7,6 +7,8 @@
 
 
 #include "../MatrImg.h"
+#include "../Clusterizers/MLSettings.h"
+#include "../Interfaces/IItem.h"
 
 import LayersCore;
 import ProjectModule;
@@ -18,11 +20,11 @@ import RasterLayers;
 import Classifiers;
 import GeoprocessorModule;
 
-import IItemModule;
+// import IItemModule;
 //import BackBind;
 // import MatrModule;
 import IAlgorithm;
-import MLSettings;
+// import MLSettings;
 import AlgUtils;
 
 class TreeWalk

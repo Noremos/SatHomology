@@ -4,9 +4,10 @@ module;
 #include <future>
 
 #include "../../backend/MatrImg.h"
+#include "../../backend/Interfaces/IItem.h"
 export module GuiRasterLayers;
 //import BackBind;
-import IItemModule;
+// import IItemModule;
 import GuiWidgets;
 import RasterLayers;
 import GuiLayers;

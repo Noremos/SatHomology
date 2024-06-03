@@ -9,18 +9,20 @@ module;
 
 
 #include "../../side/Barcode/PrjBarlib/modules/StateBinFile.h"
+#include "../Bind/MHashMap.h"
+#include "../Interfaces/IItem.h"
 export module Classifiers;
 
 // import BarcodeModule;
 // import StateBinIO;
 //import BackBind;
-import IItemModule;
+// import IItemModule;
 import ClassifierInterface;
 
 import Platform;
 
 import TrainIO;
-import MHashMap;
+// import MHashMap;
 
 
 export class BarlineClass : public IClassItem

@@ -15,14 +15,16 @@ module;
 #include <vector>
 #include <functional>
 #include "Common.h"
+#include "../Clusterizers/MLSettings.h"
+#include "../Interfaces/IItem.h"
 
 export module IAlgorithm;
 
 import RasterLayers;
 //import BackBind;
 import LayersCore;
-import IItemModule;
-import MLSettings;
+// import IItemModule;
+// import MLSettings;
 
 
 // export class IWorker

@@ -8,6 +8,8 @@
 
 #include "../Core/RefSettings.h"
 #include "../MatrImg.h"
+#include "../CachedBarcode.h"
+#include "../Clusterizers/MLSettings.h"
 namespace fs = std::filesystem;
 
 import RasterLayers;
@@ -17,8 +19,8 @@ import ProjectModule;
 import AlgUtils;
 // import MatrModule;
 import ConvertItem;
-import CachedBarcode;
-import MLSettings;
+// import CachedBarcode;
+// import MLSettings;
 // import RefSettings;
 
 class BarSettings
@@ -89,6 +91,46 @@ void moveMlToRef(MLSettings& in, RefSettings& out)
 		}
 	}
 }
+
+// class Classifier
+// {
+
+// 	void cluser(std::vector<landres>& land)
+// 	{
+// 		std::vector<std::pair<int, float> diffs;
+// 		int results[7] = { 0, 0, 0, 0, 0, 0, 0 };
+// 		std::fill_n(results, 7, 0);
+
+// 		int n = landscapes.pathset[0].size();
+// 		for (size_t i = 0; i < landscapes.pathset.size(); i++)
+// 		{
+// 			std::vector<landres>&path1 = landscapes.pathset[i];
+// 			int closer = i + 1;
+// 			float closestDiff = 999999999999999.0f;
+// 			for (size_t j = i + 2; j < landscapes.pathset.size(); j++)
+// 			{
+// 				std::vector<landres>& path2 = landscapes.pathset[j];
+
+// 				float curDiff = 0.f;
+// 				for (size_t k = 0; k < n; k++)
+// 				{
+// 					float doff = path1[i] - path2[k];
+// 					curDiff +=  doff * doff;
+// 				}
+
+// 				curDiff = sqrt(curDiff);
+// 				if (curDiff < closestDiff)
+// 				{
+// 					closer = j;
+// 					closestDiff = curDiff;
+// 				}
+
+// 			}
+
+// 			diffs.push_back({closer, closestDiff});
+// 		}
+// 	}
+// }
 
 
 class DatasetClassificationBlock : public IBlock
@@ -196,13 +238,16 @@ public:
 		for (size_t i = 0; i < added; i++)
 		{
 			int prediction = cluster.test(i);
-			int correctId = sourceFiles[names[i]];
-			bool correct = prediction == correctId;
-			if (correct)
-			{
-				results[correctId]++;
-				correctCount++;
-			}
+			// int correctId = sourceFiles[names[i]];
+			// bool correct = prediction == correctId;
+			// if (correct)
+			// {
+			// 	results[correctId]++;
+			// 	correctCount++;
+			// }
+
+			results[prediction]++;
+
 			// std::cout << paths[i] << " -> " << cluster.test(i);
 			// if (correct)
 			// {

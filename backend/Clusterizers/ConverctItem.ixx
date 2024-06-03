@@ -9,13 +9,15 @@ module;
 #include "Barcode/PrjBarlib/include/barstrucs.h"
 #include "Common.h"
 
+#include "../CachedBarcode.h"
+#include "../Interfaces/ICluster.h"
 export module ConvertItem;
 
-import ClusterInterface;
+// import ClusterInterface;
 import Platform;
 //import BackBind;
 import ExteranlReader;
-import CachedBarcode;
+// import CachedBarcode;
 import Sklearn;
 
 
@@ -95,10 +97,8 @@ public:
 		return pathset[0][0].y;
 	}
 
-	void getSignature(BackString& line) const override
+	void getSignatureAsVector(std::vector<float>& total) const
 	{
-		// SumLyambda
-		std::vector<float> total;
 		total.resize(maxEnd * AddE);
 		std::fill(total.begin(), total.end(), 0);
 
@@ -128,6 +128,13 @@ public:
 			}
 		}
 
+	}
+
+	void getSignature(BackString& line) const override
+	{
+		std::vector<float> total;
+		getSignatureAsVector(total);
+
 		line.clear();
 		for (size_t i = 0; i < total.size(); i++)
 		{
@@ -136,6 +143,7 @@ public:
 			line += " ";
 		}
 	}
+
 
 private:
 };

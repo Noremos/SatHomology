@@ -21,6 +21,9 @@ module;
 #include "../MetadataIO.h"
 #include "../ProjectSettings.h"
 #include "../MatrImg.h"
+#include "../CachedBarcode.h"
+#include "../Interfaces/ICluster.h"
+#include "../Interfaces/IItem.h"
 export module RasterLineLayerModule;
 
 //import BackBind;
@@ -28,11 +31,11 @@ export module RasterLineLayerModule;
 import LayersCore;
 import RasterLayers;
 // import MetadataCoreIO;
-import IItemModule;
+// import IItemModule;
 import GeoprocessorModule;
 // import ProjectSettings;
-import CachedBarcode;
-import ClusterInterface;
+// import CachedBarcode;
+// import ClusterInterface;
 
 export class BarLineWorker
 {

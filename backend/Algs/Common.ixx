@@ -3,9 +3,10 @@ module;
 #include "Common.h"
 
 #include "../MatrImg.h"
+#include "../Clusterizers/MLSettings.h"
 export module AlgUtils;
 
-import MLSettings;
+// import MLSettings;
 import RasterLayers;
 import ProjectModule;
 //import BackBind;

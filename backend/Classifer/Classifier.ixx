@@ -8,8 +8,9 @@ module;
 #include "../CSBind.h"
 
 #include "../MatrImg.h"
+#include "../Interfaces/IItem.h"
 export module ClassifierCore;
-import IItemModule; //
+// import IItemModule; //
 import Classifiers;
 import LayersCore;
 import TrainIO;

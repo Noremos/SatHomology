@@ -1,4 +1,9 @@
+#ifdef USE_MODULE
 module;
+#else
+#pragma once
+#endif
+
 #include <assert.h>
 #include <functional>
 #include <vector>
@@ -9,7 +14,12 @@ module;
 
 
 #include "../MetadataIO.h"
+#ifdef USE_MODULE
 export module IItemModule;
+#define MEXPORT export
+#else
+#define MEXPORT
+#endif
 
 // import BarScalarModule;
 // import BarTypes;
@@ -18,7 +28,7 @@ export module IItemModule;
 // import StateBinIO;
 
 
-export class IClassItem : public IBffIO
+MEXPORT class IClassItem : public IBffIO
 {
 public:
 	virtual size_t getId() const = 0;
@@ -44,7 +54,7 @@ public:
 
 
 // Holder - a container to store items
-export class IClassItemHolder : public IBffIO
+MEXPORT class IClassItemHolder : public IBffIO
 {
 public:
 	virtual IClassItem* getItem(size_t id) = 0;
@@ -60,7 +70,7 @@ public:
 	virtual ~IClassItemHolder() {}
 };
 
-export template<typename T>
+MEXPORT template<typename T>
 class IDataClassItemHolder : public IClassItemHolder
 {
 protected:
@@ -88,7 +98,7 @@ public:
 };
 
 
-export template<typename T>
+MEXPORT template<typename T>
 class IDataClassItemValueHolder : public IClassItemHolder
 {
 protected:
@@ -142,7 +152,7 @@ public:
 };
 
 
-export class ItemHolderCache
+MEXPORT class ItemHolderCache
 {
 protected:
 	std::unique_ptr<StateBinFile::BinState> state;
@@ -241,14 +251,14 @@ public:
 };
 
 
-export struct IItemFilter
+MEXPORT struct IItemFilter
 {
 	int imgLen = 0;
 
 	virtual bool pass(const IClassItem* line) const = 0;
 };
 
-export struct RangeItemFilter : public IItemFilter
+MEXPORT struct RangeItemFilter : public IItemFilter
 {
 	struct FRange
 	{
@@ -311,7 +321,7 @@ export struct RangeItemFilter : public IItemFilter
 };
 
 // Ml for machine learning
-export template <typename ICItem, typename ICHolder, typename IML>
+MEXPORT template <typename ICItem, typename ICHolder, typename IML>
 class ImlFactory
 {
 private:
@@ -381,7 +391,7 @@ public:
 };
 
 
-export template<class TFactory, class TClass, class TClassHolder, class TML>
+MEXPORT template<class TFactory, class TClass, class TClassHolder, class TML>
 class GlobalRegister
 {
 	int id;

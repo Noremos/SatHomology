@@ -6,9 +6,10 @@ module;
 #include <iostream>
 #include "Common.h"
 
+#include "../Interfaces/ICluster.h"
 export module TSLearn;
 
-import ClusterInterface;
+// import ClusterInterface;
 import TreeSignClass;
 import ExteranlReader;
 //import BackBind;

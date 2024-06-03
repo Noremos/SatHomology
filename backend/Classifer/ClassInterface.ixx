@@ -8,6 +8,10 @@ module;
 
 #include "../MetadataIO.h"
 #include "../MatrImg.h"
+
+
+#include "../Bind/MHashMap.h"
+#include "../backend/Interfaces/IItem.h"
 export module ClassifierInterface;
 // import std.core;
 
@@ -17,8 +21,8 @@ import Platform;
 
 import BackTypes;
 import TrainIO;
-import MHashMap;
-import IItemModule;
+// import MHashMap;
+// import IItemModule;
 //import BackBind;
 // import MatrModule;
 

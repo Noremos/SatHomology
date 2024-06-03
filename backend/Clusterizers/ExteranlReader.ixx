@@ -12,9 +12,10 @@ module;
 #include "../side/subprocess.h"
 #include "Usings.h"
 
+#include "../Clusterizers/MLSettings.h"
 export module ExteranlReader;
 
-import MLSettings;
+// import MLSettings;
 //import BackBind;
 
 export BackString get_temp_file_path()

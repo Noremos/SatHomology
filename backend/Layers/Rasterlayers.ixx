@@ -11,6 +11,9 @@ module;
 
 #include "../MetadataIO.h"
 #include "../MatrImg.h"
+
+#include "../Bind/MHashMap.h"
+#include "../Clusterizers/MLSettings.h"
 export module RasterLayers;
 import LayersCore;
 
@@ -21,8 +24,8 @@ import Platform;
 
 // import ImgReader;
 import SimpleImgReaderModule;
-import MHashMap;
-import MLSettings;
+// import MHashMap;
+// import MLSettings;
 //import BackBind;
 // import MatrModule;
 

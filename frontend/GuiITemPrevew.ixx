@@ -5,7 +5,10 @@ module;
 #include <vector>
 
 #include "../backend/CSBind.h"
-#include "../../backend/ProjectSettings.h"
+#include "../backend/ProjectSettings.h"
+#include "../backend/CachedBarcode.h"
+#include "../backend/Interfaces/ICluster.h"
+#include "../backend/Interfaces/IItem.h"
 export module GuiITemPrevew;
 import LayersCore;
 import RasterLineLayerModule;
@@ -13,9 +16,9 @@ import ProjectModule;
 // import ProjectSettings;
 import GuiLayers;
 import GuiWidgets;
-import IItemModule;
-import ClusterInterface;
-import CachedBarcode;
+// import IItemModule;
+// import ClusterInterface;
+// import CachedBarcode;
 // import CSBind;
 
 import IGuiLayer;

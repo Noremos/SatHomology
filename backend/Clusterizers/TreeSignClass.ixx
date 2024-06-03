@@ -3,13 +3,16 @@ module;
 #include "Barcode/PrjBarlib/include/barstrucs.h"
 #include "Common.h"
 
+#include "../Clusterizers/MLSettings.h"
+#include "../Interfaces/ICluster.h"
+#include "../CachedBarcode.h"
 export module TreeSignClass;
 
-import ClusterInterface;
+// import ClusterInterface;
 import Platform;
 
-import CachedBarcode;
-import MLSettings;
+// import CachedBarcode;
+// import MLSettings;
 //import BackBind;
 
 using StgnType = float;

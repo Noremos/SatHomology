@@ -6,10 +6,11 @@ module;
 #include "Common.h"
 
 
+#include "../Interfaces/ICluster.h"
 export module Sklearn;
 
 //import BackBind;
-import ClusterInterface;
+// import ClusterInterface;
 import TreeSignClass;
 import ExteranlReader;
 

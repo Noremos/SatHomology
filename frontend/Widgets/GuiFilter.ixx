@@ -1,9 +1,10 @@
 module;
 #include "../DrawCommon.h"
 
+#include "../backend/Interfaces/IItem.h"
 export module GuiFilter;
 //import BackBind;
-import IItemModule;
+// import IItemModule;
 import GuiWidgets;
 
 export struct GuiFilter

@@ -10,6 +10,7 @@ module;
 
 #include "../CSBind.h"
 #include "../MatrImg.h"
+#include "../Bind/MHashMap.h"
 export module LayersCore;
 
 // import BarTypes;
@@ -17,7 +18,7 @@ import Platform;
 // import JsonCore;
 // import MetadataCoreIO;
 // import CSBind;
-import MHashMap;
+// import MHashMap;
 //import BackBind;
 // import MatrModule;
 

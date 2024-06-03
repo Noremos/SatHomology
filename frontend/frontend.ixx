@@ -14,6 +14,7 @@ module;
 
 
 #include "../backend/CSBind.h"
+#include "../backend/Interfaces/IItem.h"
 export module FrontendBind;
 
 import ProjectModule;
@@ -22,7 +23,7 @@ import Platform;
 import RasterLayers;
 
 import GuiWidgets;
-import IItemModule;
+// import IItemModule;
 import VectorLayers;
 // import CSBind;
 import LayersCore;

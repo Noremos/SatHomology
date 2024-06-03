@@ -1,13 +1,18 @@
+#ifdef USE_MODULE
 module;
+#else
+#pragma once
+#endif
+
 #include <cassert>
 #include "Barcode/PrjBarlib/include/barline.h"
 #include "Usings.h"
 
 
 
-#include "../../side/Barcode/PrjBarlib/modules/StateBinFile.h"
-export module ClusterInterface;
 
+#ifdef USE_MODULE
+export module ClusterInterface;
 //import BackBind;
 import IItemModule;
 import CachedBarcode;
@@ -19,9 +24,17 @@ import MLSettings;
 //	IClasterItem(CachedBarline*)
 //	{}
 //};
+#define MEXPORT export
+#else
+#include "IItem.h"
+#include "../CachedBarcode.h"
+#include "../Clusterizers/MLSettings.h"
+#include "../../side/Barcode/PrjBarlib/modules/StateBinFile.h"
+#define MEXPORT
+#endif
 
 
-export class ICluster : public IClassItem // : public IBffIO
+MEXPORT class ICluster : public IClassItem // : public IBffIO
 {
 public:
 	//virtual const bc::barvector& getMatrix() const = 0;
@@ -70,7 +83,7 @@ public:
 };
 
 // Holder - a container to store items
-export class IClusterItemHolder : public IClassItemHolder
+MEXPORT class IClusterItemHolder : public IClassItemHolder
 {
 public:
 	IClusterItemHolder(bool isRootBased) : settings(), rootBased(isRootBased)
@@ -126,7 +139,7 @@ private:
 };
 
 
-export template<typename T>
+MEXPORT template<typename T>
 class IClusterItemValuesHolder : public IClusterItemHolder
 {
 protected:
@@ -168,8 +181,7 @@ public:
 };
 
 
-
-export class IBarClusterizer
+MEXPORT class IBarClusterizer
 {
 public:
 	BackPathStr dbPath;
@@ -196,18 +208,14 @@ public:
 
 using ClusterFactory = ImlFactory<ICluster, IClusterItemHolder, IBarClusterizer>;
 
-struct Dummy
+
+MEXPORT static ClusterFactory& getClusterFactory()
 {
 	static ClusterFactory clusterFactory;
-};
-ClusterFactory Dummy::clusterFactory;
-
-export ClusterFactory& getClusterFactory()
-{
-	return Dummy::clusterFactory;
+	return clusterFactory;
 }
 
-export template<class TClass, class TClassHolder, class TClassifier>
+MEXPORT template<class TClass, class TClassHolder, class TClassifier>
 class GlobalClusterRegister : public GlobalRegister<ClusterFactory, TClass, TClassHolder, TClassifier>
 {
 public:

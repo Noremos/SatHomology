@@ -3,13 +3,14 @@ module;
 #include <iostream>
 #include "Barcode/PrjBarlib/include/barstrucs.h"
 
+#include "../../backend/Interfaces/ICluster.h"
 export module GuiClusterization;
 
 //import BackBind;
 import Platform;
 import GuiWidgets;
 import TrainIO;
-import ClusterInterface;
+// import ClusterInterface;
 import TreeClassifier;
 import RasterLineLayerModule;
 import FrontendBind;

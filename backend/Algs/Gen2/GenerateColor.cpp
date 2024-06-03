@@ -14,12 +14,13 @@
 #include "Trainer.h"
 
 
+#include "../../Clusterizers/MLSettings.h"
 #include "../../MatrImg.h"
 import LayersCore;
 import RasterLayers;
 //import BackBind;
 import ProjectModule;
-import MLSettings;
+// import MLSettings;
 // import MatrModule;
 import IAlgorithm;
 import AlgUtils;

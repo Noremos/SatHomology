@@ -1,4 +1,10 @@
+
+#ifdef USE_MODULE
 module;
+#else
+#pragma once
+#endif
+
 #include <cassert>
 #include <algorithm>
 #include <memory>
@@ -6,17 +12,25 @@ module;
 #include "Usings.h"
 
 #include "../../side/Barcode/PrjBarlib/modules/StateBinFile.h"
-export module CachedBarcode;
 
+#ifdef USE_MODULE
+export module CachedBarcode;
 import IItemModule;
 import MHashMap;
+#define MEXPORT export
+#else
+#include "../Bind/MHashMap.h"
+#include "Interfaces/IItem.h"
+#define MEXPORT
+#endif
+
 // import BarcodeModule;
 //import BackBind;
 // import StateBinIO;
 
-export class CachedBaritemHolder;
+MEXPORT class CachedBaritemHolder;
 
-export class CachedBarline : public IClassItem
+MEXPORT class CachedBarline : public IClassItem
 {
 	//static unsigned int idCounter;
 public:
@@ -303,14 +317,3 @@ public:
 		}
 	}
 };
-
-
-CachedBarline* CachedBarline::getChild(int cid) const
-{
-	return root->getRItem(children[cid]);
-}
-
-CachedBarline* CachedBarline::getParent() const
-{
-	return root->getRItem(parentId);
-}
