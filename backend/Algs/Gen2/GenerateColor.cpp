@@ -14,7 +14,7 @@
 #include "Trainer.h"
 
 
-#include "../../Clusterizers/MLSettings.h"
+#include "../../MLSettings.h"
 #include "../../MatrImg.h"
 import LayersCore;
 import RasterLayers;

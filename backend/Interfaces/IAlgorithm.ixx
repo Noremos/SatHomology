@@ -15,7 +15,7 @@ module;
 #include <vector>
 #include <functional>
 #include "Common.h"
-#include "../Clusterizers/MLSettings.h"
+#include "../MLSettings.h"
 #include "../Interfaces/IItem.h"
 
 export module IAlgorithm;

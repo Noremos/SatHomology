@@ -12,7 +12,7 @@
 
 
 #include "../MatrImg.h"
-#include "../Clusterizers/MLSettings.h"
+#include "../MLSettings.h"
 
 import LayersCore;
 import RasterLayers;

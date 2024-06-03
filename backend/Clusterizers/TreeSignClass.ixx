@@ -3,7 +3,7 @@ module;
 #include "Barcode/PrjBarlib/include/barstrucs.h"
 #include "Common.h"
 
-#include "../Clusterizers/MLSettings.h"
+#include "../MLSettings.h"
 #include "../Interfaces/ICluster.h"
 #include "../CachedBarcode.h"
 export module TreeSignClass;

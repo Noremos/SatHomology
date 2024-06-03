@@ -28,7 +28,7 @@ import MLSettings;
 #else
 #include "IItem.h"
 #include "../CachedBarcode.h"
-#include "../Clusterizers/MLSettings.h"
+#include "../MLSettings.h"
 #include "../../side/Barcode/PrjBarlib/modules/StateBinFile.h"
 #define MEXPORT
 #endif

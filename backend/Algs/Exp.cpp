@@ -7,7 +7,7 @@
 
 
 #include "../MatrImg.h"
-#include "../Clusterizers/MLSettings.h"
+#include "../MLSettings.h"
 #include "../Interfaces/IItem.h"
 
 import LayersCore;

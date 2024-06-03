@@ -2,7 +2,7 @@ module;
 #include "../DrawCommon.h"
 
 #include "../../backend/Core/RefSettings.h"
-#include "../../backend/Clusterizers/MLSettings.h"
+#include "../../backend/MLSettings.h"
 export module DynamicSettings;
 
 // import MLSettings;

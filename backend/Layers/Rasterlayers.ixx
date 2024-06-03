@@ -13,7 +13,7 @@ module;
 #include "../MatrImg.h"
 
 #include "../Bind/MHashMap.h"
-#include "../Clusterizers/MLSettings.h"
+#include "../MLSettings.h"
 export module RasterLayers;
 import LayersCore;
 

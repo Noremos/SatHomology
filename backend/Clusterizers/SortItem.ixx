@@ -7,7 +7,7 @@ module;
 #include "Common.h"
 
 #include "../CachedBarcode.h"
-#include "../Clusterizers/MLSettings.h"
+#include "../MLSettings.h"
 #include "../Interfaces/ICluster.h"
 export module SortItem;
 

@@ -3,7 +3,7 @@ module;
 #include "Common.h"
 
 #include "../MatrImg.h"
-#include "../Clusterizers/MLSettings.h"
+#include "../MLSettings.h"
 export module AlgUtils;
 
 // import MLSettings;

@@ -9,7 +9,7 @@
 #include "../Core/RefSettings.h"
 #include "../MatrImg.h"
 #include "../CachedBarcode.h"
-#include "../Clusterizers/MLSettings.h"
+#include "../MLSettings.h"
 namespace fs = std::filesystem;
 
 import RasterLayers;
