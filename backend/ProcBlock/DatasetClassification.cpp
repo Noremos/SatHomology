@@ -10,6 +10,7 @@
 #include "../MatrImg.h"
 #include "../CachedBarcode.h"
 #include "../MLSettings.h"
+#include "../Clusterizers/ConverctItem.h"
 namespace fs = std::filesystem;
 
 import RasterLayers;
@@ -18,7 +19,7 @@ import LayersCore;
 import ProjectModule;
 import AlgUtils;
 // import MatrModule;
-import ConvertItem;
+// import ConvertItem;
 // import CachedBarcode;
 // import MLSettings;
 // import RefSettings;

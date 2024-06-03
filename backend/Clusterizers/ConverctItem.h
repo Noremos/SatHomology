@@ -1,4 +1,9 @@
+#ifdef USE_MODULE
 module;
+#else
+#pragma once
+#endif
+
 //#include "../../side/kde.h"
 
 #include <vector>
@@ -9,19 +14,25 @@ module;
 #include "Barcode/PrjBarlib/include/barstrucs.h"
 #include "Common.h"
 
+#ifdef USE_MODULE
+export module ConvertItem;
+#define MEXPORT export
+// import ClusterInterface;
+//import BackBind;
+// import CachedBarcode;
+#else
+#define MEXPORT
 #include "../CachedBarcode.h"
 #include "../Interfaces/ICluster.h"
-export module ConvertItem;
+#endif
 
-// import ClusterInterface;
+
 import Platform;
-//import BackBind;
 import ExteranlReader;
-// import CachedBarcode;
 import Sklearn;
 
 
-export struct landres
+MEXPORT struct landres
 {
 	//float x; // satrt
 	//float y; // height
@@ -35,7 +46,7 @@ export struct landres
 	}
 };
 
-export class ConvertClass : public ICluster
+MEXPORT class ConvertClass : public ICluster
 {
 public:
 	bc::barvector matrix;
@@ -221,7 +232,7 @@ constexpr bool between(const T& a, const T& minNotEnc, const T& maxNotEncl)
 	return minNotEnc < a && a < maxNotEncl;
 }
 //
-export class ConvertCollection : public IClusterItemValuesHolder<ConvertClass>
+MEXPORT class ConvertCollection : public IClusterItemValuesHolder<ConvertClass>
 {
 	using Base = IClusterItemValuesHolder<ConvertClass>;
 protected:
@@ -485,7 +496,7 @@ public:
 };
 
 
-export class LandClassifier : public ISklearnClassifier
+MEXPORT class LandClassifier : public ISklearnClassifier
 {
 	//// ������� ��� ���������� ��������� K-means
 	//void kmeans(const std::vector<Point>& data, int k)
