@@ -30,7 +30,7 @@ MEXPORT struct PathBlock
 	PathBlock(BackPathStr* path, bool isFile, BackString filter) : path(path), isFile(isFile), filter(filter)
 	{ }
 
-	PathBlock(const PathBlock& other) : path(other.path), filter(other.filter), isFile(other.isFile)
+	PathBlock(const PathBlock& other) : path(other.path), isFile(other.isFile), filter(other.filter)
 	{ }
 };
 
