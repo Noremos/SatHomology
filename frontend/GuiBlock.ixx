@@ -4,13 +4,13 @@ module;
 #include "../backend/Interfaces/IBlock.h"
 
 #include "../backend/MatrImg.h"
+#include "../Bind/Framework.h"
 export module GuiBlock;
 
-import BackTypes;
 //import BackBind;
 // import MatrModule;
 
-import Platform;
+// import Platform;
 import GuiWidgets;
 import TrainIO;
 import StatChart;

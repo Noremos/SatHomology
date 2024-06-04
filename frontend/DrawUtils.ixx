@@ -14,9 +14,10 @@ module;
 
 #include "../backend/CSBind.h"
 #include "../backend/MatrImg.h"
+#include "../Bind/Framework.h"
 export module DrawUtils;
 
-import Platform;
+// import Platform;
 // import MatrModule;
 // import CSBind;
 //import BackBind;

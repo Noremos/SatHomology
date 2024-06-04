@@ -12,10 +12,11 @@ module;
 
 #include "../Bind/MHashMap.h"
 #include "../backend/Interfaces/IItem.h"
+#include "../Bind/Framework.h"
 export module ClassifierInterface;
 // import std.core;
 
-import Platform;
+// import Platform;
 
 // import BarcodeModule;
 

@@ -7,6 +7,7 @@ module;
 #include "Usings.h"
 
 #include "../../backend/CSBind.h"
+#include "../Bind/Framework.h"
 export module GuiDataLayer;
 
 import LayersCore;
@@ -17,7 +18,7 @@ import GuiWidgets;
 import GuiOverlap;
 import VectorLayers;
 // import CSBind;
-import Platform;
+// import Platform;
 import DrawUtils;
 //import BackBind;
 //import LuaStates;

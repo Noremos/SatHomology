@@ -3,13 +3,13 @@ module;
 
 #include "../../backend/Core/RefSettings.h"
 #include "../../backend/MLSettings.h"
+#include "../Bind/Framework.h"
 export module DynamicSettings;
 
 // import MLSettings;
-import BackTypes;
 //import BackBind;
 // import RefSettings;
-import Platform;
+// import Platform;
 
 static int MyResizeCallback(ImGuiInputTextCallbackData* data)
 {

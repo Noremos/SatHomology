@@ -11,10 +11,11 @@ module;
 #include "../CSBind.h"
 #include "../MatrImg.h"
 #include "../Bind/MHashMap.h"
+#include "../Bind/Framework.h"
 export module LayersCore;
 
 // import BarTypes;
-import Platform;
+// import Platform;
 // import JsonCore;
 // import MetadataCoreIO;
 // import CSBind;

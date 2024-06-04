@@ -1,4 +1,8 @@
+#ifdef USE_MODULE
 module;
+#else
+#pragma once
+#endif
 
 #include <assert.h>
 #include <initializer_list>
@@ -6,16 +10,20 @@ module;
 // Side
 #include "PortFileDialog.h"
 #include "sago/platform_folders.h"
-#include "Usings.h"
-export module Platform;
 
-//import BackBind;
-import BackTypes;
+#ifdef USE_MODULE
+export module Platform;
+import BackBind;
+#define MEXPORT export
+#else
+#include "Usings.h"
+#define MEXPORT
+#endif
 
 
 //#define GL_RGB                            0x1907
 
-export std::vector<BackPathStr> openImagesOrProject()
+MEXPORT static std::vector<BackPathStr> openImagesOrProject()
 {
 	// File open
 	auto f = pfd::open_file("Choose files to read", pfd::path::home(),
@@ -40,7 +48,7 @@ export std::vector<BackPathStr> openImagesOrProject()
 	return output;
 }
 
-export BackPathStr openImage()
+MEXPORT static BackPathStr openImage()
 {
 	// File open
 	auto f = pfd::open_file("Choose files to read", pfd::path::home(),
@@ -59,7 +67,7 @@ export BackPathStr openImage()
 }
 
 
-export BackPathStr openFile(BackStringView filter)
+MEXPORT static BackPathStr openFile(BackStringView filter)
 {
 	// Split filter by the '|' character
 	std::vector<BackString> filters;
@@ -94,7 +102,7 @@ export BackPathStr openFile(BackStringView filter)
 }
 
 
-export BackPathStr openFolder()
+MEXPORT static BackPathStr openFolder()
 {
 	// File open
 	auto f = pfd::select_folder("Choose folder to read", pfd::path::home(),
@@ -103,7 +111,7 @@ export BackPathStr openFolder()
 	return f.result();
 }
 
-export BackPathStr openProject()
+MEXPORT static BackPathStr openProject()
 {
 	// File open
 	auto f = pfd::open_file("Choose files to read", pfd::path::home(),
@@ -121,7 +129,7 @@ export BackPathStr openProject()
 	return f.result().size() == 0 ? "" : f.result()[0];
 }
 
-export BackPathStr getSavePath(std::initializer_list<BackString> exts)
+MEXPORT static BackPathStr getSavePath(std::initializer_list<BackString> exts)
 {
 	auto fs = pfd::save_file("Choose file to save", pfd::path::home(), exts, pfd::opt::none);
 
@@ -130,7 +138,7 @@ export BackPathStr getSavePath(std::initializer_list<BackString> exts)
 	return fs.result().size() == 0 ? "" : fs.result();
 }
 
-export BackPathStr getDicumnetPath()
+MEXPORT static BackPathStr getDicumnetPath()
 {
 	return sago::getDocumentsFolder();
 }

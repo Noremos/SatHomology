@@ -17,17 +17,18 @@ module;
 #ifdef USE_MODULE
 export module ConvertItem;
 #define MEXPORT export
-// import ClusterInterface;
-//import BackBind;
-// import CachedBarcode;
+import ClusterInterface;
+import BackBind;
+import CachedBarcode;
+import Platform;
 #else
 #define MEXPORT
 #include "../CachedBarcode.h"
 #include "../Interfaces/ICluster.h"
+#include "../Bind/Framework.h"
 #endif
 
 
-import Platform;
 import ExteranlReader;
 import Sklearn;
 

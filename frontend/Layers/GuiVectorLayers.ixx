@@ -4,6 +4,7 @@ module;
 #include <numeric>
 
 #include "../../backend/CSBind.h"
+#include "../Bind/Framework.h"
 export module GuiVectorLayers;
 //import BackBind;
 import VectorLayers;
@@ -13,7 +14,7 @@ import DrawUtils;
 
 import IGuiLayer;
 import GuiDataLayer;
-import Platform;
+// import Platform;
 // import CSBind;
 
 // Vector layer

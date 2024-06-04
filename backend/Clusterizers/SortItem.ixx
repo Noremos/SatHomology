@@ -9,12 +9,13 @@ module;
 #include "../CachedBarcode.h"
 #include "../MLSettings.h"
 #include "../Interfaces/ICluster.h"
+#include "../Bind/Framework.h"
 export module SortItem;
 
 
 //import BackBind;
 // import ClusterInterface;
-import Platform;
+// import Platform;
 //
 // import CachedBarcode;
 // import MLSettings;

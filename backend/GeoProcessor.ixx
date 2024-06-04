@@ -11,10 +11,11 @@ module;
 
 #include "MatrImg.h"
 #include "../Bind/MHashMap.h"
+#include "../Bind/Framework.h"
 export module GeoprocessorModule;
 
 //import BackBind;
-import Platform;
+// import Platform;
 // import BarTypes;
 // import MHashMap;
 //import BackBind;

@@ -4,9 +4,10 @@ module;
 #include "Usings.h"
 #include "Barcode/PrjBarlib/modules/tiffreader.h"
 #include "MatrImg.h"
+#include "../Bind/Framework.h"
 export module SimpleImgReaderModule;
 
-import Platform;
+// import Platform;
 // import ImgReader;
 //import BackBind;
 // import MatrModule;

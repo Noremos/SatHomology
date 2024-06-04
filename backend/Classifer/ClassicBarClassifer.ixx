@@ -11,6 +11,7 @@ module;
 #include "../../side/Barcode/PrjBarlib/modules/StateBinFile.h"
 #include "../Bind/MHashMap.h"
 #include "../Interfaces/IItem.h"
+#include "../../Bind/Framework.h"
 export module Classifiers;
 
 // import BarcodeModule;
@@ -19,7 +20,7 @@ export module Classifiers;
 // import IItemModule;
 import ClassifierInterface;
 
-import Platform;
+// import Platform;
 
 import TrainIO;
 // import MHashMap;

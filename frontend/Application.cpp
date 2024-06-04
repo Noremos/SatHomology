@@ -16,9 +16,10 @@
 //#include <GLFW/glfw3.h>
 //#include "../libs/glew/include/GL/glew.h"
 #include "../../backend/ProjectSettings.h"
+#include "../Bind/Framework.h"
 
 import FrontendBind;
-import Platform;
+// import Platform;
 import GuiLayers;
 // import BarcodeModule;
 import GuiOverlap;

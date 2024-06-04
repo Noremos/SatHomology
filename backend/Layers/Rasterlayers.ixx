@@ -14,11 +14,12 @@ module;
 
 #include "../Bind/MHashMap.h"
 #include "../MLSettings.h"
+#include "../Bind/Framework.h"
 export module RasterLayers;
 import LayersCore;
 
 // import BarTypes;
-import Platform;
+// import Platform;
 
 // import MetadataCoreIO;
 

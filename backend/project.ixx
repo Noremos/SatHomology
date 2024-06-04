@@ -16,9 +16,10 @@ module;
 
 #include "CSBind.h"
 #include "ProjectSettings.h"
+#include "../Bind/Framework.h"
 export module ProjectModule;
 
-import Platform;
+// import Platform;
 
 import LayersCore;
 // import JsonCore;

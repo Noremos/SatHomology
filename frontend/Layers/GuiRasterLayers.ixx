@@ -5,6 +5,7 @@ module;
 
 #include "../../backend/MatrImg.h"
 #include "../../backend/Interfaces/IItem.h"
+#include "../Bind/Framework.h"
 export module GuiRasterLayers;
 //import BackBind;
 // import IItemModule;
@@ -13,7 +14,7 @@ import RasterLayers;
 import GuiLayers;
 import GuiOverlap;
 import GuiRasterTools;
-import Platform;
+// import Platform;
 import DrawUtils;
 import LayersCore;
 

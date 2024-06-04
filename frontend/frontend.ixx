@@ -15,10 +15,11 @@ module;
 
 #include "../backend/CSBind.h"
 #include "../backend/Interfaces/IItem.h"
+#include "../Bind/Framework.h"
 export module FrontendBind;
 
 import ProjectModule;
-import Platform;
+// import Platform;
 // import BarcodeModule;
 import RasterLayers;
 

@@ -12,11 +12,12 @@
 #include "../MLSettings.h"
 #include "../Clusterizers/ConverctItem.h"
 namespace fs = std::filesystem;
+using namespace std::string_literals;
 
 import RasterLayers;
 // import IBlock;
 import LayersCore;
-import ProjectModule;
+// import ProjectModule;
 import AlgUtils;
 // import MatrModule;
 // import ConvertItem;
@@ -30,11 +31,11 @@ public:
 	bc::ProcType type;
 	void adjustSettings(RefSettings& settings)
 	{
-		SettingValue comp("type", type,
+		SettingValue comp("type"s, type,
 		{
-			{"От 0 до 255", bc::ProcType::f0t255},
-			{"От 255 до 0", bc::ProcType::f255t0},
-			{"По расстоянию", bc::ProcType::Radius},
+			{"От 0 до 255"s, bc::ProcType::f0t255},
+			{"От 255 до 0"s, bc::ProcType::f255t0},
+			{"По расстоянию"s, bc::ProcType::Radius},
 		});
 		settings.add(comp);
 	}

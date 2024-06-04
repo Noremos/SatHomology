@@ -11,11 +11,12 @@
 
 #include "MetadataIO.h"
 #include "MatrImg.h"
+#include "../Bind/Framework.h"
 export module TrainIO;
 
 import BackTypes;
 // import MetadataCoreIO;
-import Platform;
+// import Platform;
 //import BackBind;
 // import MatrModule;
 

@@ -6,10 +6,11 @@ module;
 #include "../MLSettings.h"
 #include "../Interfaces/ICluster.h"
 #include "../CachedBarcode.h"
+#include "../Bind/Framework.h"
 export module TreeSignClass;
 
 // import ClusterInterface;
-import Platform;
+// import Platform;
 
 // import CachedBarcode;
 // import MLSettings;
