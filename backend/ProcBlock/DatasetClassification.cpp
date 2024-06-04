@@ -93,45 +93,102 @@ void moveMlToRef(MLSettings& in, RefSettings& out)
 	}
 }
 
-// class Classifier
-// {
+class Classifier
+{
+	struct DiffItem
+	{
+		size_t srcI;
+		size_t closerI;
+		float closerDiff;
+	};
+	const int N = 7;
+	int results[7];
 
-// 	void cluser(std::vector<landres>& land)
-// 	{
-// 		std::vector<std::pair<int, float> diffs;
-// 		int results[7] = { 0, 0, 0, 0, 0, 0, 0 };
-// 		std::fill_n(results, 7, 0);
+	std::unordered_map<int,int> used;
+public:
+	int test(int id)
+	{
+		return used[id];
+	}
 
-// 		int n = landscapes.pathset[0].size();
-// 		for (size_t i = 0; i < landscapes.pathset.size(); i++)
-// 		{
-// 			std::vector<landres>&path1 = landscapes.pathset[i];
-// 			int closer = i + 1;
-// 			float closestDiff = 999999999999999.0f;
-// 			for (size_t j = i + 2; j < landscapes.pathset.size(); j++)
-// 			{
-// 				std::vector<landres>& path2 = landscapes.pathset[j];
+	void cluser(std::vector<std::vector<float>>& land)
+	{
+		std::vector<DiffItem> diffs;
+		std::fill_n(results, N, 0);
 
-// 				float curDiff = 0.f;
-// 				for (size_t k = 0; k < n; k++)
-// 				{
-// 					float doff = path1[i] - path2[k];
-// 					curDiff +=  doff * doff;
-// 				}
+		int n = land[0].size();
+		for (size_t i = 0; i < land.size(); i++)
+		{
+			std::vector<float>& path1 = land[i];
+			size_t closer = i + 1;
+			float closestDiff = 999999999999999.0f;
+			for (size_t j = i + 2; j < land.size(); j++)
+			{
+				std::vector<float>& path2 = land[j];
 
-// 				curDiff = sqrt(curDiff);
-// 				if (curDiff < closestDiff)
-// 				{
-// 					closer = j;
-// 					closestDiff = curDiff;
-// 				}
+				float curDiff = 0.f;
+				for (size_t k = 0; k < n; k++)
+				{
+					float doff = path1[i] - path2[k];
+					curDiff +=  doff * doff;
+				}
 
-// 			}
+				curDiff = sqrt(curDiff);
+				if (curDiff < closestDiff)
+				{
+					closer = j;
+					closestDiff = curDiff;
+				}
+			}
 
-// 			diffs.push_back({closer, closestDiff});
-// 		}
-// 	}
-// }
+			diffs.push_back({i, closer, closestDiff});
+		}
+
+		// Sort ids
+		std::vector<int> ids;
+		for (size_t i = 0; i < diffs.size(); i++)
+		{
+			ids.push_back(i);
+		}
+
+		std::sort(ids.begin(), ids.end(), [&diffs](size_t a, size_t b)
+			{
+				return diffs[a].closerDiff < diffs[b].closerDiff;
+			});
+
+		int fill = 1;
+		for (size_t i = 0; i < ids.size(); i++)
+		{
+			int id = ids[i];
+			DiffItem& d = diffs[id];
+
+			bool has1 = used.count(d.srcI) != 0;
+			bool has2 = used.count(d.closerI) != 0;
+
+			if (!has1 && !has2)
+			{
+				if (fill < N)
+				{
+					used[d.srcI] = fill;
+					used[d.closerI] = fill;
+					++fill;
+				}
+			}
+			else if (!has1 && has2)
+			{
+				used[d.srcI] = used[d.closerI];
+			}
+			else if (has1 && !has2)
+			{
+				used[d.closerI] = used[d.srcI];
+			}
+			else
+			{
+				assert(false);
+			}
+		}
+	}
+};
 
 
 class DatasetClassificationBlock : public IBlock
@@ -203,6 +260,7 @@ public:
 		landscapes.performOnPerform();
 
 		int added = 0;
+		std::vector<std::vector<float>> landspace;
 		std::vector<BackString> names;
 		for (auto& entry : sourceFiles)
 		{
@@ -224,21 +282,28 @@ public:
 
 			landscapes.addAllLines(cache);
 
+			std::vector<float> temop;
+			landscapes.back()->getSignatureAsVector(temop);
+			landspace.push_back(std::move(temop));
+
 			names.push_back(entry.first);
 			added++;
 			// if (i++ >= limit)
 			// 	break;
 		}
 
+		Classifier cls;
+		cls.cluser(landspace);
+
 		// cluster.perform();
-		cluster.predict(landscapes);
+		// cluster.predict(landscapes);
 		int results[7] = { 0, 0, 0, 0, 0, 0, 0 };
 		std::fill_n(results, 7, 0);
 
 		int correctCount = 0;
 		for (size_t i = 0; i < added; i++)
 		{
-			int prediction = cluster.test(i);
+			int prediction = cls.test(i);
 			// int correctId = sourceFiles[names[i]];
 			// bool correct = prediction == correctId;
 			// if (correct)

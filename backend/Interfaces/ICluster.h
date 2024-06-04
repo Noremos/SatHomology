@@ -154,6 +154,11 @@ public:
 	{
 		return &items[id];
 	}
+	T* back()
+	{
+		assert(items.size() > 0);
+		return &items.back();
+	}
 
 	const T& getRItem(size_t id) const
 	{
