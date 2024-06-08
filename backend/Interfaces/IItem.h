@@ -123,6 +123,7 @@ public:
 
 	T* getItem(size_t id)
 	{
+		assert(id < items.size());
 		return &items[id];
 	}
 
@@ -139,6 +140,7 @@ public:
 
 	const IClassItem* getItem(size_t id) const
 	{
+		assert(id < items.size());
 		return &items[id];
 	}
 

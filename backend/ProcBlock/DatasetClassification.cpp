@@ -112,13 +112,13 @@ public:
 		return used[id];
 	}
 
-	void cluser(std::vector<std::vector<float>>& land)
+	void predict(std::vector<std::vector<float>>& land)
 	{
 		std::vector<DiffItem> diffs;
 		std::fill_n(results, N, 0);
 
 		int n = land[0].size();
-		for (size_t i = 0; i < land.size(); i++)
+		for (size_t i = 0; i < land.size() - 1; i++)
 		{
 			std::vector<float>& path1 = land[i];
 			size_t closer = i + 1;
@@ -185,7 +185,8 @@ public:
 			}
 			else
 			{
-				assert(false);
+				continue;
+				// assert(false);
 			}
 		}
 	}
@@ -293,18 +294,17 @@ public:
 			// 	break;
 		}
 
-		Classifier cls;
-		cls.cluser(landspace);
+		// Classifier cla;
+		// cla.cluser(landspace);
 
-		// cluster.perform();
-		// cluster.predict(landscapes);
+		cluster.predict(landscapes);
 		int results[7] = { 0, 0, 0, 0, 0, 0, 0 };
 		std::fill_n(results, 7, 0);
 
 		int correctCount = 0;
 		for (size_t i = 0; i < added; i++)
 		{
-			int prediction = cls.test(i);
+			int prediction = cluster.test(i);
 			// int correctId = sourceFiles[names[i]];
 			// bool correct = prediction == correctId;
 			// if (correct)

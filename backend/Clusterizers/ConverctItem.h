@@ -111,7 +111,7 @@ public:
 
 	void getSignatureAsVector(std::vector<float>& total) const
 	{
-		total.resize(maxEnd * AddE);
+		total.resize((maxEnd + 2) * AddE); // 1 because of rounding and 1 because of including range [0, maxEnd]
 		std::fill(total.begin(), total.end(), 0);
 
 		float N = pathset.size();
@@ -132,9 +132,10 @@ public:
 				float iter = height / (width);
 
 				float y = startY;
+				assert(endX < total.size());
 				for (size_t i = startX; i < endX; i++)
 				{
-					total[i] += y;
+					total[i] += round(y);
 					y += iter;
 				}
 			}
@@ -362,18 +363,18 @@ public:
 
 					//  CUR->      |-------M------|
 					//  NEXT->      |-------M-------|
-					auto& convertLand = landscape.get(nextI);
-					if (convertLand.getStart() > end)
+					auto& land = landscape.get(nextI);
+					if (land.getStart() > end)
 					{
 						break;
 					}
-					if (convertLand.getStart() == start)
+					if (land.getStart() == start)
 					{
 						// Когда начинается с одинакового значения
 						continue;
 					}
 
-					if (convertLand.getStart() < end && end < convertLand.getEnd())
+					if (land.getStart() < end && end < land.getEnd())
 					{
 						//float crossGip = end - convertLand->getStart();
 						//float leh = crossGip / 2;
@@ -381,13 +382,13 @@ public:
 						// from line matrstart(cur line start) to convertLand.start
 						// From this line start to the next line start
 
-						float cross = end - convertLand.getStart(); // длина пересечения
+						float cross = end - land.getStart(); // длина пересечения
 						crossWithPrev = end; // Смотрим предыдущий, который до окончания текущего
 						cl.add(end - cross / 2, cross / 2);
 
 						// lastMin = end;
-						start = convertLand.getStart();
-						end = convertLand.getEnd();
+						start = land.getStart();
+						end = land.getEnd();
 						curLineCatechd = false;
 						curI = nextI;
 						line = &landscape.get(nextI);
@@ -403,6 +404,7 @@ public:
 				}
 				if (prevId == curI)
 				{
+					assert(end <= maxEnd);
 					cl.add(end, 0);
 					break;
 				}
@@ -458,12 +460,24 @@ public:
 	void addAllLines(const CachedBaritemHolder& holder)
 	{
 		bool cmpMode = *Base::settings.getBool("Compare Only Mode");
-		for (size_t i = 0; i < holder.getItemsCount(); i++)
+		const std::vector<CachedBarline>& items = holder.getItems();
+
+		size_t size = holder.getItemsCount();
+				// Skip created root
+		if (holder.getRoot()->length() == 0)
 		{
-			auto& line = holder.getItems()[i];
-			convertLand.addExpr(line.start().getAvgFloat(), line.end().getAvgFloat());
-			maxEnd = std::max(maxEnd, line.end().getAvgFloat());
+			size--;
 		}
+
+		for (size_t i = 0; i < size; i++)
+		{
+			const CachedBarline& line = items[i];
+			convertLand.addExpr(line.start().getAvgFloat(), line.end().getAvgFloat());
+			assert(line.length().getAvgFloat() > 0);
+			maxEnd = std::max(maxEnd, convertLand.lands.back().getEnd());
+		}
+
+		// maxEnd = 255;
 
 		Base::items.push_back({});
 		auto& source = Base::items.back();

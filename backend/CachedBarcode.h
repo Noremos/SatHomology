@@ -122,7 +122,7 @@ public:
 		update(id, line, root);
 	}
 
-	~CachedBarline()
+	virtual ~CachedBarline()
 	{}
 
 	void update(buint id, bc::barline* line, CachedBaritemHolder* root)
@@ -135,6 +135,7 @@ public:
 		//matrix = (int)line->getPointsSize();
 		matrix = std::move(line->getMatrix());
 		depth = (buchar)line->getDeath();
+		// assert(startl != endl); // Allown for root
 
 		this->root = root;
 	}
@@ -162,6 +163,11 @@ public:
 	virtual Barscalar end() const override
 	{
 		return endl;
+	}
+
+	Barscalar length() const
+	{
+		return startl > endl ? endl - startl : startl - endl;
 	}
 
 	virtual const bc::barvector& getMatrix() const override
@@ -296,7 +302,7 @@ public:
 		return &Base::items[cid];
 	}
 
-	CachedBarline* getRoot()
+	const CachedBarline* getRoot() const
 	{
 		return &Base::items[root];
 	}
