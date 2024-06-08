@@ -232,3 +232,4 @@ public:
 
 
 //using GlobalClusterRegister = GlobalRegister<TClass, TClassHolder, TClassifier, ClusterFactory>;
+#undef MEXPORT

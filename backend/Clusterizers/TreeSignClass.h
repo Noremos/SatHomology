@@ -1,4 +1,9 @@
+#ifdef USE_MODULE
 module;
+#else
+#pragma once
+#endif
+
 #include "../../side/kde.h"
 #include "Barcode/PrjBarlib/include/barstrucs.h"
 #include "Common.h"
@@ -7,14 +12,23 @@ module;
 #include "../Interfaces/ICluster.h"
 #include "../CachedBarcode.h"
 #include "../Bind/Framework.h"
+#ifdef USE_MODULE
 export module TreeSignClass;
 
-// import ClusterInterface;
-// import Platform;
+import ClusterInterface;
+import Platform;
 
-// import CachedBarcode;
-// import MLSettings;
-//import BackBind;
+import CachedBarcode;
+import MLSettings;
+import BackBind;
+#define MEXPORT export
+#else
+#define MEXPORT
+#endif
+
+namespace
+{
+
 
 using StgnType = float;
 
@@ -47,8 +61,10 @@ std::vector<StgnType> resizeVectorWithApproximation(const std::vector<StgnType>&
 	return newVector;
 }
 
+}
 
-export class TreeClass : public ICluster
+
+MEXPORT class TreeClass : public ICluster
 {
 public:
 	std::vector<float> signature;
@@ -173,9 +189,10 @@ private:
 		}
 	}
 };
+
 //
 
-export class TreeSignatureCollection : public IClusterItemValuesHolder<TreeClass>
+MEXPORT class TreeSignatureCollection : public IClusterItemValuesHolder<TreeClass>
 {
 	using Base = IClusterItemValuesHolder<TreeClass>;
 protected:

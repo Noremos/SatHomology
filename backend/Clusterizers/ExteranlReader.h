@@ -1,4 +1,9 @@
+#ifdef USE_MODULE
 module;
+#else
+#pragma once
+#endif
+
 
 #ifdef _WIN32
 #include <windows.h>
@@ -13,12 +18,18 @@ module;
 #include "Usings.h"
 
 #include "../MLSettings.h"
+#ifdef USE_MODULE
 export module ExteranlReader;
+#define MEXPORT export
+#else
+#pragma once
+#define MEXPORT inline
+#endif
 
 // import MLSettings;
 //import BackBind;
 
-export BackString get_temp_file_path()
+MEXPORT BackString get_temp_file_path()
 {
 #ifdef _WIN32
 	char buffer[MAX_PATH];
@@ -31,7 +42,7 @@ export BackString get_temp_file_path()
 }
 
 
-export const char* getPythonExe()
+MEXPORT const char* getPythonExe()
 {
 #ifdef _WIN32
 		return "python.exe";
@@ -40,7 +51,7 @@ export const char* getPythonExe()
 #endif
 }
 
-export BackString getPythonSettings(const MLSettings& settings)
+MEXPORT BackString getPythonSettings(const MLSettings& settings)
 {
 	BackString json = "{";
 	for (auto& set : settings.values)
@@ -99,7 +110,7 @@ export BackString getPythonSettings(const MLSettings& settings)
 }
 
 
-export bool exec(const std::vector<BackString>& cmd, std::vector<unsigned long>& assigments, int& n)
+MEXPORT bool exec(const std::vector<BackString>& cmd, std::vector<unsigned long>& assigments, int& n)
 {
 	std::vector<const char*> args;
 	for (size_t i = 0; i < cmd.size(); i++)
@@ -156,3 +167,5 @@ export bool exec(const std::vector<BackString>& cmd, std::vector<unsigned long>&
 
 	return true;
 }
+
+#undef MEXPORT

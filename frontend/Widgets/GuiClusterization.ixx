@@ -12,7 +12,6 @@ export module GuiClusterization;
 import GuiWidgets;
 import TrainIO;
 // import ClusterInterface;
-import TreeClassifier;
 import RasterLineLayerModule;
 import FrontendBind;
 import GeoprocessorModule;

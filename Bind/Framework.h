@@ -142,3 +142,5 @@ MEXPORT static BackPathStr getDicumnetPath()
 {
 	return sago::getDocumentsFolder();
 }
+
+#undef MEXPORT

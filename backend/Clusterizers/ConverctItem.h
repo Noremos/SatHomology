@@ -21,16 +21,16 @@ import ClusterInterface;
 import BackBind;
 import CachedBarcode;
 import Platform;
+import ExteranlReader;
+import Sklearn;
 #else
 #define MEXPORT
 #include "../CachedBarcode.h"
 #include "../Interfaces/ICluster.h"
 #include "../Bind/Framework.h"
+#include "ExteranlReader.h"
+#include "SKLearnInterface.h"
 #endif
-
-
-import ExteranlReader;
-import Sklearn;
 
 
 MEXPORT struct landres

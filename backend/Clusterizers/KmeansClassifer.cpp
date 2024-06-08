@@ -1,4 +1,4 @@
-module;
+// module;
 /*
 #include <memory>
 #include <functional>
@@ -6,7 +6,7 @@ module;
 #include <cassert>
 #include <dlib/clustering.h>
 */
-export module TreeClassifier;
+// export module TreeClassifier;
 /*
 import ClusterInterface;
 

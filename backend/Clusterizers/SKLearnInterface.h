@@ -1,4 +1,8 @@
+#ifdef USE_MODULE
 module;
+#else
+#pragma once
+#endif
 
 #include <vector>
 #include <cassert>
@@ -7,14 +11,21 @@ module;
 
 
 #include "../Interfaces/ICluster.h"
-export module Sklearn;
+#include "ExteranlReader.h"
+#include "TreeSignClass.h"
 
+#ifdef USE_MODULE
+export module Sklearn;
+#define MEXPORT export
+#else
+#define MEXPORT
+#endif
 //import BackBind;
 // import ClusterInterface;
-import TreeSignClass;
-import ExteranlReader;
+// import TreeSignClass;
+// import ExteranlReader;
 
-export class ISklearnClassifier : public IBarClusterizer
+MEXPORT class ISklearnClassifier : public IBarClusterizer
 {
 	int n;
 	std::vector<unsigned long> cachedAssignments;
@@ -100,32 +111,3 @@ public:
 		return cachedAssignments[itemId];
 	}
 };
-
-
-
-class SklearnClassifier : public ISklearnClassifier
-{
-public:
-	SklearnClassifier()
-	{
-	}
-
-	virtual void writeToTemp(const IClusterItemHolder& iallItems, BackFileWriter &tempFile)
-	{
-		const TreeSignatureCollection& allItems = dynamic_cast<const TreeSignatureCollection&>(iallItems);
-		for (size_t i = 0; i < allItems.getItemsCount(); i++)
-		{
-			auto& sign = allItems.getRItem(i).signature;
-
-			for (const auto& num : sign)
-			{
-				tempFile << num << " ";
-			}
-			tempFile.seekp(-1, tempFile.cur); // ������� ��������� �������
-			tempFile << std::endl;
-
-		}
-	}
-};
-
-GlobalClusterRegister<TreeClass, TreeSignatureCollection, SklearnClassifier> c("SKLearn");

@@ -383,3 +383,5 @@ public:
 		}
 	}
 };
+
+#undef MEXPORT

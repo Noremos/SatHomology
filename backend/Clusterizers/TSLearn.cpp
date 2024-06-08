@@ -1,4 +1,3 @@
-module;
 #include <memory>
 #include <functional>
 #include <vector>
@@ -7,14 +6,17 @@ module;
 #include "Common.h"
 
 #include "../Interfaces/ICluster.h"
-export module TSLearn;
+#include "ExteranlReader.h"
+#include "TreeSignClass.h"
+
+
 
 // import ClusterInterface;
-import TreeSignClass;
-import ExteranlReader;
+// import TreeSignClass;
+// import ExteranlReader;
 //import BackBind;
 
-export class TSlearnClassifier : public IBarClusterizer
+class TSlearnClassifier : public IBarClusterizer
 {
 	int n;
 	std::vector<unsigned long> cachedAssignments;
@@ -94,4 +96,4 @@ public:
 };
 
 
-GlobalClusterRegister<TreeClass, TreeSignatureCollection, TSlearnClassifier> c("TSLearn");
+GlobalClusterRegister<TreeClass, TreeSignatureCollection, TSlearnClassifier> TSLearnReg("TSLearn");
