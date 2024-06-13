@@ -12,8 +12,7 @@ class SelfCluster
 		size_t closerI;
 		float closerDiff;
 	};
-	const int N = 7;
-	int results[7];
+	int results[NC];
 
 	std::vector<int> output;
 public:
@@ -69,6 +68,7 @@ public:
 
 		int usedClusters = 0;
 		output.resize(land.size());
+		std::fill(output.begin(), output.end(), -1);
 		for (size_t i = 0; i < ids.size(); i++)
 		{
 			int id = ids[i];
@@ -77,9 +77,9 @@ public:
 			int a = d.srcI;
 			int b = d.closerI;
 
-			if (output[a] != 0)
+			if (output[a] != -1)
 			{
-				if (output[b] != 0)
+				if (output[b] != -1)
 					continue;
 				else
 				{
@@ -88,13 +88,13 @@ public:
 			}
 			else
 			{
-				if (output[b] != 0)
+				if (output[b] != -1)
 				{
 					output[a] = output[b];
 				}
-				else if (usedClusters < 7)
+				else if (usedClusters < NC)
 				{
-					output[a] = output[b] = usedClusters++;
+					output[a] = output[b] = usedClusters++; // Clusters numbers with 0
 				}
 			}
 
@@ -147,14 +147,14 @@ class SelfClass
 		}
 	};
 
-	ClassSet classes[7];
+	ClassSet classes[NC];
 
 	using ClassId = int;
 	std::vector<ClassId> output;
 public:
 	void addToTrain(int id, std::vector<float>&& path)
 	{
-		assert(id < 7);
+		assert(id < NC);
 		classes[id].add(std::forward<Path>(path));
 	}
 
@@ -173,7 +173,7 @@ public:
 			Path& p = land[l];
 			ClassId minClass = 0;
 			float minDiff = std::numeric_limits<float>::max();
-			for (size_t i = 0; i < 7; i++)
+			for (size_t i = 0; i < NC; i++)
 			{
 				auto& c = classes[i];
 

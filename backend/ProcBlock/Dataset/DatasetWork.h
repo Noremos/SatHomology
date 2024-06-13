@@ -12,7 +12,7 @@
 #include "../../CachedBarcode.h"
 #include "../../Clusterizers/ConverctItem.h"
 
-
+constexpr int NC = 2;
 class DatasetWork
 {
 	std::unordered_map<std::string, int> sourceFiles;
@@ -25,7 +25,8 @@ public:
 		// Read file line by line
 
 		std::string line;
-		int counter[7] = { 0, 0, 0, 0, 0, 0, 0 };
+		int counter[NC];
+		std::fill_n(counter, NC, 0);
 
 		while (std::getline(srcleab, line))
 		{
@@ -36,13 +37,13 @@ public:
 			sourceFiles.insert(std::pair(name, id));
 		}
 
-		std::cout << "Total: " << std::accumulate(counter, counter + 7, 0) << std::endl;
-		for (size_t i = 0; i < 7; i++)
+		std::cout << "Total: " << std::accumulate(counter, counter + NC, 0) << std::endl;
+		for (size_t i = 0; i < NC; i++)
 		{
 			std::cout << i + 1 << ": " << counter[i] << std::endl;
 		}
 
-		maxAllowed = *std::min_element(counter, counter + 7);
+		maxAllowed = *std::min_element(counter, counter + NC);
 	}
 
 	template<class C>
@@ -50,25 +51,30 @@ public:
 	{
 		std::cout << "Sample " << maxAllowed << " elements from each cluster" << std::endl;
 
-		int counter[7] = { 0, 0, 0, 0, 0, 0, 0 };
+		int counter[NC];
+		std::fill_n(counter, NC, 0);
 		int added = 0;
 
 		std::vector<BackString> names;
 		for (auto& entry : sourceFiles)
 		{
 			int correctId = entry.second;
-			if (counter[correctId] > maxAllowed)
+			if (counter[correctId] >= maxAllowed)
 				continue;
 
-			// Skip list
-			// switch (correctId)
-			// {
-			// case 1:
-			// case 2:
-			// case 5:
+			// // Skip list
+			switch (correctId)
+			{
+			case 0:
+			case 1:
+			case 2:
+			// case 3:
+			case 4:
+			case 5:
 			// case 6:
-			// 	continue;
-			// }
+			case 7:
+				continue;
+			}
 
 			BackString path = filesRoot / entry.first;
 			// assert(pathExists(path));
@@ -90,10 +96,11 @@ public:
 		}
 
 		processor.predict();
-		int results[7] = { 0, 0, 0, 0, 0, 0, 0 };
-		std::fill_n(results, 7, 0);
+		int results[1000];
+		std::fill_n(results, 1000, 0);
 
 		int correctCount = 0;
+		int maxPred = 0;
 		for (size_t i = 0; i < added; i++)
 		{
 			int prediction = processor.test(i);
@@ -104,8 +111,10 @@ public:
 			// 	results[correctId]++;
 			// 	correctCount++;
 			// }
-			assert(prediction < 7);
+			// assert(prediction < 7);
 			results[prediction]++;
+			if (prediction > maxPred)
+				maxPred = prediction;
 
 			// std::cout << paths[i] << " -> " << cluster.test(i);
 			// if (correct)
@@ -122,42 +131,71 @@ public:
 		// std::cout << "Correct: " << correctCount << "/" << added << " (" << correctCount * 100.0 / added << "%)" << std::endl;
 		correctCount = 0;
 		float res = 0;
-		for (size_t i = 0; i < 7; i++)
+		for (size_t i = 0; i <= maxPred; i++)
 		{
 			int r = results[i];
-			int c = counter[i];
-			if (r > c)
-				r = std::max(c - r, 0);
 
-			int a = (c - r);
+			if (i >= NC)
+			{
+				std::cout << i + 1 << ": " << r << "/?" << std::endl;
+				continue;
+			}
+
+			int c = counter[i];
+
+			int t;
+			if (r <= c)
+				t = c - r;
+			else
+				t = std::max(c - r, 0);
+
+			int a = (c - t);
 			if (a >= 0)
 				correctCount += a;
 
 			std::cout << i + 1 << ": " << r << "/" << c << std::endl;
-			res += r * 100.0 / (c);
+			res += t * 100.0 / (c);
 		}
-		std::cout << "Correct: " << correctCount << "/" << added << " (" << res / 7 << "%)" << std::endl;
+		std::cout << "Correct: " << correctCount << "/" << added << " (" << res / NC << "%)" << std::endl;
 	}
 };
 
-template<class T>
-class StrictIterProcessor
+enum class SignatureType
+{
+	Iter,
+	Combined,
+	CombinedIter
+};
+
+template<class T, SignatureType type>
+class SignatureProcessor
 {
 	T dummy;
 public:
-	StrictIterProcessor(T& ref) : ref(ref) {}
-	StrictIterProcessor() : ref(dummy) {}
+	SignatureProcessor(T& ref) : ref(ref) {}
+	SignatureProcessor() : ref(dummy) {}
 
 	int addToSet(ConvertClass* item, int classId)
 	{
-		landspace.push_back({});
-		item->getCombinedPointsAsSignature(landspace.back());
+		hist.push_back({});
+		switch (type)
+		{
+		case SignatureType::Iter:
+			item->getSignatureAsVector(hist.back());
+			break;
+		case SignatureType::Combined:
+			item->getCombinedPointsAsHist(hist.back());
+			break;
+		case SignatureType::CombinedIter:
+			item->getCombinedPointsAsSignature(hist.back());
+			break;
+		}
 		return 1;
 	}
 
 	void predict()
 	{
-		ref.predict(landspace);
+		ref.predict(hist);
 	}
 
 	int test(int id)
@@ -167,7 +205,7 @@ public:
 
 private:
 	T& ref;
-	std::vector<std::vector<float>> landspace;
+	std::vector<std::vector<float>> hist;
 };
 
 template<class T>
@@ -198,34 +236,4 @@ public:
 private:
 	T& ref;
 	std::vector<std::vector<landres>> landspacePoints;
-};
-
-template<class T>
-class IterProcessor
-{
-	T dummy;
-public:
-	IterProcessor(T& ref) : ref(ref) {}
-	IterProcessor() : ref(dummy) {}
-
-	int addToSet(ConvertClass* item, int classId)
-	{
-		landspacePoints.push_back({});
-		item->getSignatureAsVector(landspacePoints.back());
-		return 1;
-	}
-
-	void predict()
-	{
-		ref.predict(landspacePoints);
-	}
-
-	int test(int id)
-	{
-		return ref.test(id);
-	}
-
-private:
-	T& ref;
-	std::vector<std::vector<float>> landspacePoints;
 };

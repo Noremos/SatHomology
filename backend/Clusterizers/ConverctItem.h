@@ -51,6 +51,10 @@ MEXPORT struct landres
 	{
 		float a = x - other.x;
 		float b = y - other.y;
+		float r = a * a + b * b;
+		if (r == 0)
+			return 0;
+
 		return sqrt(a * a + b * b);
 	}
 };
@@ -202,7 +206,7 @@ public:
 		getCombinedPoints(points);
 
 		total.clear();
-		total.reserve(256.f * AddE);
+		total.resize(256.f * AddE);
 		for (auto &l : points)
 		{
 			total[round(l.x * AddE)] += l.y;
@@ -215,7 +219,7 @@ public:
 		getCombinedPoints(points);
 
 		total.clear();
-		total.reserve(256.f * AddE);
+		total.resize(256.f * AddE);
 		itrateOverPoints(points, total, AddE);
 	}
 
