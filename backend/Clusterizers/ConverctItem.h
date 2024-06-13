@@ -45,6 +45,14 @@ MEXPORT struct landres
 	{
 		return y - x;
 	}
+
+
+	float operator-(const landres& other) const
+	{
+		float a = x - other.x;
+		float b = y - other.y;
+		return sqrt(a * a + b * b);
+	}
 };
 
 MEXPORT class ConvertClass : public ICluster
@@ -111,7 +119,7 @@ public:
 
 	void getSignatureAsVector(std::vector<float>& total) const
 	{
-		total.resize((maxEnd + 2) * AddE); // 1 because of rounding and 1 because of including range [0, maxEnd]
+		total.resize(256.f * AddE); // 1 because of rounding and 1 because of including range [0, maxEnd]
 		std::fill(total.begin(), total.end(), 0);
 
 		float N = pathset.size();
@@ -127,8 +135,16 @@ public:
 
 				const size_t startX = round(prev.x * AddE); // Из-за округления может быть равным с предыдущем
 				const size_t endX = round(cur.x * AddE);
+
+				assert(startX <= endX);
+
 				const float width = endX - startX;
-				const float height = cur.y - prev.y;
+				const float height = abs(cur.y - prev.y);
+				if (height == 0 || width == 0)
+				{
+					total[startX] += round(startY);
+					continue;
+				}
 				float iter = height / (width);
 
 				float y = startY;
@@ -141,6 +157,50 @@ public:
 			}
 		}
 
+	}
+
+	void getCombinedPoints(std::vector<landres>& total) const
+	{
+		float N = pathset.size();
+
+		// For each lyambda
+		std::unordered_map<float, float> combinedPoints;
+		for (const auto& path : pathset)
+		{
+			for (auto &point : path)
+			{
+
+				float y = point.y;
+				auto it = combinedPoints.find(point.x);
+				if (it == combinedPoints.end())
+					combinedPoints.insert({y, 1.f});
+				else
+					it->second += y;
+			}
+		}
+
+		total.clear();
+		for (auto &l : combinedPoints)
+		{
+			total.push_back( {l.first, l.second});
+		}
+
+		std::sort(total.begin(), total.end(), [](const auto& a, const auto& b) {
+			return a.x < b.x;
+		});
+	}
+
+	void getCombinedPointsAsSignature(std::vector<float>& total) const
+	{
+		std::vector<landres> points;
+		getCombinedPoints(points);
+
+		total.clear();
+		total.reserve(256.f * AddE);
+		for (auto &l : points)
+		{
+			total[round(l.x * AddE)] += l.y;
+		}
 	}
 
 	void getSignature(BackString& line) const override
