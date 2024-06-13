@@ -118,7 +118,7 @@ public:
 	}
 
 
-	static void itrateOverPoints(const std::vector<landres>& points, std::vector<float>& total)
+	static void itrateOverPoints(const std::vector<landres>& points, std::vector<float>& total, float AddE)
 	{
 		for (size_t j = 1; j < points.size(); j++)
 		{
@@ -160,7 +160,7 @@ public:
 		// For each lyambda
 		for (const auto& landset : pathset)
 		{
-			itrateOverPoints(landset, total);
+			itrateOverPoints(landset, total, AddE);
 		}
 
 	}
@@ -216,7 +216,7 @@ public:
 
 		total.clear();
 		total.reserve(256.f * AddE);
-		itrateOverPoints(points, total);
+		itrateOverPoints(points, total, AddE);
 	}
 
 	void getSignature(BackString& line) const override
