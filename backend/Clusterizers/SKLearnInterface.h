@@ -106,6 +106,53 @@ public:
 		//cachedAssignments = spectral_cluster(kernel_type(0.1), samples, n);
 	}
 
+	void writeToTemp(const std::vector<std::vector<float>>& allItemSign, BackFileWriter &tempFile)
+	{
+		for (size_t i = 0; i < allItemSign.size(); i++)
+		{
+			auto& sign = allItemSign[i];
+
+			for (const auto& num : sign)
+			{
+				tempFile << num << " ";
+			}
+			tempFile.seekp(-1, tempFile.cur); // ������� ��������� �������
+			tempFile << std::endl;
+
+		}
+	}
+
+	bool predict(const std::vector<std::vector<float>>& allItemSign)
+	{
+		n = *IBarClusterizer::settings.getInt("n_clusters");
+
+		BackString filePath = get_temp_file_path();
+		BackFileWriter tempFile(filePath, BackFileWriter::out | BackFileWriter::trunc);
+		if (!tempFile.is_open())
+		{
+			std::cerr << "Unable to open temporary file for writing." << std::endl;
+			exit(EXIT_FAILURE);
+		}
+
+		writeToTemp(allItemSign, tempFile);
+
+		tempFile.close();
+
+
+		std::vector<BackString> execCmd;
+		execCmd.push_back(getPythonExe());
+		execCmd.push_back((Variables::metaPath / "cluster.py").string());
+		execCmd.push_back(filePath);
+		execCmd.push_back(BackString(settings.getEnum("method").data()));
+		execCmd.push_back(getPythonSettings(settings));
+		return exec(execCmd, cachedAssignments, n);
+
+		//test.set_number_of_centers(n);
+		//pick_initial_centers(n, initial_centers, samples, test.get_kernel());
+		//test.train(samples, initial_centers);
+		//cachedAssignments = spectral_cluster(kernel_type(0.1), samples, n);
+	}
+
 	int test(size_t itemId)
 	{
 		return cachedAssignments[itemId];

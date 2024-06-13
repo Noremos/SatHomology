@@ -1,16 +1,23 @@
-#include "Barcode/PrjBarlib/include/barcodeCreator.h"
 #include <filesystem>
 #include <unordered_map>
 #include <fstream>
 #include <algorithm>
+#include <limits>
+// #include <map>
+
 #include "Common.h"
+#include "Barcode/PrjBarlib/include/barcodeCreator.h"
 #include "../Interfaces/IBlock.h"
 
 #include "../Core/RefSettings.h"
 #include "../MatrImg.h"
 #include "../CachedBarcode.h"
 #include "../MLSettings.h"
-#include "../Clusterizers/ConverctItem.h"
+
+#include "Dataset/PointClass.h"
+#include "Dataset/SelfClassCluster.h"
+#include "Dataset/DatasetWork.h"
+
 namespace fs = std::filesystem;
 using namespace std::string_literals;
 
@@ -94,100 +101,64 @@ void moveMlToRef(MLSettings& in, RefSettings& out)
 	}
 }
 
-class Classifier
+class WriterProcessor
 {
-	struct DiffItem
-	{
-		size_t srcI;
-		size_t closerI;
-		float closerDiff;
-	};
-	const int N = 7;
-	int results[7];
-
-	std::unordered_map<int,int> used;
+	StateBinFile::BinStateWriter writer;
 public:
-	int test(int id)
+	WriterProcessor(int resolution)
 	{
-		return used[id];
+		writer.open("out.bin");
+		writer.pInt(resolution);
 	}
 
-	void predict(std::vector<std::vector<float>>& land)
+	int addToSet(ConvertClass* item, int classId)
 	{
-		std::vector<DiffItem> diffs;
-		std::fill_n(results, N, 0);
+		// Save to disk --------------- --------------- ---------------
+		writer.pBool(true);
+		// writer.pString(entry.first); // TODO: Use conbext instead of classId
+		writer.pInt(classId);
+		saveToDist(writer, item);
 
-		int n = land[0].size();
-		for (size_t i = 0; i < land.size() - 1; i++)
+		std::vector<float> temp;
+		item->getSignatureAsVector(temp);
+		saveToDist(writer, temp);
+		// Save to disk end --------------- --------------- ---------------
+		return 0;
+	}
+
+	void predict()
+	{
+		writer.pBool(false);
+		writer.close();
+	}
+
+
+	int test(int id)
+	{
+		return 0;
+	}
+
+	void saveToDist(StateBinFile::BinStateWriter& out, ConvertClass* item)
+	{
+		auto& lines = item->pathset;
+		out.pArray(static_cast<buint>(lines.size()));
+		for(auto& line : lines)
 		{
-			std::vector<float>& path1 = land[i];
-			size_t closer = i + 1;
-			float closestDiff = 999999999999999.0f;
-			for (size_t j = i + 2; j < land.size(); j++)
+			out.pArray(static_cast<buint>(line.size()));
+			for (size_t i = 0; i < line.size(); i++)
 			{
-				std::vector<float>& path2 = land[j];
-
-				float curDiff = 0.f;
-				for (size_t k = 0; k < n; k++)
-				{
-					float doff = path1[i] - path2[k];
-					curDiff +=  doff * doff;
-				}
-
-				curDiff = sqrt(curDiff);
-				if (curDiff < closestDiff)
-				{
-					closer = j;
-					closestDiff = curDiff;
-				}
+				out.pInt(line[i].x);
+				out.pInt(line[i].y);
 			}
-
-			diffs.push_back({i, closer, closestDiff});
 		}
+	}
 
-		// Sort ids
-		std::vector<int> ids;
-		for (size_t i = 0; i < diffs.size(); i++)
+	void saveToDist(StateBinFile::BinStateWriter& out, std::vector<float>& set)
+	{
+		out.pArray(static_cast<buint>(set.size()));
+		for(auto& hei : set)
 		{
-			ids.push_back(i);
-		}
-
-		std::sort(ids.begin(), ids.end(), [&diffs](size_t a, size_t b)
-			{
-				return diffs[a].closerDiff < diffs[b].closerDiff;
-			});
-
-		int fill = 1;
-		for (size_t i = 0; i < ids.size(); i++)
-		{
-			int id = ids[i];
-			DiffItem& d = diffs[id];
-
-			bool has1 = used.count(d.srcI) != 0;
-			bool has2 = used.count(d.closerI) != 0;
-
-			if (!has1 && !has2)
-			{
-				if (fill < N)
-				{
-					used[d.srcI] = fill;
-					used[d.closerI] = fill;
-					++fill;
-				}
-			}
-			else if (!has1 && has2)
-			{
-				used[d.srcI] = used[d.closerI];
-			}
-			else if (has1 && !has2)
-			{
-				used[d.closerI] = used[d.srcI];
-			}
-			else
-			{
-				continue;
-				// assert(false);
-			}
+			out.pFloat(hei);
 		}
 	}
 };
@@ -230,108 +201,26 @@ public:
 			limit = INT_MAX;
 
 
-		std::ifstream res("/Users/sam/Edu/datasets/hirise-map-proj-v3/labels-map-proj-v3.txt");
-		// Read file line by line
-
-		std::unordered_map<std::string, int> sourceFiles;
-		std::string line;
-		int counter[7] = { 0, 0, 0, 0, 0, 0, 0 };
-
-		while (std::getline(res, line))
-		{
-			int p = line.find_last_of(' ');
-			std::string name = line.substr(0, p);
-			int id = std::stoi(line.substr(p + 1));
-			counter[id]++;
-			sourceFiles.insert(std::pair(name, id));
-		}
-
-
-		for (size_t i = 0; i < 7; i++)
-		{
-			std::cout << i + 1 << ": " << counter[i] << std::endl;
-		}
-
-		int maxAllowed = *std::min_element(counter, counter + 7);
-		std::fill_n(counter, 7, 0);
-
-
-		maxAllowed = 50;
-		std::cout << "Sample " << maxAllowed << " elements from each cluster" << std::endl;
-
 		landscapes.performOnPerform();
 
-		int added = 0;
-		std::vector<std::vector<float>> landspace;
-		std::vector<BackString> names;
-		for (auto& entry : sourceFiles)
-		{
-			int correctId = entry.second;
-			if (counter[correctId] > maxAllowed)
-				continue;
+		IterProcessor<SelfCluster> iterSelfCuster;
+		StrictIterProcessor<SelfCluster> strictSelfCuster;
 
-			BackString path = filesRoot / entry.first;
-			// assert(pathExists(path));
+		IterProcessor iterLandCuster(cluster);
+		StrictIterProcessor strictLandCuster(cluster);
 
-			counter[correctId]++;
+		PointsProcessor<PointCluster> pointCuster;
 
-			BackImage main = imread(path);
+		bc::barstruct constr = bar.getConstr();
+		int maxAllowed = 50;
 
-			bc::barstruct constr = bar.getConstr();
-
-			CachedBaritemHolder cache;
-			cache.create(&main, constr, nullptr);
-
-			landscapes.addAllLines(cache);
-
-			std::vector<float> temop;
-			landscapes.back()->getSignatureAsVector(temop);
-			landspace.push_back(std::move(temop));
-
-			names.push_back(entry.first);
-			added++;
-			// if (i++ >= limit)
-			// 	break;
-		}
-
-		// Classifier cla;
-		// cla.cluser(landspace);
-
-		cluster.predict(landscapes);
-		int results[7] = { 0, 0, 0, 0, 0, 0, 0 };
-		std::fill_n(results, 7, 0);
-
-		int correctCount = 0;
-		for (size_t i = 0; i < added; i++)
-		{
-			int prediction = cluster.test(i);
-			// int correctId = sourceFiles[names[i]];
-			// bool correct = prediction == correctId;
-			// if (correct)
-			// {
-			// 	results[correctId]++;
-			// 	correctCount++;
-			// }
-
-			results[prediction]++;
-
-			// std::cout << paths[i] << " -> " << cluster.test(i);
-			// if (correct)
-			// {
-			// 	std::cout << " (correct)";
-			// }
-			// else
-			// {
-			// 	std::cout << " (incorrect, " << prediction << " vs " << correctId << ")";
-			// }
-			// std::cout << std::endl;
-		}
-
-		std::cout << "Correct: " << correctCount << "/" << added << " (" << correctCount * 100.0 / added << "%)" << std::endl;
-		for (size_t i = 0; i < 7; i++)
-		{
-			std::cout << i + 1 << ": " << results[i] << "/" << counter[i] << std::endl;
-		}
+		DatasetWork dw;
+		dw.open();
+		// dw.predict(filesRoot, maxAllowed, landscapes, constr, iterSelfCuster);
+		// dw.predict(filesRoot, maxAllowed, landscapes, constr, strictSelfCuster);
+		// dw.predict(filesRoot, maxAllowed, landscapes, constr, iterLandCuster);
+		// dw.predict(filesRoot, maxAllowed, landscapes, constr, strictLandCuster);
+		dw.predict(filesRoot, maxAllowed, landscapes, constr, pointCuster);
 
 		return {};
 	}
