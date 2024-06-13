@@ -117,6 +117,39 @@ public:
 		return pathset[0][0].y;
 	}
 
+
+	static void itrateOverPoints(const std::vector<landres>& points, std::vector<float>& total)
+	{
+		for (size_t j = 1; j < points.size(); j++)
+		{
+			const auto& prev = points[j - 1];
+			const auto& cur = points[j];
+			float startY = prev.y;
+
+			const size_t startX = round(prev.x * AddE); // Из-за округления может быть равным с предыдущем
+			const size_t endX = round(cur.x * AddE);
+
+			assert(startX <= endX);
+
+			const float width = endX - startX;
+			const float height = abs(cur.y - prev.y);
+			if (height == 0 || width == 0)
+			{
+				total[startX] += round(startY);
+				continue;
+			}
+			float iter = height / (width);
+
+			float y = startY;
+			assert(endX < total.size());
+			for (size_t i = startX; i < endX; i++)
+			{
+				total[i] += round(y);
+				y += iter;
+			}
+		}
+	}
+
 	void getSignatureAsVector(std::vector<float>& total) const
 	{
 		total.resize(256.f * AddE); // 1 because of rounding and 1 because of including range [0, maxEnd]
@@ -127,34 +160,7 @@ public:
 		// For each lyambda
 		for (const auto& landset : pathset)
 		{
-			for (size_t j = 1; j < landset.size(); j++)
-			{
-				const auto& prev = landset[j - 1];
-				const auto& cur = landset[j];
-				float startY = prev.y;
-
-				const size_t startX = round(prev.x * AddE); // Из-за округления может быть равным с предыдущем
-				const size_t endX = round(cur.x * AddE);
-
-				assert(startX <= endX);
-
-				const float width = endX - startX;
-				const float height = abs(cur.y - prev.y);
-				if (height == 0 || width == 0)
-				{
-					total[startX] += round(startY);
-					continue;
-				}
-				float iter = height / (width);
-
-				float y = startY;
-				assert(endX < total.size());
-				for (size_t i = startX; i < endX; i++)
-				{
-					total[i] += round(y);
-					y += iter;
-				}
-			}
+			itrateOverPoints(landset, total);
 		}
 
 	}
@@ -190,7 +196,7 @@ public:
 		});
 	}
 
-	void getCombinedPointsAsSignature(std::vector<float>& total) const
+	void getCombinedPointsAsHist(std::vector<float>& total) const
 	{
 		std::vector<landres> points;
 		getCombinedPoints(points);
@@ -201,6 +207,16 @@ public:
 		{
 			total[round(l.x * AddE)] += l.y;
 		}
+	}
+
+	void getCombinedPointsAsSignature(std::vector<float>& total) const
+	{
+		std::vector<landres> points;
+		getCombinedPoints(points);
+
+		total.clear();
+		total.reserve(256.f * AddE);
+		itrateOverPoints(points, total);
 	}
 
 	void getSignature(BackString& line) const override
