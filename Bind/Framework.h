@@ -23,7 +23,7 @@ import BackBind;
 
 //#define GL_RGB                            0x1907
 
-MEXPORT static std::vector<BackPathStr> openImagesOrProject()
+MEXPORT inline std::vector<BackPathStr> openImagesOrProject()
 {
 	// File open
 	auto f = pfd::open_file("Choose files to read", pfd::path::home(),
@@ -48,7 +48,7 @@ MEXPORT static std::vector<BackPathStr> openImagesOrProject()
 	return output;
 }
 
-MEXPORT static BackPathStr openImage()
+MEXPORT inline BackPathStr openImage()
 {
 	// File open
 	auto f = pfd::open_file("Choose files to read", pfd::path::home(),
@@ -67,7 +67,7 @@ MEXPORT static BackPathStr openImage()
 }
 
 
-MEXPORT static BackPathStr openFile(BackStringView filter)
+MEXPORT inline BackPathStr openFile(BackStringView filter)
 {
 	// Split filter by the '|' character
 	std::vector<BackString> filters;
@@ -102,7 +102,7 @@ MEXPORT static BackPathStr openFile(BackStringView filter)
 }
 
 
-MEXPORT static BackPathStr openFolder()
+MEXPORT inline BackPathStr openFolder()
 {
 	// File open
 	auto f = pfd::select_folder("Choose folder to read", pfd::path::home(),
@@ -111,7 +111,7 @@ MEXPORT static BackPathStr openFolder()
 	return f.result();
 }
 
-MEXPORT static BackPathStr openProject()
+MEXPORT inline BackPathStr openProject()
 {
 	// File open
 	auto f = pfd::open_file("Choose files to read", pfd::path::home(),
@@ -129,7 +129,7 @@ MEXPORT static BackPathStr openProject()
 	return f.result().size() == 0 ? "" : f.result()[0];
 }
 
-MEXPORT static BackPathStr getSavePath(std::initializer_list<BackString> exts)
+MEXPORT inline BackPathStr getSavePath(std::initializer_list<BackString> exts)
 {
 	auto fs = pfd::save_file("Choose file to save", pfd::path::home(), exts, pfd::opt::none);
 
@@ -138,7 +138,7 @@ MEXPORT static BackPathStr getSavePath(std::initializer_list<BackString> exts)
 	return fs.result().size() == 0 ? "" : fs.result();
 }
 
-MEXPORT static BackPathStr getDicumnetPath()
+MEXPORT inline BackPathStr getDicumnetPath()
 {
 	return sago::getDocumentsFolder();
 }

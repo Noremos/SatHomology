@@ -155,49 +155,49 @@ MEXPORT struct SettingValue
 	} type;
 
 public:
-	SettingValue(const BackString& name, bool& val)
+	constexpr SettingValue(const BackString& name, bool& val)
 	{
 		this->name = name;
 		data.b = &val;
 		type = sv_bool;
 	}
 
-	SettingValue(const BackString& name, int& val)
+	constexpr SettingValue(const BackString& name, int& val)
 	{
 		this->name = name;
 		data.i = &val;
 		type = sv_int;
 	}
 
-	SettingValue(const BackString& name, float& val)
+	constexpr SettingValue(const BackString& name, float& val)
 	{
 		this->name = name;
 		data.f = &val;
 		type = sv_double;
 	}
 
-	SettingValue(const BackString& name, double& val)
+	constexpr SettingValue(const BackString& name, double& val)
 	{
 		this->name = name;
 		data.d = &val;
 		type = sv_double;
 	}
 
-	SettingValue(const BackString& name, BackString& val)
+	constexpr SettingValue(const BackString& name, BackString& val)
 	{
 		this->name = name;
 		data.s = &val;
 		type = sv_str;
 	}
 
-	SettingValue(const BackString& name, BackPathStr& val, bool fileMode, BackStringView filter = "")
+	constexpr SettingValue(const BackString& name, BackPathStr& val, bool fileMode, BackStringView filter = "")
 	{
 		this->name = name;
 		data.p = new PathBlock(&val, fileMode, filter.data());
 		type = sv_path;
 	}
 
-	SettingValue(const BackString& name, int* selected, std::initializer_list<BackString> vals)
+	constexpr SettingValue(const BackString& name, int* selected, std::initializer_list<BackString> vals)
 	{
 		this->name = name;
 		data.e = new EnumBlock(selected, vals);
@@ -205,14 +205,14 @@ public:
 	}
 
 	template<class T>
-	SettingValue(const BackString& name, T& selected, std::initializer_list<std::pair<BackString, T>> vals)
+	constexpr SettingValue(const BackString& name, T& selected, std::initializer_list<std::pair<BackString, T>> vals)
 	{
 		this->name = name;
 		data.e = new EnumBlock(&selected, vals);
 		type = sv_enum;
 	}
 
-	SettingValue(const SettingValue& other)
+	constexpr SettingValue(const SettingValue& other)
 	{
 		operator=(other);
 	}
