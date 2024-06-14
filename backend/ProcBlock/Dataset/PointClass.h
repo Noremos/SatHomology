@@ -12,11 +12,17 @@ class PointCluster
 
 	// int results[7];
 
+	int maxClusters;
 	// std::unordered_map<int,int> used;
 public:
 	int test(int id)
 	{
 		return output[id];
+	}
+
+	void setClasses(int n)
+	{
+		maxClusters = n;
 	}
 
 	struct PredClass
@@ -186,13 +192,14 @@ public:
 			int size = 0;
 
 			int clusId = -1;
+			int maxClausers = 7;
 
-			ProtoClust(int& usedId, int id) : usedId(usedId), id(id) {}
+			ProtoClust(int& usedId, int id, int maxClausers) : usedId(usedId), id(id), maxClausers(maxClausers) {}
 
 			void add(int dd = 1)
 			{
 				size += dd;
-				if (size >= 3 && usedId < NC)
+				if (size >= 3 && usedId < maxClausers)
 				{
 					clusId = usedId++;
 				}
@@ -284,7 +291,7 @@ public:
 						// pc.items.push_back(a);
 						// pc.items.push_back(b);
 						int pid = clusters.size();
-						auto p = std::make_shared<ProtoClust>(usedClusters, pid);
+						auto p = std::make_shared<ProtoClust>(usedClusters, pid, maxClusters);
 						clusters.push_back(p);
 						p->add(2);
 						// protos.insert({a, pid});
@@ -388,7 +395,7 @@ public:
 			graph.connect(d.aId, d.bId, d.diff);
 		}
 
-		graph.predict(NC);
+		graph.predict(maxClusters);
 		output = std::move(graph.output);
 	}
 };

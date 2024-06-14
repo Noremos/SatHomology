@@ -592,6 +592,15 @@ namespace MyApp
 		// https://github.com/bkaradzic/bgfx/blob/master/3rdparty/dear-imgui/widgets/range_slider.inl
 		if (ImGui::BeginViewportSideBar("##BottomBar", NULL, ImGuiDir_Down, 50, window_flags))
 		{
+			ImGui::SameLine(0, 30);
+			static GuiBlock guiblock;
+
+			if (ImGui::Button("Блоки"))
+			{
+				guiblock.show = true;
+			}
+			guiblock.draw(layersVals);
+
 			// GBL
 			ImGui::BeginDisabled(commonValus.onAir || !tbVals.enableProcessBtn);
 
@@ -606,14 +615,7 @@ namespace MyApp
 			// {
 			// 	backend.showResultPics(bottomVals.drawPics);
 			// }
-			ImGui::SameLine(0, 30);
-			static GuiBlock guiblock;
 
-			if (ImGui::Button("Блоки"))
-			{
-				guiblock.show = true;
-			}
-			guiblock.draw(layersVals);
 
 			// ImGui::Text(bottomVals.debug.c_str());
 

@@ -12,21 +12,22 @@
 #include "../../CachedBarcode.h"
 #include "../../Clusterizers/ConverctItem.h"
 
-constexpr int NC = 2;
 class DatasetWork
 {
-	std::unordered_map<std::string, int> sourceFiles;
+	std::unordered_map<BackPathStr, int> sourceFiles;
 	int maxAllowed;
+	int NC = 2;
 public:
 
 	void open()
 	{
+		BackPathStr filesRoot = "/Users/sam/Edu/datasets/hirise-map-proj-v3/map-proj-v3";
+		NC = 7;
 		std::ifstream srcleab("/Users/sam/Edu/datasets/hirise-map-proj-v3/labels-map-proj-v3.txt");
 		// Read file line by line
 
 		std::string line;
-		int counter[NC];
-		std::fill_n(counter, NC, 0);
+		std::vector<int> counter(NC, 0);
 
 		while (std::getline(srcleab, line))
 		{
@@ -34,25 +35,53 @@ public:
 			std::string name = line.substr(0, p);
 			int id = std::stoi(line.substr(p + 1));
 			counter[id]++;
-			sourceFiles.insert(std::pair(name, id));
+			sourceFiles.insert(std::pair(filesRoot / name, id));
 		}
 
-		std::cout << "Total: " << std::accumulate(counter, counter + NC, 0) << std::endl;
+		std::cout << "Total: " << std::accumulate(counter.begin(), counter.end(), 0) << std::endl;
 		for (size_t i = 0; i < NC; i++)
 		{
 			std::cout << i + 1 << ": " << counter[i] << std::endl;
 		}
 
-		maxAllowed = *std::min_element(counter, counter + NC);
+		maxAllowed = *std::min_element(counter.begin(), counter.end());
+	}
+
+	void openCraters(BackStringView name)
+	{
+		NC = 2;
+		BackPathStr datasets("/Users/sam/Edu/datasets");
+		BackPathStr srcleab(datasets / name / "train/crater");
+		std::vector<int> counter(NC, 0);
+		// iterate over each file in the directory
+		for (const auto& entry : std::filesystem::directory_iterator(srcleab))
+		{
+			// std::cout << entry.path() << std::endl;
+			sourceFiles.insert(std::pair<std::string, int>(entry.path(), 0));
+			counter[0]++;
+		}
+
+		srcleab =datasets / name / "train/noncrater";
+		for (const auto& entry : std::filesystem::directory_iterator(srcleab))
+		{
+			sourceFiles.insert(std::pair<std::string, int>(entry.path(), 1));
+			counter[1]++;
+		}
+
+		std::cout << "Total: " << std::accumulate(counter.begin(), counter.end(), 0) << std::endl;
+		for (size_t i = 0; i < NC; i++)
+		{
+			std::cout << i + 1 << ": " << counter[i] << std::endl;
+		}
 	}
 
 	template<class C>
-	void predict(BackPathStr filesRoot, int maxAllowed, ConvertCollection& landscape, const bc::barstruct& constr, C& processor) const
+	void predict(int maxAllowed, ConvertCollection& landscape, const bc::barstruct& constr, C& processor) const
 	{
+		processor.setClasses(NC);
 		std::cout << "Sample " << maxAllowed << " elements from each cluster" << std::endl;
 
-		int counter[NC];
-		std::fill_n(counter, NC, 0);
+		std::vector<int> counter(NC, 0);
 		int added = 0;
 
 		std::vector<BackString> names;
@@ -62,21 +91,21 @@ public:
 			if (counter[correctId] >= maxAllowed)
 				continue;
 
-			// // Skip list
-			switch (correctId)
-			{
-			case 0:
-			case 1:
-			case 2:
-			// case 3:
-			case 4:
-			case 5:
-			// case 6:
-			case 7:
-				continue;
-			}
+			// // // Skip list
+			// switch (correctId)
+			// {
+			// case 0:
+			// case 1:
+			// case 2:
+			// // case 3:
+			// case 4:
+			// case 5:
+			// // case 6:
+			// case 7:
+			// 	continue;
+			// }
 
-			BackString path = filesRoot / entry.first;
+			BackPathStr path =  entry.first;
 			// assert(pathExists(path));
 
 			counter[correctId]++;
@@ -92,7 +121,7 @@ public:
 			added += processor.addToSet(item, correctId);
 			// --------------- --------------- ---------------
 
-			names.push_back(entry.first);
+			names.push_back(entry.first.filename().string());
 		}
 
 		processor.predict();
@@ -147,16 +176,18 @@ public:
 			if (r <= c)
 				t = c - r;
 			else
-				t = std::max(c - r, 0);
+				t = -(r - c);
 
-			int a = (c - t);
+			correctCount += t;
+
+			int a = float(r) / float(c);
 			if (a >= 0)
-				correctCount += a;
+				a = 1.0 - a;
 
 			std::cout << i + 1 << ": " << r << "/" << c << std::endl;
-			res += t * 100.0 / (c);
+			res += a;
 		}
-		std::cout << "Correct: " << correctCount << "/" << added << " (" << res / NC << "%)" << std::endl;
+		std::cout << "Correct: " << correctCount << "/" << added << " (" << res * 100.f << "%)" << std::endl;
 	}
 };
 
@@ -192,6 +223,10 @@ public:
 		}
 		return 1;
 	}
+	void setClasses(int n)
+	{
+		ref.setClasses(n);
+	}
 
 	void predict()
 	{
@@ -221,6 +256,11 @@ public:
 		landspacePoints.push_back({});
 		item->getCombinedPoints(landspacePoints.back());
 		return 1;
+	}
+
+	void setClasses(int n)
+	{
+		ref.setClasses(n);
 	}
 
 	void predict()

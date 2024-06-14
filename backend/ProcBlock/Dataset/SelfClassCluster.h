@@ -12,8 +12,10 @@ class SelfCluster
 		size_t closerI;
 		float closerDiff;
 	};
-	int results[NC];
+	std::vector<int> results;
 
+
+	int maxAllowed = 2;
 	std::vector<int> output;
 public:
 	int test(int id)
@@ -21,17 +23,29 @@ public:
 		return output[id];
 	}
 
+	void setClasses(int n)
+	{
+		maxAllowed = n;
+		results.resize(n, 0);
+	}
+
+	struct Cluster
+	{
+		float sumDiff;
+		std::vector<float> path1;
+	};
+
 	void predict(std::vector<std::vector<float>>& land)
 	{
 		std::vector<DiffItem> diffs;
-		std::fill_n(results, N, 0);
+		std::fill(results.begin(), results.end(), 0);
 
 		int n = land[0].size();
 		for (size_t i = 0; i < land.size() - 1; i++)
 		{
 			std::vector<float>& path1 = land[i];
 			size_t closer = i + 1;
-			float closestDiff = 999999999999999.0f;
+			float closestDiff = std::numeric_limits<float>::max();
 			for (size_t j = i + 1; j < land.size(); j++)
 			{
 				std::vector<float>& path2 = land[j];
@@ -39,9 +53,11 @@ public:
 				float curDiff = 0.f;
 				for (size_t k = 0; k < n; k++)
 				{
-					float doff = path1[i] - path2[k];
-					curDiff +=  doff * doff;
+					float doff = path1[k] - path2[k];
+					curDiff += doff * doff;
 				}
+
+				// diffs.push_back({i, j, curDiff});
 
 				curDiff = sqrt(curDiff);
 				if (curDiff < closestDiff)
@@ -55,24 +71,17 @@ public:
 		}
 
 		// Sort ids
-		std::vector<int> ids;
-		for (size_t i = 0; i < diffs.size(); i++)
-		{
-			ids.push_back(i);
-		}
-
-		std::sort(ids.begin(), ids.end(), [&diffs](size_t a, size_t b)
+		std::sort(diffs.begin(), diffs.end(), [](auto& a, auto& b)
 			{
-				return diffs[a].closerDiff < diffs[b].closerDiff;
+				return a.closerDiff < b.closerDiff;
 			});
 
 		int usedClusters = 0;
 		output.resize(land.size());
 		std::fill(output.begin(), output.end(), -1);
-		for (size_t i = 0; i < ids.size(); i++)
+		for (size_t i = 0; i < diffs.size(); i++)
 		{
-			int id = ids[i];
-			DiffItem& d = diffs[id];
+			DiffItem& d = diffs[i];
 
 			int a = d.srcI;
 			int b = d.closerI;
@@ -81,7 +90,7 @@ public:
 			{
 				if (output[b] != -1)
 					continue;
-				else
+				else // output[b] == -1
 				{
 					output[b] = output[a];
 				}
@@ -92,7 +101,7 @@ public:
 				{
 					output[a] = output[b];
 				}
-				else if (usedClusters < NC)
+				else// if (usedClusters < maxAllowed)
 				{
 					output[a] = output[b] = usedClusters++; // Clusters numbers with 0
 				}
@@ -147,14 +156,18 @@ class SelfClass
 		}
 	};
 
-	ClassSet classes[NC];
-
+	std::vector<ClassSet> classes;
 	using ClassId = int;
 	std::vector<ClassId> output;
 public:
+	void setClasses(int n)
+	{
+		classes.resize(n);
+	}
+
 	void addToTrain(int id, std::vector<float>&& path)
 	{
-		assert(id < NC);
+		assert(id < classes.size());
 		classes[id].add(std::forward<Path>(path));
 	}
 
@@ -173,7 +186,7 @@ public:
 			Path& p = land[l];
 			ClassId minClass = 0;
 			float minDiff = std::numeric_limits<float>::max();
-			for (size_t i = 0; i < NC; i++)
+			for (size_t i = 0; i < classes.size(); i++)
 			{
 				auto& c = classes[i];
 

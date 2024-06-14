@@ -214,33 +214,36 @@ public:
 		PointsProcessor<PointCluster> pointCuster;
 
 		bc::barstruct constr = bar.getConstr();
-		int maxAllowed = 50;
+		int maxAllowed = 999999;
 
 		DatasetWork dw;
-		dw.open();
+		// dw.open(filesRoot);
+		// dw.openCraters("ctaters");
+		// dw.openCraters("ctx_samv1");
+		dw.openCraters("ctx_samv2");
 		// std::cout << "iterSelfCuster" << std::endl;
-		// dw.predict(filesRoot, maxAllowed, landscapes, constr, iterSelfCuster);
+		// dw.predict(maxAllowed, landscapes, constr, iterSelfCuster);
 		// std::cout << "combinedSelfCuster" << std::endl;
-		// dw.predict(filesRoot, maxAllowed, landscapes, constr, combinedSelfCuster);
+		// dw.predict(maxAllowed, landscapes, constr, combinedSelfCuster);
 		// std::cout << "combinedIterCuster" << std::endl;
-		// dw.predict(filesRoot, maxAllowed, landscapes, constr, combinedIterCuster);
+		// dw.predict(maxAllowed, landscapes, constr, combinedIterCuster);
 		// std::cout << "iterLandCuster" << std::endl;
-		// dw.predict(filesRoot, maxAllowed, landscapes, constr, iterLandCuster);
+		// dw.predict(maxAllowed, landscapes, constr, iterLandCuster);
 		// std::cout << "combinedLandCuster" << std::endl;
-		// dw.predict(filesRoot, maxAllowed, landscapes, constr, combinedLandCuster);
+		// dw.predict(maxAllowed, landscapes, constr, combinedLandCuster);
 		// std::cout << "combinedIterLandCuster" << std::endl;
-		// dw.predict(filesRoot, maxAllowed, landscapes, constr, combinedIterLandCuster);
+		// dw.predict(maxAllowed, landscapes, constr, combinedIterLandCuster);
 
 
 		// std::cout << "pointCuster" << std::endl;
-		// dw.predict(filesRoot, maxAllowed, landscapes, constr, pointCuster);
+		// dw.predict(maxAllowed, landscapes, constr, pointCuster);
 
 		std::cout << "iterLandCuster" << std::endl;
-		dw.predict(filesRoot, maxAllowed, landscapes, constr, iterLandCuster);
-		std::cout << "combinedLandCuster" << std::endl;
-		dw.predict(filesRoot, maxAllowed, landscapes, constr, combinedLandCuster);
-		std::cout << "combinedIterLandCuster" << std::endl;
-		dw.predict(filesRoot, maxAllowed, landscapes, constr, combinedIterLandCuster);
+		dw.predict(maxAllowed, landscapes, constr, iterLandCuster);
+		// std::cout << "combinedLandCuster" << std::endl;
+		// dw.predict(maxAllowed, landscapes, constr, combinedLandCuster);
+		// std::cout << "combinedIterLandCuster" << std::endl;
+		// dw.predict(maxAllowed, landscapes, constr, combinedIterLandCuster);
 
 		return {};
 	}

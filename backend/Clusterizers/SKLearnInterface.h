@@ -69,6 +69,11 @@ public:
 		// n = size;
 	}
 
+	void setClasses(int size)
+	{
+		*IBarClusterizer::settings.getInt("n_clusters") = size;
+	}
+
 	int getClusters()
 	{
 		return n;
