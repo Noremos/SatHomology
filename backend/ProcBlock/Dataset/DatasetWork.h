@@ -47,11 +47,11 @@ public:
 		maxAllowed = *std::min_element(counter.begin(), counter.end());
 	}
 
-	void openCraters(BackStringView name)
+	void openCraters(BackStringView name, BackStringView name1 = "crater", BackStringView name2 = "noncrater")
 	{
 		NC = 2;
 		BackPathStr datasets("/Users/sam/Edu/datasets");
-		BackPathStr srcleab(datasets / name / "train/crater");
+		BackPathStr srcleab(datasets / name / name1);
 		std::vector<int> counter(NC, 0);
 		// iterate over each file in the directory
 		for (const auto& entry : std::filesystem::directory_iterator(srcleab))
@@ -61,7 +61,7 @@ public:
 			counter[0]++;
 		}
 
-		srcleab =datasets / name / "train/noncrater";
+		srcleab =datasets / name / name2;
 		for (const auto& entry : std::filesystem::directory_iterator(srcleab))
 		{
 			sourceFiles.insert(std::pair<std::string, int>(entry.path(), 1));
@@ -78,13 +78,14 @@ public:
 	template<class C>
 	void predict(int maxAllowed, ConvertCollection& landscape, const bc::barstruct& constr, C& processor) const
 	{
+		landscape.clear();
 		processor.setClasses(NC);
 		std::cout << "Sample " << maxAllowed << " elements from each cluster" << std::endl;
 
 		std::vector<int> counter(NC, 0);
 		int added = 0;
 
-		std::vector<BackString> names;
+		std::vector<int> correctIds;
 		for (auto& entry : sourceFiles)
 		{
 			int correctId = entry.second;
@@ -121,27 +122,33 @@ public:
 			added += processor.addToSet(item, correctId);
 			// --------------- --------------- ---------------
 
-			names.push_back(entry.first.filename().string());
+			// names.push_back(entry.first.filename());
+			correctIds.push_back(correctId);
 		}
 
 		processor.predict();
 		int results[1000];
 		std::fill_n(results, 1000, 0);
 
+		int fals[1000];
+		std::fill_n(fals, 1000, 0);
+
 		int correctCount = 0;
 		int maxPred = 0;
 		for (size_t i = 0; i < added; i++)
 		{
 			int prediction = processor.test(i);
-			// int correctId = sourceFiles[names[i]];
-			// bool correct = prediction == correctId;
-			// if (correct)
-			// {
-			// 	results[correctId]++;
-			// 	correctCount++;
-			// }
+			int correctId = correctIds[i];
+			bool correct = prediction == correctId;
+			if (correct)
+			{
+				results[correctId]++;
+				correctCount++;
+			}
+			else
+				fals[correctId]++;
 			// assert(prediction < 7);
-			results[prediction]++;
+			// results[prediction]++;
 			if (prediction > maxPred)
 				maxPred = prediction;
 
@@ -158,8 +165,8 @@ public:
 		}
 
 		// std::cout << "Correct: " << correctCount << "/" << added << " (" << correctCount * 100.0 / added << "%)" << std::endl;
-		correctCount = 0;
 		float res = 0;
+		correctCount = 0;
 		for (size_t i = 0; i <= maxPred; i++)
 		{
 			int r = results[i];
@@ -167,24 +174,20 @@ public:
 			if (i >= NC)
 			{
 				std::cout << i + 1 << ": " << r << "/?" << std::endl;
+				correctCount -= r;
 				continue;
 			}
 
-			int c = counter[i];
+			int c = counter[NC - i - 1];
 
-			int t;
-			if (r <= c)
-				t = c - r;
-			else
-				t = -(r - c);
-
+			int t = c - r;
 			correctCount += t;
 
-			int a = float(r) / float(c);
+			float a = float(r) / float(c);
 			if (a >= 0)
 				a = 1.0 - a;
 
-			std::cout << i + 1 << ": " << r << "/" << c << std::endl;
+			std::cout << i + 1 << ": " << r << "/" << c << " (false is " << fals[NC-i-1] << ")" << std::endl;
 			res += a;
 		}
 		std::cout << "Correct: " << correctCount << "/" << added << " (" << res * 100.f << "%)" << std::endl;
@@ -203,8 +206,8 @@ class SignatureProcessor
 {
 	T dummy;
 public:
-	SignatureProcessor(T& ref) : ref(ref) {}
-	SignatureProcessor() : ref(dummy) {}
+	SignatureProcessor(T& ref, int resolution) : ref(ref), resolution(resolution) {}
+	SignatureProcessor(int resolution) : ref(dummy), resolution(resolution) {}
 
 	int addToSet(ConvertClass* item, int classId)
 	{
@@ -212,17 +215,19 @@ public:
 		switch (type)
 		{
 		case SignatureType::Iter:
-			item->getSignatureAsVector(hist.back());
+			item->getSignatureAsVector(hist.back(), resolution);
 			break;
 		case SignatureType::Combined:
-			item->getCombinedPointsAsHist(hist.back());
+			item->getCombinedPointsAsHist(hist.back(), resolution);
 			break;
 		case SignatureType::CombinedIter:
-			item->getCombinedPointsAsSignature(hist.back());
+			item->getCombinedPointsAsSignature(hist.back(), resolution);
 			break;
 		}
 		return 1;
 	}
+
+	int resolution = 1;
 	void setClasses(int n)
 	{
 		ref.setClasses(n);
