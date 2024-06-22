@@ -55,15 +55,15 @@ def apply_mean_shift(X, params): #(X):
     return clustering.labels_
 
 def apply_spectral_clustering(X, params): #(X, n_clusters):
-    clustering = SpectralClustering(n_clusters=params["n_clusters"]).fit(X)
+    clustering = SpectralClustering(n_clusters=params["n_clusters"], random_state=42).fit(X)
     return clustering.labels_
 
 def apply_spectral_biclustering(X, params):
-    clustering = SpectralBiclustering(n_clusters=params["n_clusters"]).fit(X)
+    clustering = SpectralBiclustering(n_clusters=params["n_clusters"], random_state=42).fit(X)
     return clustering.row_labels_
 
 def apply_spectral_coclustering(X, params): #(X, n_clusters):
-    clustering = SpectralCoclustering(n_clusters=params["n_clusters"]).fit(X)
+    clustering = SpectralCoclustering(n_clusters=params["n_clusters"], random_state=42).fit(X)
     return clustering.row_labels_
 
 def apply_dbscan(X, params): #(X, eps, min_samples):
@@ -80,6 +80,7 @@ def apply_bisecting_kmeans(X, params): #(X, n_clusters):
     return clustering.labels_
 
 def main(method, X, params):
+    X = np.nan_to_num(X, neginf=0, posinf=0, nan=0)
     # Инициализация и обучение модели
     if method == 'AffinityPropagation':
         labels = apply_affinity_propagation(X)
