@@ -56,7 +56,7 @@ public:
 		//constr.attachMode = bc::AttachMode::closer;
 		constr.returnType = bc::ReturnType::barcode2d;
 
-		constr.addStructure(type, bc::ColorType::native, bc::ComponentType::Component);
+		constr.addStructure(type, bc::ColorType::gray, bc::ComponentType::Component);
 
 		return constr;
 	}
@@ -119,9 +119,9 @@ public:
 		writer.pInt(classId);
 		saveToDist(writer, item);
 
-		std::vector<float> temp;
-		item->getSignatureAsVector(temp);
-		saveToDist(writer, temp);
+		// std::vector<float> temp;
+		// item->getSignatureAsVector(temp);
+		// saveToDist(writer, temp);
 		// Save to disk end --------------- --------------- ---------------
 		return 0;
 	}
@@ -136,6 +136,11 @@ public:
 	int test(int id)
 	{
 		return 0;
+	}
+
+	void setClasses(int n)
+	{
+		writer.pShort(n);
 	}
 
 	void saveToDist(StateBinFile::BinStateWriter& out, ConvertClass* item)
@@ -203,48 +208,50 @@ public:
 
 		landscapes.performOnPerform();
 
-		SignatureProcessor<SelfCluster, SignatureType::Iter> iterSelfCuster;
-		SignatureProcessor<SelfCluster, SignatureType::Combined> combinedSelfCuster;
-		SignatureProcessor<SelfCluster, SignatureType::CombinedIter> combinedIterCuster;
+		SignatureProcessor<SelfCluster, SignatureType::Iter> iterSelfCuster(resolution);
+		SignatureProcessor<SelfCluster, SignatureType::Combined> combinedSelfCuster(resolution);
+		SignatureProcessor<SelfCluster, SignatureType::CombinedIter> combinedIterCuster(resolution);
 
-		SignatureProcessor<LandClassifier, SignatureType::Iter> iterLandCuster(cluster);
-		SignatureProcessor<LandClassifier, SignatureType::Combined> combinedLandCuster(cluster);
-		SignatureProcessor<LandClassifier, SignatureType::CombinedIter> combinedIterLandCuster(cluster);
+		SignatureProcessor<LandClassifier, SignatureType::Iter> iterLandCuster(cluster, resolution);
+		SignatureProcessor<LandClassifier, SignatureType::Combined> combinedLandCuster(cluster, resolution);
+		SignatureProcessor<LandClassifier, SignatureType::CombinedIter> combinedIterLandCuster(cluster, resolution);
 
 		PointsProcessor<PointCluster> pointCuster;
 
 		bc::barstruct constr = bar.getConstr();
-		int maxAllowed = 999999;
+		constr.createGraph = false; // Do not create empty nodes
+		int maxAllowed = 100;
 
 		DatasetWork dw;
 		// dw.open(filesRoot);
 		// dw.openCraters("ctaters");
 		// dw.openCraters("ctx_samv1");
-		dw.openCraters("ctx_samv2");
+		// dw.openCraters("ctx_samv2/train");
+		dw.openCraters("planet/train", "Earth", "Moon");
+		// dw.openCraters("test_dataset");
+		// dw.openCraters("ctx_samv2/valid");
+		// dw.open();
 		// std::cout << "iterSelfCuster" << std::endl;
-		// dw.predict(maxAllowed, landscapes, constr, iterSelfCuster);
+		// dw.predict(maxAllowed, landscapes, constr, iterSelfCuster); // Ok, но почему0то много кластеров
 		// std::cout << "combinedSelfCuster" << std::endl;
 		// dw.predict(maxAllowed, landscapes, constr, combinedSelfCuster);
 		// std::cout << "combinedIterCuster" << std::endl;
 		// dw.predict(maxAllowed, landscapes, constr, combinedIterCuster);
-		// std::cout << "iterLandCuster" << std::endl;
-		// dw.predict(maxAllowed, landscapes, constr, iterLandCuster);
-		// std::cout << "combinedLandCuster" << std::endl;
-		// dw.predict(maxAllowed, landscapes, constr, combinedLandCuster);
-		// std::cout << "combinedIterLandCuster" << std::endl;
-		// dw.predict(maxAllowed, landscapes, constr, combinedIterLandCuster);
-
 
 		// std::cout << "pointCuster" << std::endl;
-		// dw.predict(maxAllowed, landscapes, constr, pointCuster);
+		// dw.predict(maxAllowed, landscapes, constr, pointCuster); // Broken
 
 		std::cout << "iterLandCuster" << std::endl;
 		dw.predict(maxAllowed, landscapes, constr, iterLandCuster);
-		// std::cout << "combinedLandCuster" << std::endl;
+		std::cout << "combinedLandCuster" << std::endl;
 		// dw.predict(maxAllowed, landscapes, constr, combinedLandCuster);
 		// std::cout << "combinedIterLandCuster" << std::endl;
 		// dw.predict(maxAllowed, landscapes, constr, combinedIterLandCuster);
 
+		// WriterProcessor writer(resolution);
+		// dw.predict(maxAllowed, landscapes, constr, writer);
+
+		std::cout << "Done" << std::endl;
 		return {};
 	}
 
