@@ -119,7 +119,10 @@ public:
 
 			for (const auto& num : sign)
 			{
-				tempFile << num << " ";
+				if (std::isfinite(num))
+					tempFile << num << " ";
+				else
+					tempFile << 0 << " ";
 			}
 			tempFile.seekp(-1, tempFile.cur); // ������� ��������� �������
 			tempFile << std::endl;
