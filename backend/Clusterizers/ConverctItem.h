@@ -64,18 +64,27 @@ MEXPORT class ConvertClass : public ICluster
 public:
 	bc::barvector matrix;
 	std::vector<std::vector<landres>> pathset;
-	float AddE = 0;
-	mutable float maxEnd = 0;
+	// mutable float maxEnd = 0;
 //	bool addMiddleDepth;
+
+	// virtual void add(float x, float y, bool round)
 //
 	const bc::barvector& getMatrix() const override
 	{
 		return matrix;
 	}
 
-	void add(float x, float y)
+	void add(float x, float y, bool round)
 	{
-		// assert(pathset.back().size() == 0 || pathset.back().back().x != x);
+		x =  round ? roundf(x) : x;
+		if (pathset.back().size() != 0)
+		{
+			auto& curVec = pathset.back();
+			auto& b = curVec.back();
+			// assert(b.x < x);
+			// assert(b.y != y);
+		}
+		assert(std::isfinite(y));
 		pathset.back().push_back({x, y});
 	}
 //
@@ -98,17 +107,13 @@ public:
 		id = other.id;
 		matrix = other.matrix;
 		pathset = other.pathset;
-		AddE = other.AddE;
-		maxEnd = other.maxEnd;
 	}
 
 	explicit ConvertClass(ConvertClass&& other) //: id(id)
 	{
 		id = other.id;
 		matrix = std::move(other.matrix);
-		pathset =   std::move(other.pathset);
-		AddE = other.AddE;
-		maxEnd = other.maxEnd;
+		pathset = std::move(other.pathset);
 	}
 
 	Barscalar start() const override
@@ -122,7 +127,7 @@ public:
 	}
 
 
-	static void itrateOverPoints(const std::vector<landres>& points, std::vector<float>& total, float AddE)
+	static void itrateOverPoints(const std::vector<landres>& points, std::vector<float>& total)
 	{
 		for (size_t j = 1; j < points.size(); j++)
 		{
@@ -130,8 +135,8 @@ public:
 			const auto& cur = points[j];
 			float startY = prev.y;
 
-			const size_t startX = round(prev.x * AddE); // Из-за округления может быть равным с предыдущем
-			const size_t endX = round(cur.x * AddE);
+			const size_t startX = round(prev.x); // Из-за округления может быть равным с предыдущем
+			const size_t endX = round(cur.x);
 
 			assert(startX <= endX);
 
@@ -154,9 +159,9 @@ public:
 		}
 	}
 
-	void getSignatureAsVector(std::vector<float>& total) const
+	void getSignatureAsVector(std::vector<float>& total, int res) const
 	{
-		total.resize(256.f * AddE); // 1 because of rounding and 1 because of including range [0, maxEnd]
+		total.resize(256.f * res, 0); // 1 because of rounding and 1 because of including range [0, maxEnd]
 		std::fill(total.begin(), total.end(), 0);
 
 		float N = pathset.size();
@@ -164,9 +169,13 @@ public:
 		// For each lyambda
 		for (const auto& landset : pathset)
 		{
-			itrateOverPoints(landset, total, AddE);
+			itrateOverPoints(landset, total);
 		}
 
+		for (auto &val : total)
+		{
+			val /= N;
+		}
 	}
 
 	void getCombinedPoints(std::vector<landres>& total) const
@@ -174,7 +183,7 @@ public:
 		float N = pathset.size();
 
 		// For each lyambda
-		std::unordered_map<float, float> combinedPoints;
+		std::unordered_map<float, std::pair<float,int>> combinedPoints;
 		for (const auto& path : pathset)
 		{
 			for (auto &point : path)
@@ -183,16 +192,19 @@ public:
 				float y = point.y;
 				auto it = combinedPoints.find(point.x);
 				if (it == combinedPoints.end())
-					combinedPoints.insert({y, 1.f});
+					combinedPoints.insert({y, {1.f, 1}});
 				else
-					it->second += y;
+				{
+					it->second.first += y;
+					++it->second.second;
+				}
 			}
 		}
 
 		total.clear();
 		for (auto &l : combinedPoints)
 		{
-			total.push_back( {l.first, l.second});
+			total.push_back( {l.first, l.second.first / l.second.second});
 		}
 
 		std::sort(total.begin(), total.end(), [](const auto& a, const auto& b) {
@@ -200,33 +212,33 @@ public:
 		});
 	}
 
-	void getCombinedPointsAsHist(std::vector<float>& total) const
+	void getCombinedPointsAsHist(std::vector<float>& total, int resolution) const
 	{
 		std::vector<landres> points;
 		getCombinedPoints(points);
 
 		total.clear();
-		total.resize(256.f * AddE);
+		total.resize(256.f * resolution, 0);
 		for (auto &l : points)
 		{
-			total[round(l.x * AddE)] += l.y;
+			total[round(l.x * resolution)] += l.y;
 		}
 	}
 
-	void getCombinedPointsAsSignature(std::vector<float>& total) const
+	void getCombinedPointsAsSignature(std::vector<float>& total, int res) const
 	{
 		std::vector<landres> points;
 		getCombinedPoints(points);
 
 		total.clear();
-		total.resize(256.f * AddE);
-		itrateOverPoints(points, total, AddE);
+		total.resize(256.f * res, 0);
+		itrateOverPoints(points, total);
 	}
 
 	void getSignature(BackString& line) const override
 	{
 		std::vector<float> total;
-		getSignatureAsVector(total);
+		getSignatureAsVector(total, 1);
 
 		line.clear();
 		for (size_t i = 0; i < total.size(); i++)
@@ -295,13 +307,31 @@ struct Landscape
 		return nullptr;
 	}
 
-	void addExpr(float st, float end)
+	void addExpr(Barscalar st, Barscalar end, float resolution = 1.f)
 	{
 		if (st > end)
 			std::swap(st, end);
 
-		lands.push_back({st, end  - st});
+		assert(st != end);
+
+		float length = (end - st).getAvgFloat();
+		assert(length > 0.f);
+		lands.push_back({st.getAvgFloat() * resolution, length  * resolution});
 	}
+
+	void addExprRaw(float st, float end, float resolution = 1.f)
+	{
+		if (st > end)
+			std::swap(st, end);
+
+		assert(st != end);
+
+		float length = (end - st);
+		assert(length > 0.f);
+		lands.push_back({st, length});
+	}
+
+
 	size_t size() const
 	{
 		return lands.size();
@@ -321,6 +351,7 @@ protected:
 //
 public:
 	float maxEnd = 0;
+	bool round = true;
 	ConvertCollection() : Base(false)
 	{
 		Base::settings =
@@ -343,9 +374,6 @@ public:
 
 	void convert(Landscape& landscape, ConvertClass* source = nullptr)
 	{
-		if (source)
-			source->maxEnd = maxEnd;
-
 		landscape.sort();
 		// �� birth
 		for (size_t i = 0; i < landscape.size(); i++)
@@ -354,9 +382,11 @@ public:
 
 			float start = line->getStart();
 			float end = line->getEnd();
+			// if (i == 18)
+			// 	std::cout << start << " " << end << std::endl;
 			// std::cout << start << " " << end << std::endl;
 			// float matrstart = start;
-			// float beginning = start;
+			float beginning = start;
 			float crossWithPrev = start;
 			// float ending = end;
 			// float lastMin = beginning;
@@ -367,27 +397,26 @@ public:
 			if (source == nullptr)
 			{
 				Base::items.push_back({});
-				Base::items.back().maxEnd = maxEnd;
+				// Base::items.back().maxEnd = maxEnd;
 			}
 
 			ConvertClass& cl = source ? *source : Base::items.back();
 			cl.id = i;
 			cl.pathset.push_back({});
-			cl.add(start, 0);
-			cl.AddE = *Base::settings.getInt("Resolution");
+			cl.add(start, 0, round);
+			// cl.AddE = resolution;
 
 
 			//cl.matrix = line.matrix;
 
-			size_t startI = 0;
 			int curI = i;
 			int prevId = -1;
 			bool curLineCatechd = false;
 			while (true)
 			{
-				// Asc, началось до текущего, окончилос внутри
+				// Asc, началось до текущего, окончилось внутри
 				bool reachedPeak = true;
-				for (int ascI = curI - 1; ascI >= 0; --ascI)
+				for (int ascI = i - 1; ascI >= 0; --ascI)
 				{
 					// c - crossWithPrev
 					//  CUR->                C-------------E
@@ -399,12 +428,19 @@ public:
 					// 	continue;
 
 					auto& prevLine = landscape.get(ascI);
-					if (prevLine.getStart() < start && between(prevLine.getEnd(), crossWithPrev, end)) // Между концом предыдущего и концном текущего
+
+					assert(prevLine.len);
+
+					if (prevLine.getStart() <= beginning && between(prevLine.getEnd(), crossWithPrev, end)) // Между концом предыдущего и концном текущего
 					{
 						float cross = prevLine.getEnd() - start;
-						cl.add(start + cross / 2, cross / 2);
+						float midPoint = cross / 2.f;
+						cl.add(start + midPoint, midPoint, round);
 						end = prevLine.getEnd();
 						reachedPeak = false;
+
+						// if (i == 18)
+						// 	std::cout << "prev:" << prevLine.getStart() << " " << end << std::endl;
 						break;
 					}
 				}
@@ -428,33 +464,35 @@ public:
 
 				if (reachedPeak)
 				{
-					auto len = end - start;
-					cl.add(middle, len / 2);
+					// if (i == 18)
+					// 	std::cout << "peak:" << start << " " << end << std::endl;
+
+					cl.add(middle, len / 2, round);
 				}
 
 				// dsc, те, которые начались внутри и окончились снаружи текущего
 				prevId = curI;
 				size_t nextI = static_cast<size_t>(curI) + 1;
 
-				for (; nextI < landscape.size(); nextI++)
+				for (;nextI < landscape.size(); nextI++)
 				{
 					//  CUR->      |-------M------|
 					//  NEXT->                   |-------M-------|
 
 					//  CUR->      |-------M------|
 					//  NEXT->      |-------M-------|
-					auto& land = landscape.get(nextI);
-					if (land.getStart() > end)
+					auto& nextLand = landscape.get(nextI);
+					if (nextLand.getStart() > end)
 					{
 						break;
 					}
-					if (land.getStart() == start)
+					if (nextLand.getStart() == start)
 					{
 						// Когда начинается с одинакового значения
 						continue;
 					}
 
-					if (land.getStart() < end && end < land.getEnd())
+					if (nextLand.getStart() < end && end < nextLand.getEnd())
 					{
 						//float crossGip = end - convertLand->getStart();
 						//float leh = crossGip / 2;
@@ -462,16 +500,19 @@ public:
 						// from line matrstart(cur line start) to convertLand.start
 						// From this line start to the next line start
 
-						float cross = end - land.getStart(); // длина пересечения
+						float cross = end - nextLand.getStart(); // длина пересечения
 						crossWithPrev = end; // Смотрим предыдущий, который до окончания текущего
-						cl.add(end - cross / 2, cross / 2);
+						cl.add(end - cross / 2.f, cross / 2.f, round);
 
 						// lastMin = end;
-						start = land.getStart();
-						end = land.getEnd();
+						start = nextLand.getStart();
+						end = nextLand.getEnd();
 						curLineCatechd = false;
 						curI = nextI;
 						line = &landscape.get(nextI);
+
+						// if (i == 18)
+						// 	std::cout << "next:" << start << " " << end << std::endl;
 						// matrstart = line->getStart();
 
 						break;
@@ -484,8 +525,10 @@ public:
 				}
 				if (prevId == curI)
 				{
-					assert(end <= maxEnd);
-					cl.add(end, 0);
+					// if (i == 18)
+					// 		std::cout << start << " " << end << std::endl;
+					// assert(end <= maxEnd);
+					cl.add(end, 0, round);
 					break;
 				}
 			}
@@ -501,12 +544,12 @@ public:
 		}
 	}
 
-
 	void collectChildren(const CachedBarline& line)
 	{
-		convertLand.addExpr(line.start().getAvgFloat(), line.end().getAvgFloat());
+		int resolution =  *Base::settings.getInt("Resolution");
+		convertLand.addExpr(line.start(), line.end(), resolution);
 		convertLand.lands.back().matrix = line.getMatrix();
-		maxEnd = std::max(maxEnd, line.end().getAvgFloat());
+		// maxEnd = std::max(maxEnd, line.end().getAvgFloat());
 
 		for (int i = 0; i < line.getChildrenCount(); i++)
 		{
@@ -531,9 +574,9 @@ public:
 		}
 		else
 		{
-			convertLand.addExpr(line.start().getAvgFloat(), line.end().getAvgFloat());
+			int resolution =  *Base::settings.getInt("Resolution");
+			convertLand.addExpr(line.start(), line.end(), resolution);
 			convertLand.lands.back().matrix = line.getMatrix();
-			maxEnd = std::max(maxEnd, line.end().getAvgFloat());
 		}
 	}
 
@@ -549,12 +592,14 @@ public:
 			size--;
 		}
 
+		int resolution =  *Base::settings.getInt("Resolution");
 		for (size_t i = 0; i < size; i++)
 		{
 			const CachedBarline& line = items[i];
-			convertLand.addExpr(line.start().getAvgFloat(), line.end().getAvgFloat());
+
+			convertLand.addExpr(line.start(), line.end(), resolution);
 			assert(line.length().getAvgFloat() > 0);
-			maxEnd = std::max(maxEnd, convertLand.lands.back().getEnd());
+			// maxEnd = std::max(maxEnd, convertLand.lands.back().getEnd());
 		}
 
 		// maxEnd = 255;
@@ -675,7 +720,6 @@ MEXPORT class LandClassifier : public ISklearnClassifier
 		{
 			auto& item = allItems.getRItem(i);
 			BackString line;
-			item.maxEnd = allItems.maxEnd;
 			item.getSignature(line);
 			tempFile << line;
 
@@ -705,6 +749,3 @@ MEXPORT class LandClassifier : public ISklearnClassifier
 		// return exec(execCmd, cachedAssignments, n);
 	}
 };
-
-GlobalClusterRegister<ConvertClass, ConvertCollection, LandClassifier> c("Landscape");
-// TODO: Land projection of line
