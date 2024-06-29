@@ -134,7 +134,10 @@
         "__tree": "cpp",
         "__verbose_abort": "cpp",
         "execution": "cpp",
-        "__memory": "cpp"
+        "__memory": "cpp",
+        "print": "cpp",
+        "__assert": "cpp",
+        "__availability": "cpp"
     },
     "C_Cpp.default.includePath": [
         "side",

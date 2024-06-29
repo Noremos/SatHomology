@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include <unordered_set>
-#include "../../Clusterizers/ConverctItem.h"
+#include "../../Clusterizers/LandscapeItem.h"
 
 
 class PointCluster
@@ -328,7 +328,7 @@ public:
 		VertId bId;
 		float diff;
 	};
-	using PointLine = std::vector<landres>;
+	using PointLine = std::vector<LandPoint>;
 
 	// Combine
 	void predict(std::vector<PointLine>& land)

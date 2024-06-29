@@ -6,3 +6,4 @@
 
 #include "gtest/gtest.h"
 #include <initializer_list>
+#include <algorithm>

@@ -108,9 +108,53 @@ public:
 			}
 
 		}
+
+		if (usedClusters <= maxAllowed)
+			return;
+
+		std::vector<std::vector<float>> ot(usedClusters);
+		std::vector<int> counterSize(usedClusters);
+		std::vector<std::vector<int>> idsFromOld(usedClusters);
+		for (size_t i = 0; i < diffs.size(); i++)
+		{
+			int id = output[i];
+
+			if (counterSize[id] == 0)
+			{
+				idsFromOld[id].push_back(i);
+				ot[id] = land[i];
+			}
+			else
+			{
+				// Add vectors ot[id] += land[i];
+				for (size_t j = 0; j < land[i].size(); j++)
+				{
+					ot[id][j] += land[i][j];
+				}
+			}
+
+			++counterSize[id];
+		}
+
+		for (size_t i = 0; i < usedClusters; i++)
+		{
+			for (size_t j = 0; j < land[i].size(); j++)
+			{
+				ot[i][j] /= counterSize[i];
+			}
+		}
+
+
+		// TODO:
+		auto prot = output;
+		predict(ot);
+		assert(output.size() == usedClusters);
+		for (size_t i = 0; i < usedClusters; i++)
+		{
+			int id = output[i];
+		}
 	}
 };
-
 
 
 class SelfClass

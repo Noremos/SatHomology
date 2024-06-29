@@ -235,7 +235,7 @@
     <ClCompile Include="backend\Interfaces\MLClasses.ixx">
       <Filter>Backend\ML</Filter>
     </ClCompile>
-    <ClCompile Include="backend\Clusterizers\ConverctItem.ixx">
+    <ClCompile Include="backend\Clusterizers\LandscapeItem.ixx">
       <Filter>Backend\ML</Filter>
     </ClCompile>
     <ClCompile Include="backend\Clusterizers\SortItem.ixx">

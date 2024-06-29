@@ -18,6 +18,8 @@
 #include "../../backend/ProjectSettings.h"
 #include "../Bind/Framework.h"
 
+#include "../backend/MatrImg.h"
+
 import FrontendBind;
 // import Platform;
 import GuiLayers;
@@ -902,6 +904,21 @@ namespace MyApp
 
 	void Init(const char* root)
 	{
+
+		// bc::barstruct constr;
+		// constr.createBinaryMasks = true;
+		// constr.createGraph = false;
+		// constr.attachMode = bc::AttachMode::morePointsEatLow;
+		// //constr.attachMode = bc::AttachMode::closer;
+		// constr.returnType = bc::ReturnType::barcode2d;
+
+		// constr.addStructure(bc::ProcType::f0t255, bc::ColorType::gray, bc::ComponentType::Component);
+
+		// BackImage imr = imread(BackPathStr("/Users/sam/Edu/datasets/test_dataset/crater/image_27.png"));
+		// BackImage img = imr;//.getRect(2,160,15,3);
+		// bc::BarcodeCreator creator;
+		// std::unique_ptr<bc::Baritem> citem(creator.createBarcode(&img, constr));
+
 		// setlocale(LC_ALL, "ru_ru.utf-8");
 		srand(time(NULL));
 		Variables::setRoot(root);

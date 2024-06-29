@@ -1,7 +1,7 @@
 #include "pch.h"
-#include "../backend/Clusterizers/ConverctItem.h"
+#include "../backend/Clusterizers/LandscapeItem.h"
 // import ConvertItem;
-import BackBind;
+// import BackBind;
 
 
 std::vector<float> buildLandscape(std::initializer_list<std::pair<float, float>> list)
@@ -31,20 +31,22 @@ std::vector<float> buildLandscape(std::initializer_list<std::pair<float, float>>
 
 struct TestOut
 {
-	std::vector<std::vector<landres>> expected;
+	std::vector<std::vector<LandPoint>> expected;
 
-	void compare(ConvertClass& result)
+	void compare(LandscapeClass& result)
 	{
-		EXPECT_EQ(result.pathset.size(), expected.size());
+		EXPECT_EQ(result.landscape.size(), expected.size());
 
-		for (size_t i = 0; i < result.pathset.size(); i++)
+		int minl = std::min(result.landscape.size(), expected.size());
+		for (size_t i = 0; i < minl; i++)
 		{
-			EXPECT_EQ(result.pathset[i].size(), expected[i].size());
+			EXPECT_EQ(result.landscape[i].size(), expected[i].size());
 
-			for (size_t j = 0; j <  result.pathset[i].size(); j++)
+			int minn = std::min(result.landscape[i].size(), expected[i].size());
+			for (size_t j = 0; j <  minn; j++)
 			{
-				EXPECT_EQ(result.pathset[i][j].x, expected[i][j].x);
-				EXPECT_EQ(result.pathset[i][j].y, expected[i][j].y);
+				EXPECT_EQ(result.landscape[i].points[j].x, expected[i][j].x);
+				EXPECT_EQ(result.landscape[i].points[j].y, expected[i][j].y);
 			}
 		}
 	}
@@ -61,15 +63,17 @@ struct TestOut
 
 
 
-TEST(Landscape, TestBubenick)
+TEST(InputLandData, TestBubenick)
 {
-	ConvertCollection col;
-	col.convertLand.addExpr(3, 9);
-	col.convertLand.addExpr(4, 6);
-	col.convertLand.addExpr(5, 11);
+	LandscapeCollection col;
+	col.setTestEnv();
+
+	col.convertLand.addExprRaw(3, 9);
+	col.convertLand.addExprRaw(4, 6);
+	col.convertLand.addExprRaw(5, 11);
 	col.performOnPerform();
-	ConvertClass out;
-	col.convert(col.convertLand, &out);
+	LandscapeClass out;
+	col.convertToLandscape(col.convertLand, &out);
 
 	TestOut bubenic;
 	bubenic.buildexpectedource({{3,0},{6,3}, {7,2}, {8,3}, 	{11,0}});
@@ -78,25 +82,26 @@ TEST(Landscape, TestBubenick)
 	bubenic.compare(out);
 }
 
-TEST(Landscape, TestMdpikName)
+TEST(InputLandData, TestMdpikName)
 {
 	// https://www.mdpi.com/2073-431X/12/6/110
 
-	ConvertCollection mdpiTests;
-	mdpiTests.convertLand.addExpr(0.5, 2.5);
-	mdpiTests.convertLand.addExpr(2, 6);
-	mdpiTests.convertLand.addExpr(3, 5);
-	mdpiTests.convertLand.addExpr(5, 7);
+	LandscapeCollection mdpiTests;
+	mdpiTests.setTestEnv();
+	mdpiTests.convertLand.addExprRaw(0.5, 2.5);
+	mdpiTests.convertLand.addExprRaw(2, 6);
+	mdpiTests.convertLand.addExprRaw(3, 5);
+	mdpiTests.convertLand.addExprRaw(5, 7);
 
 	mdpiTests.performOnPerform();
-	ConvertClass out;
-	mdpiTests.convert(mdpiTests.convertLand, &out);
+	LandscapeClass out;
+	mdpiTests.convertToLandscape(mdpiTests.convertLand, &out);
 
 	TestOut mdpiExpected;
 	mdpiExpected.buildexpectedource({{0.5,0}, {1.5,1},{2.25,0.25}, {4,2}, {5.5,0.5},{6,1},{7,0}});
-	mdpiExpected.buildexpectedource({{2,  0}, {2.25,0.25},{2.5,0}});
-	mdpiExpected.buildexpectedource({{3,  0}, {4,1},      {5,0}});
-	mdpiExpected.buildexpectedource({{5,  0}, {5.5, 0.5}, {6,0}});
+	mdpiExpected.buildexpectedource({{2,  0}, {2.25,0.25},{2.5,0},
+		{3, 0},  {4,1},  {5,0},
+		{5.5, 0.5}, {6,0}});
 	mdpiExpected.compare(out);
 
 	// buildexpectedource();
@@ -115,43 +120,44 @@ TEST(Landscape, TestMdpikName)
 	// }
 }
 
-TEST(Landscape, SameStart)
+TEST(InputLandData, SameStart)
 {
-	ConvertCollection col;
-	col.convertLand.addExpr(60, 62);
-	col.convertLand.addExpr(60, 84);
-	col.convertLand.addExpr(60, 186);
+	LandscapeCollection col;
+	col.setTestEnv();
+	col.convertLand.addExprRaw(60, 62);
+	col.convertLand.addExprRaw(60, 84);
+	col.convertLand.addExprRaw(60, 186);
 	col.performOnPerform();
-	ConvertClass out;
-	col.convert(col.convertLand, &out);
+	LandscapeClass out;
+	col.convertToLandscape(col.convertLand, &out);
 
 	TestOut expected;
-	expected.buildexpectedource({{60,0},{61,1}, {62,0}});
-	expected.buildexpectedource({{60,0},{72,12}, {84,0}});
 	expected.buildexpectedource({{60,0},{123,63}, {186,0}});
+	expected.buildexpectedource({{60,0},{72,12}, {84,0}});
+	expected.buildexpectedource({{60,0},{61,1}, {62,0}});
 	expected.compare(out);
 }
 
-TEST(Landscape, PaperTest)
+TEST(InputLandData, PaperTest)
 {
 	// https://www.sciencedirect.com/science/article/pii/S0747717116300104
-	ConvertCollection col;
-	col.convertLand.addExpr(1, 5);
-	col.convertLand.addExpr(2, 8);
-	col.convertLand.addExpr(3, 4);
-	col.convertLand.addExpr(5, 9);
-	col.convertLand.addExpr(6, 7);
+	LandscapeCollection col;
+	col.setTestEnv();
+
+	col.convertLand.addExprRaw(1, 5);
+	col.convertLand.addExprRaw(2, 8);
+	col.convertLand.addExprRaw(3, 4);
+	col.convertLand.addExprRaw(5, 9);
+	col.convertLand.addExprRaw(6, 7);
 
 	col.performOnPerform();
-	ConvertClass out;
-	col.convert(col.convertLand, &out);
+	LandscapeClass out;
+	col.convertToLandscape(col.convertLand, &out);
 
 	TestOut expected;
 	expected.buildexpectedource({{1,0}, {3,   2},   {3.5,1.5}, {5,3}, {6.5,1.5}, {7,2}, {9,0}});
-	expected.buildexpectedource({{2,0}, {3.5, 1.5}, {5,0}});
-	expected.buildexpectedource({{3,0}, {3.5, 0.5}, {4,0}});
-	expected.buildexpectedource({{5,0}, {6.5, 1.5}, {8,0}});
-	expected.buildexpectedource({{6,0}, {6.5, 0.5}, {7,0}});
+	expected.buildexpectedource({{2,0}, {3.5, 1.5}, {5,0},    {6.5, 1.5}, {8,0}});
+	expected.buildexpectedource({{3,0}, {3.5, 0.5}, {4,0}, {6,0}, {6.5, 0.5}, {7,0}});
 	expected.compare(out);
 }
 
@@ -159,35 +165,77 @@ TEST(Landscape, PaperTest)
 TEST(LandScape, signature)
 {
 	// https://www.sciencedirect.com/science/article/pii/S0747717116300104
-	ConvertCollection col;
-	col.convertLand.addExpr(1, 5);
-	col.convertLand.addExpr(2, 8);
-	col.convertLand.addExpr(3, 4);
-	col.convertLand.addExpr(5, 9);
-	col.convertLand.addExpr(6, 7);
-	col.maxEnd = 9;
+	LandscapeCollection col;
+	col.setTestEnv();
 
+	col.convertLand.addExprRaw(1, 5);
+	col.convertLand.addExprRaw(2, 8);
+	col.convertLand.addExprRaw(3, 4);
+	col.convertLand.addExprRaw(5, 9);
+	col.convertLand.addExprRaw(6, 7);
+	col.maxEnd = 9;
 	col.performOnPerform();
 	col.perform();
 
-	std::vector<std::string> expectedSignature = {
-		{"0.000000 0.000000 1.000000 2.000000 2.250000 3.000000 2.250000 2.000000 1.000000 "},
-		{"0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000"},  // small
-		{"0.000000 0.000000 0.000000 0.750000 0.750000 0.000000 0.000000 0.000000 0.000000 "},
-		{"0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.750000 0.750000 0.000000 "},
-		{"0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000"}, // small
+	std::vector<std::vector<float>> expectedSignature = {
+		{0.0f, 0.0f, 1.0f, 2.0f, 2.25f, 3.0f, 2.25f, 2.0f, 1.0f},
+		{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},  // small
+		{0.0f, 0.0f, 0.0f, 0.75f, 0.75f, 0.0f, 0.0f, 0.0f, 0.0f},
+		{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.75f, 0.75f, 0.0f},
+		{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}, // small
 	};
 
-
-	ASSERT_EQ(col.getItemsCount(), expectedSignature.size());
+	// ASSERT_EQ(col.getItemsCount(), expectedSignature.size());
 	for (size_t i = 0; i < col.getItemsCount(); i++)
 	{
-		ConvertClass* item = col.getRItem(i);
-		item->AddE = 1;
+		LandscapeClass* item = col.getRItem(i);
 
-		std::string signature;
-		item->getSignature(signature);
+		std::vector<float> signature;
+		item->getSignatureAsVector(signature, 1);
+		assert(item->landscape.size() == 1);
+		signature.resize(9);
 
-		// ASSERT_EQ(signature, expectedSignature[i]);
+		ASSERT_EQ(signature, expectedSignature[i]);
 	}
+}
+
+TEST(LandScape, dwq1)
+{
+	LandscapeCollection col;
+	col.setTestEnv();
+
+	col.convertLand.addExprRaw(4, 5);
+	// col.convertLand.addExprRaw(144.667, 175.667);
+	// col.convertLand.addExprRaw(143.667, 169.333);
+	// col.convertLand.addExprRaw(145, 175);
+	// col.convertLand.addExprRaw(145.333, 175.667);
+	// col.convertLand.addExprRaw(145.667, 180.333);
+	// col.convertLand.addExprRaw(144, 179.333);
+	col.convertLand.addExprRaw(6, 10);
+	col.convertLand.addExprRaw(7, 11);
+	col.convertLand.addExprRaw(8, 11);
+
+	LandscapeClass out;
+	col.convertToLandscape(col.convertLand, &out);
+}
+
+
+TEST(LandScape, closee)
+{
+	LandscapeCollection col;
+	col.setTestEnv();
+
+	col.convertLand.addExprRaw(144.333, 169);
+	// col.convertLand.addExprRaw(144.667, 175.667);
+	// col.convertLand.addExprRaw(143.667, 169.333);
+	// col.convertLand.addExprRaw(145, 175);
+	// col.convertLand.addExprRaw(145.333, 175.667);
+	// col.convertLand.addExprRaw(145.667, 180.333);
+	// col.convertLand.addExprRaw(144, 179.333);
+	col.convertLand.addExprRaw(146, 180);
+	col.convertLand.addExprRaw(146.333, 180.333);
+	col.convertLand.addExprRaw(146.667, 180.333);
+
+	LandscapeClass out;
+	col.convertToLandscape(col.convertLand, &out);
 }

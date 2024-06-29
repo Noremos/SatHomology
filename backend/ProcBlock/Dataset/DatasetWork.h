@@ -10,7 +10,7 @@
 
 #include "../../MatrImg.h"
 #include "../../CachedBarcode.h"
-#include "../../Clusterizers/ConverctItem.h"
+#include "../../Clusterizers/LandscapeItem.h"
 
 class DatasetWork
 {
@@ -76,7 +76,7 @@ public:
 	}
 
 	template<class C>
-	void predict(int maxAllowed, ConvertCollection& landscape, const bc::barstruct& constr, C& processor) const
+	void predict(int maxAllowed, LandscapeCollection& landscape, const bc::barstruct& constr, C& processor) const
 	{
 		landscape.clear();
 		processor.setClasses(NC);
@@ -116,7 +116,7 @@ public:
 			cache.create(&main, constr, nullptr);
 
 			landscape.addAllLines(cache);
-			ConvertClass* item = landscape.back();
+			LandscapeClass* item = landscape.back();
 
 			// Fitting --------------- ---------------
 			added += processor.addToSet(item, correctId);
@@ -198,7 +198,8 @@ enum class SignatureType
 {
 	Iter,
 	Combined,
-	CombinedIter
+	CombinedIter,
+	SupFull
 };
 
 template<class T, SignatureType type>
@@ -209,19 +210,25 @@ public:
 	SignatureProcessor(T& ref, int resolution) : ref(ref), resolution(resolution) {}
 	SignatureProcessor(int resolution) : ref(dummy), resolution(resolution) {}
 
-	int addToSet(ConvertClass* item, int classId)
+	int addToSet(LandscapeClass* item, int classId)
 	{
-		hist.push_back({});
+		landscapes.push_back({});
 		switch (type)
 		{
 		case SignatureType::Iter:
-			item->getSignatureAsVector(hist.back(), resolution);
+			landscapes.back().push_back({});
+			item->getSignatureAsVector(landscapes.back().back().points, resolution);
 			break;
 		case SignatureType::Combined:
-			item->getCombinedPointsAsHist(hist.back(), resolution);
+			landscapes.back().push_back({});
+			item->getCombinedPointsAsHist(landscapes.back().back().points, resolution);
 			break;
 		case SignatureType::CombinedIter:
-			item->getCombinedPointsAsSignature(hist.back(), resolution);
+			landscapes.back().push_back({});
+			item->getCombinedPointsAsSignature(landscapes.back().back().points, resolution);
+			break;
+		case SignatureType::SupFull:
+			landscapes.push_back(item->getIterLandscape(resolution));
 			break;
 		}
 		return 1;
@@ -235,7 +242,7 @@ public:
 
 	void predict()
 	{
-		ref.predict(hist);
+		ref.predict(landscapes);
 	}
 
 	int test(int id)
@@ -245,7 +252,7 @@ public:
 
 private:
 	T& ref;
-	std::vector<std::vector<float>> hist;
+	std::vector<IterLandscape> landscapes;
 };
 
 template<class T>
@@ -256,7 +263,7 @@ public:
 	PointsProcessor(T& ref) : ref(ref) {}
 	PointsProcessor() : ref(dummy) {}
 
-	int addToSet(ConvertClass* item, int classId)
+	int addToSet(LandscapeClass* item, int classId)
 	{
 		landspacePoints.push_back({});
 		item->getCombinedPoints(landspacePoints.back());
@@ -280,5 +287,5 @@ public:
 
 private:
 	T& ref;
-	std::vector<std::vector<landres>> landspacePoints;
+	std::vector<std::vector<LandPoint>> landspacePoints;
 };

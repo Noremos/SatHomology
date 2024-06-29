@@ -51,7 +51,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["C:\\Users\\slash\\AppData\\Local\\Temp\\input_array.txt", "DBSCAN", "{\"n_clusters\":3}"],
+            "args": ["/tmp/input_array.txt", "SpectralCoclustering", "{\"n_clusters\":2}"],
             "justMyCode": true
         },
     ]

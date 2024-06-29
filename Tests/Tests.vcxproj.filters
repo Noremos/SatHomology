@@ -21,7 +21,7 @@
     <ClCompile Include="..\Bind\Common.ixx">
       <Filter>Зависимости</Filter>
     </ClCompile>
-    <ClCompile Include="..\backend\Clusterizers\ConverctItem.ixx">
+    <ClCompile Include="..\backend\Clusterizers\LandscapeItem.ixx">
       <Filter>Зависимости</Filter>
     </ClCompile>
     <ClCompile Include="..\backend\CSBind.ixx">

@@ -39,3 +39,5 @@ Build/compile_commands.json
 .cache
 imgui.ini
 .DS_Store
+m
+*.bin

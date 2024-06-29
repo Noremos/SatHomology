@@ -30,40 +30,15 @@ import Sklearn;
 #include "../Bind/Framework.h"
 #include "ExteranlReader.h"
 #include "SKLearnInterface.h"
+#include "LandBase.h"
 #endif
 
-
-MEXPORT struct landres
-{
-	//float x; // satrt
-	//float y; // height
-
-	float x; // start
-	float y; // end
-
-	float getLength() const
-	{
-		return y - x;
-	}
-
-
-	float operator-(const landres& other) const
-	{
-		float a = x - other.x;
-		float b = y - other.y;
-		float r = a * a + b * b;
-		if (r == 0)
-			return 0;
-
-		return sqrt(a * a + b * b);
-	}
-};
-
-MEXPORT class ConvertClass : public ICluster
+MEXPORT class LandscapeClass : public ICluster
 {
 public:
 	bc::barvector matrix;
-	std::vector<std::vector<landres>> pathset;
+
+	Landscape landscape;
 	// mutable float maxEnd = 0;
 //	bool addMiddleDepth;
 
@@ -77,19 +52,18 @@ public:
 	void add(float x, float y, bool round)
 	{
 		x =  round ? roundf(x) : x;
-		if (pathset.back().size() != 0)
+		if (landscape.back().size() != 0)
 		{
-			auto& curVec = pathset.back();
-			auto& b = curVec.back();
-			// assert(b.x < x);
-			// assert(b.y != y);
+			auto& curVec = landscape.back();
+			auto& b = curVec.points.back();
+			assert(b.x <= x);
 		}
 		assert(std::isfinite(y));
-		pathset.back().push_back({x, y});
+		landscape.back().points.push_back({x, y});
 	}
 //
 	size_t id;
-	ConvertClass(size_t id = -1) : id(id)
+	LandscapeClass(size_t id = -1) : id(id)
 	{ }
 //
 	size_t getId() const override
@@ -102,32 +76,32 @@ public:
 	//	return pack.back().x - pack[0].x;
 	//}
 
-	explicit ConvertClass(const ConvertClass& other) //: id(id)
+	explicit LandscapeClass(const LandscapeClass& other) //: id(id)
 	{
 		id = other.id;
 		matrix = other.matrix;
-		pathset = other.pathset;
+		landscape = other.landscape;
 	}
 
-	explicit ConvertClass(ConvertClass&& other) //: id(id)
+	explicit LandscapeClass(LandscapeClass&& other) //: id(id)
 	{
 		id = other.id;
 		matrix = std::move(other.matrix);
-		pathset = std::move(other.pathset);
+		landscape = std::move(other.landscape);
 	}
 
 	Barscalar start() const override
 	{
-		return pathset[0][0].x;
+		return landscape[0].points[0].x;
 	}
 
 	Barscalar end() const override
 	{
-		return pathset[0][0].y;
+		return landscape[0].points[0].y;
 	}
 
 
-	static void itrateOverPoints(const std::vector<landres>& points, std::vector<float>& total)
+	static void itrateOverPoints(const std::vector<LandPoint>& points, std::vector<float>& total)
 	{
 		for (size_t j = 1; j < points.size(); j++)
 		{
@@ -147,7 +121,7 @@ public:
 				total[startX] += round(startY);
 				continue;
 			}
-			float iter = height / (width);
+			float iter = height / width;
 
 			float y = startY;
 			assert(endX < total.size());
@@ -162,14 +136,13 @@ public:
 	void getSignatureAsVector(std::vector<float>& total, int res) const
 	{
 		total.resize(256.f * res, 0); // 1 because of rounding and 1 because of including range [0, maxEnd]
-		std::fill(total.begin(), total.end(), 0);
 
-		float N = pathset.size();
+		float N = landscape.size();
 
 		// For each lyambda
-		for (const auto& landset : pathset)
+		for (const LyambdaLine& landset : landscape)
 		{
-			itrateOverPoints(landset, total);
+			itrateOverPoints(landset.points, total);
 		}
 
 		for (auto &val : total)
@@ -178,15 +151,34 @@ public:
 		}
 	}
 
-	void getCombinedPoints(std::vector<landres>& total) const
+	IterLandscape getIterLandscape(int res) const
 	{
-		float N = pathset.size();
+		IterLandscape out;
+
+		float N = landscape.size();
+
+		// For each lyambda
+		for (const LyambdaLine& landset : landscape)
+		{
+			out.push_back({});
+			LyambdaIterLine& iterLine = out.back();
+			iterLine.points.resize(256.f * res, 0.f);
+
+			itrateOverPoints(landset.points, iterLine.points);
+		}
+
+		return out;
+	}
+
+	void getCombinedPoints(std::vector<LandPoint>& total) const
+	{
+		float N = landscape.size();
 
 		// For each lyambda
 		std::unordered_map<float, std::pair<float,int>> combinedPoints;
-		for (const auto& path : pathset)
+		for (const auto& path : landscape)
 		{
-			for (auto &point : path)
+			for (auto &point : path.points)
 			{
 
 				float y = point.y;
@@ -214,7 +206,7 @@ public:
 
 	void getCombinedPointsAsHist(std::vector<float>& total, int resolution) const
 	{
-		std::vector<landres> points;
+		std::vector<LandPoint> points;
 		getCombinedPoints(points);
 
 		total.clear();
@@ -227,7 +219,7 @@ public:
 
 	void getCombinedPointsAsSignature(std::vector<float>& total, int res) const
 	{
-		std::vector<landres> points;
+		std::vector<LandPoint> points;
 		getCombinedPoints(points);
 
 		total.clear();
@@ -253,7 +245,7 @@ public:
 private:
 };
 
-struct landline
+struct InputLandLine
 {
 	float start;
 	float len;
@@ -277,25 +269,26 @@ struct landline
 	}
 };
 
-struct Landscape
+struct InputLandData
 {
-	std::vector<landline> lands;
+	std::vector<InputLandLine> lands;
 	void sort()
 	{
-		std::sort(lands.begin(), lands.end(), [](const landline& a, const landline& b) {
+		std::sort(lands.begin(), lands.end(), [](const InputLandLine& a, const InputLandLine& b) {
 			if (a.start == b.start)
-				return a.len < b.len;
+				return a.len > b.len; // First the longest
 
 			return a.start < b.start;
 		});
 	}
 
-	landline& get(size_t id)
+	InputLandLine& get(size_t id)
 	{
+		assert(id < lands.size());
 		return lands[id];
 	}
 
-	landline* getByValue(size_t firstId, float endLimit)
+	InputLandLine* getByValue(size_t firstId, float endLimit)
 	{
 		if (firstId >= lands.size())
 			return nullptr;
@@ -344,15 +337,15 @@ constexpr bool between(const T& a, const T& minNotEnc, const T& maxNotEncl)
 	return minNotEnc < a && a < maxNotEncl;
 }
 //
-MEXPORT class ConvertCollection : public IClusterItemValuesHolder<ConvertClass>
+MEXPORT class LandscapeCollection : public IClusterItemValuesHolder<LandscapeClass>
 {
-	using Base = IClusterItemValuesHolder<ConvertClass>;
+	using Base = IClusterItemValuesHolder<LandscapeClass>;
 protected:
 //
 public:
 	float maxEnd = 0;
 	bool round = true;
-	ConvertCollection() : Base(false)
+	LandscapeCollection() : Base(false)
 	{
 		Base::settings =
 		{
@@ -372,27 +365,35 @@ public:
 		return cmpMode;
 	}
 
-	void convert(Landscape& landscape, ConvertClass* source = nullptr)
+	void convertToLandscape(InputLandData& landscape, LandscapeClass* source = nullptr)
 	{
 		landscape.sort();
 		// �� birth
+
+		int k = 0;
+
+		std::vector<bool> used;
+		used.resize(landscape.size(), true);
 		for (size_t i = 0; i < landscape.size(); i++)
 		{
+			if (!used[i])
+				continue;
+
 			auto* line = &landscape.get(i);
 
 			float start = line->getStart();
 			float end = line->getEnd();
+			float beginning = start;
+			float crossWithPrev = start;
 			// if (i == 18)
 			// 	std::cout << start << " " << end << std::endl;
 			// std::cout << start << " " << end << std::endl;
 			// float matrstart = start;
-			float beginning = start;
-			float crossWithPrev = start;
 			// float ending = end;
 			// float lastMin = beginning;
 			// float lastStart = start;
 
-			//std::vector<landres> landPath = { {start, 0}, {middle, h} };
+			//std::vector<LandPoint> landPath = { {start, 0}, {middle, h} };
 
 			if (source == nullptr)
 			{
@@ -400,10 +401,11 @@ public:
 				// Base::items.back().maxEnd = maxEnd;
 			}
 
-			ConvertClass& cl = source ? *source : Base::items.back();
+			LandscapeClass& cl = source ? *source : Base::items.back();
 			cl.id = i;
-			cl.pathset.push_back({});
+			cl.landscape.push_back({});
 			cl.add(start, 0, round);
+			cl.landscape.back().k = k++;
 			// cl.AddE = resolution;
 
 
@@ -411,12 +413,13 @@ public:
 
 			int curI = i;
 			int prevId = -1;
+			int backScanStart = i;
 			bool curLineCatechd = false;
 			while (true)
 			{
 				// Asc, началось до текущего, окончилось внутри
 				bool reachedPeak = true;
-				for (int ascI = i - 1; ascI >= 0; --ascI)
+				for (int ascI = backScanStart - 1; ascI >= 0; --ascI)
 				{
 					// c - crossWithPrev
 					//  CUR->                C-------------E
@@ -476,9 +479,7 @@ public:
 
 				for (;nextI < landscape.size(); nextI++)
 				{
-					//  CUR->      |-------M------|
-					//  NEXT->                   |-------M-------|
-
+					// Checks for
 					//  CUR->      |-------M------|
 					//  NEXT->      |-------M-------|
 					auto& nextLand = landscape.get(nextI);
@@ -492,55 +493,295 @@ public:
 						continue;
 					}
 
-					if (nextLand.getStart() < end && end < nextLand.getEnd())
+
+					// Checks for
+					//  CUR->      |-------M------|
+					//  NEXT->                    |-------M-------|
+					if (nextLand.getEnd() < end)
+						continue;
+
+
+
+					// The next one starts at the same pos as the current one ends
+					if (nextLand.getStart() == end)
 					{
-						//float crossGip = end - convertLand->getStart();
-						//float leh = crossGip / 2;
-
-						// from line matrstart(cur line start) to convertLand.start
-						// From this line start to the next line start
-
-						float cross = end - nextLand.getStart(); // длина пересечения
-						crossWithPrev = end; // Смотрим предыдущий, который до окончания текущего
-						cl.add(end - cross / 2.f, cross / 2.f, round);
-
-						// lastMin = end;
-						start = nextLand.getStart();
-						end = nextLand.getEnd();
-						curLineCatechd = false;
-						curI = nextI;
-						line = &landscape.get(nextI);
-
-						// if (i == 18)
-						// 	std::cout << "next:" << start << " " << end << std::endl;
-						// matrstart = line->getStart();
-
-						break;
+						beginning = nextLand.start;
+						backScanStart = nextI;
+						used[nextI] = false;
 					}
+
+
+					//float crossGip = end - convertLand->getStart();
+					//float leh = crossGip / 2;
+
+					// from line matrstart(cur line start) to convertLand.start
+					// From this line start to the next line start
+
+					float cross = end - nextLand.getStart(); // длина пересечения
+					crossWithPrev = end; // Смотрим предыдущий, который до окончания текущего
+					cl.add(end - cross / 2.f, cross / 2.f, round);
+
+					// lastMin = end;
+					start = nextLand.getStart();
+					end = nextLand.getEnd();
+					curLineCatechd = false;
+					curI = nextI;
+					line = &landscape.get(nextI);
+
+					// if (i == 18)
+					// 	std::cout << "next:" << start << " " << end << std::endl;
+					// matrstart = line->getStart();
+
+					break;
 
 					//landPath.push_back({ convertLand->getStart() +  leh, leh});
 					//auto lastH = landPath.back();
 					//cl.paths.push_back({ lastH.x + lastH.y, 0 });
 					//cl.paths.push_back({ lastH.x + lastH.y, 0 });
 				}
+
 				if (prevId == curI)
 				{
 					// if (i == 18)
 					// 		std::cout << start << " " << end << std::endl;
 					// assert(end <= maxEnd);
 					cl.add(end, 0, round);
-					break;
+
+					++curI;
+					for (;curI < landscape.size(); curI++)
+					{
+						if (!used[curI])
+							continue;
+
+						//  CUR->      |-------M------|
+						//  NEXT->                   |-------M-------|
+
+						//  CUR->      |-------M------|
+						//  NEXT->      |-------M-------|
+						auto& nextLand = landscape.get(curI);
+						if (nextLand.getStart() >= end)
+						{
+							// Found the next line
+							used[curI] = false;
+							start = nextLand.getStart();
+							end = nextLand.getEnd();
+							beginning = start;
+							crossWithPrev = start;
+
+							backScanStart = curI;
+							curLineCatechd = false;
+							cl.add(start, 0, round);
+							break;
+						}
+					}
+					if (curI == landscape.size())
+						break;
 				}
+
+				if (!curLineCatechd)
+				{
+					auto& chm = line->matrix; //srcLine.getChild(startI)->getMatrix();
+					for (auto& val : chm)
+					{
+						cl.matrix.push_back(val);
+					}
+				}
+			}
+		}
+	}
+
+	struct DIK
+	{
+		struct Point
+		{
+			size_t lineId;
+			float hei;
+			float lineHei;
+		};
+
+		std::vector<Point> tops;
+
+		void sort()
+		{
+			std::sort(tops.begin(), tops.end(), [](const Point& a, const Point& b) {
+				if (a.hei == b.hei)
+					return a.lineHei < b.lineHei;
+
+				return a.hei < b.hei;
+			});
+		}
+
+		size_t size() const
+		{
+			return tops.size();
+		}
+
+		Point pop(size_t curLineId)
+		{
+			assert(size() > 0);
+			auto id = tops.back();
+			tops.pop_back();
+
+			// for (size_t i = 0; i < tops.size(); i++)
+			// {
+			// 	if (tops[i].lineId == curLineId)
+			// 	{
+			// 		tops[i].hei = id.hei;
+			// 		break;
+			// 	}
+			// }
+			// while (tops.size() > 0 && std::round(tops.back().hei * 100) == std::round(id.hei * 100))
+			// {
+			// 	tops.pop_back();
+			// }
+
+			// if (id.hei == 0)
+			// 	tops.clear();
+
+			return id;
+		}
+	};
+
+	void convertToLandscape_it(InputLandData& landscape, LandscapeClass* source = nullptr)
+	{
+		landscape.sort();
+		int resolution =  *Base::settings.getInt("Resolution");
+
+		std::vector<DIK> diks(256 * resolution + 1);
+		// std::vector<DIK> tops(256 * resolution);
+
+		int start = 256 * resolution;
+		int end = 0;
+
+		// birth
+		for (size_t lineId = 0; lineId < landscape.size(); lineId++)
+		{
+			auto* line = &landscape.get(lineId);
+
+			float lstart = line->getStart() * resolution;
+			float lend = line->getEnd() * resolution;
+			float length = lend - lstart;
+			float half = length / 2;
+			for (int j = 0, totol = std::round(length); j <= totol; j++)
+			{
+				int x = std::floor(lstart) + j;
+				float y = j < half ? j : totol - j;
+				assert(y >= 0);
+				diks[x].tops.push_back({ lineId, y, line->getHeight() });
 			}
 
-			if (!curLineCatechd)
+			start = std::min<int>(start, std::floor(lstart));
+			end = std::max<int>(end, std::round(lend));
+		}
+		for (size_t i = 0; i < diks.size(); i++)
+		{
+			diks[i].sort();
+		}
+
+		bool hasLine = true;
+		int k = 0;
+		while (hasLine)
+		{
+			if (source == nullptr)
 			{
-				auto& chm = line->matrix; //srcLine.getChild(startI)->getMatrix();
-				for (auto& val : chm)
-				{
-					cl.matrix.push_back(val);
-				}
+				Base::items.push_back({});
+				// Base::items.back().maxEnd = maxEnd;
 			}
+			LandscapeClass& cl = source ? *source : Base::items.back();
+
+			hasLine = false;
+			for (int iterator = start; iterator <= end; iterator++)
+			{
+				if (diks[iterator].size() == 0)
+					continue;
+
+				if (!hasLine)
+				{
+					cl.id = 0;
+					cl.landscape.push_back({});
+					cl.landscape.back().k = k++;
+					hasLine = true;
+				}
+
+				int lineId = diks[iterator].pop(-1).lineId;
+
+				auto* l = &landscape.get(lineId);
+
+				int lstart = iterator++;
+				// int mid = l->getMiddle();
+				// assert(start == std::round(l->getStart()));
+
+				cl.add(l->start, 0, round);
+				float prevHei = 0.f;
+				bool acs = true;
+				bool addMiddle = true;
+				// cl.add(mid, l->getHeight(), round);
+
+				while (diks[iterator].size() != 0)
+				{
+					auto p = diks[iterator].pop(lineId);
+					int nextLineId = p.lineId;
+					if (nextLineId != lineId)
+					{
+						auto* nl = &landscape.get(nextLineId);
+						float crossLength;
+						float corssX;
+						if (iterator > l->getMiddle())
+						{
+							crossLength = l->getEnd() - nl->getStart();
+							corssX =  l->getEnd() - crossLength / 2.f;
+							if (addMiddle)
+								cl.add(l->getMiddle(), l->getHeight(), round); // Middle top
+						}
+						else
+						{
+							crossLength = nl->getEnd() - l->getStart();
+							corssX =  nl->getEnd() - crossLength / 2.f;
+						}
+
+						addMiddle = (nl->getMiddle() > corssX);
+
+						cl.add(corssX, crossLength / 2.f, round);
+						// cl.add(nl->getMiddle(), nl->getHeight(), round);
+						l = nl;
+
+
+						lineId = nextLineId;
+					}
+
+					// float hei = diks[iterator].popLineHei();
+					// if (acs)
+					// {
+					// 	if (prevHei >= hei)
+					// 	{
+					// 		acs = false;
+					// 		cl.add(iterator - 1, prevHei, round);
+					// 	}
+					// }
+					// else
+					// {
+					// 	if (prevHei <= hei)
+					// 	{
+					// 		acs = true;
+					// 		cl.add(iterator, prevHei, round);
+					// 	}
+					// }
+					// prevHei = p.hei;
+
+					++iterator;
+				}
+				// cl.add(iterator - 1, 0, round);
+
+				if (addMiddle)
+					cl.add(l->getMiddle(), l->getHeight(), round);
+				cl.add(l->getEnd(), 0.f, round);
+			} // for
+		} // while
+
+		if (source == nullptr)
+		{
+			if (Base::items.back().landscape.size() == 0)
+				Base::items.pop_back();
 		}
 	}
 
@@ -557,7 +798,13 @@ public:
 		}
 	}
 
-	Landscape convertLand;
+	void setTestEnv()
+	{
+		*settings.getInt("Resolution") = 1;
+		round = false;
+	}
+
+	InputLandData convertLand;
 	virtual void addItem(const CachedBarline& line)
 	{
 		bool cmpMode = *Base::settings.getBool("Compare Only Mode");
@@ -567,7 +814,7 @@ public:
 			collectChildren(line);
 			Base::items.push_back({});
 			auto& source = Base::items.back();
-			convert(convertLand, &source);
+			convertToLandscape(convertLand, &source);
 
 			convertLand.lands.clear();
 			source.matrix = line.getMatrix();
@@ -606,7 +853,7 @@ public:
 
 		Base::items.push_back({});
 		auto& source = Base::items.back();
-		convert(convertLand, &source);
+		convertToLandscape(convertLand, &source);
 
 		convertLand.lands.clear();
 		// source.matrix = line.getMatrix();
@@ -616,7 +863,7 @@ public:
 	{
 		bool cmpMode = *Base::settings.getBool("Compare Only Mode");
 		if (!cmpMode)
-			convert(convertLand);
+			convertToLandscape(convertLand);
 	}
 
 	/*const CachedBarline* getRItem(size_t id) const
@@ -715,7 +962,7 @@ MEXPORT class LandClassifier : public ISklearnClassifier
 
 	virtual void writeToTemp(const IClusterItemHolder& iallItems, BackFileWriter &tempFile)
 	{
-		const ConvertCollection& allItems = dynamic_cast<const ConvertCollection&>(iallItems);
+		const LandscapeCollection& allItems = dynamic_cast<const LandscapeCollection&>(iallItems);
 		for (size_t i = 0; i < allItems.getItemsCount(); i++)
 		{
 			auto& item = allItems.getRItem(i);

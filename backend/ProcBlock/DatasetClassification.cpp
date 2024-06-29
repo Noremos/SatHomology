@@ -14,8 +14,9 @@
 #include "../CachedBarcode.h"
 #include "../MLSettings.h"
 
-#include "Dataset/PointClass.h"
-#include "Dataset/SelfClassCluster.h"
+// #include "Dataset/PointClass.h"
+// #include "Dataset/SelfClassCluster.h"
+#include "Dataset/LandscapeCalss.h"
 #include "Dataset/DatasetWork.h"
 
 namespace fs = std::filesystem;
@@ -111,7 +112,7 @@ public:
 		writer.pInt(resolution);
 	}
 
-	int addToSet(ConvertClass* item, int classId)
+	int addToSet(LandscapeClass* item, int classId)
 	{
 		// Save to disk --------------- --------------- ---------------
 		writer.pBool(true);
@@ -143,17 +144,17 @@ public:
 		writer.pShort(n);
 	}
 
-	void saveToDist(StateBinFile::BinStateWriter& out, ConvertClass* item)
+	void saveToDist(StateBinFile::BinStateWriter& out, LandscapeClass* item)
 	{
-		auto& lines = item->pathset;
+		auto& lines = item->landscape;
 		out.pArray(static_cast<buint>(lines.size()));
-		for(auto& line : lines)
+		for(LyambdaLine& line : lines)
 		{
 			out.pArray(static_cast<buint>(line.size()));
 			for (size_t i = 0; i < line.size(); i++)
 			{
-				out.pInt(line[i].x);
-				out.pInt(line[i].y);
+				out.pInt(line.points[i].x);
+				out.pInt(line.points[i].y);
 			}
 		}
 	}
@@ -199,7 +200,7 @@ public:
 	{
 		// Enumerate each file in filesRoot
 
-		ConvertCollection landscapes;
+		LandscapeCollection landscapes;
 		*landscapes.settings.getInt("Resolution") = resolution;
 		bc::BarcodeCreator bcc;
 		if (limit <= 0)
@@ -208,15 +209,18 @@ public:
 
 		landscapes.performOnPerform();
 
-		SignatureProcessor<SelfCluster, SignatureType::Iter> iterSelfCuster(resolution);
-		SignatureProcessor<SelfCluster, SignatureType::Combined> combinedSelfCuster(resolution);
-		SignatureProcessor<SelfCluster, SignatureType::CombinedIter> combinedIterCuster(resolution);
+		// SignatureProcessor<SelfCluster, SignatureType::Iter> iterSelfCuster(resolution);
+		// SignatureProcessor<SelfCluster, SignatureType::Combined> combinedSelfCuster(resolution);
+		// SignatureProcessor<SelfCluster, SignatureType::CombinedIter> combinedIterCuster(resolution);
 
-		SignatureProcessor<LandClassifier, SignatureType::Iter> iterLandCuster(cluster, resolution);
-		SignatureProcessor<LandClassifier, SignatureType::Combined> combinedLandCuster(cluster, resolution);
-		SignatureProcessor<LandClassifier, SignatureType::CombinedIter> combinedIterLandCuster(cluster, resolution);
+		// SignatureProcessor<LandClassifier, SignatureType::Iter> iterLandCuster(cluster, resolution);
+		// SignatureProcessor<LandClassifier, SignatureType::Combined> combinedLandCuster(cluster, resolution);
+		// SignatureProcessor<LandClassifier, SignatureType::CombinedIter> combinedIterLandCuster(cluster, resolution);
 
-		PointsProcessor<PointCluster> pointCuster;
+
+		SignatureProcessor<LandscapeCluster, SignatureType::SupFull> iterSupCuster(resolution);
+
+		// PointsProcessor<PointCluster> pointCuster;
 
 		bc::barstruct constr = bar.getConstr();
 		constr.createGraph = false; // Do not create empty nodes
@@ -242,8 +246,8 @@ public:
 		// dw.predict(maxAllowed, landscapes, constr, pointCuster); // Broken
 
 		std::cout << "iterLandCuster" << std::endl;
-		dw.predict(maxAllowed, landscapes, constr, iterLandCuster);
-		std::cout << "combinedLandCuster" << std::endl;
+		dw.predict(maxAllowed, landscapes, constr, iterSupCuster);
+		// std::cout << "combinedLandCuster" << std::endl;
 		// dw.predict(maxAllowed, landscapes, constr, combinedLandCuster);
 		// std::cout << "combinedIterLandCuster" << std::endl;
 		// dw.predict(maxAllowed, landscapes, constr, combinedIterLandCuster);
