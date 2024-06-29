@@ -11,6 +11,7 @@
 #include "../../MatrImg.h"
 #include "../../CachedBarcode.h"
 #include "../../Clusterizers/LandscapeItem.h"
+#include "Hungarian.h" // Подключаем библиотеку для Венгерского алгоритма (lap.h)
 
 class DatasetWork
 {
@@ -82,14 +83,14 @@ public:
 		processor.setClasses(NC);
 		std::cout << "Sample " << maxAllowed << " elements from each cluster" << std::endl;
 
-		std::vector<int> counter(NC, 0);
+		std::vector<int> totalAdded(NC, 0);
 		int added = 0;
 
 		std::vector<int> correctIds;
 		for (auto& entry : sourceFiles)
 		{
 			int correctId = entry.second;
-			if (counter[correctId] >= maxAllowed)
+			if (totalAdded[correctId] >= maxAllowed)
 				continue;
 
 			// // // Skip list
@@ -109,7 +110,7 @@ public:
 			BackPathStr path =  entry.first;
 			// assert(pathExists(path));
 
-			counter[correctId]++;
+			totalAdded[correctId]++;
 			BackImage main = imread(path);
 
 			CachedBaritemHolder cache;
@@ -127,70 +128,103 @@ public:
 		}
 
 		processor.predict();
-		int results[1000];
-		std::fill_n(results, 1000, 0);
+		int corrcts[1000];
+		std::fill_n(corrcts, 1000, 0);
 
 		int fals[1000];
 		std::fill_n(fals, 1000, 0);
 
 		int correctCount = 0;
-		int maxPred = 0;
+		std::vector<int> predictions;
 		for (size_t i = 0; i < added; i++)
 		{
-			int prediction = processor.test(i);
-			int correctId = correctIds[i];
-			bool correct = prediction == correctId;
-			if (correct)
+			predictions.push_back(processor.test(i));
+		}
+
+		std::vector<int> tr = mapIds(correctIds, predictions, NC);
+		// std::cout << "Correct: " << correctCount << "/" << added << " (" << correctCount * 100.0 / added << "%)" << std::endl;
+
+		int maxPred = 0;
+		for (size_t i = 0; i < predictions.size(); i++)
+		{
+			int r = tr[i];
+
+			if (r >= NC)
 			{
-				results[correctId]++;
+				fals[r]++;
+				maxPred = std::max(maxPred, r);
+				continue;
+			}
+
+			if (r == correctIds[i])
+			{
+				corrcts[r]++;
 				correctCount++;
 			}
 			else
-				fals[correctId]++;
-			// assert(prediction < 7);
-			// results[prediction]++;
-			if (prediction > maxPred)
-				maxPred = prediction;
-
-			// std::cout << paths[i] << " -> " << cluster.test(i);
-			// if (correct)
-			// {
-			// 	std::cout << " (correct)";
-			// }
-			// else
-			// {
-			// 	std::cout << " (incorrect, " << prediction << " vs " << correctId << ")";
-			// }
-			// std::cout << std::endl;
+			{
+				correctCount--;
+				fals[r]++;
+			}
 		}
 
-		// std::cout << "Correct: " << correctCount << "/" << added << " (" << correctCount * 100.0 / added << "%)" << std::endl;
 		float res = 0;
-		correctCount = 0;
 		for (size_t i = 0; i <= maxPred; i++)
 		{
-			int r = results[i];
+			int r = tr[i];
 
-			if (i >= NC)
+			if (r >= NC)
 			{
-				std::cout << i + 1 << ": " << r << "/?" << std::endl;
+				std::cout << i + 1 << ": " << r << "/?" << " (false is " << fals[i] << ")" <<  std::endl;
 				correctCount -= r;
 				continue;
 			}
 
-			int c = counter[NC - i - 1];
+			int correct = corrcts[r];
+			int total = totalAdded[r];
 
-			int t = c - r;
-			correctCount += t;
-
-			float a = float(r) / float(c);
-			if (a >= 0)
-				a = 1.0 - a;
-
-			std::cout << i + 1 << ": " << r << "/" << c << " (false is " << fals[NC-i-1] << ")" << std::endl;
-			res += a;
+			std::cout << i + 1 << ": " << correct << "/" << total << " (false is " << fals[i] << ")" << std::endl;
 		}
-		std::cout << "Correct: " << correctCount << "/" << added << " (" << res * 100.f << "%)" << std::endl;
+
+		res = correctCount * 1.0 / added;
+		std::cout << "Total Correct: " << correctCount << "/" << added << " (" << res * 100.f << "%)" << std::endl;
+	}
+
+
+	static void printConfusionMatrix(const vector<vector<double>>& cm)
+	{
+		using namespace std;
+		for (const auto& row : cm)
+		{
+			for (int val : row) {
+				cout << val << " ";
+			}
+			cout << endl;
+		}
+	}
+
+	static void createConfusionMatrix(const std::vector<int>& true_labels, const std::vector<int>& predicted_labels, std::vector<std::vector<double>>& cm, int num_classes) {
+		cm.resize(num_classes, std::vector<double>(num_classes, 0));
+		for (size_t i = 0; i < true_labels.size(); ++i)
+		{
+			cm[true_labels[i] - 1][predicted_labels[i] - 1]++;
+		}
+	}
+
+	std::vector<int> mapIds(std::vector<int> true_labels, std::vector<int> predicted_labels, int num_classes) const
+	{
+		using namespace std;
+
+		vector<vector<double>> cm;
+		createConfusionMatrix(true_labels, predicted_labels, cm, num_classes);
+		cout << "Confusion Matrix:" << endl;
+		printConfusionMatrix(cm);
+
+		HungarianAlgorithm alg;
+		vector<int> assignment;
+		alg.Solve(cm, assignment);
+
+		return assignment;
 	}
 };
 
@@ -288,4 +322,40 @@ public:
 private:
 	T& ref;
 	std::vector<std::vector<LandPoint>> landspacePoints;
+};
+
+
+
+template<class T>
+class PointProcessor
+{
+	T dummy;
+public:
+	PointProcessor(T& ref) : ref(ref) {}
+	PointProcessor() : ref(dummy) {}
+
+	int addToSet(LandscapeClass* item, int classId)
+	{
+		landscapes.push_back(item->landscape);
+		return 1;
+	}
+
+	void setClasses(int n)
+	{
+		ref.setClasses(n);
+	}
+
+	void predict()
+	{
+		ref.predict(landscapes);
+	}
+
+	int test(int id)
+	{
+		return ref.test(id);
+	}
+
+private:
+	T& ref;
+	std::vector<Landscape> landscapes;
 };

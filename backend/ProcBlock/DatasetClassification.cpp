@@ -218,20 +218,20 @@ public:
 		// SignatureProcessor<LandClassifier, SignatureType::CombinedIter> combinedIterLandCuster(cluster, resolution);
 
 
-		SignatureProcessor<LandscapeCluster, SignatureType::SupFull> iterSupCuster(resolution);
+		PointProcessor<LandscapeCluster> iterSupCuster;
 
 		// PointsProcessor<PointCluster> pointCuster;
 
 		bc::barstruct constr = bar.getConstr();
 		constr.createGraph = false; // Do not create empty nodes
-		int maxAllowed = 100;
+		int maxAllowed = 20;
 
 		DatasetWork dw;
-		// dw.open(filesRoot);
+		dw.open();
 		// dw.openCraters("ctaters");
 		// dw.openCraters("ctx_samv1");
 		// dw.openCraters("ctx_samv2/train");
-		dw.openCraters("planet/train", "Earth", "Moon");
+		// dw.openCraters("planet/train", "Earth", "Moon");
 		// dw.openCraters("test_dataset");
 		// dw.openCraters("ctx_samv2/valid");
 		// dw.open();
@@ -270,6 +270,9 @@ public:
 
 		// proj->saveProject();
 	}
+
+
+private:
 };
 
 BlockRegister<DatasetClassificationBlock> DatasetClassificationBlockReg;

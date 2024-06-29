@@ -38,6 +38,7 @@ set(SIDE_SOURCES
     side/imgui/imgui_widgets.cpp
     side/fpng/fpng.cpp
     side/barcode/PrjBarlib/modules/tiffreader.cpp
+    side/Hungarian.cpp
 )
 
 

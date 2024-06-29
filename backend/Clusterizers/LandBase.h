@@ -61,6 +61,16 @@ struct LyambdaLine
 	{
 		return points.size();
 	}
+
+	float getSup() const
+	{
+		float r = 0;
+		auto max = std::max_element(points.begin(), points.end(), [](const LandPoint& a, const LandPoint& b)
+		{
+			return a.y < b.y;
+		});
+		return max->y;
+	}
 };
 using Landscape = std::vector<LyambdaLine>;
 
@@ -213,4 +223,290 @@ inline double iterLandDistanceSupPlusP2(const IterLandscape& a, const IterLandsc
 	}
 
 	return p2Norm(sup.points);
+}
+
+
+struct PointsIterator
+{
+	const std::vector<LandPoint>& points;
+	size_t curPoint = 0;
+	float endX = 0;
+	float x = 1;
+	float y = 0;
+	float iter = 0;
+
+	void reset()
+	{
+		curPoint = 0;
+		endX = 0;
+		x = 1;
+		y = 0;
+		iter = 0;
+	}
+
+	bool ended() const
+	{
+		return (curPoint >= points.size());
+	}
+	// Current state is after execute
+	float executeLymbda(float t)
+	{
+		if (ended())
+			return 0;
+
+		if (x >= endX)
+		{
+			++curPoint;
+			if (ended())
+				return 0;
+
+			const auto& prev = points[curPoint - 1];
+			const auto& cur = points[curPoint];
+
+			y = prev.y;
+
+			float startX = x = prev.x;
+			endX = cur.x;
+
+			assert(startX <= endX);
+
+			const float width = endX - startX;
+			const float height = cur.y - prev.y;
+			if (height == 0 || width == 0)
+			{
+				iter = 0;
+				return y;
+			}
+			iter = height / width;
+
+			return y;
+		}
+
+		x += t;
+		y += iter * t;
+		assert(std::round(y) >= 0);
+		return y;
+	}
+};
+
+// sup по всему
+inline double iterLandDistanceInf(const Landscape& a, const Landscape& b, float)
+{
+	assert(a[0].size() == b[0].size());
+
+	double maxDiff = 0;
+	const size_t minsize = std::min(a.size(), b.size());
+	for (size_t i = 0; i < minsize; i++)
+	{
+		const LyambdaLine& lineA = a[i];
+		const LyambdaLine& lineB = b[i];
+		assert(lineA.k == lineB.k);
+
+		maxDiff = std::max<double>(maxDiff, abs(lineA.getSup() - lineB.getSup()));
+	}
+
+	const Landscape& maxiter =  a.size() > b.size() ? a : b;
+
+	for (size_t i = minsize; i < maxiter.size(); i++)
+	{
+		const LyambdaLine& line = maxiter[i];
+
+		maxDiff = std::max<double>(maxDiff, line.getSup());
+	}
+
+	return maxDiff;
+}
+
+
+inline double iterLandDistance2(const Landscape& a, const Landscape& b, float)
+{
+	assert(a[0].size() == b[0].size());
+
+	double maxDiff = 0;
+	const size_t minsize = std::min(a.size(), b.size());
+	for (size_t i = 0; i < minsize; i++)
+	{
+		const LyambdaLine& lineA = a[i];
+		const LyambdaLine& lineB = b[i];
+		assert(lineA.k == lineB.k);
+
+		maxDiff += sqr(abs(lineA.getSup() - lineB.getSup()));
+	}
+
+	const Landscape& maxiter =  a.size() > b.size() ? a : b;
+
+	for (size_t i = minsize; i < maxiter.size(); i++)
+	{
+		const LyambdaLine& line = maxiter[i];
+
+		maxDiff += sqr(line.getSup());
+	}
+
+	return sqrt(maxDiff);
+}
+
+
+inline double iterLandDistanceMdpiInf(const Landscape& a, const Landscape& b, float t)
+{
+	assert(a[0].size() == b[0].size());
+
+	double maxDiff = 0;
+	const size_t minsize = std::min(a.size(), b.size());
+	for (size_t i = 0; i < minsize; i++)
+	{
+		const LyambdaLine& lineA = a[i];
+		const LyambdaLine& lineB = b[i];
+		assert(lineA.k == lineB.k);
+
+		PointsIterator ait{lineA.points};
+		PointsIterator bit{lineB.points};
+
+		while (!ait.ended() && !bit.ended())
+		{
+			maxDiff = std::max<double>(maxDiff, abs(ait.executeLymbda(t) - bit.executeLymbda(t)));
+		}
+	}
+
+	const Landscape& maxiter = a.size() > b.size() ? a : b;
+
+	for (size_t i = minsize; i < maxiter.size(); i++)
+	{
+		const LyambdaLine& line = maxiter[i];
+		PointsIterator it{line.points};
+
+		while (!it.ended())
+		{
+			maxDiff = std::max<double>(maxDiff, it.executeLymbda(t));
+		}
+	}
+
+	return maxDiff;
+}
+
+
+inline double iterLandDistanceMdpi2(const Landscape& a, const Landscape& b, float t = 0.1f)
+{
+	assert(a[0].size() == b[0].size());
+
+	double maxDiff = 0;
+	const size_t minsize = std::min(a.size(), b.size());
+
+	for (size_t i = 0; i < minsize; i++)
+	{
+		const LyambdaLine& lineA = a[i];
+		const LyambdaLine& lineB = b[i];
+		assert(lineA.k == lineB.k);
+
+		PointsIterator ait{lineA.points};
+		PointsIterator bit{lineB.points};
+
+		float loc = 0;
+		while (!ait.ended() && !bit.ended())
+		{
+			loc += abs(ait.executeLymbda(t) - bit.executeLymbda(t));
+		}
+		maxDiff += sqr(loc);
+	}
+
+	const Landscape& maxiter = a.size() > b.size() ? a : b;
+	for (size_t i = minsize; i < maxiter.size(); i++)
+	{
+		const LyambdaLine& line = maxiter[i];
+		PointsIterator it{line.points};
+
+		float loc = 0;
+		while (!it.ended())
+		{
+			loc += abs(it.executeLymbda(t));
+		}
+		maxDiff += sqr(loc);
+	}
+
+	return sqrt(maxDiff);
+}
+
+// Дистанция по сумму норм
+inline double iterLandDistanceSum2(const Landscape& a, const Landscape& b, float t = 0.1f)
+{
+	assert(a[0].size() == b[0].size());
+
+	double maxDiff = 0;
+	const size_t minsize = std::min(a.size(), b.size());
+
+	for (size_t i = 0; i < minsize; i++)
+	{
+		const LyambdaLine& lineA = a[i];
+		const LyambdaLine& lineB = b[i];
+		assert(lineA.k == lineB.k);
+
+		PointsIterator ait{lineA.points};
+		PointsIterator bit{lineB.points};
+
+		float locD = 0;
+		while (!ait.ended() && !bit.ended())
+		{
+			locD += sqr(abs(ait.executeLymbda(t) - bit.executeLymbda(t)));
+		}
+		maxDiff += sqrt(locD);
+	}
+
+	const Landscape& maxiter = a.size() > b.size() ? a : b;
+	for (size_t i = minsize; i < maxiter.size(); i++)
+	{
+		const LyambdaLine& line = maxiter[i];
+		PointsIterator it{line.points};
+
+		float locD = 0;
+		while (!it.ended())
+		{
+			locD += sqr(it.executeLymbda(t));
+		}
+
+		maxDiff += sqrt(locD);
+	}
+
+	return maxDiff;
+}
+
+
+
+// Дистанция по сумму норм
+inline double iterLandDistanceSumInf(const Landscape& a, const Landscape& b, float t = 0.1f)
+{
+	double maxDiff = 0;
+	const size_t minsize = std::min(a.size(), b.size());
+
+	for (size_t i = 0; i < minsize; i++)
+	{
+		const LyambdaLine& lineA = a[i];
+		const LyambdaLine& lineB = b[i];
+		assert(lineA.k == lineB.k);
+
+		PointsIterator ait{lineA.points};
+		PointsIterator bit{lineB.points};
+
+		float locD = 0;
+		while (!ait.ended() && !bit.ended())
+		{
+			locD = std::max<double>(locD, abs(ait.executeLymbda(t) - bit.executeLymbda(t)));
+		}
+		maxDiff += locD;
+	}
+
+	const Landscape& maxiter = a.size() > b.size() ? a : b;
+
+	for (size_t i = minsize; i < maxiter.size(); i++)
+	{
+		const LyambdaLine& line = maxiter[i];
+		PointsIterator it{line.points};
+
+		float locD = 0;
+		while (!it.ended())
+		{
+			locD = std::max<double>(locD, it.executeLymbda(t));
+		}
+		maxDiff += locD;
+	}
+
+	return maxDiff;
 }

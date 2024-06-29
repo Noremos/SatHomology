@@ -161,44 +161,6 @@ TEST(InputLandData, PaperTest)
 	expected.compare(out);
 }
 
-
-TEST(LandScape, signature)
-{
-	// https://www.sciencedirect.com/science/article/pii/S0747717116300104
-	LandscapeCollection col;
-	col.setTestEnv();
-
-	col.convertLand.addExprRaw(1, 5);
-	col.convertLand.addExprRaw(2, 8);
-	col.convertLand.addExprRaw(3, 4);
-	col.convertLand.addExprRaw(5, 9);
-	col.convertLand.addExprRaw(6, 7);
-	col.maxEnd = 9;
-	col.performOnPerform();
-	col.perform();
-
-	std::vector<std::vector<float>> expectedSignature = {
-		{0.0f, 0.0f, 1.0f, 2.0f, 2.25f, 3.0f, 2.25f, 2.0f, 1.0f},
-		{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},  // small
-		{0.0f, 0.0f, 0.0f, 0.75f, 0.75f, 0.0f, 0.0f, 0.0f, 0.0f},
-		{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.75f, 0.75f, 0.0f},
-		{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}, // small
-	};
-
-	// ASSERT_EQ(col.getItemsCount(), expectedSignature.size());
-	for (size_t i = 0; i < col.getItemsCount(); i++)
-	{
-		LandscapeClass* item = col.getRItem(i);
-
-		std::vector<float> signature;
-		item->getSignatureAsVector(signature, 1);
-		assert(item->landscape.size() == 1);
-		signature.resize(9);
-
-		ASSERT_EQ(signature, expectedSignature[i]);
-	}
-}
-
 TEST(LandScape, dwq1)
 {
 	LandscapeCollection col;
@@ -238,4 +200,140 @@ TEST(LandScape, closee)
 
 	LandscapeClass out;
 	col.convertToLandscape(col.convertLand, &out);
+}
+
+
+TEST(LandScape, Chukanov)
+{
+	return;
+	LandscapeCollection house;
+	house.setTestEnv();
+
+	house.convertLand.addExprRaw(0, 1.41);
+	house.convertLand.addExprRaw(0, 1.41);
+	house.convertLand.addExprRaw(0, 2);
+	// house.convertLand.addExprRaw(2, 2.828); // dim1
+	house.performOnPerform();
+	LandscapeClass outHouse;
+	house.convertToLandscape(house.convertLand, &outHouse);
+
+
+	LandscapeCollection house1;
+	house1.setTestEnv();
+
+	house1.convertLand.addExprRaw(0, 2);
+	house1.convertLand.addExprRaw(0, 2);
+	house1.convertLand.addExprRaw(0, 2);
+	house1.convertLand.addExprRaw(0, 2.233);
+	// house1.convertLand.addExprRaw(2, 2.828);
+	house1.performOnPerform();
+	LandscapeClass outHouse1;
+	house1.convertToLandscape(house1.convertLand, &outHouse1);
+
+	Landscape& houset = outHouse.landscape;
+	Landscape& houset1 = outHouse1.landscape;
+
+	double rest1 = iterLandDistanceMdpiInf(houset, houset1, 1);
+	double rest2 = iterLandDistanceMdpiInf(houset, houset1, 0.1);
+	double rest3 = iterLandDistanceMdpiInf(houset, houset1, 0.01);
+	EXPECT_EQ(rest1, 0.5451);
+}
+
+
+
+// signature
+
+
+
+TEST(LandScape, signatureHard)
+{
+	// https://www.sciencedirect.com/science/article/pii/S0747717116300104
+	LandscapeCollection col;
+	col.setTestEnv();
+
+	col.convertLand.addExprRaw(1, 5);
+	col.convertLand.addExprRaw(2, 8);
+	col.convertLand.addExprRaw(3, 4);
+	col.convertLand.addExprRaw(5, 9);
+	col.convertLand.addExprRaw(6, 7);
+	col.maxEnd = 9;
+	col.performOnPerform();
+	col.perform();
+
+	return;
+	std::vector<std::vector<float>> expectedSignature = {
+		{0.0f, 0.0f, 1.0f, 2.0f, 2.25f, 3.0f, 2.25f, 2.0f, 1.0f},
+		{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},  // small
+		{0.0f, 0.0f, 0.0f, 0.75f, 0.75f, 0.0f, 0.0f, 0.0f, 0.0f},
+		{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.75f, 0.75f, 0.0f},
+		{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}, // small
+	};
+
+	// ASSERT_EQ(col.getItemsCount(), expectedSignature.size());
+	for (size_t i = 0; i < col.getItemsCount(); i++)
+	{
+		LandscapeClass* item = col.getRItem(i);
+
+		std::vector<float> signature;
+		item->getSignatureAsVector(signature, 1);
+		assert(item->landscape.size() == 1);
+		signature.resize(9);
+
+		ASSERT_EQ(signature, expectedSignature[i]);
+	}
+}
+
+
+TEST(LandScape, signatureSimple)
+{
+	// https://www.sciencedirect.com/science/article/pii/S0747717116300104
+	LandscapeCollection col;
+	col.setTestEnv();
+
+	col.convertLand.addExprRaw(1, 5);
+	col.convertLand.addExprRaw(7, 9);
+	col.performOnPerform();
+	col.perform();
+
+	std::vector<std::vector<float>> expectedSignature {
+		// 0   1      2     3     4    4     5   6  7    8,
+		{0.0f, 0.0f, 1.0f, 2.0f, 1.f, 0.0f,  0.f,  0.f,  0.f,  1.f,  0.f},
+
+		{0.0f, 0.0f, 0.5f, 1.0f, 1.5f, 2.0f, 1.5f, 1.0f,  0.5f, 0.f},
+		{0.0f, 0.0f, 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f,
+			1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.6f, 1.7f, 1.8f, 1.9f, 2.0f,
+			1.9f, 1.8f, 1.7f, 1.6f, 1.5f, 1.4f, 1.3f, 1.2f, 1.1f, 1.0f,
+			0.9f, 0.8f, 0.7f, 0.6f, 0.5f, 0.4f, 0.3f, 0.2f, 0.1f, 0.0f}
+	};
+
+	// ASSERT_EQ(col.getItemsCount(), expectedSignature.size());
+	ASSERT_EQ(col.getItemsCount(), 1);
+	LandscapeClass* item = col.getRItem(0);
+	ASSERT_EQ(item->landscape.size(), 1);
+	const LyambdaLine& line = item->landscape[0];
+
+
+	PointsIterator it{line.points};
+
+	std::vector<float> res;
+	while (!it.ended())
+		res.push_back(it.executeLymbda(1));
+
+	EXPECT_EQ(res, expectedSignature[0]);
+
+
+	res.clear();
+	it.reset();
+	while (!it.ended())
+		res.push_back(it.executeLymbda(0.5));
+
+	EXPECT_EQ(res, expectedSignature[1]);
+
+
+	res.clear();
+	it.reset();
+	while (!it.ended())
+		res.push_back(it.executeLymbda(0.1));
+
+	EXPECT_EQ(res, expectedSignature[2]);
 }

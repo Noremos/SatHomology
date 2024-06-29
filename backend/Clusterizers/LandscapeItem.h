@@ -101,6 +101,7 @@ public:
 	}
 
 
+	[[deprecated]]
 	static void itrateOverPoints(const std::vector<LandPoint>& points, std::vector<float>& total)
 	{
 		for (size_t j = 1; j < points.size(); j++)
@@ -115,7 +116,7 @@ public:
 			assert(startX <= endX);
 
 			const float width = endX - startX;
-			const float height = abs(cur.y - prev.y);
+			const float height = cur.y - prev.y;
 			if (height == 0 || width == 0)
 			{
 				total[startX] += round(startY);
@@ -133,6 +134,7 @@ public:
 		}
 	}
 
+	[[deprecated]]
 	void getSignatureAsVector(std::vector<float>& total, int res) const
 	{
 		total.resize(256.f * res, 0); // 1 because of rounding and 1 because of including range [0, maxEnd]
@@ -170,6 +172,7 @@ public:
 		return out;
 	}
 
+	[[deprecated]]
 	void getCombinedPoints(std::vector<LandPoint>& total) const
 	{
 		float N = landscape.size();
@@ -204,6 +207,7 @@ public:
 		});
 	}
 
+	[[deprecated]]
 	void getCombinedPointsAsHist(std::vector<float>& total, int resolution) const
 	{
 		std::vector<LandPoint> points;
@@ -217,6 +221,7 @@ public:
 		}
 	}
 
+	[[deprecated]]
 	void getCombinedPointsAsSignature(std::vector<float>& total, int res) const
 	{
 		std::vector<LandPoint> points;
@@ -374,12 +379,33 @@ public:
 
 		std::vector<bool> used;
 		used.resize(landscape.size(), true);
-		for (size_t i = 0; i < landscape.size(); i++)
+
+
+		std::vector<InputLandLine> landset;
+		size_t prev = 0;
+		for (size_t i = 1; i < landscape.size(); i++)
+		{
+			auto& line1 = landscape.get(prev);
+			auto& line2 = landscape.get(i);
+			if (line1.start == line2.start && line1.len == line2.len)
+			{
+				line1.matrix.insert(line1.matrix.end(), line2.matrix.begin(), line2.matrix.end());
+				continue;
+			}
+			landset.push_back(line1);
+			prev = i;
+		}
+
+		landset.push_back(landscape.get(prev));
+
+		const size_t landSize = landset.size();
+
+		for (size_t i = 0; i < landSize; i++)
 		{
 			if (!used[i])
 				continue;
 
-			auto* line = &landscape.get(i);
+			auto* line = &landset[i];
 
 			float start = line->getStart();
 			float end = line->getEnd();
@@ -430,7 +456,7 @@ public:
 					// if (ascI == prevId)
 					// 	continue;
 
-					auto& prevLine = landscape.get(ascI);
+					auto& prevLine = landset[ascI];
 
 					assert(prevLine.len);
 
@@ -477,12 +503,12 @@ public:
 				prevId = curI;
 				size_t nextI = static_cast<size_t>(curI) + 1;
 
-				for (;nextI < landscape.size(); nextI++)
+				for (;nextI < landSize; nextI++)
 				{
 					// Checks for
 					//  CUR->      |-------M------|
 					//  NEXT->      |-------M-------|
-					auto& nextLand = landscape.get(nextI);
+					auto& nextLand = landset[nextI];
 					if (nextLand.getStart() > end)
 					{
 						break;
@@ -526,7 +552,7 @@ public:
 					end = nextLand.getEnd();
 					curLineCatechd = false;
 					curI = nextI;
-					line = &landscape.get(nextI);
+					line = &landset[nextI];
 
 					// if (i == 18)
 					// 	std::cout << "next:" << start << " " << end << std::endl;
@@ -548,7 +574,7 @@ public:
 					cl.add(end, 0, round);
 
 					++curI;
-					for (;curI < landscape.size(); curI++)
+					for (;curI < landSize; curI++)
 					{
 						if (!used[curI])
 							continue;
@@ -558,7 +584,7 @@ public:
 
 						//  CUR->      |-------M------|
 						//  NEXT->      |-------M-------|
-						auto& nextLand = landscape.get(curI);
+						auto& nextLand = landset[curI];
 						if (nextLand.getStart() >= end)
 						{
 							// Found the next line
@@ -574,7 +600,7 @@ public:
 							break;
 						}
 					}
-					if (curI == landscape.size())
+					if (curI == landSize)
 						break;
 				}
 
