@@ -224,7 +224,7 @@ public:
 
 		bc::barstruct constr = bar.getConstr();
 		constr.createGraph = false; // Do not create empty nodes
-		int maxAllowed = 20;
+		int maxAllowed = 100;
 
 		DatasetWork dw;
 		dw.open();

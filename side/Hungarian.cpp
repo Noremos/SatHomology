@@ -1,13 +1,13 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Hungarian.cpp: Implementation file for Class HungarianAlgorithm.
-// 
+//
 // This is a C++ wrapper with slight modification of a hungarian algorithm implementation by Markus Buehren.
 // The original implementation is a few mex-functions for use in MATLAB, found here:
 // http://www.mathworks.com/matlabcentral/fileexchange/6543-functions-for-the-rectangular-assignment-problem
-// 
+//
 // Both this code and the orignal code are published under the BSD license.
 // by Cong Ma, 2016
-// 
+//
 
 #include <stdlib.h>
 #include <cfloat> // for DBL_MAX
@@ -32,13 +32,13 @@ double HungarianAlgorithm::Solve(vector <vector<double> >& DistMatrix, vector<in
 	double cost = 0.0;
 
 	// Fill in the distMatrixIn. Mind the index is "i + nRows * j".
-	// Here the cost matrix of size MxN is defined as a double precision array of N*M elements. 
+	// Here the cost matrix of size MxN is defined as a double precision array of N*M elements.
 	// In the solving functions matrices are seen to be saved MATLAB-internally in row-order.
 	// (i.e. the matrix [1 2; 3 4] will be stored as a vector [1 3 2 4], NOT [1 2 3 4]).
 	for (unsigned int i = 0; i < nRows; i++)
 		for (unsigned int j = 0; j < nCols; j++)
 			distMatrixIn[i + nRows * j] = DistMatrix[i][j];
-	
+
 	// call solving function
 	assignmentoptimal(assignment, &cost, distMatrixIn, nRows, nCols);
 
@@ -75,8 +75,8 @@ void HungarianAlgorithm::assignmentoptimal(int *assignment, double *cost, double
 	for (row = 0; row<nOfElements; row++)
 	{
 		value = distMatrixIn[row];
-		if (value < 0)
-			cerr << "All matrix elements have to be non-negative." << endl;
+		// if (value < 0)
+		// 	cerr << "All matrix elements have to be non-negative." << endl;
 		distMatrix[row] = value;
 	}
 

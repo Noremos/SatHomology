@@ -229,11 +229,12 @@ inline double iterLandDistanceSupPlusP2(const IterLandscape& a, const IterLandsc
 struct PointsIterator
 {
 	const std::vector<LandPoint>& points;
+	float t = 1.f;
 	size_t curPoint = 0;
 	float endX = 0;
 	float x = 1;
 	float y = 0;
-	float iter = 0;
+	float yIter = 0;
 
 	void reset()
 	{
@@ -241,7 +242,7 @@ struct PointsIterator
 		endX = 0;
 		x = 1;
 		y = 0;
-		iter = 0;
+		yIter = 0;
 	}
 
 	bool ended() const
@@ -249,7 +250,7 @@ struct PointsIterator
 		return (curPoint >= points.size());
 	}
 	// Current state is after execute
-	float executeLymbda(float t)
+	float executeLymbda()
 	{
 		if (ended())
 			return 0;
@@ -274,18 +275,88 @@ struct PointsIterator
 			const float height = cur.y - prev.y;
 			if (height == 0 || width == 0)
 			{
-				iter = 0;
+				yIter = 0;
 				return y;
 			}
-			iter = height / width;
+			yIter = height / width;
 
 			return y;
 		}
 
 		x += t;
-		y += iter * t;
+		y += yIter * t;
 		assert(std::round(y) >= 0);
 		return y;
+	}
+};
+
+
+
+struct CorrectPointsIterator
+{
+	const std::vector<LandPoint>& points;
+	size_t curPoint = 0;
+	float startX = 0;
+	float endX = 0;
+	float x = 0;
+	const float xIter = 0;
+	float startY;
+	bool asc;
+
+
+	CorrectPointsIterator(const std::vector<LandPoint>& points, float t) :
+		points(points), xIter(t)
+	{
+		updateLine();
+	}
+
+	bool ended() const
+	{
+		return (x > endX && curPoint + 1 >= points.size());
+	}
+
+	void updateLine(bool skipZero = false)
+	{
+		++curPoint;
+		const auto& prev = points[curPoint - 1];
+		const auto& cur = points[curPoint];
+
+		if (skipZero &&  prev.y == 0 && cur.y == 0)
+		{
+			updateLine(true);
+			return;
+		}
+		asc = (prev.y < cur.y);
+
+		startY = prev.y;
+
+		startX = prev.x;
+		endX = cur.x;
+	}
+	// Current state is after execute
+	float executeLymbda()
+	{
+		if (ended())
+			return 0;
+
+		float orgX = x;
+		x += xIter;
+
+		if (orgX >= endX)
+		{
+			if (curPoint + 1 >= points.size())
+				return 0;
+
+			updateLine(true);
+		}
+
+		if (orgX < startX)
+			return 0;
+
+		float diff = orgX - startX;
+		float outY = startY + ( asc ? diff : -diff );
+		assert(std::round(outY) >= 0);
+		return outY;
 	}
 };
 
@@ -358,12 +429,12 @@ inline double iterLandDistanceMdpiInf(const Landscape& a, const Landscape& b, fl
 		const LyambdaLine& lineB = b[i];
 		assert(lineA.k == lineB.k);
 
-		PointsIterator ait{lineA.points};
-		PointsIterator bit{lineB.points};
+		PointsIterator ait{lineA.points, t};
+		PointsIterator bit{lineB.points, t};
 
 		while (!ait.ended() && !bit.ended())
 		{
-			maxDiff = std::max<double>(maxDiff, abs(ait.executeLymbda(t) - bit.executeLymbda(t)));
+			maxDiff = std::max<double>(maxDiff, abs(ait.executeLymbda() - bit.executeLymbda()));
 		}
 	}
 
@@ -372,11 +443,11 @@ inline double iterLandDistanceMdpiInf(const Landscape& a, const Landscape& b, fl
 	for (size_t i = minsize; i < maxiter.size(); i++)
 	{
 		const LyambdaLine& line = maxiter[i];
-		PointsIterator it{line.points};
+		PointsIterator it{line.points, t};
 
 		while (!it.ended())
 		{
-			maxDiff = std::max<double>(maxDiff, it.executeLymbda(t));
+			maxDiff = std::max<double>(maxDiff, it.executeLymbda());
 		}
 	}
 
@@ -397,13 +468,13 @@ inline double iterLandDistanceMdpi2(const Landscape& a, const Landscape& b, floa
 		const LyambdaLine& lineB = b[i];
 		assert(lineA.k == lineB.k);
 
-		PointsIterator ait{lineA.points};
-		PointsIterator bit{lineB.points};
+		PointsIterator ait{lineA.points, t};
+		PointsIterator bit{lineB.points, t};
 
 		float loc = 0;
 		while (!ait.ended() && !bit.ended())
 		{
-			loc += abs(ait.executeLymbda(t) - bit.executeLymbda(t));
+			loc += abs(ait.executeLymbda() - bit.executeLymbda());
 		}
 		maxDiff += sqr(loc);
 	}
@@ -412,12 +483,12 @@ inline double iterLandDistanceMdpi2(const Landscape& a, const Landscape& b, floa
 	for (size_t i = minsize; i < maxiter.size(); i++)
 	{
 		const LyambdaLine& line = maxiter[i];
-		PointsIterator it{line.points};
+		PointsIterator it{line.points, t};
 
 		float loc = 0;
 		while (!it.ended())
 		{
-			loc += abs(it.executeLymbda(t));
+			loc += abs(it.executeLymbda());
 		}
 		maxDiff += sqr(loc);
 	}
@@ -439,13 +510,13 @@ inline double iterLandDistanceSum2(const Landscape& a, const Landscape& b, float
 		const LyambdaLine& lineB = b[i];
 		assert(lineA.k == lineB.k);
 
-		PointsIterator ait{lineA.points};
-		PointsIterator bit{lineB.points};
+		PointsIterator ait{lineA.points, t};
+		PointsIterator bit{lineB.points, t};
 
 		float locD = 0;
 		while (!ait.ended() && !bit.ended())
 		{
-			locD += sqr(abs(ait.executeLymbda(t) - bit.executeLymbda(t)));
+			locD += sqr(abs(ait.executeLymbda() - bit.executeLymbda()));
 		}
 		maxDiff += sqrt(locD);
 	}
@@ -454,12 +525,12 @@ inline double iterLandDistanceSum2(const Landscape& a, const Landscape& b, float
 	for (size_t i = minsize; i < maxiter.size(); i++)
 	{
 		const LyambdaLine& line = maxiter[i];
-		PointsIterator it{line.points};
+		PointsIterator it{line.points, t};
 
 		float locD = 0;
 		while (!it.ended())
 		{
-			locD += sqr(it.executeLymbda(t));
+			locD += sqr(it.executeLymbda());
 		}
 
 		maxDiff += sqrt(locD);
@@ -482,13 +553,13 @@ inline double iterLandDistanceSumInf(const Landscape& a, const Landscape& b, flo
 		const LyambdaLine& lineB = b[i];
 		assert(lineA.k == lineB.k);
 
-		PointsIterator ait{lineA.points};
-		PointsIterator bit{lineB.points};
+		PointsIterator ait{lineA.points, t};
+		PointsIterator bit{lineB.points, t};
 
 		float locD = 0;
 		while (!ait.ended() && !bit.ended())
 		{
-			locD = std::max<double>(locD, abs(ait.executeLymbda(t) - bit.executeLymbda(t)));
+			locD = std::max<double>(locD, abs(ait.executeLymbda() - bit.executeLymbda()));
 		}
 		maxDiff += locD;
 	}
@@ -498,12 +569,12 @@ inline double iterLandDistanceSumInf(const Landscape& a, const Landscape& b, flo
 	for (size_t i = minsize; i < maxiter.size(); i++)
 	{
 		const LyambdaLine& line = maxiter[i];
-		PointsIterator it{line.points};
+		PointsIterator it{line.points, t};
 
 		float locD = 0;
 		while (!it.ended())
 		{
-			locD = std::max<double>(locD, it.executeLymbda(t));
+			locD = std::max<double>(locD, it.executeLymbda());
 		}
 		maxDiff += locD;
 	}

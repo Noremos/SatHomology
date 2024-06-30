@@ -141,19 +141,20 @@ public:
 			predictions.push_back(processor.test(i));
 		}
 
-		std::vector<int> tr = mapIds(correctIds, predictions, NC);
+		std::vector<int> tr = mapIds(correctIds, predictions, NC, true);
 		// std::cout << "Correct: " << correctCount << "/" << added << " (" << correctCount * 100.0 / added << "%)" << std::endl;
 
 		int maxPred = 0;
+		assert(tr.size() == predictions.size());
 		for (size_t i = 0; i < predictions.size(); i++)
 		{
 			int r = tr[i];
 
-			if (r >= NC)
+			assert(r < NC);
 			{
-				fals[r]++;
-				maxPred = std::max(maxPred, r);
-				continue;
+				// fals[r]++;
+				// maxPred = std::max(maxPred, r);
+				// continue;
 			}
 
 			if (r == correctIds[i])
@@ -169,19 +170,10 @@ public:
 		}
 
 		float res = 0;
-		for (size_t i = 0; i <= maxPred; i++)
+		for (size_t i = 0; i < NC; i++)
 		{
-			int r = tr[i];
-
-			if (r >= NC)
-			{
-				std::cout << i + 1 << ": " << r << "/?" << " (false is " << fals[i] << ")" <<  std::endl;
-				correctCount -= r;
-				continue;
-			}
-
-			int correct = corrcts[r];
-			int total = totalAdded[r];
+			int correct = corrcts[i];
+			int total = totalAdded[i];
 
 			std::cout << i + 1 << ": " << correct << "/" << total << " (false is " << fals[i] << ")" << std::endl;
 		}
@@ -207,24 +199,68 @@ public:
 		cm.resize(num_classes, std::vector<double>(num_classes, 0));
 		for (size_t i = 0; i < true_labels.size(); ++i)
 		{
-			cm[true_labels[i] - 1][predicted_labels[i] - 1]++;
+			assert(true_labels[i] < num_classes);
+			assert(predicted_labels[i] < num_classes);
+			cm[true_labels[i]][predicted_labels[i]]++;
 		}
 	}
 
-	std::vector<int> mapIds(std::vector<int> true_labels, std::vector<int> predicted_labels, int num_classes) const
+	static std::vector<int> mapIds(std::vector<int> true_labels, std::vector<int> predicted_labels, int num_classes, bool printMap = false)
 	{
+		assert(true_labels.size() == predicted_labels.size());
 		using namespace std;
 
-		vector<vector<double>> cm;
-		createConfusionMatrix(true_labels, predicted_labels, cm, num_classes);
-		cout << "Confusion Matrix:" << endl;
-		printConfusionMatrix(cm);
+		vector<vector<double>> confusion_matrix;
+		createConfusionMatrix(true_labels, predicted_labels, confusion_matrix, num_classes);
+		// cout << "Confusion Matrix:" << endl;
+		// printConfusionMatrix(confusion_matrix);
+
+	// Hungarian algorithm requires cost matrix where we minimize the cost
+		// Since we're maximizing the match between true_labels and predicted_labels,
+		// we use negative values in the cost matrix
+		std::vector<std::vector<double>> cost_matrix(num_classes, std::vector<double>(num_classes));
+		for (int i = 0; i < num_classes; ++i)
+		{
+			for (int j = 0; j < num_classes; ++j)
+			{
+				cost_matrix[i][j] = -confusion_matrix[i][j];
+				// // REMOVE IF BREAKS
+				// if (cost_matrix[i][j] < 0)
+				// 	cost_matrix[i][j] = 0;
+			}
+		}
 
 		HungarianAlgorithm alg;
 		vector<int> assignment;
-		alg.Solve(cm, assignment);
+		double cost = alg.Solve(cost_matrix, assignment);
 
-		return assignment;
+
+		std::unordered_map<int, int> label_mapping;
+		for (int i = 0; i < num_classes; ++i) {
+			label_mapping[assignment[i]] = i ;
+		}
+
+		if (printMap)
+		{
+			std::cout << "Mapping (original to new):" << std::endl;
+			for (const auto& pair : label_mapping) {
+				std::cout << pair.first << " -> " << pair.second << std::endl;
+			}
+		}
+
+		// Apply the new mapping to predicted labels
+		std::vector<int> new_predicted_labels(predicted_labels.size());
+		for (size_t i = 0; i < predicted_labels.size(); ++i) {
+			new_predicted_labels[i] = label_mapping[predicted_labels[i]];
+		}
+
+		// std::cout << "New Predicted Labels:" << std::endl;
+		// for (int label : new_predicted_labels) {
+		// 	std::cout << label << " ";
+		// }
+		// std::cout << std::endl;
+
+		return new_predicted_labels;
 	}
 };
 

@@ -26,10 +26,10 @@ class MatrixXd
 {
 public:
 	int rows, cols;
-	std::unique_ptr<double[]> data;
+	std::vector<double> data;
 	MatrixXd(int rows, int cols) : rows(rows), cols(cols)
 	{
-		data = std::make_unique<double[]>(rows * cols);
+		data.resize(rows * cols);
 	}
 
 	double& operator()(int i, int j)
@@ -39,27 +39,54 @@ public:
 	double operator()(int i, int j) const
 	{
 		assert(i >= 0 && i < rows && j >= 0 && j < cols);
-		return data[i * cols + j];
+		auto value = data[i * cols + j];
+		assert(value == data[j * cols + i]);
+		return value;
 	}
 
 	double& get(int i, int j)
 	{
 		assert(i >= 0 && i < rows && j >= 0 && j < cols);
-		return data[i * cols + j];
+		auto value = data[i * cols + j];
+		assert(value == data[j * cols + i]);
+		return value;
+	}
+
+
+	void setBoth(int i, int j, double val)
+	{
+		assert(i >= 0 && i < rows && j >= 0 && j < cols);
+		assert(data[i * cols + j] == data[j * cols + i]);
+		data[j * cols + i]  = data[i * cols + j] = val;
+	}
+
+	std::vector<std::vector<double>> getMatr() const
+	{
+		std::vector<std::vector<double>> m;
+		m.resize(rows);
+		for (size_t i = 0; i < rows; i++)
+		{
+			m[i].resize(rows);
+
+			for (size_t j = 0; j < rows; j++)
+			{
+				m[i][j] = operator()(i, j);
+			}
+		}
+
+		return m;
 	}
 
 	MatrixXd(const MatrixXd& other) : rows(other.rows), cols(other.cols)
 	{
-		data = std::make_unique<double[]>(rows * cols);
-		std::copy(other.data.get(), other.data.get() + rows * cols, data.get());
+		data = other.data;
 	}
 
 	MatrixXd& operator=(const MatrixXd& other)
 	{
 		rows = other.rows;
 		cols = other.cols;
-		data = std::make_unique<double[]>(rows * cols);
-		std::copy(other.data.get(), other.data.get() + rows * cols, data.get());
+		data = other.data;
 		return *this;
 	}
 
@@ -77,54 +104,30 @@ public:
 
 	void updateDistances(int numClusters, int cluster1, int cluster2)
 	{
-		int newClusterSize = numClusters - 1;
-		MatrixXd newDistances(newClusterSize, newClusterSize);
-		for (int i = 0; i < newClusterSize; ++i) {
-			for (int j = 0; j < newClusterSize; ++j)
-			{
-				newDistances(i, j) = get(i, j);
-			}
-		}
+		double minVal = get(cluster1, cluster2);
+		setBoth(cluster1, cluster2, -1);
 
-		if (cluster2 < newClusterSize && cluster1 < newClusterSize)
-		{
-			newDistances(cluster1, cluster2) = -1;
-			newDistances(cluster2, cluster1) = -1;
-		}
+		// for (int i = 0; i < numClusters; ++i)
+		// {
+		// 	if (i == cluster1 || i == cluster2)
+		// 		continue;
 
-		int newCluster = numClusters - 2;
-		for (int i = 0; i < newCluster; ++i)
-		{
-			if (i < cluster1)
-			{
-				newDistances(i, newCluster) = std::min(get(i, cluster1), get(i, cluster2));
-			}
-			else if (i < cluster2)
-			{
-				newDistances(i, newCluster) = std::min(get(cluster1, i), get(i, cluster2));
-			}
-			else
-			{
-				newDistances(i, newCluster) = std::min(get(cluster1, i+1), get(cluster2, i+1));
-			}
-			newDistances(newCluster, i) = newDistances(i, newCluster);
-		}
-
-		newDistances(newCluster, newCluster) = 0;
-		*this = std::move(newDistances);
+		// 	setBoth(cluster1, i, std::min(get(i, cluster1), minVal));
+		// 	setBoth(cluster2, i, std::min(get(i, cluster2), minVal));
+		// }
 	}
 
 
-	std::pair<int, int> findMinDistance(int numClusters) {
+	std::pair<int, int> findMinDistance(int numClusters)
+	{
 		double minDistance = std::numeric_limits<double>::max();
 		std::pair<int, int> minPair = { -1, -1 };
-		for (int i = 0; i < numClusters; ++i) {
-			for (int j = i + 1; j < numClusters; ++j)
+		for (int i = 0; i < rows; ++i)
+		{
+			for (int j = i + 1; j < cols; ++j)
 			{
 				float val = get(i, j);
 				if (val == -1)
-					continue;
-				if (i == j)
 					continue;
 
 				if (val < minDistance)
@@ -163,26 +166,109 @@ struct Cluster
     // }
 };
 
-std::vector<int> hierarchicalClustering(const MatrixXd& distanceMatrix, int num_clusters)
+
+using namespace std;
+
+class HierarchicalClustering2 {
+public:
+    HierarchicalClustering2(const vector<vector<double>>& distMatrix, int numClusters)
+        : distanceMatrix(distMatrix), desiredClusters(numClusters) {
+        int n = distanceMatrix.size();
+        for (int i = 0; i < n; ++i) {
+            clusters.push_back({i});
+        }
+    }
+
+    void cluster() {
+        while (clusters.size() > desiredClusters) {
+            pair<int, int> closestPair = findClosestClusters();
+            mergeClusters(closestPair.first, closestPair.second);
+        }
+    }
+
+    void printClusters() {
+        for (const auto& cluster : clusters) {
+            for (int idx : cluster) {
+                cout << idx << " ";
+            }
+            cout << endl;
+        }
+    }
+
+private:
+    vector<vector<double>> distanceMatrix;
+    vector<vector<int>> clusters;
+    int desiredClusters;
+
+    pair<int, int> findClosestClusters() {
+        double minDistance = numeric_limits<double>::max();
+        pair<int, int> closestPair = {-1, -1};
+
+        for (size_t i = 0; i < clusters.size(); ++i) {
+            for (size_t j = i + 1; j < clusters.size(); ++j) {
+                double dist = calculateDistance(clusters[i], clusters[j]);
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    closestPair = {i, j};
+                }
+            }
+        }
+        return closestPair;
+    }
+
+    double calculateDistance(const vector<int>& clusterA, const vector<int>& clusterB) {
+        double minDistance = numeric_limits<double>::max();
+        for (int i : clusterA) {
+            for (int j : clusterB) {
+                minDistance = min(minDistance, distanceMatrix[i][j]);
+            }
+        }
+        return minDistance;
+    }
+
+    void mergeClusters(int idxA, int idxB) {
+        clusters[idxA].insert(clusters[idxA].end(), clusters[idxB].begin(), clusters[idxB].end());
+        clusters.erase(clusters.begin() + idxB);
+    }
+};
+
+std::vector<int> hierarchicalClustering(const MatrixXd& distanceMatrix, int maxAllowed)
 {
+	// HierarchicalClustering2 hc(distanceMatrix.getMatr(), maxAllowed);
+	// hc.cluster();
+    // hc.printClusters();
+
+
     int numRows = distanceMatrix.rows;
     int numClusters = numRows;
 
     MatrixXd distances = distanceMatrix;
 
-	std::vector<Cluster*> clusters;
+	std::vector<std::shared_ptr<Cluster>> clusters;
 	for (size_t i = 0; i < numRows; i++)
 	{
-		clusters.push_back(new Cluster(i));
+		clusters.push_back(std::make_shared<Cluster>(i));
 	}
 
-	while (numClusters > num_clusters)
+	while (numClusters > maxAllowed)
 	{
 		std::pair<int, int> minPair = distances.findMinDistance(numClusters);
 		std::cout << "Объединяются кластеры " << minPair.first << " и " << minPair.second << std::endl;
 
-		clusters[minPair.first]->merge(*clusters[minPair.second]);
-		clusters[minPair.second] = clusters[minPair.first];
+		auto& a = clusters.at(minPair.first);
+		Cluster* b = clusters.at(minPair.second).get(); // DONOT USE SHARTED PTR!
+		if (a.get() == b)
+		{
+			distances.updateDistances(numClusters, minPair.first, minPair.second);
+			continue;
+		}
+
+		a->merge(*b);
+
+		for (size_t i = 0; i < b->points.size(); i++)
+		{
+			clusters.at(b->points[i]) = a;
+		}
 
 		distances.updateDistances(numClusters, minPair.first, minPair.second);
 		--numClusters;
@@ -206,6 +292,8 @@ std::vector<int> hierarchicalClustering(const MatrixXd& distanceMatrix, int num_
 
 		outputIds.push_back(fid);
 	}
+
+	assert(uniqeIds.size() == maxAllowed);
 	clusters.clear();
 
 	return outputIds;
@@ -308,7 +396,7 @@ public:
 		{
 			for (size_t j = i + 1; j < n; j++)
 			{
-				matrix(j, i) = matrix(i, j) = iterLandDistanceSumInf(landscapes[i], landscapes[j], 0.1f);
+				matrix.setBoth(j, i, iterLandDistanceSumInf(landscapes[i], landscapes[j], 0.1f));
 			}
 		}
 
