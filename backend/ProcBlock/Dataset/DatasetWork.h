@@ -23,7 +23,7 @@ public:
 	void open()
 	{
 		BackPathStr filesRoot = "/Users/sam/Edu/datasets/hirise-map-proj-v3/map-proj-v3";
-		NC = 7;
+		NC = 8;
 		std::ifstream srcleab("/Users/sam/Edu/datasets/hirise-map-proj-v3/labels-map-proj-v3.txt");
 		// Read file line by line
 

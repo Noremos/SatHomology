@@ -855,7 +855,6 @@ public:
 
 	void addAllLines(const CachedBaritemHolder& holder)
 	{
-		bool cmpMode = *Base::settings.getBool("Compare Only Mode");
 		const std::vector<CachedBarline>& items = holder.getItems();
 
 		size_t size = holder.getItemsCount();

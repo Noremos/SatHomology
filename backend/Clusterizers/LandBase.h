@@ -55,7 +55,7 @@ MEXPORT struct LandPoint
 struct LyambdaLine
 {
 	std::vector<LandPoint> points;
-	int k;
+	int k = 0;
 
 	size_t size() const
 	{
@@ -109,7 +109,7 @@ struct LyambdaIterLine
 
 using IterLandscape = std::vector<LyambdaIterLine>;
 
-inline double iterLandDistanceEvklid(const LyambdaIterLine& a, const LyambdaIterLine& b)
+inline double iterLandDistanceEvklid(const LyambdaIterLine& a, const LyambdaIterLine& b,float = 0)
 {
 	assert(a.size() == b.size());
 
@@ -125,7 +125,7 @@ inline double iterLandDistanceEvklid(const LyambdaIterLine& a, const LyambdaIter
 }
 
 
-inline double iterLandDistance2p(const LyambdaIterLine& a, const LyambdaIterLine& b)
+inline double iterLandDistance2p(const LyambdaIterLine& a, const LyambdaIterLine& b,float = 0)
 {
 	assert(a.size() == b.size());
 
@@ -135,7 +135,7 @@ inline double iterLandDistance2p(const LyambdaIterLine& a, const LyambdaIterLine
 	return abs(ap - bp);
 }
 
-inline double iterLandDistance2p(const IterLandscape& a, const IterLandscape& b)
+inline double iterLandDistance2p(const IterLandscape& a, const IterLandscape& b,float = 0)
 {
 	assert(a[0].size() == b[0].size());
 
@@ -164,7 +164,7 @@ inline double iterLandDistance2p(const IterLandscape& a, const IterLandscape& b)
 }
 
 
-inline double iterLandDistanceEvklid(const IterLandscape& a, const IterLandscape& b)
+inline double iterLandDistanceEvklid(const IterLandscape& a, const IterLandscape& b,float = 0)
 {
 	assert(a[0].size() == b[0].size());
 
@@ -194,7 +194,7 @@ inline double iterLandDistanceEvklid(const IterLandscape& a, const IterLandscape
 
 
 
-inline double iterLandDistanceSupPlusP2(const IterLandscape& a, const IterLandscape& b)
+inline double iterLandDistanceSupPlusP2(const IterLandscape& a, const IterLandscape& b,float = 0)
 {
 	assert(a[0].size() == b[0].size());
 	const size_t N = a.size();
@@ -419,8 +419,6 @@ inline double iterLandDistance2(const Landscape& a, const Landscape& b, float)
 
 inline double iterLandDistanceMdpiInf(const Landscape& a, const Landscape& b, float t)
 {
-	assert(a[0].size() == b[0].size());
-
 	double maxDiff = 0;
 	const size_t minsize = std::min(a.size(), b.size());
 	for (size_t i = 0; i < minsize; i++)

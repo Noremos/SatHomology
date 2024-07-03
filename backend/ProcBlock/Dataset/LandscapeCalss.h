@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <memory>
 #include <set>
+#include "hclust-cpp/fastcluster.h"
 
 struct Point {
     double x, y;
@@ -19,7 +20,7 @@ struct Point {
     Point(double x, double y) : x(x), y(y) {}
 };
 
-double distance(const Point& a, const Point& b) {
+inline double distance(const Point& a, const Point& b) {
     return std::sqrt(std::pow(a.x - b.x, 2) + std::pow(a.y - b.y, 2));
 }
 class MatrixXd
@@ -47,7 +48,7 @@ public:
 	double& get(int i, int j)
 	{
 		assert(i >= 0 && i < rows && j >= 0 && j < cols);
-		auto value = data[i * cols + j];
+		double& value = data[i * cols + j];
 		assert(value == data[j * cols + i]);
 		return value;
 	}
@@ -102,10 +103,13 @@ public:
 	}
 
 
-	void updateDistances(int numClusters, int cluster1, int cluster2)
+	void updateDistances(int source, int cooked)
 	{
-		double minVal = get(cluster1, cluster2);
-		setBoth(cluster1, cluster2, -1);
+		double maxVal = get(source, cooked);
+		for (size_t i = 0; i < rows; i++)
+		{
+			setBoth(i, cooked,  std::max(get(i, cooked), maxVal));
+		}
 
 		// for (int i = 0; i < numClusters; ++i)
 		// {
@@ -122,17 +126,21 @@ public:
 	{
 		double minDistance = std::numeric_limits<double>::max();
 		std::pair<int, int> minPair = { -1, -1 };
+		assert(rows > 0);
+		assert(data.size() > 0);
+		using namespace std;
 		for (int i = 0; i < rows; ++i)
 		{
 			for (int j = i + 1; j < cols; ++j)
 			{
-				float val = get(i, j);
-				if (val == -1)
+				double val = get(i, j);
+				if (val < 0.0) // skip -1.0
 					continue;
 
+				// cout << val <<  " vs " << minDistance << endl;
 				if (val < minDistance)
 				{
-					minDistance = get(i, j);
+					minDistance = val;
 					minPair = { i, j };
 				}
 			}
@@ -232,7 +240,7 @@ private:
     }
 };
 
-std::vector<int> hierarchicalClustering(const MatrixXd& distanceMatrix, int maxAllowed)
+inline std::vector<int> hierarchicalClustering(const MatrixXd& distanceMatrix, int maxAllowed)
 {
 	// HierarchicalClustering2 hc(distanceMatrix.getMatr(), maxAllowed);
 	// hc.cluster();
@@ -259,18 +267,23 @@ std::vector<int> hierarchicalClustering(const MatrixXd& distanceMatrix, int maxA
 		Cluster* b = clusters.at(minPair.second).get(); // DONOT USE SHARTED PTR!
 		if (a.get() == b)
 		{
-			distances.updateDistances(numClusters, minPair.first, minPair.second);
+			distances.setBoth(minPair.first, minPair.second, -1);
 			continue;
 		}
 
+		assert(a->points.size());
+		assert(b->points.size());
 		a->merge(*b);
 
-		for (size_t i = 0; i < b->points.size(); i++)
+		auto points = std::move(b->points);
+		double maxVal = distances.get(minPair.first, minPair.second);
+		for (size_t i = 0, total = points.size(); i < total; i++)
 		{
-			clusters.at(b->points[i]) = a;
+			distances.updateDistances(points[i], minPair.second);
+			clusters.at(points[i]) = a;
 		}
 
-		distances.updateDistances(numClusters, minPair.first, minPair.second);
+		distances.setBoth(minPair.first, minPair.second, -1);
 		--numClusters;
 	}
 
@@ -396,7 +409,13 @@ public:
 		{
 			for (size_t j = i + 1; j < n; j++)
 			{
-				matrix.setBoth(j, i, iterLandDistanceSumInf(landscapes[i], landscapes[j], 0.1f));
+				// iterLandDistanceSumInf // 14
+				// iterLandDistanceSum2 // 17
+				// iterLandDistanceInf // 11
+				// iterLandDistance2 // 4
+				// iterLandDistanceMdpiInf // 5
+				// iterLandDistanceMdpi2 // 18
+				matrix.setBoth(j, i, iterLandDistanceSum2(landscapes[i], landscapes[j], 0.1f));
 			}
 		}
 
@@ -405,6 +424,19 @@ public:
 			matrix(i, i) = 0;
 		}
 
-		output = hierarchicalClustering(matrix, maxAllowed);
+		// clustering call
+		int opt_method = HCLUST_METHOD_COMPLETE; //HCLUST_METHOD_SINGLE  HCLUST_METHOD_COMPLETE  HCLUST_METHOD_AVERAGE HCLUST_METHOD_MEDIAN
+
+		int* merge = new int[2*(n-1)];
+		double* height = new double[n-1];
+		hclust_fast(n, matrix.data.data(), opt_method, merge, height);
+
+		output.resize(n);
+		cutree_k(n, merge, maxAllowed, output.data());
+
+		delete[] height;
+		delete[] merge;
+
+		// output = hierarchicalClustering(matrix, maxAllowed);
 	}
 };

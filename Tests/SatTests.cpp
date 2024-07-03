@@ -595,3 +595,53 @@ TEST(Side, hangarianMoreClassesWithError)
 	auto assigns = DatasetWork::mapIds(true_labels, predicted_labels, num_classes);
 	EXPECT_EQ(assigns, expected);
 }
+
+#include "../backend/ProcBlock/Dataset/LandscapeCalss.h"
+
+TEST(ClusterTest, Hiracy)
+{
+	LandscapeCluster iterSupCuster;
+
+	LyambdaLine l0;
+	l0.points.push_back({1, 1});
+	l0.points.push_back({4, 3});
+	l0.points.push_back({5, 1});
+	LyambdaLine l1;
+	l1.points.push_back({1, 1});
+	l1.points.push_back({3, 3});
+	l1.points.push_back({5, 1});
+	Landscape land0;
+	land0.push_back(l0);
+	Landscape land1;
+	land1.push_back(l1);
+
+
+	LyambdaLine l2;
+	l0.points.push_back({5, 1});
+	l0.points.push_back({8, 3});
+	l0.points.push_back({9, 1});
+	LyambdaLine l3;
+	l1.points.push_back({5, 1});
+	l1.points.push_back({8, 3});
+	l1.points.push_back({9, 1});
+
+	Landscape land2;
+	land2.push_back(l0);
+	Landscape land3;
+	land3.push_back(l1);
+
+
+	std::vector<Landscape> lands;
+	lands.push_back(land0);
+	lands.push_back(land1);
+	lands.push_back(land2);
+	lands.push_back(land3);
+
+	iterSupCuster.predict(lands);
+
+	EXPECT_EQ(iterSupCuster.test(0), 0);
+	EXPECT_EQ(iterSupCuster.test(1), 0);
+
+	EXPECT_EQ(iterSupCuster.test(2), 1);
+	EXPECT_EQ(iterSupCuster.test(3), 1);
+}

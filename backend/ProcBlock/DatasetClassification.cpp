@@ -227,9 +227,8 @@ public:
 		int maxAllowed = 100;
 
 		DatasetWork dw;
-		dw.open();
-		// dw.openCraters("ctaters");
-		// dw.openCraters("ctx_samv1");
+		// dw.open();
+		dw.openCraters("ctx_samv1/train");
 		// dw.openCraters("ctx_samv2/train");
 		// dw.openCraters("planet/train", "Earth", "Moon");
 		// dw.openCraters("test_dataset");
