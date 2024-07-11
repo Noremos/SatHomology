@@ -139,6 +139,19 @@ TEST(InputLandData, SameStart)
 	expected.compare(out);
 }
 
+TEST(LandScape, SameEnd)
+{
+	LandscapeCollection col;
+	col.setTestEnv();
+
+	col.convertLand.addExprRaw(0, 4);
+	col.convertLand.addExprRaw(2, 4);
+
+	LandscapeClass out;
+	col.convertToLandscape(col.convertLand, &out);
+}
+
+
 TEST(InputLandData, PaperTest)
 {
 	// https://www.sciencedirect.com/science/article/pii/S0747717116300104
@@ -161,6 +174,7 @@ TEST(InputLandData, PaperTest)
 	expected.buildexpectedource({{3,0}, {3.5, 0.5}, {4,0}, {6,0}, {6.5, 0.5}, {7,0}});
 	expected.compare(out);
 }
+
 
 TEST(LandScape, dwq1)
 {
