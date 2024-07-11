@@ -13,6 +13,11 @@
 #include "../../Clusterizers/LandscapeItem.h"
 #include "Hungarian.h" // Подключаем библиотеку для Венгерского алгоритма (lap.h)
 
+class BarWriter
+{
+
+};
+
 class DatasetWork
 {
 	std::unordered_map<BackPathStr, int> sourceFiles;
@@ -50,23 +55,30 @@ public:
 
 	void openCraters(BackStringView name, BackStringView name1 = "crater", BackStringView name2 = "noncrater")
 	{
-		NC = 2;
-		BackPathStr datasets("/Users/sam/Edu/datasets");
-		BackPathStr srcleab(datasets / name / name1);
-		std::vector<int> counter(NC, 0);
-		// iterate over each file in the directory
-		for (const auto& entry : std::filesystem::directory_iterator(srcleab))
-		{
-			// std::cout << entry.path() << std::endl;
-			sourceFiles.insert(std::pair<std::string, int>(entry.path(), 0));
-			counter[0]++;
-		}
+		openCraters(name, {name1, name2});
+	}
 
-		srcleab =datasets / name / name2;
-		for (const auto& entry : std::filesystem::directory_iterator(srcleab))
+	void openCraters(BackStringView name, std::initializer_list<BackStringView> names)
+	{
+		NC = names.size();
+		BackPathStr datasets("/Users/sam/Edu/datasets");
+		BackPathStr srcleab(datasets / name);
+		std::vector<int> counter(NC, 0);
+
+		int nc = 0;
+		// iterate over each name
+		for (auto& className : names)
 		{
-			sourceFiles.insert(std::pair<std::string, int>(entry.path(), 1));
-			counter[1]++;
+			// iterate over each file in the directory
+			BackPathStr srcleanb(srcleab / className);
+			for (const auto& entry : std::filesystem::directory_iterator(srcleanb))
+			{
+				// std::cout << entry.path() << std::endl;
+				sourceFiles.insert(std::pair<std::string, int>(entry.path(), nc));
+				counter[nc]++;
+			}
+
+			nc++;
 		}
 
 		std::cout << "Total: " << std::accumulate(counter.begin(), counter.end(), 0) << std::endl;
@@ -74,6 +86,7 @@ public:
 		{
 			std::cout << i + 1 << ": " << counter[i] << std::endl;
 		}
+
 	}
 
 	template<class C>
@@ -85,6 +98,10 @@ public:
 
 		std::vector<int> totalAdded(NC, 0);
 		int added = 0;
+
+		StateBinFile::BinStateWriter writer;
+		writer.open("binitem.bin");
+
 
 		std::vector<int> correctIds;
 		for (auto& entry : sourceFiles)
@@ -115,11 +132,17 @@ public:
 
 			CachedBaritemHolder cache;
 			cache.create(&main, constr, nullptr);
+			cache.saveLoadState(&writer);
 
 			landscape.addAllLines(cache);
 			LandscapeClass* item = landscape.back();
 
 			// Fitting --------------- ---------------
+
+			if constexpr(std::is_base_of<BarWriter, C>::value)
+			{
+				processor.add(cache, correctId);
+			}
 			added += processor.addToSet(item, correctId);
 			// --------------- --------------- ---------------
 
@@ -128,6 +151,9 @@ public:
 		}
 
 		processor.predict();
+		if (added == 0)
+			return;
+
 		int corrcts[1000];
 		std::fill_n(corrcts, 1000, 0);
 
@@ -164,7 +190,7 @@ public:
 			}
 			else
 			{
-				correctCount--;
+				// correctCount--;
 				fals[r]++;
 			}
 		}
@@ -272,94 +298,6 @@ enum class SignatureType
 	SupFull
 };
 
-template<class T, SignatureType type>
-class SignatureProcessor
-{
-	T dummy;
-public:
-	SignatureProcessor(T& ref, int resolution) : ref(ref), resolution(resolution) {}
-	SignatureProcessor(int resolution) : ref(dummy), resolution(resolution) {}
-
-	int addToSet(LandscapeClass* item, int classId)
-	{
-		landscapes.push_back({});
-		switch (type)
-		{
-		case SignatureType::Iter:
-			landscapes.back().push_back({});
-			item->getSignatureAsVector(landscapes.back().back().points, resolution);
-			break;
-		case SignatureType::Combined:
-			landscapes.back().push_back({});
-			item->getCombinedPointsAsHist(landscapes.back().back().points, resolution);
-			break;
-		case SignatureType::CombinedIter:
-			landscapes.back().push_back({});
-			item->getCombinedPointsAsSignature(landscapes.back().back().points, resolution);
-			break;
-		case SignatureType::SupFull:
-			landscapes.push_back(item->getIterLandscape(resolution));
-			break;
-		}
-		return 1;
-	}
-
-	int resolution = 1;
-	void setClasses(int n)
-	{
-		ref.setClasses(n);
-	}
-
-	void predict()
-	{
-		ref.predict(landscapes);
-	}
-
-	int test(int id)
-	{
-		return ref.test(id);
-	}
-
-private:
-	T& ref;
-	std::vector<IterLandscape> landscapes;
-};
-
-template<class T>
-class PointsProcessor
-{
-	T dummy;
-public:
-	PointsProcessor(T& ref) : ref(ref) {}
-	PointsProcessor() : ref(dummy) {}
-
-	int addToSet(LandscapeClass* item, int classId)
-	{
-		landspacePoints.push_back({});
-		item->getCombinedPoints(landspacePoints.back());
-		return 1;
-	}
-
-	void setClasses(int n)
-	{
-		ref.setClasses(n);
-	}
-
-	void predict()
-	{
-		ref.predict(landspacePoints);
-	}
-
-	int test(int id)
-	{
-		return ref.test(id);
-	}
-
-private:
-	T& ref;
-	std::vector<std::vector<LandPoint>> landspacePoints;
-};
-
 
 
 template<class T>
@@ -394,4 +332,66 @@ public:
 private:
 	T& ref;
 	std::vector<Landscape> landscapes;
+};
+
+
+
+
+class ClassProcessor
+{
+	std::vector<std::pair<Landscape,int>> landscapes;
+	StateBinFile::BinStateWriter writer;
+public:
+	ClassProcessor()
+	{
+		writer.open("out.bin");
+	}
+
+	bool classMode = false;
+	void switchToClassMode()
+	{
+		classMode = true;
+	}
+	std::vector<int> out;
+
+	int addToSet(LandscapeClass* item, int classId)
+	{
+		if (!classMode)
+		{
+			landscapes.push_back({item->landscape, classId});
+			return 0;
+		}
+		else
+		{
+			int closed = 0;
+			float closedDist = std::numeric_limits<float>::max();
+			for (size_t i = 1; i < landscapes.size(); i++)
+			{
+
+				float dist = iterDistance<Distance::Iter::SumNorm2>(landscapes[i].first, item->landscape, 0.1f);
+				if (dist < closedDist)
+				{
+					closedDist = dist;
+					closed = landscapes[i].second;
+				}
+			}
+			out.push_back(closed);
+			return 1;
+		}
+	}
+
+	void predict()
+	{
+
+	}
+
+	int test(int id)
+	{
+		return out[id];
+	}
+
+	void setClasses(int n)
+	{
+	}
+
 };
