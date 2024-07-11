@@ -170,6 +170,80 @@ public:
 };
 
 
+class BarWrtierProc : BarWriter
+{
+	StateBinFile::BinStateWriter writer;
+public:
+	BarWrtierProc()
+	{
+		writer.open("outitem.bin");
+	}
+
+	int addToSet(LandscapeClass* item, int classId)
+	{
+		return 0;
+	}
+
+	// void add(const CachedBarcode& cache)
+	// {
+	// 	// Save to disk --------------- --------------- ---------------
+	// 	writer.pBool(true);
+	// 	cache.
+	// 	// writer.pString(entry.first); // TODO: Use conbext instead of classId
+	// 	writer.pInt(classId);
+	// 	saveToDist(writer, item);
+
+	// 	// std::vector<float> temp;
+	// 	// item->getSignatureAsVector(temp);
+	// 	// saveToDist(writer, temp);
+	// 	// Save to disk end --------------- --------------- ---------------
+	// 	return 0;
+	// }
+
+	void predict()
+	{
+		writer.pBool(false);
+		writer.close();
+	}
+
+
+	int test(int id)
+	{
+		return 0;
+	}
+
+	void setClasses(int n)
+	{
+		writer.pShort(n);
+	}
+
+	void saveToDist(StateBinFile::BinStateWriter& out, LandscapeClass* item)
+	{
+		auto& lines = item->landscape;
+		out.pArray(static_cast<buint>(lines.size()));
+		for(LyambdaLine& line : lines)
+		{
+			out.pArray(static_cast<buint>(line.size()));
+			for (size_t i = 0; i < line.size(); i++)
+			{
+				out.pInt(line.points[i].x);
+				out.pInt(line.points[i].y);
+			}
+		}
+	}
+
+	void saveToDist(StateBinFile::BinStateWriter& out, std::vector<float>& set)
+	{
+		out.pArray(static_cast<buint>(set.size()));
+		for(auto& hei : set)
+		{
+			out.pFloat(hei);
+		}
+	}
+};
+
+
+
 class DatasetClassificationBlock : public IBlock
 {
 	BackPathStr filesRoot = "/Users/sam/Edu/datasets/hirise-map-proj-v3/map-proj-v3/";
@@ -208,6 +282,7 @@ public:
 
 
 		landscapes.performOnPerform();
+		landscapes.round = false;
 
 		// SignatureProcessor<SelfCluster, SignatureType::Iter> iterSelfCuster(resolution);
 		// SignatureProcessor<SelfCluster, SignatureType::Combined> combinedSelfCuster(resolution);
@@ -219,40 +294,46 @@ public:
 
 
 		PointProcessor<LandscapeCluster> iterSupCuster;
+		ClassProcessor classer;
 
-		// PointsProcessor<PointCluster> pointCuster;
 
 		bc::barstruct constr = bar.getConstr();
 		constr.createGraph = false; // Do not create empty nodes
-		int maxAllowed = 100;
+		int maxAllowed = 20;
 
 		DatasetWork dw;
 		// dw.open();
-		dw.openCraters("ctx_samv1/train");
-		// dw.openCraters("ctx_samv2/train");
-		// dw.openCraters("planet/train", "Earth", "Moon");
+		// dw.openCraters("ctx_samv1/train");
+		dw.openCraters("objects/eurosat", {"Forest", "Pasture"});
 		// dw.openCraters("test_dataset");
 		// dw.openCraters("ctx_samv2/valid");
 		// dw.open();
-		// std::cout << "iterSelfCuster" << std::endl;
-		// dw.predict(maxAllowed, landscapes, constr, iterSelfCuster); // Ok, но почему0то много кластеров
-		// std::cout << "combinedSelfCuster" << std::endl;
-		// dw.predict(maxAllowed, landscapes, constr, combinedSelfCuster);
-		// std::cout << "combinedIterCuster" << std::endl;
-		// dw.predict(maxAllowed, landscapes, constr, combinedIterCuster);
 
-		// std::cout << "pointCuster" << std::endl;
-		// dw.predict(maxAllowed, landscapes, constr, pointCuster); // Broken
 
-		std::cout << "iterLandCuster" << std::endl;
+
+		// **** Cluster ****
+
+		std::cout << "Start" << std::endl;
 		dw.predict(maxAllowed, landscapes, constr, iterSupCuster);
-		// std::cout << "combinedLandCuster" << std::endl;
-		// dw.predict(maxAllowed, landscapes, constr, combinedLandCuster);
-		// std::cout << "combinedIterLandCuster" << std::endl;
-		// dw.predict(maxAllowed, landscapes, constr, combinedIterLandCuster);
 
-		// WriterProcessor writer(resolution);
-		// dw.predict(maxAllowed, landscapes, constr, writer);
+
+
+		// **** Classifier ****
+
+		// std::cout << "iterLandCuster" << std::endl;
+		// dw.predict(maxAllowed, landscapes, constr, classer);
+
+		// {
+		// 	classer.switchToClassMode();
+		// 	DatasetWork test;
+		// 	// test.openCraters("planet/test", "Earth", "Moon");
+		// 	test.openCraters("ctx_samv2/test");
+		// 	test.predict(9999, landscapes, constr, classer);
+		// }
+
+		// **** Binary writer ****
+		WriterProcessor writer(resolution);
+		dw.predict(maxAllowed, landscapes, constr, writer);
 
 		std::cout << "Done" << std::endl;
 		return {};
@@ -273,5 +354,7 @@ public:
 
 private:
 };
+
+
 
 BlockRegister<DatasetClassificationBlock> DatasetClassificationBlockReg;
