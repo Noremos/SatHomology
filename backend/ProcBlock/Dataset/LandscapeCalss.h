@@ -261,7 +261,7 @@ inline std::vector<int> hierarchicalClustering(const MatrixXd& distanceMatrix, i
 	while (numClusters > maxAllowed)
 	{
 		std::pair<int, int> minPair = distances.findMinDistance(numClusters);
-		std::cout << "Объединяются кластеры " << minPair.first << " и " << minPair.second << std::endl;
+		// std::cout << "Объединяются кластеры " << minPair.first << " и " << minPair.second << std::endl;
 
 		auto& a = clusters.at(minPair.first);
 		Cluster* b = clusters.at(minPair.second).get(); // DONOT USE SHARTED PTR!
@@ -279,7 +279,7 @@ inline std::vector<int> hierarchicalClustering(const MatrixXd& distanceMatrix, i
 		double maxVal = distances.get(minPair.first, minPair.second);
 		for (size_t i = 0, total = points.size(); i < total; i++)
 		{
-			distances.updateDistances(points[i], minPair.second);
+			// distances.updateDistances(points[i], minPair.second);
 			clusters.at(points[i]) = a;
 		}
 
@@ -415,7 +415,8 @@ public:
 				// iterLandDistance2 // 4
 				// iterLandDistanceMdpiInf // 5
 				// iterLandDistanceMdpi2 // 18
-				matrix.setBoth(j, i, iterLandDistanceSum2(landscapes[i], landscapes[j], 0.1f));
+				matrix.setBoth(i, j, iterDistance<Distance::Iter::SumNorm2>(landscapes[i], landscapes[j], 0.5f));
+				// matrix.setBoth(j, i, lineDistance<Distance::Line::AreaInf>(landscapes[i], landscapes[j]));
 			}
 		}
 
@@ -424,12 +425,12 @@ public:
 			matrix(i, i) = 0;
 		}
 
-		// clustering call
 		int opt_method = HCLUST_METHOD_COMPLETE; //HCLUST_METHOD_SINGLE  HCLUST_METHOD_COMPLETE  HCLUST_METHOD_AVERAGE HCLUST_METHOD_MEDIAN
 
 		int* merge = new int[2*(n-1)];
 		double* height = new double[n-1];
-		hclust_fast(n, matrix.data.data(), opt_method, merge, height);
+		auto temp = matrix.data;
+		hclust_fast(n, temp.data(), opt_method, merge, height);
 
 		output.resize(n);
 		cutree_k(n, merge, maxAllowed, output.data());
