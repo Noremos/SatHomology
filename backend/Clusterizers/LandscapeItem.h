@@ -57,7 +57,11 @@ public:
 			auto& curVec = landscape.back();
 			auto& b = curVec.points.back();
 			assert(b.x <= x);
+			assert(b.x != x || b.y != y); //TODO: FIXME
+			if (b.x == x && b.y == y)
+				return;
 		}
+
 		assert(std::isfinite(y));
 		landscape.back().points.push_back({x, y});
 	}
@@ -101,151 +105,9 @@ public:
 	}
 
 
-	[[deprecated]]
-	static void itrateOverPoints(const std::vector<LandPoint>& points, std::vector<float>& total)
-	{
-		for (size_t j = 1; j < points.size(); j++)
-		{
-			const auto& prev = points[j - 1];
-			const auto& cur = points[j];
-			float startY = prev.y;
-
-			const size_t startX = round(prev.x); // Из-за округления может быть равным с предыдущем
-			const size_t endX = round(cur.x);
-
-			assert(startX <= endX);
-
-			const float width = endX - startX;
-			const float height = cur.y - prev.y;
-			if (height == 0 || width == 0)
-			{
-				total[startX] += round(startY);
-				continue;
-			}
-			float iter = height / width;
-
-			float y = startY;
-			assert(endX < total.size());
-			for (size_t i = startX; i < endX; i++)
-			{
-				total[i] += round(y);
-				y += iter;
-			}
-		}
-	}
-
-	[[deprecated]]
-	void getSignatureAsVector(std::vector<float>& total, int res) const
-	{
-		total.resize(256.f * res, 0); // 1 because of rounding and 1 because of including range [0, maxEnd]
-
-		float N = landscape.size();
-
-		// For each lyambda
-		for (const LyambdaLine& landset : landscape)
-		{
-			itrateOverPoints(landset.points, total);
-		}
-
-		for (auto &val : total)
-		{
-			val /= N;
-		}
-	}
-
-	IterLandscape getIterLandscape(int res) const
-	{
-		IterLandscape out;
-
-		float N = landscape.size();
-
-		// For each lyambda
-		for (const LyambdaLine& landset : landscape)
-		{
-			out.push_back({});
-			LyambdaIterLine& iterLine = out.back();
-			iterLine.points.resize(256.f * res, 0.f);
-
-			itrateOverPoints(landset.points, iterLine.points);
-		}
-
-		return out;
-	}
-
-	[[deprecated]]
-	void getCombinedPoints(std::vector<LandPoint>& total) const
-	{
-		float N = landscape.size();
-
-		// For each lyambda
-		std::unordered_map<float, std::pair<float,int>> combinedPoints;
-		for (const auto& path : landscape)
-		{
-			for (auto &point : path.points)
-			{
-
-				float y = point.y;
-				auto it = combinedPoints.find(point.x);
-				if (it == combinedPoints.end())
-					combinedPoints.insert({y, {1.f, 1}});
-				else
-				{
-					it->second.first += y;
-					++it->second.second;
-				}
-			}
-		}
-
-		total.clear();
-		for (auto &l : combinedPoints)
-		{
-			total.push_back( {l.first, l.second.first / l.second.second});
-		}
-
-		std::sort(total.begin(), total.end(), [](const auto& a, const auto& b) {
-			return a.x < b.x;
-		});
-	}
-
-	[[deprecated]]
-	void getCombinedPointsAsHist(std::vector<float>& total, int resolution) const
-	{
-		std::vector<LandPoint> points;
-		getCombinedPoints(points);
-
-		total.clear();
-		total.resize(256.f * resolution, 0);
-		for (auto &l : points)
-		{
-			total[round(l.x * resolution)] += l.y;
-		}
-	}
-
-	[[deprecated]]
-	void getCombinedPointsAsSignature(std::vector<float>& total, int res) const
-	{
-		std::vector<LandPoint> points;
-		getCombinedPoints(points);
-
-		total.clear();
-		total.resize(256.f * res, 0);
-		itrateOverPoints(points, total);
-	}
-
 	void getSignature(BackString& line) const override
 	{
-		std::vector<float> total;
-		getSignatureAsVector(total, 1);
-
-		line.clear();
-		for (size_t i = 0; i < total.size(); i++)
-		{
-			// total[i] /= N;
-			line += std::to_string(total[i]);
-			line += " ";
-		}
 	}
-
 
 private:
 };
@@ -382,7 +244,7 @@ public:
 
 
 		std::vector<InputLandLine> landset;
-		size_t prev = 0;
+		size_t prev = 0; // Skip same lines
 		for (size_t i = 1; i < landscape.size(); i++)
 		{
 			auto& line1 = landscape.get(prev);
@@ -513,9 +375,18 @@ public:
 					{
 						break;
 					}
+
+					// *** Same start ***
 					if (nextLand.getStart() == start)
 					{
 						// Когда начинается с одинакового значения
+						continue;
+					}
+
+					// *** Same end ***
+					// The next one ends at the same pos as the current one ends
+					if (nextLand.getEnd() == end)
+					{
 						continue;
 					}
 
@@ -566,13 +437,17 @@ public:
 					//cl.paths.push_back({ lastH.x + lastH.y, 0 });
 				}
 
+				// Не нашли линии внутри
 				if (prevId == curI)
 				{
 					// if (i == 18)
 					// 		std::cout << start << " " << end << std::endl;
 					// assert(end <= maxEnd);
+
+					// Добавляем конце линии
 					cl.add(end, 0, round);
 
+					// Ищем следующую на том же уровне K
 					++curI;
 					for (;curI < landSize; curI++)
 					{
@@ -585,10 +460,14 @@ public:
 						//  CUR->      |-------M------|
 						//  NEXT->      |-------M-------|
 						auto& nextLand = landset[curI];
+						// Следующая должна начинаться после текущей
 						if (nextLand.getStart() >= end)
 						{
 							// Found the next line
 							used[curI] = false;
+							if (nextLand.getStart() > end)
+								cl.add(nextLand.getStart(), 0, round);
+
 							start = nextLand.getStart();
 							end = nextLand.getEnd();
 							beginning = start;
@@ -596,7 +475,9 @@ public:
 
 							backScanStart = curI;
 							curLineCatechd = false;
-							cl.add(start, 0, round);
+
+							// Если не начиается сразу же после текущей, то добавляем точку
+
 							break;
 						}
 					}
