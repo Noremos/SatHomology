@@ -50,6 +50,12 @@ MEXPORT struct LandPoint
 
 		return sqrt(a * a + b * b);
 	}
+
+
+	bool operator=(const LandPoint& other) const
+	{
+		return x == other.x && y == other.y;
+	}
 };
 
 struct LyambdaLine
@@ -318,10 +324,10 @@ struct CorrectPointsIterator
 	void updateLine(bool skipZero = false)
 	{
 		++curPoint;
-		const auto& prev = points[curPoint - 1];
-		const auto& cur = points[curPoint];
+		const LandPoint& prev = points[curPoint - 1];
+		const LandPoint& cur = points[curPoint];
 
-		if (skipZero &&  prev.y == 0 && cur.y == 0)
+		if (skipZero && (prev.y == 0 && cur.y == 0))
 		{
 			updateLine(true);
 			return;
@@ -497,8 +503,6 @@ inline double iterLandDistanceMdpi2(const Landscape& a, const Landscape& b, floa
 // Дистанция по сумму норм
 inline double iterLandDistanceSum2(const Landscape& a, const Landscape& b, float t = 0.1f)
 {
-	assert(a[0].size() == b[0].size());
-
 	double maxDiff = 0;
 	const size_t minsize = std::min(a.size(), b.size());
 
@@ -579,3 +583,246 @@ inline double iterLandDistanceSumInf(const Landscape& a, const Landscape& b, flo
 
 	return maxDiff;
 }
+
+
+
+template<typename TBlock>
+concept BlockDistanceConc = requires(TBlock&& block, const Landscape& a, const Landscape& b, float t, int maxK)
+{
+    { block.startCmp() } -> std::same_as<void>;
+    { block.endCmp() } -> std::same_as<void>;
+    { block.cmp(a[0], b[0]) } -> std::same_as<void>;
+    { block.cmp(a[0], 0) } -> std::same_as<void>;
+    { block.result() } -> std::same_as<double>;
+};
+
+
+template<typename TBlock>
+// requires BlockDistanceConc<TBlock>
+inline double iterDistance(const Landscape& a, const Landscape& b, float t = 0.1f, int maxK = -1)
+{
+	const size_t minsize = maxK == -1 ? std::min(a.size(), b.size()) : (size_t)maxK;
+
+	TBlock block;
+	for (size_t i = 0; i < minsize; i++)
+	{
+		const LyambdaLine& lineA = a[i];
+		const LyambdaLine& lineB = b[i];
+		assert(lineA.k == lineB.k);
+
+		CorrectPointsIterator ait{lineA.points, t};
+		CorrectPointsIterator bit{lineB.points, t};
+
+		block.startCmp();
+		while (!ait.ended() && !bit.ended())
+		{
+			block.cmp(ait.executeLymbda(), bit.executeLymbda());
+			assert(abs(ait.x - bit.x) < 1.f);
+		}
+		block.endCmp();
+	}
+
+	const Landscape& maxiter = a.size() > b.size() ? a : b;
+	const size_t secondSize = maxK == -1 ? maxiter.size() : (size_t)maxK;
+	for (size_t i = minsize; i < secondSize; i++)
+	{
+		const LyambdaLine& line = maxiter[i];
+		CorrectPointsIterator it{line.points, t};
+
+		block.startCmp();
+		while (!it.ended())
+		{
+			block.cmp(it.executeLymbda(), 0);
+		}
+		block.endCmp();
+	}
+
+	return block.result();
+}
+
+template<typename TBlock>
+inline double lineDistance(const Landscape& a, const Landscape& b, int maxK = -1)
+{
+	TBlock block;
+	const size_t minsize = maxK == -1 ? std::min(a.size(), b.size()) : (size_t)maxK;
+	for (size_t i = 0; i < minsize; i++)
+	{
+		const LyambdaLine& lineA = a[i];
+		const LyambdaLine& lineB = b[i];
+		assert(lineA.k == lineB.k);
+
+		block.cmp(lineA, lineB);
+	}
+
+	const Landscape& maxiter =  a.size() > b.size() ? a : b;
+	const size_t secondSize = maxK == -1 ? maxiter.size() : (size_t)maxK;
+	for (size_t i = minsize; i < secondSize; i++)
+	{
+		const LyambdaLine& line = maxiter[i];
+
+		block.cmp(line);
+	}
+
+	return block.result();
+}
+
+
+namespace Distance
+{
+	struct DummyStartEnd
+	{
+		void startCmp() {}
+		void endCmp() {}
+	};
+
+	namespace Iter
+	{
+
+	// Сумма норм 2 для каждого К
+	struct SumNorm2
+	{
+		double sum = 0;
+
+		double locD;
+		void startCmp()
+		{
+			locD = 0;
+		}
+
+		void cmp(float a, float b)
+		{
+			locD += sqr(a - b);
+		}
+
+		void endCmp()
+		{
+			sum += sqrt(locD);
+		}
+
+		double result()
+		{
+			return sum;
+		}
+	};
+
+
+
+	// Норма 2 по K и T
+	struct Norm2 : public DummyStartEnd
+	{
+		double sum = 0;
+		void cmp(float a, float b)
+		{
+			sum += sqr(a - b);
+		}
+
+		double result()
+		{
+			return sqrt(sum);
+		}
+	};
+
+	// Норма inf по K и T
+	struct Inf : public DummyStartEnd
+	{
+		double maxDiff = 0;
+		void cmp(float a, float b)
+		{
+			maxDiff = std::max<double>(maxDiff, abs(a - b));
+		}
+
+		double result()
+		{
+			return maxDiff;
+		}
+	};
+
+	// Считаем  норму inf для каждого К и суммируем
+	struct InfSum : public DummyStartEnd
+	{
+		double sum = 0;
+		float locD;
+		void startCmp()
+		{
+			locD = 0;
+		}
+
+		void cmp(float a, float b)
+		{
+			locD = std::max<float>(locD, abs(a - b));
+		}
+
+		void endCmp()
+		{
+			sum += locD;
+		}
+
+		double result()
+		{
+			return sum;
+		}
+	};
+
+	}
+
+
+	namespace Line
+	{
+		inline double polygonArea(const std::vector<LandPoint>& vertices)
+		{
+			double area = 0.0;
+			int n = vertices.size();
+
+			for (int i = 0; i < n; ++i) {
+				int j = (i + 1) % n;
+				area += vertices[i].x * vertices[j].y;
+				area -= vertices[j].x * vertices[i].y;
+			}
+
+			area = std::abs(area) / 2.0;
+			return area;
+		}
+
+		struct AreaInf
+		{
+			double maxDiff = 0.f;
+
+
+			void cmp(const LyambdaLine& a)
+			{
+				maxDiff = std::max(maxDiff, abs(polygonArea(a.points)));
+			}
+
+			void cmp(const LyambdaLine& a, const LyambdaLine& b)
+			{
+				maxDiff = std::max(maxDiff, abs(polygonArea(a.points) - polygonArea(b.points)));
+			}
+
+			double result()
+			{
+				return maxDiff;
+			}
+		};
+
+		struct AreaNorm2
+		{
+			double diff = 0.f;
+
+			void cmp(const LyambdaLine& a)
+			{
+				diff += sqr(polygonArea(a.points));
+			}
+
+			void cmp(const LyambdaLine& a, const LyambdaLine& b)
+			{
+				diff += sqr(polygonArea(a.points) - polygonArea(b.points));
+			}
+
+			double result()
+			{
+				return std::sqrt(diff);
+			}
+		};
+	} // Line
+
+} // Distance
