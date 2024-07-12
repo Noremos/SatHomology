@@ -348,7 +348,7 @@ struct CorrectPointsIterator
 		float orgX = x;
 		x += xIter;
 
-		if (orgX >= endX)
+		while (orgX >= endX)
 		{
 			if (curPoint + 1 >= points.size())
 				return 0;

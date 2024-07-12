@@ -35,6 +35,7 @@ def cluster_data(distance_matrix, method='hierarchical', num_clusters=2):
 		from sklearn_extra.cluster import KMedoids
 		kmedoids = KMedoids(n_clusters=num_clusters, metric='precomputed', random_state=0)
 		clusters = kmedoids.fit_predict(distance_matrix)
+		return clusters
 	elif method == 'dbscan':
 		# DBSCAN
 		dbscan = DBSCAN(metric='precomputed')

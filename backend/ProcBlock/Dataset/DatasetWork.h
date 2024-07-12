@@ -21,19 +21,20 @@ class BarWriter
 class DatasetWork
 {
 	std::unordered_map<BackPathStr, int> sourceFiles;
-	int maxAllowed;
 	int NC = 2;
 public:
 
-	void open()
+	void open(int maxAllowed)
 	{
-		BackPathStr filesRoot = "/Users/sam/Edu/datasets/hirise-map-proj-v3/map-proj-v3";
+		BackPathStr filesRoot = "/Users/sam/Edu/datasets/objects/hirise-map-proj-v3";
+		BackPathStr images = filesRoot / "map-proj-v3";
 		NC = 8;
-		std::ifstream srcleab("/Users/sam/Edu/datasets/hirise-map-proj-v3/labels-map-proj-v3.txt");
+		std::ifstream srcleab(filesRoot / "labels-map-proj-v3.txt");
 		// Read file line by line
 
 		std::string line;
 		std::vector<int> counter(NC, 0);
+		rnames.resize(NC);
 
 		while (std::getline(srcleab, line))
 		{
@@ -41,7 +42,10 @@ public:
 			std::string name = line.substr(0, p);
 			int id = std::stoi(line.substr(p + 1));
 			counter[id]++;
-			sourceFiles.insert(std::pair(filesRoot / name, id));
+			if (counter[id] >= maxAllowed)
+				continue;;
+
+			sourceFiles.insert(std::pair(images / name, id));
 		}
 
 		std::cout << "Total: " << std::accumulate(counter.begin(), counter.end(), 0) << std::endl;
@@ -53,16 +57,34 @@ public:
 		maxAllowed = *std::min_element(counter.begin(), counter.end());
 	}
 
-	void openCraters(BackStringView name, BackStringView name1 = "crater", BackStringView name2 = "noncrater")
-	{
-		openCraters(name, {name1, name2});
-	}
+	std::vector<BackString> rnames;
 
-	void openCraters(BackStringView name, std::initializer_list<BackStringView> names)
+	void openCraters(int maxAllowed, BackStringView name, const std::vector<BackString>& names = {})
 	{
-		NC = names.size();
 		BackPathStr datasets("/Users/sam/Edu/datasets");
 		BackPathStr srcleab(datasets / name);
+
+		if (names.size() == 0)
+		{
+			std::vector<BackString> newNames;
+			for (const auto& entry : std::filesystem::directory_iterator(srcleab))
+			{
+				BackString name = entry.path().filename().string();
+				if (name.starts_with('.'))
+					continue;
+
+				newNames.push_back(entry.path().filename().string());
+			}
+			if (newNames.size() == 0)
+				return;
+
+			openCraters(maxAllowed, name, newNames);
+			return;
+		}
+
+		rnames = names;
+		NC = names.size();
+
 		std::vector<int> counter(NC, 0);
 
 		int nc = 0;
@@ -76,6 +98,8 @@ public:
 				// std::cout << entry.path() << std::endl;
 				sourceFiles.insert(std::pair<std::string, int>(entry.path(), nc));
 				counter[nc]++;
+				if (counter[nc] >= maxAllowed)
+					break;
 			}
 
 			nc++;
@@ -112,22 +136,6 @@ public:
 		for (auto& entry : sourceFiles)
 		{
 			int correctId = entry.second;
-			if (totalAdded[correctId] >= maxAllowed)
-				continue;
-
-			// // // Skip list
-			// switch (correctId)
-			// {
-			// case 0:
-			// case 1:
-			// case 2:
-			// // case 3:
-			// case 4:
-			// case 5:
-			// // case 6:
-			// case 7:
-			// 	continue;
-			// }
 
 			BackPathStr path =  entry.first;
 			// assert(pathExists(path));
@@ -149,6 +157,8 @@ public:
 				processor.add(cache, correctId);
 			}
 			added += processor.addToSet(item, correctId);
+			if (added % 20 == 0)
+				cout << added << "/" << sourceFiles.size() << endl;
 			// --------------- --------------- ---------------
 
 			// names.push_back(entry.first.filename());
@@ -158,11 +168,12 @@ public:
 	}
 
 	template<class C>
-	void predict(C& processor) const
+	std::pair<int, int> predict(C& processor) const
 	{
+		std::cout << "Predicting..." << std::endl;
 		processor.predict();
 		if (added == 0)
-			return;
+			return {0, 0};
 
 		int corrcts[1000];
 		std::fill_n(corrcts, 1000, 0);
@@ -211,11 +222,15 @@ public:
 			int correct = corrcts[i];
 			int total = totalAdded[i];
 
-			std::cout << i + 1 << ": " << correct << "/" << total << " (false is " << fals[i] << ")" << std::endl;
+			std::cout << rnames[i] << " (" << i + 1 << "): " << correct << "/" << total << " (false is " << fals[i] << ")" << std::endl;
 		}
 
 		res = correctCount * 1.0 / added;
-		std::cout << "Total Correct: " << correctCount << "/" << added << " (" << res * 100.f << "%)" << std::endl;
+		std::cout << "====================================" << std::endl;
+		std::cout << "----------> Total Correct: " << correctCount << "/" << added << " (" << res * 100.f << "%)" << std::endl;
+		std::cout << "====================================" << std::endl << std::endl;
+		// return procent
+		return {correctCount,added};
 	}
 
 

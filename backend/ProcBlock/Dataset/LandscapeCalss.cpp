@@ -405,7 +405,7 @@ void LandscapeCluster::predict(std::vector<Landscape>& landscapes)
 			// iterLandDistance2 // 4
 			// iterLandDistanceMdpiInf // 5
 			// iterLandDistanceMdpi2 // 18
-			matrix.setBoth(i, j, func(landscapes[i], landscapes[j], 0.5f, -1));
+			matrix.setBoth(i, j, func(landscapes[i], landscapes[j], iterationStep, -1));
 			// matrix.setBoth(j, i, lineDistance<Distance::Line::AreaInf>(landscapes[i], landscapes[j]));
 		}
 		matrix(i, i) = 0;

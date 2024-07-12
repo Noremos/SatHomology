@@ -3,6 +3,7 @@
 #include <fstream>
 #include <algorithm>
 #include <limits>
+#include <string_view>
 // #include <map>
 
 #include "Common.h"
@@ -243,6 +244,176 @@ public:
 };
 
 
+class TestIterator
+{
+public:
+	virtual void restart() = 0;
+	virtual void iterate() = 0;
+
+	virtual bool ended() = 0;
+
+	virtual void print(BackString& out) = 0;
+};
+
+
+class FuncIterator : public TestIterator
+{
+	int& funcId;
+public:
+
+	FuncIterator(int& funcId) : funcId(funcId)
+	{ }
+
+	void restart() override
+	{
+		funcId = 0;
+	}
+
+	void iterate() override
+	{
+		funcId++;
+	}
+
+	bool ended() override
+	{
+		return funcId >= 3;
+	}
+
+	void print(BackString& out) override
+	{
+		out += "Func: "s + to_string(funcId) + " ";
+	}
+};
+
+class ProcTypeIterator : public TestIterator
+{
+	bc::ProcType& type;
+	bool end = false;
+public:
+
+	ProcTypeIterator(bc::ProcType& intype) : type(intype)
+	{ }
+
+	void restart() override
+	{
+		type = bc::ProcType::f0t255;
+	}
+
+	void iterate() override
+	{
+		if (type == bc::ProcType::f255t0)
+			end = true;
+
+		type = bc::ProcType::f255t0;
+	}
+
+	bool ended() override
+	{
+		return type == bc::ProcType::f255t0;
+	}
+
+	void print(BackString& out) override
+	{
+		out += "ProcType: "s + (type == bc::ProcType::f0t255 ? "f0t255 " : "f255t0 ");
+	}
+};
+
+
+class StepIterator : public TestIterator
+{
+	int stepId;
+	float& step;
+public:
+
+	StepIterator(float& step) : step(step)
+	{ }
+
+	void restart() override
+	{
+		stepId = 0;
+		step = 1.f;
+	}
+
+	void iterate() override
+	{
+		++stepId;
+		switch (stepId)
+		{
+		case 0:
+			step = 1.f;
+			break;
+		case 1:
+			step = 0.5f;
+			break;
+		case 2:
+			step = 0.1f;
+			break;
+		case 3:
+			break;
+		default:
+			assert(false);
+			break;
+		}
+
+	}
+
+	bool ended() override
+	{
+		return stepId >= 2;
+	}
+
+
+	void print(BackString& out) override
+	{
+		out += "Step: "s + to_string(step) + " ";
+	}
+};
+
+using namespace std::literals::string_view_literals;
+
+class FuncNameIterator : public TestIterator
+{
+	int stepId;
+	const char*& ref;
+	BackStringView funcName[4]
+	{
+		"hierarchical"sv,
+		"mds_kmeans"sv,
+		"kmedoids"sv,
+		""
+	};
+
+public:
+
+	FuncNameIterator(const char*& ref) : ref(ref)
+	{ }
+
+	void restart() override
+	{
+		stepId = 0;
+		ref = funcName[stepId].data();
+	}
+
+	void iterate() override
+	{
+		++stepId;
+		ref = funcName[stepId].data();
+	}
+
+	bool ended() override
+	{
+		return stepId >= 2;
+	}
+
+
+	void print(BackString& out) override
+	{
+		out += "Method: "s;
+		out += funcName[stepId];
+		out += " "s;
+	}
+};
+
 
 class DatasetClassificationBlock : public IBlock
 {
@@ -284,68 +455,99 @@ public:
 		landscapes.performOnPerform();
 		landscapes.round = false;
 
-		// SignatureProcessor<SelfCluster, SignatureType::Iter> iterSelfCuster(resolution);
-		// SignatureProcessor<SelfCluster, SignatureType::Combined> combinedSelfCuster(resolution);
-		// SignatureProcessor<SelfCluster, SignatureType::CombinedIter> combinedIterCuster(resolution);
-
-		// SignatureProcessor<LandClassifier, SignatureType::Iter> iterLandCuster(cluster, resolution);
-		// SignatureProcessor<LandClassifier, SignatureType::Combined> combinedLandCuster(cluster, resolution);
-		// SignatureProcessor<LandClassifier, SignatureType::CombinedIter> combinedIterLandCuster(cluster, resolution);
-
-
-		PointProcessor<LandscapeCluster> iterSupCuster;
+		PointProcessor<LandscapeCluster> landPyCluste;
 		ClassProcessor classer;
 
 
 		bc::barstruct constr = bar.getConstr();
 		constr.createGraph = false; // Do not create empty nodes
-		int maxAllowed = 50;
+
+
+		// **** Iterators ****
+		FuncIterator iterFunc(landPyCluste.dummy.curFUnc);
+		StepIterator iterStep(landPyCluste.dummy.iterationStep);
+		FuncNameIterator iterFuncName(landPyCluste.dummy.methodName);
+		ProcTypeIterator iterType(constr.proctype);
+		iterType.restart();
+		iterFunc.restart();
+		iterStep.restart();
+		iterFuncName.restart();
+
+		// **** Collect ****
+		std::vector<TestIterator*> iters {&iterFunc, &iterStep, &iterFuncName, &iterType};
+		int maxAllowed = 20;
+
+		// **** Work ****
+		DatasetWork dws;
+		dws.openCraters(maxAllowed, "objects/NWPU-RESISC45", {"desert", "intersection"});
+		dws.collect(maxAllowed, landscapes, constr, landPyCluste);
+
+
+		BackFileWriter result("result.txt", std::ios::trunc);
+		while (true)
+		{
+			TestIterator& it = *iters[0];
+
+			// print
+			BackString out;
+			for (auto* t : iters)
+			{
+				t->print(out);
+				out += "| ";
+			}
+			cout << out << endl;
+
+			auto res = dws.predict(landPyCluste);
+			result << out << " => " << res.first << "/" << res.second << ", " << ((100.f * res.first) / res.second) << "%" << endl;
+
+			int i = 0;
+			for (;i < iters.size(); i++)
+			{
+				if (!iters[i]->ended())
+				{
+					iters[i]->iterate(); // Switch next
+					break;
+				}
+				else
+					iters[i]->restart(); // Rstart and go iterate next
+			}
+
+			if (i == iters.size())
+				break;
+		}
+
+
+		cout << "DONE" << endl;
+
+		return {};
+
+
+
+
 
 		DatasetWork dw;
-		// dw.open();
-		// dw.openCraters("ctx_samv1/train");
+		// dw.open(maxAllowed);
+		// dw.openCraters("craters/ctx_samv2/train");
 		// dw.openCraters("objects/eurosat", {"Forest", "Pasture"});
 		// dw.openCraters("objects/256_ObjectCategories", {"009.bear", "007.bat"});
-		dw.openCraters("objects/NWPU-RESISC45", {"desert", "intersection"});
-		// dw.openCraters("objects/UCMerced_LandUse/Images", {"desert", "intersection"});
+
+		dw.openCraters(maxAllowed, "objects/NWPU-RESISC45", {"desert", "intersection"});
+		// dw.openCraters(maxAllowed, "objects/NWPU-RESISC45");
+		// dw.openCraters("objects/UCMerced_LandUse/Images", {"forest", "parkinglot"});
 		// dw.openCraters("test_dataset");
-		// dw.openCraters("ctx_samv2/valid");
-		// dw.open();
 
 
 
 		// **** Cluster ****
 
 		std::cout << "Start" << std::endl;
-		dw.collect(maxAllowed, landscapes, constr, iterSupCuster);
-
-
-		// for (size_t i = 0; i < 4; i++)
-		// {
-		// 	iterSupCuster.dummy.curFUnc = i;
-		// 	dw.predict(iterSupCuster);
-		// }
-
-		iterSupCuster.dummy.curFUnc = 0;
-		dw.predict(iterSupCuster);
-
-
-		// **** Classifier ****
-
-		// std::cout << "iterLandCuster" << std::endl;
-		// dw.predict(maxAllowed, landscapes, constr, classer);
-
-		// {
-		// 	classer.switchToClassMode();
-		// 	DatasetWork test;
-		// 	// test.openCraters("planet/test", "Earth", "Moon");
-		// 	test.openCraters("ctx_samv2/test");
-		// 	test.predict(9999, landscapes, constr, classer);
-		// }
+		dw.collect(maxAllowed, landscapes, constr, landPyCluste);
+		landPyCluste.dummy.curFUnc = 0;
+		dw.predict(landPyCluste);
 
 		// **** Binary writer ****
-		WriterProcessor writer(resolution);
-		dw.collect(maxAllowed, landscapes, constr, writer);
+		// WriterProcessor writer(resolution);
+		// dw.collect(maxAllowed, landscapes, constr, writer);
 
 		std::cout << "Done" << std::endl;
 		return {};

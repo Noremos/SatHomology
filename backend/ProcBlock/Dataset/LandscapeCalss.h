@@ -30,6 +30,7 @@ public:
 
 	int curFUnc = 0;
 	const char* methodName = "hierarchical";
+	float iterationStep = 0.5f;
 	void predict(std::vector<Landscape>& landscapes);
 
 };
