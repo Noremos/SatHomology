@@ -299,12 +299,15 @@ public:
 
 		bc::barstruct constr = bar.getConstr();
 		constr.createGraph = false; // Do not create empty nodes
-		int maxAllowed = 20;
+		int maxAllowed = 50;
 
 		DatasetWork dw;
 		// dw.open();
 		// dw.openCraters("ctx_samv1/train");
-		dw.openCraters("objects/eurosat", {"Forest", "Pasture"});
+		// dw.openCraters("objects/eurosat", {"Forest", "Pasture"});
+		// dw.openCraters("objects/256_ObjectCategories", {"009.bear", "007.bat"});
+		dw.openCraters("objects/NWPU-RESISC45", {"desert", "intersection"});
+		// dw.openCraters("objects/UCMerced_LandUse/Images", {"desert", "intersection"});
 		// dw.openCraters("test_dataset");
 		// dw.openCraters("ctx_samv2/valid");
 		// dw.open();
@@ -314,8 +317,17 @@ public:
 		// **** Cluster ****
 
 		std::cout << "Start" << std::endl;
-		dw.predict(maxAllowed, landscapes, constr, iterSupCuster);
+		dw.collect(maxAllowed, landscapes, constr, iterSupCuster);
 
+
+		// for (size_t i = 0; i < 4; i++)
+		// {
+		// 	iterSupCuster.dummy.curFUnc = i;
+		// 	dw.predict(iterSupCuster);
+		// }
+
+		iterSupCuster.dummy.curFUnc = 0;
+		dw.predict(iterSupCuster);
 
 
 		// **** Classifier ****
@@ -333,7 +345,7 @@ public:
 
 		// **** Binary writer ****
 		WriterProcessor writer(resolution);
-		dw.predict(maxAllowed, landscapes, constr, writer);
+		dw.collect(maxAllowed, landscapes, constr, writer);
 
 		std::cout << "Done" << std::endl;
 		return {};

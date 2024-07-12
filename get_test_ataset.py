@@ -3,7 +3,7 @@ import numpy as np
 import os
 
 # Создаем выходную папку, если ее не существует
-output_folder = 'test_dataset/crater'
+output_folder = 'test_dataset/half'
 os.makedirs(output_folder, exist_ok=True)
 
 # Размеры изображения
@@ -15,7 +15,7 @@ num_images = 30
 # Генерация изображений
 for i in range(num_images):
     # Создаем массив с шумом
-    noise = np.random.randint(0, 101, (height, width, 3), dtype=np.uint8)
+    noise = np.random.randint(50, 256, (height, width, 3), dtype=np.uint8)
 
     # Создаем изображение из массива
     img = Image.fromarray(noise, 'RGB')

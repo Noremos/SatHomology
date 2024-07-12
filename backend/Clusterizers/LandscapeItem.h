@@ -749,6 +749,8 @@ public:
 		for (size_t i = 0; i < size; i++)
 		{
 			const CachedBarline& line = items[i];
+			// if (line.length() < 10)
+			// 	continue;
 
 			convertLand.addExpr(line.start(), line.end(), resolution);
 			assert(line.length().getAvgFloat() > 0);

@@ -89,21 +89,26 @@ public:
 
 	}
 
+	int added = 0;
+	std::vector<int> totalAdded;
+	std::vector<int> correctIds;
+
 	template<class C>
-	void predict(int maxAllowed, LandscapeCollection& landscape, const bc::barstruct& constr, C& processor) const
+	void collect(int maxAllowed, LandscapeCollection& landscape, const bc::barstruct& constr, C& processor)
 	{
 		landscape.clear();
 		processor.setClasses(NC);
 		std::cout << "Sample " << maxAllowed << " elements from each cluster" << std::endl;
 
-		std::vector<int> totalAdded(NC, 0);
-		int added = 0;
+		added = 0;
+		totalAdded.clear();
+		totalAdded.resize(NC, 0);
 
-		StateBinFile::BinStateWriter writer;
-		writer.open("binitem.bin");
+		// StateBinFile::BinStateWriter writer;
+		// writer.open("binitem.bin");
 
 
-		std::vector<int> correctIds;
+		correctIds = {};
 		for (auto& entry : sourceFiles)
 		{
 			int correctId = entry.second;
@@ -132,7 +137,7 @@ public:
 
 			CachedBaritemHolder cache;
 			cache.create(&main, constr, nullptr);
-			cache.saveLoadState(&writer);
+			// cache.saveLoadState(&writer);
 
 			landscape.addAllLines(cache);
 			LandscapeClass* item = landscape.back();
@@ -150,6 +155,11 @@ public:
 			correctIds.push_back(correctId);
 		}
 
+	}
+
+	template<class C>
+	void predict(C& processor) const
+	{
 		processor.predict();
 		if (added == 0)
 			return;
@@ -303,8 +313,9 @@ enum class SignatureType
 template<class T>
 class PointProcessor
 {
-	T dummy;
 public:
+	T dummy;
+
 	PointProcessor(T& ref) : ref(ref) {}
 	PointProcessor() : ref(dummy) {}
 

@@ -1,42 +1,190 @@
 import struct
 from typing import BinaryIO, Optional, Callable, List
 
-from BinState import *
+class BinStateReader:
+	def __init__(self, stream: Optional[BinaryIO] = None):
+		self.main_stream = open(stream, 'rb') if isinstance(stream, str) else stream
+		self.stream = self.main_stream
+		self.inside = stream is None
+		self.parse_barscalar = None  # Callable[[BinaryIO], Barscalar]
+		self.memoffs = []
+		self.items_end_pos = 0
 
-def loadLandscape(name):
-	reader = BinStateReader()
-	reader.open(name)
-	resolution = reader.p_int()
-	clustersCount = reader.p_short()
-	a = reader.p_bool()
+		if self.stream:
+			self.inti_on_open()
 
-	landsPerClass = {}
-	landsAll = []
-	while a:
-		land = Landscape()
-		# land.name = reader.p_string()
-		land.correctId = reader.p_int()
-		land.readPoints(reader)
-		# land.readHeis(reader)
+	def read_raw(self, fmt: str):
+		size = struct.calcsize(fmt)
+		data = self.stream.read(size)
+		return struct.unpack(fmt, data)[0]
 
-		landId = len(landsAll)
-		landsAll.append(land)
+	def inti_on_open(self):
+		self.items_end_pos = self.read_raw('Q')  # Assuming size_t is 8 bytes
+		cur_pos = self.stream.tell()
 
-		if land.correctId in landsPerClass:
-			landsPerClass[land.correctId].append(landId)
+		self.stream.seek(self.items_end_pos)
+
+		size = self.read_raw('I')  # Assuming uint is 4 bytes
+		self.memoffs = [self.read_raw('Q') for _ in range(size)]
+
+		self.stream.seek(cur_pos)
+
+	def open(self, path: str) -> bool:
+		if not self.inside:
+			raise Exception("Stream already initialized externally")
+
+		self.main_stream = open(path, 'rb')
+		self.stream = self.main_stream
+
+		if self.main_stream:
+			self.inti_on_open()
+			return True
 		else:
-			landsPerClass[land.correctId] = [landId]
+			return False
 
-		a = reader.p_bool()
-		# break
+	def move_index(self, index: int):
+		assert index < len(self.memoffs)
+		self.stream.seek(self.memoffs[index])
 
-	return landsPerClass, landsAll
+	def get_index_size(self):
+		return len(self.memoffs)
+
+	def ended(self) -> bool:
+		return self.stream.tell() >= self.items_end_pos or self.stream.peek() == b''
+
+	def close(self) -> None:
+		if not self.inside and self.main_stream is not None:
+			self.main_stream.close()
+
+	def p_bool(self):
+		return self.read_raw('B') > 0
+
+	def p_short(self):
+		return self.read_raw('h')
+
+	def p_int(self):
+		return self.read_raw('i')
+
+	def p_float(self):
+		return self.read_raw('f')
+
+	def p_int64(self):
+		return self.read_raw('Q')
+
+	def p_barscalar(self):
+		return self.parse_barscalar(self.stream)
+
+	def p_string(self):
+		length = self.read_raw('H')  # Assuming ushort is 2 bytes
+		return str(self.stream.read(length))
+
+	def p_array(self):
+		return self.p_int()
 
 
-import matplotlib.pyplot as plt
-import numpy as np
-import matplotlib
-matplotlib.use('Qt5Agg')
+
+class Point:
+	def __init__(self, x = 0, y = 0):
+		self.x = x
+		self.y = y
+
+class Landline:
+	def __init__(self):
+		self.hist = []
+		self.lines = []
+		self.correctId = -1
+		self.name = ""
+
+
+
+
+class Barcode:
+	def __init__(self):
+		self.lines = []
+		self.items = []
+
+	def readLine(self, state : BinStateReader):
+		startl = state.p_short()
+		endl = state.p_short()
+		return Point(startl, endl)
+
+
+	def readBarcode(self, state : BinStateReader):
+		count = state.pInt()
+		for i in range(count):
+			self.items.append(self.readLine(state))
+
+
+state = BinStateReader()
+state.open("out.bin")
+bars = {}
+a = state.p_bool()
+while a:
+	id = state.p_int()
+	bar = Barcode()
+	bar.readBarcode(state)
+	if id in bars:
+		bars[id].append(bar)
+	else:
+		bars[id] = [bar]
+
+	a = state.p_bool()
+
+def pca():
+	import numpy as np
+	import pandas as pd
+	from sklearn.decomposition import PCA
+	from sklearn.preprocessing import StandardScaler
+	from sklearn.ensemble import RandomForestClassifier
+	from sklearn.model_selection import train_test_split
+
+	# Пример данных, где каждая строка - это набор точек для отдельного элемента.
+	data = {
+		'item': ['item1', 'item2', 'item3', 'item4', 'item5'],
+		'feature1': [2.5, 0.5, 2.2, 1.9, 3.1],
+		'feature2': [2.4, 0.7, 2.9, 2.2, 3.0],
+		'feature3': [1.5, 1.1, 1.2, 1.9, 2.7],
+		'feature4': [2.1, 1.4, 2.2, 1.9, 2.9],
+		'class': [0, 1, 0, 1, 0]  # Метки классов для классификации
+	}
+
+	# Загружаем данные в DataFrame
+	df = pd.DataFrame(data)
+
+	# Разделяем данные на признаки и целевую переменную
+	X = df.drop(['item', 'class'], axis=1)
+	y = df['class']
+
+	# Стандартизируем данные
+	scaler = StandardScaler()
+	X_scaled = scaler.fit_transform(X)
+
+	# Выполняем PCA
+	pca = PCA(n_components=2)  # Сократим до 2 главных компонент для визуализации
+	X_pca = pca.fit_transform(X_scaled)
+
+	# Преобразуем данные PCA в DataFrame для удобства
+	df_pca = pd.DataFrame(data=X_pca, columns=['PC1', 'PC2'])
+	df_pca['class'] = y.values
+
+	# Разделим данные на обучающий и тестовый наборы
+	X_train, X_test, y_train, y_test = train_test_split(X_pca, y, test_size=0.3, random_state=42)
+
+	# Создадим и обучим классификатор (например, случайный лес)
+	classifier = RandomForestClassifier(n_estimators=100, random_state=42)
+	classifier.fit(X_train, y_train)
+
+	# Оценим точность классификации
+	accuracy = classifier.score(X_test, y_test)
+	print(f'Accuracy: {accuracy * 100:.2f}%')
+
+	# Пример прогнозирования классов новых данных
+	new_data = [[2.0, 2.2, 1.1, 2.3]]
+	new_data_scaled = scaler.transform(new_data)
+	new_data_pca = pca.transform(new_data_scaled)
+	predicted_class = classifier.predict(new_data_pca)
+	print(f'Predicted class: {predicted_class[0]}')
+
 
 # num_objects = len(landsPerClass)
 

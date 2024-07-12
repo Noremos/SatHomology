@@ -110,7 +110,7 @@ MEXPORT BackString getPythonSettings(const MLSettings& settings)
 }
 
 
-MEXPORT bool exec(const std::vector<BackString>& cmd, std::vector<unsigned long>& assigments, int& n)
+MEXPORT bool exec(const std::vector<BackString>& cmd, std::vector<unsigned long>& assigments, int& n, bool outputIsFile = true)
 {
 	std::vector<const char*> args;
 	for (size_t i = 0; i < cmd.size(); i++)
@@ -156,14 +156,28 @@ MEXPORT bool exec(const std::vector<BackString>& cmd, std::vector<unsigned long>
 	}
 
 	outputString.resize(outputString.length() - 1); // Skip last '\n'
-	BackFileReader iss;
-	iss.open(outputString);
-	iss >> n;
-	printf("%d\n", n);
-	int number;
-	assigments.clear();
-	while (iss >> number)
-		assigments.push_back(number);
+
+	if (outputIsFile)
+	{
+		BackFileReader iss;
+		iss.open(outputString);
+		iss >> n;
+		printf("%d\n", n);
+		int number;
+		assigments.clear();
+		while (iss >> number)
+			assigments.push_back(number);
+	}
+	else
+	{
+		std::stringstream iss(outputString);
+		iss >> n;
+		printf("%d\n", n);
+		int number;
+		assigments.clear();
+		while (iss >> number)
+			assigments.push_back(number);
+	}
 
 	return true;
 }

@@ -1,13 +1,16 @@
 #include "MatrImg.h"
 
 #include "fpng/fpng.h"
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
 
-#define STB_IMAGE_WRITE_IMPLEMENTATION
+#define TINY_DNG_LOADER_IMPLEMENTATION
+#define STB_IMAGE_IMPLEMENTATION
+// #include "stb_image.h"
+
 #define __STDC_LIB_EXT1__
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
+#include "tiny_dng_loader.h"
 
 
 void FrameworkInit()
@@ -17,6 +20,42 @@ void FrameworkInit()
 
 MEXPORT BackImage imread(const BackString& path)
 {
+	if (path.ends_with(".tif"))
+	{
+		  std::string warn, err;
+		std::vector<tinydng::DNGImage> images;
+
+		// List of custom field infos. This is optional and can be empty.
+		std::vector<tinydng::FieldInfo> custom_field_lists;
+
+		// Loads all images(IFD) in the DNG file to `images` array.
+		// You can use `LoadDNGFromMemory` API to load DNG image from a memory.
+		bool ret = tinydng::LoadDNG(path.data(), custom_field_lists, &images, &warn, &err);
+
+		const int rwid = images[0].width;
+		const int rhei = images[0].height;
+		const bool rgb = images[0].samples_per_pixel > 1;
+
+
+		auto& rp = images[0];
+
+		if (rgb)
+		{
+			BackImage out(rwid, rhei, 3, rp.data.data(), true, true);
+			return out;
+		}
+		else
+		{
+			BackImage out(rwid, rhei, 3);
+			for (size_t i = 0; i < out.length(); i++)
+			{
+				uchar value = rp.data[i];
+				out.setLiner(i, Barscalar(value, value, value));
+			}
+			return out;
+		}
+
+	}
 	int width, height, chls;
 	unsigned char* image_data = stbi_load(path.c_str(), &width, &height, &chls, 0);
 	if (image_data == NULL)
