@@ -252,6 +252,11 @@ public:
 
 	virtual bool ended() = 0;
 
+	virtual bool needRebuild()
+	{
+		return false;
+	}
+
 	virtual void print(BackString& out) = 0;
 };
 
@@ -276,7 +281,7 @@ public:
 
 	bool ended() override
 	{
-		return funcId >= 3;
+		return funcId >= 4;
 	}
 
 	void print(BackString& out) override
@@ -303,13 +308,17 @@ public:
 	{
 		if (type == bc::ProcType::f255t0)
 			end = true;
-
 		type = bc::ProcType::f255t0;
+	}
+
+	bool needRebuild() override
+	{
+		return true;
 	}
 
 	bool ended() override
 	{
-		return type == bc::ProcType::f255t0;
+		return end;
 	}
 
 	void print(BackString& out) override
@@ -323,6 +332,7 @@ class StepIterator : public TestIterator
 {
 	int stepId;
 	float& step;
+	std::vector<float> steps = { 1.f, 0.5f, 0.1f, 1.f};
 public:
 
 	StepIterator(float& step) : step(step)
@@ -337,29 +347,12 @@ public:
 	void iterate() override
 	{
 		++stepId;
-		switch (stepId)
-		{
-		case 0:
-			step = 1.f;
-			break;
-		case 1:
-			step = 0.5f;
-			break;
-		case 2:
-			step = 0.1f;
-			break;
-		case 3:
-			break;
-		default:
-			assert(false);
-			break;
-		}
-
+		step = steps[stepId];
 	}
 
 	bool ended() override
 	{
-		return stepId >= 2;
+		return stepId >= steps.size() - 1;
 	}
 
 
@@ -374,35 +367,39 @@ using namespace std::literals::string_view_literals;
 class FuncNameIterator : public TestIterator
 {
 	int stepId;
-	const char*& ref;
-	BackStringView funcName[4]
+	const char*& methodName;
+	std::vector<BackStringView> funcName =
 	{
 		"hierarchical"sv,
 		"mds_kmeans"sv,
 		"kmedoids"sv,
-		""
+
+		// "spectral"sv,
+		// "dbscan"sv,
+		// "affinity"sv,
+		""sv
 	};
 
 public:
 
-	FuncNameIterator(const char*& ref) : ref(ref)
+	FuncNameIterator(const char*& ref) : methodName(ref)
 	{ }
 
 	void restart() override
 	{
 		stepId = 0;
-		ref = funcName[stepId].data();
+		methodName = funcName[stepId].data();
 	}
 
 	void iterate() override
 	{
 		++stepId;
-		ref = funcName[stepId].data();
+		methodName = funcName[stepId].data();
 	}
 
 	bool ended() override
 	{
-		return stepId >= 2;
+		return stepId >= funcName.size() - 1; // 1 for the last empty string and 1 to get last valid index
 	}
 
 
@@ -500,16 +497,31 @@ public:
 			auto res = dws.predict(landPyCluste);
 			result << out << " => " << res.first << "/" << res.second << ", " << ((100.f * res.first) / res.second) << "%" << endl;
 
+
 			int i = 0;
 			for (;i < iters.size(); i++)
 			{
-				if (!iters[i]->ended())
+				bool allowMoveNext = true;
+				iters[i]->iterate(); // Switch next
+				if (iters[i]->ended())
 				{
-					iters[i]->iterate(); // Switch next
-					break;
+					iters[i]->restart(); // Rstart and go iterate next
 				}
 				else
-					iters[i]->restart(); // Rstart and go iterate next
+				{
+					if (iters[i]->needRebuild())
+					{
+						landPyCluste.clear();
+						dws.collect(maxAllowed, landscapes, constr, landPyCluste);
+					}
+					allowMoveNext = false;
+				}
+
+
+
+
+				if (!allowMoveNext)
+					break;
 			}
 
 			if (i == iters.size())

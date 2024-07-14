@@ -121,6 +121,7 @@ public:
 	void collect(int maxAllowed, LandscapeCollection& landscape, const bc::barstruct& constr, C& processor)
 	{
 		landscape.clear();
+		processor.clear();
 		processor.setClasses(NC);
 		std::cout << "Sample " << maxAllowed << " elements from each cluster" << std::endl;
 
@@ -196,6 +197,8 @@ public:
 		for (size_t i = 0; i < predictions.size(); i++)
 		{
 			int r = tr[i];
+			if (r == -1)
+				continue;
 
 			assert(r < NC);
 			{
@@ -222,7 +225,7 @@ public:
 			int correct = corrcts[i];
 			int total = totalAdded[i];
 
-			std::cout << rnames[i] << " (" << i + 1 << "): " << correct << "/" << total << " (false is " << fals[i] << ")" << std::endl;
+			std::cout << rnames[i] << " (" << i << "): " << correct << "/" << total << " (false is " << fals[i] << ")" << std::endl;
 		}
 
 		res = correctCount * 1.0 / added;
@@ -266,7 +269,7 @@ public:
 		// cout << "Confusion Matrix:" << endl;
 		// printConfusionMatrix(confusion_matrix);
 
-	// Hungarian algorithm requires cost matrix where we minimize the cost
+		// Hungarian algorithm requires cost matrix where we minimize the cost
 		// Since we're maximizing the match between true_labels and predicted_labels,
 		// we use negative values in the cost matrix
 		std::vector<std::vector<double>> cost_matrix(num_classes, std::vector<double>(num_classes));
@@ -334,6 +337,10 @@ public:
 	PointProcessor(T& ref) : ref(ref) {}
 	PointProcessor() : ref(dummy) {}
 
+	void clear()
+	{
+		landscapes.clear();
+	}
 	int addToSet(LandscapeClass* item, int classId)
 	{
 		landscapes.push_back(item->landscape);
