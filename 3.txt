@@ -1,0 +1,16 @@
+Func: 0 | Step: 1.000000 | Method: hierarchical | ProcType: f0t255 |  => 176/300, 58.6667%
+Func: 1 | Step: 1.000000 | Method: hierarchical | ProcType: f0t255 |  => 157/300, 52.3333%
+Func: 2 | Step: 1.000000 | Method: hierarchical | ProcType: f0t255 |  => 195/300, 65%
+Func: 3 | Step: 1.000000 | Method: hierarchical | ProcType: f0t255 |  => 150/300, 50%
+Func: 0 | Step: 1.000000 | Method: mds_kmeans | ProcType: f0t255 |  => 195/300, 65%
+Func: 1 | Step: 1.000000 | Method: mds_kmeans | ProcType: f0t255 |  => 162/300, 54%
+Func: 2 | Step: 1.000000 | Method: mds_kmeans | ProcType: f0t255 |  => 165/300, 55%
+Func: 3 | Step: 1.000000 | Method: mds_kmeans | ProcType: f0t255 |  => 164/300, 54.6667%
+Func: 0 | Step: 1.000000 | Method: hierarchical | ProcType: f255t0 |  => 149/300, 49.6667%
+Func: 1 | Step: 1.000000 | Method: hierarchical | ProcType: f255t0 |  => 196/300, 65.3333%
+Func: 2 | Step: 1.000000 | Method: hierarchical | ProcType: f255t0 |  => 201/300, 67%
+Func: 3 | Step: 1.000000 | Method: hierarchical | ProcType: f255t0 |  => 203/300, 67.6667%
+Func: 0 | Step: 1.000000 | Method: mds_kmeans | ProcType: f255t0 |  => 207/300, 69%
+Func: 1 | Step: 1.000000 | Method: mds_kmeans | ProcType: f255t0 |  => 190/300, 63.3333%
+Func: 2 | Step: 1.000000 | Method: mds_kmeans | ProcType: f255t0 |  => 205/300, 68.3333%
+Func: 3 | Step: 1.000000 | Method: mds_kmeans | ProcType: f255t0 |  => 187/300, 62.3333%

@@ -264,6 +264,8 @@ public:
 class FuncIterator : public TestIterator
 {
 	int& funcId;
+	int id = 0;
+	std::vector<int> funcs = { 0, 1, 2, 3, 0};
 public:
 
 	FuncIterator(int& funcId) : funcId(funcId)
@@ -271,17 +273,19 @@ public:
 
 	void restart() override
 	{
-		funcId = 0;
+		id = 0;
+		funcId = funcs[id];
 	}
 
 	void iterate() override
 	{
-		funcId++;
+		id++;
+		funcId = funcs[id];
 	}
 
 	bool ended() override
 	{
-		return funcId >= 4;
+		return id >= funcs.size() - 1;
 	}
 
 	void print(BackString& out) override
@@ -332,7 +336,7 @@ class StepIterator : public TestIterator
 {
 	int stepId;
 	float& step;
-	std::vector<float> steps = { 1.f, 0.5f, 0.1f, 1.f};
+	std::vector<float> steps = { 1.0f, 1.f};
 public:
 
 	StepIterator(float& step) : step(step)
@@ -341,7 +345,7 @@ public:
 	void restart() override
 	{
 		stepId = 0;
-		step = 1.f;
+		step = steps[0];
 	}
 
 	void iterate() override
@@ -372,7 +376,6 @@ class FuncNameIterator : public TestIterator
 	{
 		"hierarchical"sv,
 		"mds_kmeans"sv,
-		"kmedoids"sv,
 
 		// "spectral"sv,
 		// "dbscan"sv,
@@ -472,11 +475,11 @@ public:
 
 		// **** Collect ****
 		std::vector<TestIterator*> iters {&iterFunc, &iterStep, &iterFuncName, &iterType};
-		int maxAllowed = 20;
+		int maxAllowed = 100;
 
 		// **** Work ****
 		DatasetWork dws;
-		dws.openCraters(maxAllowed, "objects/NWPU-RESISC45", {"desert", "intersection"});
+		dws.openCraters(maxAllowed, "objects/NWPU-RESISC45", {"desert", "intersection", "railway", "commercial_area"});
 		dws.collect(maxAllowed, landscapes, constr, landPyCluste);
 
 
