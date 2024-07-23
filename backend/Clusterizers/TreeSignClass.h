@@ -21,8 +21,10 @@ import Platform;
 import CachedBarcode;
 import MLSettings;
 import BackBind;
+#undef MEXPORT
 #define MEXPORT export
 #else
+#undef MEXPORT
 #define MEXPORT
 #endif
 

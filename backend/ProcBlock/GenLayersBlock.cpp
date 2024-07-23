@@ -4,10 +4,12 @@
 
 #include "Barcode/PrjBarlib/include/barcodeCreator.h"
 #include "../MatrImg.h"
+#include "../Layers/layerInterface.h"
+#include "../Layers/Rasterlayers.h"
 
-import RasterLayers;
+// import RasterLayers;
 // import IBlock;
-import LayersCore;
+// import LayersCore;
 import ProjectModule;
 import AlgUtils;
 //import BackBind;
@@ -83,7 +85,7 @@ public:
 			const auto& matr = line->matr;
 			int depth = line->getDeath();
 
-			ska::flat_hash_map<uint, size_t> map;
+			std::unordered_map<uint, size_t> map;
 
 			for (size_t i = 0; i < matr.size(); i++)
 			{

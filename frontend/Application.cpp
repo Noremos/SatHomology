@@ -19,6 +19,8 @@
 #include "../Bind/Framework.h"
 
 #include "../backend/MatrImg.h"
+#include "../backend/Layers/layerInterface.h"
+#include "../backend/Layers/Rasterlayers.h"
 
 import FrontendBind;
 // import Platform;
@@ -37,8 +39,8 @@ import GuiRasterLineLayer;
 import RasterLineLayerModule;
 
 import DrawUtils;
-import RasterLayers;
-import LayersCore;
+// import RasterLayers;
+// import LayersCore;
 import IGuiLayer;
 import GuiLayers;
 import IAlgorithm;

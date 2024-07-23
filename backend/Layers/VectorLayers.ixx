@@ -10,10 +10,11 @@ module;
 #include "../../side/Barcode/PrjBarlib/modules/StateBinFile.h"
 #include "../Interfaces/ICluster.h"
 #include "../Bind/Framework.h"
+#include "layerInterface.h"
 export module VectorLayers;
 //import std.core;
 //import BackBind;
-import LayersCore;
+// import LayersCore;
 
 // import Platform;
 

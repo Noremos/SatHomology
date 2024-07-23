@@ -8,11 +8,12 @@ module;
 #include <cassert>
 
 #include "../MetadataIO.h"
+#include "layerInterface.h"
 export module GroupLayer;
 
 //import BackBind;
 // import MetadataCoreIO;
-import LayersCore;
+// import LayersCore;
 
 export class GroupLayer : public ILayer
 {

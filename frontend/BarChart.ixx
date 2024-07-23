@@ -8,16 +8,18 @@ module;
 #include "Barcode/PrjBarlib/include/barline.h"
 #include "DrawCommon.h"
 #include "../backend/MatrImg.h"
+#include "../backend/Layers/layerInterface.h"
+#include "../backend/Layers/Rasterlayers.h"
 export module StatChart;
 
 import BackTypes;
 //import BackBind;
 // import MatrModule;
 
-import LayersCore;
+// import LayersCore;
 import GuiWidgets;
 
-import RasterLayers;
+// import RasterLayers;
 import ClassifierInterface;
 import TrainIO;
 import Classifiers;
@@ -143,7 +145,7 @@ public:
 		draws.push_back({ "mart size", count, 1000});
 
 
-		ClassDataIO::TrainCallback cla = [this, endC, matrsizeC, lenC](int, vbuffer& buf, BackImage, size_t /*dbLocalId*/)
+		ClassDataIO::TrainCallback cla = [this, endC, matrsizeC, lenC](int, ubuffer& buf, BackImage, size_t /*dbLocalId*/)
 		{
 			std::ostringstream oss;
 			oss.write(reinterpret_cast<const char*>(buf.data()), buf.size());
@@ -208,7 +210,7 @@ public:
 		io.open(dbPath);
 		int count = io.getClassCount(classId);
 
-		ClassDataIO::TrainCallback cla = [this, count](int, vbuffer& buf, BackImage, size_t /*dbLocalId*/)
+		ClassDataIO::TrainCallback cla = [this, count](int, ubuffer& buf, BackImage, size_t /*dbLocalId*/)
 		{
 			std::ostringstream oss;
 			oss.write(reinterpret_cast<const char*>(buf.data()), buf.size());

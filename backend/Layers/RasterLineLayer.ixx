@@ -24,12 +24,14 @@ module;
 #include "../CachedBarcode.h"
 #include "../Interfaces/ICluster.h"
 #include "../Interfaces/IItem.h"
+#include "layerInterface.h"
+#include "Rasterlayers.h"
 export module RasterLineLayerModule;
 
 //import BackBind;
 // import MatrModule;
-import LayersCore;
-import RasterLayers;
+// import LayersCore;
+// import RasterLayers;
 // import MetadataCoreIO;
 // import IItemModule;
 import GeoprocessorModule;

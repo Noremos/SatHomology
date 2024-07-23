@@ -2,10 +2,11 @@ module;
 #include "../DrawCommon.h"
 #include <utility>
 #include <vector>
+#include "../../backend/Layers/Rasterlayers.h"
 
 export module BarcodeChart;
 
-import RasterLayers;
+// import RasterLayers;
 
 
 class SavedLines

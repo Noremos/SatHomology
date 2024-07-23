@@ -116,7 +116,7 @@ export struct GuiClassifer
 
 	void loadClassImages(ClassDataIO& io, GuiClass& classDisplayData)
 	{
-		ClassDataIO::TrainCallback cla = [&classDisplayData](int, vbuffer&, BackImage preview, size_t dbLocalId)
+		ClassDataIO::TrainCallback cla = [&classDisplayData](int, ubuffer&, BackImage preview, size_t dbLocalId)
 		{
 			classDisplayData.imgs.push_back(TrainPiecePreview(preview, dbLocalId));
 		};

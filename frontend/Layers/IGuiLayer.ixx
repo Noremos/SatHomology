@@ -6,10 +6,12 @@ module;
 #include "Usings.h"
 
 #include "../../backend/CSBind.h"
+#include "../../backend/Layers/layerInterface.h"
+#include "../../backend/Layers/Rasterlayers.h"
 export module IGuiLayer;
 
-import LayersCore;
-import RasterLayers;
+// import LayersCore;
+// import RasterLayers;
 import ProjectModule;
 // import BarcodeModule
 // import CSBind;

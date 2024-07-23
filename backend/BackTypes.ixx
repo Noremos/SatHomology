@@ -140,7 +140,7 @@ public:
 	}
 };
 
-export using vbuffer = StaticBuffer<unsigned char>;
+export using ubuffer = StaticBuffer<unsigned char>;
 
 
 

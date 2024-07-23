@@ -5,13 +5,15 @@ module;
 
 #include "Barcode/PrjBarlib/include/barstrucs.h"
 
-#include "../backend/Interfaces/IItem.h"
+#include "../../backend/Interfaces/IItem.h"
+#include "../../backend/Layers/Rasterlayers.h"
+
 export module GuiRasterLineLayer;
 
 //import BackBind;
 // import IItemModule;
 import GuiWidgets;
-import RasterLayers;
+// import RasterLayers;
 import GuiOverlap;
 import RasterLineLayerModule;
 import GuiRasterTools;

@@ -14,9 +14,11 @@ module;
 #ifdef USE_MODULE
 export module Platform;
 import BackBind;
+#undef MEXPORT
 #define MEXPORT export
 #else
 #include "Usings.h"
+#undef MEXPORT
 #define MEXPORT
 #endif
 
@@ -142,5 +144,3 @@ MEXPORT inline BackPathStr getDicumnetPath()
 {
 	return sago::getDocumentsFolder();
 }
-
-#undef MEXPORT

@@ -17,10 +17,12 @@ module;
 export module CachedBarcode;
 import IItemModule;
 import MHashMap;
+#undef MEXPORT
 #define MEXPORT export
 #else
 #include "../Bind/MHashMap.h"
 #include "Interfaces/IItem.h"
+#undef MEXPORT
 #define MEXPORT
 #endif
 

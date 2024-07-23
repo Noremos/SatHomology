@@ -16,6 +16,7 @@ module;
 
 #ifdef USE_MODULE
 export module ConvertItem;
+#undef MEXPORT
 #define MEXPORT export
 import ClusterInterface;
 import BackBind;
@@ -24,6 +25,7 @@ import Platform;
 import ExteranlReader;
 import Sklearn;
 #else
+#undef MEXPORT
 #define MEXPORT
 #include "../CachedBarcode.h"
 #include "../Interfaces/ICluster.h"
@@ -296,9 +298,6 @@ public:
 			cl.landscape.back().k = k++;
 			// cl.AddE = resolution;
 
-
-			//cl.matrix = line.matrix;
-
 			int curI = i;
 			int prevId = -1;
 			int backScanStart = i;
@@ -417,6 +416,15 @@ public:
 					float cross = end - nextLand.getStart(); // длина пересечения
 					crossWithPrev = end; // Смотрим предыдущий, который до окончания текущего
 					cl.add(end - cross / 2.f, cross / 2.f, round);
+					auto& matr = line->matrix;
+					for (auto& val : matr)
+					{
+						if (val.value < nextLand.start)
+							break;
+
+						cl.matrix.push_back(val);
+					}
+
 
 					// lastMin = end;
 					start = nextLand.getStart();
@@ -424,6 +432,7 @@ public:
 					curLineCatechd = false;
 					curI = nextI;
 					line = &landset[nextI];
+
 
 					// if (i == 18)
 					// 	std::cout << "next:" << start << " " << end << std::endl;
@@ -446,6 +455,16 @@ public:
 
 					// Добавляем конце линии
 					cl.add(end, 0, round);
+
+					auto& matr = line->matrix;
+					for (auto& val : matr)
+					{
+						if (val.value < end)
+							break;
+
+						cl.matrix.push_back(val);
+					}
+
 
 					// Ищем следующую на том же уровне K
 					++curI;
@@ -475,23 +494,12 @@ public:
 
 							backScanStart = curI;
 							curLineCatechd = false;
-
-							// Если не начиается сразу же после текущей, то добавляем точку
-
+							line = &nextLand;
 							break;
 						}
 					}
 					if (curI == landSize)
 						break;
-				}
-
-				if (!curLineCatechd)
-				{
-					auto& chm = line->matrix; //srcLine.getChild(startI)->getMatrix();
-					for (auto& val : chm)
-					{
-						cl.matrix.push_back(val);
-					}
 				}
 			}
 		}

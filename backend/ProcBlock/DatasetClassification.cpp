@@ -19,13 +19,15 @@
 // #include "Dataset/SelfClassCluster.h"
 #include "Dataset/LandscapeCalss.h"
 #include "Dataset/DatasetWork.h"
+#include "../Layers/layerInterface.h"
+#include "../Layers/Rasterlayers.h"
 
 namespace fs = std::filesystem;
 using namespace std::string_literals;
 
-import RasterLayers;
+// import RasterLayers;
 // import IBlock;
-import LayersCore;
+// import LayersCore;
 // import ProjectModule;
 import AlgUtils;
 // import MatrModule;

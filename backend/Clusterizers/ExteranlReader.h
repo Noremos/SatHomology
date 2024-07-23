@@ -20,9 +20,11 @@ module;
 #include "../MLSettings.h"
 #ifdef USE_MODULE
 export module ExteranlReader;
+#undef MEXPORT
 #define MEXPORT export
 #else
 #pragma once
+#undef MEXPORT
 #define MEXPORT inline
 #endif
 
@@ -181,5 +183,3 @@ MEXPORT bool exec(const std::vector<BackString>& cmd, std::vector<unsigned long>
 
 	return true;
 }
-
-#undef MEXPORT

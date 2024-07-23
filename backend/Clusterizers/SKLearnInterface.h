@@ -16,8 +16,10 @@ module;
 
 #ifdef USE_MODULE
 export module Sklearn;
+#undef MEXPORT
 #define MEXPORT export
 #else
+#undef MEXPORT
 #define MEXPORT
 #endif
 //import BackBind;

@@ -17,12 +17,14 @@ module;
 #include "Common.h"
 #include "../MLSettings.h"
 #include "../Interfaces/IItem.h"
+#include "../Layers/layerInterface.h"
+#include "../Layers/Rasterlayers.h"
 
 export module IAlgorithm;
 
-import RasterLayers;
+// import RasterLayers;
 //import BackBind;
-import LayersCore;
+// import LayersCore;
 // import IItemModule;
 // import MLSettings;
 

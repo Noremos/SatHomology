@@ -1,4 +1,14 @@
+#ifdef USE_MODULE
+#undef MEXPORT
+#define MEXPORT export
 module;
+#else
+#pragma once
+#undef MEXPORT
+#define MEXPORT
+#endif
+
+
 #include <memory>
 #include <unordered_set>
 #include <algorithm>
@@ -15,8 +25,11 @@ module;
 #include "../Bind/MHashMap.h"
 #include "../MLSettings.h"
 #include "../Bind/Framework.h"
+
+#ifdef USE_MODULE
 export module RasterLayers;
 import LayersCore;
+
 
 // import BarTypes;
 // import Platform;
@@ -29,11 +42,15 @@ import SimpleImgReaderModule;
 // import MLSettings;
 //import BackBind;
 // import MatrModule;
+#else
+#include "layerInterface.h"
+#include "../SimpleImgReader.h"
+#endif
 
 using LayerMetaProvider = MetadataProvider;
 
 
-export enum class ReadType
+MEXPORT enum class ReadType
 {
 	Tiff,
 	Simple
@@ -41,12 +58,12 @@ export enum class ReadType
 
 
 
-int getFid(int wid, int s)
+inline int getFid(int wid, int s)
 {
 	return (wid + s - 1) / s;
 }
 
-BackImage tiffToImg(ImageReader* reader, const BackPathStr& path, int fctor = 10, bool save = false)
+inline BackImage tiffToImg(ImageReader* reader, const BackPathStr& path, int fctor = 10, bool save = false)
 {
 	const int rwid = reader->width();
 	const int rhei = reader->height();
@@ -157,7 +174,7 @@ BackImage tiffToImg(ImageReader* reader, const BackPathStr& path, int fctor = 10
 }
 
 
-export struct BarcodeProperies : public MLSettings
+MEXPORT struct BarcodeProperies : public MLSettings
 {
 	bc::ComponentType comtype;
 	bc::ProcType proctype;
@@ -232,7 +249,7 @@ export struct BarcodeProperies : public MLSettings
 };
 
 
-export class RasterLayer : public IRasterLayer
+MEXPORT class RasterLayer : public IRasterLayer
 {
 public:
 	BackImage mat;
@@ -345,8 +362,8 @@ public:
 	}
 };
 
-export struct SimpleLine;
-export struct SimpleLineHolder
+MEXPORT struct SimpleLine;
+MEXPORT struct SimpleLineHolder
 {
 	//std::vector<std::unique_ptr<SimpleLine>> holder;
 	std::unordered_map<size_t, std::unique_ptr<SimpleLine>> holder;
@@ -387,8 +404,8 @@ struct SimpleLine
 	}
 };
 
-export using IdGrater = MMMAP<size_t, SimpleLine*>;
-export class RasterFromDiskLayer : public IRasterLayer
+MEXPORT using IdGrater = MMMAP<size_t, SimpleLine*>;
+MEXPORT class RasterFromDiskLayer : public IRasterLayer
 {
 public:
 	ImageReader* reader = nullptr;

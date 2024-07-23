@@ -9,8 +9,9 @@ module;
 #include "../backend/CachedBarcode.h"
 #include "../backend/Interfaces/ICluster.h"
 #include "../backend/Interfaces/IItem.h"
+#include "../backend/Layers/layerInterface.h"
 export module GuiITemPrevew;
-import LayersCore;
+// import LayersCore;
 import RasterLineLayerModule;
 import ProjectModule;
 // import ProjectSettings;

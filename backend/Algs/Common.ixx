@@ -4,14 +4,16 @@ module;
 
 #include "../MatrImg.h"
 #include "../MLSettings.h"
+#include "../Layers/layerInterface.h"
+#include "../Layers/Rasterlayers.h"
 export module AlgUtils;
 
 // import MLSettings;
-import RasterLayers;
+// import RasterLayers;
 import ProjectModule;
 //import BackBind;
 // import MatrModule;
-import LayersCore;
+// import LayersCore;
 
 export MLSettings mkSettingsType()
 {

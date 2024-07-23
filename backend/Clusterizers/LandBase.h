@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <cassert>
+#undef MEXPORT
 #define MEXPORT
 
 

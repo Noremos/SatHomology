@@ -9,14 +9,16 @@
 #include "../MatrImg.h"
 #include "../MLSettings.h"
 #include "../Interfaces/IItem.h"
+#include "../Layers/layerInterface.h"
+#include "../Layers/Rasterlayers.h"
 
-import LayersCore;
+// import LayersCore;
 import ProjectModule;
 import RasterLineLayerModule;
 import VectorLayers;
 // import BarTypes;
 // import BarcodeModule;
-import RasterLayers;
+// import RasterLayers;
 import Classifiers;
 import GeoprocessorModule;
 

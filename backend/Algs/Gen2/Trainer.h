@@ -9,7 +9,6 @@
 #include <set>
 
 #include "Barcode/PrjBarlib/include/barscalar.h"
-#include "../side/emhash/thirdparty/ska/flat_hash_map.hpp"
 
 /*
 ** Binary Search Tree implementation in C++
@@ -411,7 +410,7 @@ public:
 
 	struct MaxFindBlock
 	{
-		ska::flat_hash_map<int, int> lines;
+		std::unordered_map<int, int> lines;
 		int maxCounter = 0;
 		int maxId = -1;
 

@@ -16,18 +16,20 @@ module;
 #include "../backend/CSBind.h"
 #include "../backend/Interfaces/IItem.h"
 #include "../Bind/Framework.h"
+#include "../backend/Layers/layerInterface.h"
+#include "../../backend/Layers/Rasterlayers.h"
 export module FrontendBind;
 
 import ProjectModule;
 // import Platform;
 // import BarcodeModule;
-import RasterLayers;
+// import RasterLayers;
 
 import GuiWidgets;
 // import IItemModule;
 import VectorLayers;
 // import CSBind;
-import LayersCore;
+// import LayersCore;
 // import MetadataCoreIO;
 // import BarTypes;
 // import BarScalarModule;

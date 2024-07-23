@@ -1,4 +1,13 @@
+#ifdef USE_MODULE
 module;
+#undef MEXPORT
+#define MEXPORT export
+#else
+#pragma once
+#undef MEXPORT
+#define MEXPORT
+#endif
+
 #include <algorithm>
 #include <functional>
 #include <memory>
@@ -12,6 +21,9 @@ module;
 #include "../MatrImg.h"
 #include "../Bind/MHashMap.h"
 #include "../Bind/Framework.h"
+
+
+#ifdef USE_MODULE
 export module LayersCore;
 
 // import BarTypes;
@@ -22,11 +34,12 @@ export module LayersCore;
 // import MHashMap;
 //import BackBind;
 // import MatrModule;
+#endif
 
-export const int DEF_TILE_SIZE = 1000;
-export const int DEF_TILE_OFFSET = 300;
+constexpr int DEF_TILE_SIZE = 1000;
+constexpr int DEF_TILE_OFFSET = 300;
 
-export struct TileProvider
+struct TileProvider
 {
 public:
 	float factor;
@@ -57,7 +70,7 @@ public:
 	}
 };
 
-export class TileImgIterator
+ class TileImgIterator
 {
 	TileIterator stW, stH;
 
@@ -117,7 +130,7 @@ public:
 };
 
 
-export class LayerProvider
+ class LayerProvider
 {
 public:
 	int width; // realWid
@@ -253,20 +266,20 @@ public:
 };
 
 
-//export struct IGuiLayer
+// struct IGuiLayer
 //{
 //	virtual void draw() = 0;
 //};
 
-int getCon(int total, int part)
+inline int getCon(int total, int part)
 {
 	return total / part + (total % part == 0 ? 0 : 1);
 }
 
-export using LFID = unsigned int;
+ using LFID = unsigned int;
 
 
-export struct InOutLayer
+ struct InOutLayer
 {
 	int in;
 	int subImgIndex = 0;
@@ -285,7 +298,7 @@ export struct InOutLayer
 };
 
 
-export template <class T>
+ template <class T>
 class LayersList
 {
 	std::list<std::unique_ptr<T>> layers;
@@ -456,7 +469,7 @@ public:
 };
 
 
-export class ILayer : public IJsonIO
+ class ILayer : public IJsonIO
 {
 protected:
 	enum class Type
@@ -627,17 +640,16 @@ public:
 	{ }
 };
 
-LFID ILayer::counter = 0;
-export const LFID RASTER_LAYER_FID = 0;
-export const LFID RASTER_LINE_LAYER_FID = 1;
-export const LFID RASTER_DISK_LAYER_FID = 2;
-export const LFID VECTOR_LAYER_FID = 3;
-export const LFID MULTIPOLY_VECTOR_LAYER_FID = 4;// ILayer::getCountId();
-export const LFID TREE_VECTOR_LAYER_FID = 5;
-export const LFID GROUP_LAYER = 6;
-export const LFID TREE_VECTOR_CLASS_LAYER = 7;
+ constexpr LFID RASTER_LAYER_FID = 0;
+ constexpr LFID RASTER_LINE_LAYER_FID = 1;
+ constexpr LFID RASTER_DISK_LAYER_FID = 2;
+ constexpr LFID VECTOR_LAYER_FID = 3;
+ constexpr LFID MULTIPOLY_VECTOR_LAYER_FID = 4;// ILayer::getCountId();
+ constexpr LFID TREE_VECTOR_LAYER_FID = 5;
+ constexpr LFID GROUP_LAYER = 6;
+ constexpr LFID TREE_VECTOR_CLASS_LAYER = 7;
 
-export class CoreLayerFactory
+ class CoreLayerFactory
 {
 protected:
 	template<class IF>
@@ -649,25 +661,13 @@ protected:
 	static FunctionCoreHolder<ILayer> coreLayersCreators;
 
 public:
-	static ILayer* CreateCoreLayer(int id)
-	{
-		auto it = coreLayersCreators.find(id);
-		if (it != coreLayersCreators.end())
-			return it->second();
-		else
-			return nullptr;
-	}
+	static ILayer* CreateCoreLayer(int id);
 };
 
-CoreLayerFactory::FunctionCoreHolder<ILayer> CoreLayerFactory::coreLayersCreators;
 
+ using SubImgInf = BackSize;
 
-
-
-
-export using SubImgInf = BackSize;
-
-export class IRasterLayer : public ILayer
+ class IRasterLayer : public ILayer
 {
 public:
 	LayerProvider prov;
@@ -707,7 +707,7 @@ public:
 };
 
 
-export class IVectorLayer : public ILayer
+ class IVectorLayer : public ILayer
 {
 public:
 	Type getType() const
@@ -727,9 +727,7 @@ public:
 };
 
 
-
-
-export struct LCoreItems
+ struct LCoreItems
 {
 	ILayer* core;
 	BackString name;
@@ -750,4 +748,4 @@ export struct LCoreItems
 	}
 };
 
-export using RetLayers = std::vector<LCoreItems>;
+ using RetLayers = std::vector<LCoreItems>;

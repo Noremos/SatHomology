@@ -16,8 +16,10 @@ module;
 #include "../MetadataIO.h"
 #ifdef USE_MODULE
 export module IItemModule;
+#undef MEXPORT
 #define MEXPORT export
 #else
+#undef MEXPORT
 #define MEXPORT
 #endif
 

@@ -9,9 +9,11 @@
 
 #include "../MatrImg.h"
 #include "../MLSettings.h"
+#include "../Layers/layerInterface.h"
+#include "../Layers/Rasterlayers.h"
 
-import LayersCore;
-import RasterLayers;
+// import LayersCore;
+// import RasterLayers;
 //import BackBind;
 import ProjectModule;
 // import MLSettings;

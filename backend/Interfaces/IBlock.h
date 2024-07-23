@@ -1,9 +1,11 @@
 
 #ifdef USE_MODULE
+#undef MEXPORT
 #define MEXPORT export
 module;
 #else
 #pragma once
+#undef MEXPORT
 #define MEXPORT
 #endif
 
@@ -15,13 +17,14 @@ module;
 export module IBlock;
 import ProjectSettings;
 import RefSettings;
+import LayersCore;
 #else
 #include "../ProjectSettings.h"
 #include "../Core/RefSettings.h"
+#include "../Layers/layerInterface.h"
 #endif
 
 //import BackBind;
-import LayersCore;
 // import BarTypes;
 //export class IClasterItem
 //{

@@ -4,9 +4,11 @@
 #include "../Interfaces/IBlock.h"
 
 #include "../MatrImg.h"
-import RasterLayers;
+#include "../Layers/layerInterface.h"
+#include "../Layers/Rasterlayers.h"
+// import RasterLayers;
 // import IBlock;
-import LayersCore;
+// import LayersCore;
 import ProjectModule;
 import AlgUtils;
 //import BackBind;

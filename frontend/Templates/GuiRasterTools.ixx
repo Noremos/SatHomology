@@ -3,12 +3,14 @@ module;
 #include <memory>
 #include <future>
 #include "Barcode/PrjBarlib/include/barstrucs.h"
+#include "../../backend/Layers/layerInterface.h"
+#include "../../backend/Layers/Rasterlayers.h"
 
 export module GuiRasterTools;
 
 //import BackBind;
 import GuiWidgets;
-import RasterLayers;
+// import RasterLayers;
 import GuiLayers;
 import GuiOverlap;
 import DynamicSettings;
@@ -17,7 +19,7 @@ import IGuiLayer;
 import GuiDataLayer;
 import GuiAlgo;
 import CoreLoaders;
-import LayersCore;
+// import LayersCore;
 import GuiFilter;
 import DrawUtils;
 

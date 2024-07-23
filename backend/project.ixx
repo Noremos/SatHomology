@@ -17,11 +17,13 @@ module;
 #include "CSBind.h"
 #include "ProjectSettings.h"
 #include "../Bind/Framework.h"
+#include "Layers/layerInterface.h"
+
 export module ProjectModule;
 
 // import Platform;
 
-import LayersCore;
+// import LayersCore;
 // import JsonCore;
 // import MetadataCoreIO;
 // import CSBind;
@@ -64,10 +66,6 @@ export enum class GuiState
 	Loaded
 };
 
-int getCon(int total, int part)
-{
-	return total / part + (total % part == 0 ? 0 : 1);
-}
 
 export class Project
 {

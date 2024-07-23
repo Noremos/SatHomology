@@ -9,10 +9,12 @@ module;
 
 #include "../MatrImg.h"
 #include "../Interfaces/IItem.h"
+#include "../Layers/layerInterface.h"
+
 export module ClassifierCore;
 // import IItemModule; //
 import Classifiers;
-import LayersCore;
+// import LayersCore;
 import TrainIO;
 import GeoprocessorModule;
 import VectorLayers;

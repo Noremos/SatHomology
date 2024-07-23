@@ -56,7 +56,7 @@ public:
 
 		ClassDataIO io;
 		io.openWrite(dbPath);
-		vbuffer temp;
+		ubuffer temp;
 		auto str = st.str();
 		char* data = str.data();
 		temp.setData((buchar*)data, str.length(), false);
@@ -148,7 +148,7 @@ public:
 
 	void loadClassData(ClassDataIO& io, int classId)
 	{
-		ClassDataIO::TrainCallback cla = [this](int clId, vbuffer& buf, BackImage, size_t dbLocalId)
+		ClassDataIO::TrainCallback cla = [this](int clId, ubuffer& buf, BackImage, size_t dbLocalId)
 		{
 			std::stringstream stream;
 			stream.write(reinterpret_cast<const char*>(buf.data()), buf.size());

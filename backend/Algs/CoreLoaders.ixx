@@ -2,11 +2,13 @@ module;
 #include "Common.h"
 
 #include "../Interfaces/IItem.h"
+#include "../Layers/layerInterface.h"
+#include "../Layers/Rasterlayers.h"
 export module CoreLoaders;
 //import BackBind;
-import LayersCore;
+// import LayersCore;
 import RasterLineLayerModule;
-import RasterLayers;
+// import RasterLayers;
 import ProjectModule;
 // import IItemModule;
 

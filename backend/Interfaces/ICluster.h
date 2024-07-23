@@ -24,12 +24,14 @@ import MLSettings;
 //	IClasterItem(CachedBarline*)
 //	{}
 //};
+#undef MEXPORT
 #define MEXPORT export
 #else
 #include "IItem.h"
 #include "../CachedBarcode.h"
 #include "../MLSettings.h"
 #include "../../side/Barcode/PrjBarlib/modules/StateBinFile.h"
+#undef MEXPORT
 #define MEXPORT
 #endif
 
@@ -232,4 +234,3 @@ public:
 
 
 //using GlobalClusterRegister = GlobalRegister<TClass, TClassHolder, TClassifier, ClusterFactory>;
-#undef MEXPORT

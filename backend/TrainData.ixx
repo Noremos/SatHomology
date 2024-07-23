@@ -15,6 +15,8 @@
 export module TrainIO;
 
 import BackTypes;
+
+
 // import MetadataCoreIO;
 // import Platform;
 //import BackBind;
@@ -225,7 +227,7 @@ public:
 		}
 	}
 
-	using TrainCallback = std::function<void(int classId, vbuffer& bbfFile, BackImage preview, size_t localId)>;
+	using TrainCallback = std::function<void(int classId, ubuffer& bbfFile, BackImage preview, size_t localId)>;
 
 	enum LoadField : unsigned char
 	{
@@ -241,7 +243,7 @@ public:
 
 		while (sqlite3_step(stmt) == SQLITE_ROW)
 		{
-			vbuffer bff;
+			ubuffer bff;
 			BackImage img(1,1,1);
 			size_t locId;
 			// int classIdo;
@@ -390,7 +392,7 @@ private:
 		return stmt;
 	}
 
-	void loadEnd(sqlite3_stmt* stmt, LoadField filter, int& classId, vbuffer& bbfFile, BackImage& preview, size_t& locId)
+	void loadEnd(sqlite3_stmt* stmt, LoadField filter, int& classId, ubuffer& bbfFile, BackImage& preview, size_t& locId)
 	{
 		int counterId = 0;
 
@@ -420,7 +422,7 @@ private:
 	}
 
 public:
-	size_t save(int classId, const vbuffer& bbfFile, BackImage* preview)
+	size_t save(int classId, const ubuffer& bbfFile, BackImage* preview)
 	{
 		sqlite3_stmt* stmt = NULL;
 

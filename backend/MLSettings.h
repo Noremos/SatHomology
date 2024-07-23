@@ -11,8 +11,10 @@ module;
 
 #ifdef USE_MODULE
 export module MLSettings;
+#undef MEXPORT
 #define MEXPORT export
 #else
+#undef MEXPORT
 #define MEXPORT
 #endif
 
@@ -383,5 +385,3 @@ public:
 		}
 	}
 };
-
-#undef MEXPORT

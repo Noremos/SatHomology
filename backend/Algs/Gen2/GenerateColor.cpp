@@ -16,8 +16,11 @@
 
 #include "../../MLSettings.h"
 #include "../../MatrImg.h"
-import LayersCore;
-import RasterLayers;
+#include "../../Layers/layerInterface.h"
+#include "../../Layers/Rasterlayers.h"
+
+// import LayersCore;
+// import RasterLayers;
 //import BackBind;
 import ProjectModule;
 // import MLSettings;

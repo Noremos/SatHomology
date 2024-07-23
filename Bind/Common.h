@@ -1,10 +1,12 @@
 // #define USE_MODULE
 
 #ifdef USE_MODULE
+#undef MEXPORT
 #define MEXPORT export
 module;
 #else
 #pragma once
+#undef MEXPORT
 #define MEXPORT
 #endif
 
