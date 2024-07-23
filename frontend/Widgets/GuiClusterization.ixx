@@ -4,6 +4,7 @@ module;
 #include "Barcode/PrjBarlib/include/barstrucs.h"
 
 #include "../../backend/Interfaces/ICluster.h"
+#include "../../backend/Layers/RasterLineLayer.h"
 #include "../Bind/Framework.h"
 export module GuiClusterization;
 
@@ -12,7 +13,7 @@ export module GuiClusterization;
 import GuiWidgets;
 import TrainIO;
 // import ClusterInterface;
-import RasterLineLayerModule;
+// import RasterLineLayerModule;
 import FrontendBind;
 import GeoprocessorModule;
 import GuiVectorLayers;

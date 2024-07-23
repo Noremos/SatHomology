@@ -10,9 +10,10 @@ module;
 #include "../backend/Interfaces/ICluster.h"
 #include "../backend/Interfaces/IItem.h"
 #include "../backend/Layers/layerInterface.h"
+#include "../backend/Layers/RasterLineLayer.h"
 export module GuiITemPrevew;
 // import LayersCore;
-import RasterLineLayerModule;
+// import RasterLineLayerModule;
 import ProjectModule;
 // import ProjectSettings;
 import GuiLayers;

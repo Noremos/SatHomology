@@ -17,7 +17,8 @@ module;
 #include "../backend/Interfaces/IItem.h"
 #include "../Bind/Framework.h"
 #include "../backend/Layers/layerInterface.h"
-#include "../../backend/Layers/Rasterlayers.h"
+#include "../backend/Layers/Rasterlayers.h"
+#include "../backend/Layers/RasterLineLayer.h"
 export module FrontendBind;
 
 import ProjectModule;
@@ -33,7 +34,7 @@ import VectorLayers;
 // import MetadataCoreIO;
 // import BarTypes;
 // import BarScalarModule;
-import RasterLineLayerModule;
+// import RasterLineLayerModule;
 import CoreLoaders;
 //import BackBind;
 

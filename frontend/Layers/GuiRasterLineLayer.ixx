@@ -7,6 +7,7 @@ module;
 
 #include "../../backend/Interfaces/IItem.h"
 #include "../../backend/Layers/Rasterlayers.h"
+#include "../../backend/Layers/RasterLineLayer.h"
 
 export module GuiRasterLineLayer;
 
@@ -15,7 +16,7 @@ export module GuiRasterLineLayer;
 import GuiWidgets;
 // import RasterLayers;
 import GuiOverlap;
-import RasterLineLayerModule;
+// import RasterLineLayerModule;
 import GuiRasterTools;
 import GuiClusterization;
 //import SimpleLine;

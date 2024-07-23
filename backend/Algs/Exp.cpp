@@ -11,10 +11,11 @@
 #include "../Interfaces/IItem.h"
 #include "../Layers/layerInterface.h"
 #include "../Layers/Rasterlayers.h"
+#include "../Layers/RasterLineLayer.h"
 
 // import LayersCore;
 import ProjectModule;
-import RasterLineLayerModule;
+// import RasterLineLayerModule;
 import VectorLayers;
 // import BarTypes;
 // import BarcodeModule;

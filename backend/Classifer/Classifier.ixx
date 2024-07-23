@@ -10,6 +10,7 @@ module;
 #include "../MatrImg.h"
 #include "../Interfaces/IItem.h"
 #include "../Layers/layerInterface.h"
+#include "../Layers/RasterLineLayer.h"
 
 export module ClassifierCore;
 // import IItemModule; //
@@ -18,7 +19,7 @@ import Classifiers;
 import TrainIO;
 import GeoprocessorModule;
 import VectorLayers;
-import RasterLineLayerModule;
+// import RasterLineLayerModule;
 import ProjectModule; // BackImage
 // import CSBind; // csbind
 //import BackBind;

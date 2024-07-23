@@ -4,10 +4,11 @@ module;
 #include "../Interfaces/IItem.h"
 #include "../Layers/layerInterface.h"
 #include "../Layers/Rasterlayers.h"
+#include "../Layers/RasterLineLayer.h"
 export module CoreLoaders;
 //import BackBind;
 // import LayersCore;
-import RasterLineLayerModule;
+// import RasterLineLayerModule;
 // import RasterLayers;
 import ProjectModule;
 // import IItemModule;

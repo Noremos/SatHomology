@@ -21,6 +21,7 @@
 #include "../backend/MatrImg.h"
 #include "../backend/Layers/layerInterface.h"
 #include "../backend/Layers/Rasterlayers.h"
+#include "../backend/Layers/RasterLineLayer.h"
 
 import FrontendBind;
 // import Platform;
@@ -36,7 +37,7 @@ import GuiRasterLayers;
 import GuiRasterLineLayer;
 // import ProjectSettings;
 //import BackBind;
-import RasterLineLayerModule;
+// import RasterLineLayerModule;
 
 import DrawUtils;
 // import RasterLayers;
