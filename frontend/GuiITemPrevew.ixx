@@ -42,7 +42,6 @@ public:
 			itemMethods.add(name,  i);
 		}
 		itemMethods.endAdding();
-		auto methodId = itemMethods.currentValue();
 	}
 
 	RetLayers makePreviwLayer(RasterLineLayer* inLayer, int methodId)

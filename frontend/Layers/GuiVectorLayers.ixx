@@ -95,12 +95,12 @@ public:
 		if (!Base::data->visible)
 			return;
 
-		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
 		 | ImGuiWindowFlags_NoScrollWithMouse;
 
 
 		ImGui::SetCursorPos(ds.getDrawPos());
-		if (!ImGui::BeginChild(Base::data->name.c_str(), ds.getDrawSize(), false, window_flags))
+		if (!ImGui::BeginChild(Base::data->name.c_str(), ds.getDrawSize(), ImGuiChildFlags_AlwaysAutoResize | ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_AutoResizeY, window_flags))
 		{
 			ImGui::EndChild();
 			return;

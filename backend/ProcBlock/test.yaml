@@ -1,0 +1,8 @@
+Func: 0 | Step: 0.500000 | Method: hierarchical | ProcType: f0t255 |  => 89/200, 44.5%
+Func: 3 | Step: 0.500000 | Method: hierarchical | ProcType: f0t255 |  => 104/200, 52%
+Func: 0 | Step: 0.500000 | Method: mds_kmeans | ProcType: f0t255 |  => 105/200, 52.5%
+Func: 3 | Step: 0.500000 | Method: mds_kmeans | ProcType: f0t255 |  => 109/200, 54.5%
+Func: 0 | Step: 0.500000 | Method: hierarchical | ProcType: f255t0 |  => 98/200, 49%
+Func: 3 | Step: 0.500000 | Method: hierarchical | ProcType: f255t0 |  => 102/200, 51%
+Func: 0 | Step: 0.500000 | Method: mds_kmeans | ProcType: f255t0 |  => 102/200, 51%
+Func: 3 | Step: 0.500000 | Method: mds_kmeans | ProcType: f255t0 |  => 106/200, 53%

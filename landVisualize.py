@@ -65,8 +65,6 @@ def drawForOne(land : Landscape, source):
 	pointsColor = len(colors) - 1
 
 	# Создание графика
-	plt.figure(figsize=(10, 6))
-
 	# for point in land.hist:
 	# 	plt.scatter(point.x, point.y, color=colors(pointsColor), label=name)
 
@@ -138,8 +136,8 @@ def drawAll(lands : List[Landscape], name = None):
 		# y = i + np.random.rand(100)*0.25
 		colors.append([r,g,b])
 
-	# Создание графика
-	plt.figure(figsize=(10, 6))
+	# # Создание графика
+	# plt.figure(figsize=(10, 6))
 
 	# for point in land.hist:
 	# 	plt.scatter(point.x, point.y, color=colors(pointsColor), label=name)
@@ -235,7 +233,7 @@ def drawAll(lands : List[Landscape], name = None):
 	# plt.legend()
 	# plt.grid(True)
 	if name:
-		mainFig.savefig('combined_' + name)
+		# mainFig.savefig('combined_' + name)
 		separateFig.savefig('separated_' + name)
 		plt.close()
 	else:
@@ -254,8 +252,92 @@ def drawAll(lands : List[Landscape], name = None):
 # drawAll(landsAll, UseSignature, "f0t255_signature.png")
 # drawAll(landsAll, UseHei, "f0t255_hei.png")
 
+
+linesd= [
+(0, 95),
+(0, 95),
+(9, 104),
+(101, 110),
+(0, 118),
+(0, 132),
+(95, 132),
+(0, 132),
+(126, 132),
+(126, 139),
+(0, 141),
+(100, 141),
+(125, 141),
+]
+
+def drawSingle(land : Landscape, name = None):
+	# Количество объектов
+	np.random.seed(0)  # Для повторяемости результатов0
+	# Уникальные цвета для каждого объекта
+	colors = []
+	for i in range(30):
+		r = np.round(np.random.rand(),1)
+		g = np.round(np.random.rand(),1)
+		b = np.round(np.random.rand(),1)
+
+	# y = i + np.random.rand(100)*0.25
+		colors.append([r,g,b])
+
+	separateFig, (ax, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+
+
+	plt.axis('equal')
+	# ax.legend()
+	ax.grid(True)
+	ax2.grid(True)
+
+	ax.set_xlabel('Яркость')
+	ax.set_ylabel('Высота')
+
+	ax2.set_xlabel('Яркость')
+	ax2.set_ylabel('Номер компоненты')
+	# Start y from 0
+	# ax.set_yticks([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
+
+	ax2.set_yticklabels([])
+	# set x legend
+
+
+	k = 0
+
+	k2 = 1
+
+	for line in linesd:
+		x_coords = [line[0], line[1]]
+		heights = [k2, k2]
+		ax2.plot(x_coords, heights, linestyle='-', color=colors[k2 % len(colors)], linewidth= 2)
+		k2 += 5
+
+	for line in land.lines:
+		if k == 0:
+			k += 1
+			continue
+		x_coords = [p.x for p in line]
+		heights = [p.y for p in line]
+
+		if k == 7:
+			x_coords[0] -= 1
+			x_coords[1] -= 0.5
+			heights[1] += 0.5
+
+		wid = 5 - k
+		if wid < 0:
+			wid = 1
+		wid = 1
+		ax.plot(x_coords, heights, linestyle='-', color=colors[k % len(colors)], linewidth= wid)
+		k += 1
+
+	# save figure with 300 dpi
+
+	plt.savefig("out.jpg", dpi=300)
+	plt.show()
+
 landsPerClass, landsAll = loadLandscape("out.bin")
-# drawAll(landsAll, UseSignature)
-drawAll(landsAll)
+drawSingle(landsAll[0])
+# drawForOne(landsAll[0], UseHei)
 
 # drawForOne(landsAll[0])

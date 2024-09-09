@@ -515,6 +515,8 @@ public:
 		}
 		else
 		{
+			assert(type == BarType::BYTE8_3 || type == BarType::BYTE8_4);
+
 			buchar *off = data + (y * _wid + x) * TSize;
 			if (val.type == BarType::BYTE8_3)
 			{
@@ -524,6 +526,7 @@ public:
 			}
 			else
 			{
+				assert(val.type == BarType::BYTE8_1);
 				off[0] += val.data.b1;
 				off[1] += val.data.b1;
 				off[2] += val.data.b1;
@@ -532,6 +535,15 @@ public:
 
 		cachedMin.isCached = false;
 		cachedMax.isCached = false;
+	}
+
+	void setOpp(int x, int y, uchar op)
+	{
+		buchar *off = data + (y * _wid + x) * TSize;
+		if (type == BarType::BYTE8_4)
+		{
+			off[3] = op;
+		}
 	}
 
 

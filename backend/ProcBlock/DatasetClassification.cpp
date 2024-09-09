@@ -114,6 +114,10 @@ public:
 		writer.open("out.bin");
 		writer.pInt(resolution);
 	}
+	void clear()
+	{
+
+	}
 
 	int addToSet(LandscapeClass* item, int classId)
 	{
@@ -156,8 +160,8 @@ public:
 			out.pArray(static_cast<buint>(line.size()));
 			for (size_t i = 0; i < line.size(); i++)
 			{
-				out.pInt(line.points[i].x);
-				out.pInt(line.points[i].y);
+				out.pFloat(line.points[i].x);
+				out.pFloat(line.points[i].y);
 			}
 		}
 	}
@@ -477,69 +481,9 @@ public:
 
 		// **** Collect ****
 		std::vector<TestIterator*> iters {&iterFunc, &iterStep, &iterFuncName, &iterType};
-		int maxAllowed = 100;
+		int maxAllowed = 1;
 
 		// **** Work ****
-		DatasetWork dws;
-		dws.openCraters(maxAllowed, "objects/NWPU-RESISC45", {"desert", "intersection", "railway", "commercial_area"});
-		dws.collect(maxAllowed, landscapes, constr, landPyCluste);
-
-
-		BackFileWriter result("result.txt", std::ios::trunc);
-		while (true)
-		{
-			TestIterator& it = *iters[0];
-
-			// print
-			BackString out;
-			for (auto* t : iters)
-			{
-				t->print(out);
-				out += "| ";
-			}
-			cout << out << endl;
-
-			auto res = dws.predict(landPyCluste);
-			result << out << " => " << res.first << "/" << res.second << ", " << ((100.f * res.first) / res.second) << "%" << endl;
-
-
-			int i = 0;
-			for (;i < iters.size(); i++)
-			{
-				bool allowMoveNext = true;
-				iters[i]->iterate(); // Switch next
-				if (iters[i]->ended())
-				{
-					iters[i]->restart(); // Rstart and go iterate next
-				}
-				else
-				{
-					if (iters[i]->needRebuild())
-					{
-						landPyCluste.clear();
-						dws.collect(maxAllowed, landscapes, constr, landPyCluste);
-					}
-					allowMoveNext = false;
-				}
-
-
-
-
-				if (!allowMoveNext)
-					break;
-			}
-
-			if (i == iters.size())
-				break;
-		}
-
-
-		cout << "DONE" << endl;
-
-		return {};
-
-
-
 
 
 		DatasetWork dw;
@@ -548,7 +492,7 @@ public:
 		// dw.openCraters("objects/eurosat", {"Forest", "Pasture"});
 		// dw.openCraters("objects/256_ObjectCategories", {"009.bear", "007.bat"});
 
-		dw.openCraters(maxAllowed, "objects/NWPU-RESISC45", {"desert", "intersection"});
+		dw.openCraters(maxAllowed, "objects/NWPU-RESISC45", {"intersection"});
 		// dw.openCraters(maxAllowed, "objects/NWPU-RESISC45");
 		// dw.openCraters("objects/UCMerced_LandUse/Images", {"forest", "parkinglot"});
 		// dw.openCraters("test_dataset");
@@ -557,15 +501,28 @@ public:
 
 		// **** Cluster ****
 
-		std::cout << "Start" << std::endl;
-		dw.collect(maxAllowed, landscapes, constr, landPyCluste);
-		landPyCluste.dummy.curFUnc = 0;
-		dw.predict(landPyCluste);
+		// std::cout << "Start" << std::endl;
+		// dw.collect(maxAllowed, landscapes, constr, landPyCluste);
+		// landPyCluste.dummy.curFUnc = 0;
+		// dw.predict(landPyCluste);
 
 		// **** Binary writer ****
-		// WriterProcessor writer(resolution);
+		WriterProcessor writer(resolution);
 		// dw.collect(maxAllowed, landscapes, constr, writer);
+		CachedBaritemHolder cache;
 
+		BackImage main = imread("/Users/sam/Edu/bar/test2/s4.png"s);
+		cache.create(&main, constr, nullptr);
+		// cache.saveLoadState(&writer);
+
+		landscapes.addAllLines(cache);
+		LandscapeClass* item = landscapes.back();
+
+		// Fitting --------------- ---------------
+
+		writer.setClasses(1);
+		writer.addToSet(item, 0);
+		writer.predict();
 		std::cout << "Done" << std::endl;
 		return {};
 	}

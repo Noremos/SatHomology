@@ -192,15 +192,15 @@ class ExeGUI : public IAlg
 
 		RasterLineLayer(); // init colors
 
-		auto* root = item->getRootNode();
+		// auto* root = item->getRootNode();
 
 		TreeWalk helper;
 		helper.layer = layer;
 		helper.layerRect = layerRect;
 		helper.rasterSpot = rasterSpot;
 		helper.filter = filter;
-		assert(root->childrenId.size() == 1);
-		layer->tree = helper.addTree(root->getChild(0));
+		// assert(root->childrenId.size() == 1);
+		// layer->tree = helper.addTree(root->getChild(0));
 
 		return ret;
 	}

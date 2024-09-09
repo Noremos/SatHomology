@@ -216,7 +216,7 @@ public:
 using ClusterFactory = ImlFactory<ICluster, IClusterItemHolder, IBarClusterizer>;
 
 
-MEXPORT static ClusterFactory& getClusterFactory()
+MEXPORT inline ClusterFactory& getClusterFactory()
 {
 	static ClusterFactory clusterFactory;
 	return clusterFactory;

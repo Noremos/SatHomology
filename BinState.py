@@ -102,8 +102,8 @@ class Landscape:
 			size = out.p_array()
 			for _ in range(size):
 				point = Point()
-				point.x = out.p_int()
-				point.y = out.p_int()
+				point.x = out.p_float()
+				point.y = out.p_float()
 				line.append(point)
 
 			self.lines.append(line)
