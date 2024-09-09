@@ -53,8 +53,10 @@ private:
 	};
 };
 
-MEXPORT static ProjectSettings& getSettings()
+MEXPORT inline ProjectSettings& getSettings()
 {
-	static ProjectSettings globalSettings;
-	return globalSettings;
+	static ProjectSettings* globalSettings = nullptr;
+	if (globalSettings == nullptr)
+		globalSettings = new ProjectSettings();
+	return *globalSettings;
 }
