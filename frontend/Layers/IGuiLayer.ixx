@@ -217,11 +217,16 @@ public:
 	{
 		for (auto& lay : rlayers)
 		{
-			auto ptr = LayerFactory::CreateGuiLayer(lay.core);
-			if (!layers.set(lay.core->id, ptr))
-			{
+			IGuiLayer* ptr = LayerFactory::CreateGuiLayer(lay.core);
+
+			bool inited = false;
+			if (layers.set(lay.core->id, ptr))
+				inited = true;
+			else if (!iol.isOutEmpty() && layers.set(iol.out, ptr))
+				inited = true;
+			else
 				layers.addMove(ptr);
-			}
+
 			settup(ptr, lay.getName(name));
 		}
 	}
