@@ -511,7 +511,7 @@ public:
 		//else
 		if (type == BarType::BYTE8_1)
 		{
-			data[(y * _wid + x) * TSize] += val.data.b1;
+			data[(y * _wid + x) * TSize] += val.getAvgUchar();
 		}
 		else
 		{
@@ -527,9 +527,9 @@ public:
 			else
 			{
 				assert(val.type == BarType::BYTE8_1);
-				off[0] += val.data.b1;
-				off[1] += val.data.b1;
-				off[2] += val.data.b1;
+				off[0] += val.getAvgUchar();
+				off[1] += val.getAvgUchar();
+				off[2] += val.getAvgUchar();
 			}
 		}
 
@@ -537,13 +537,96 @@ public:
 		cachedMax.isCached = false;
 	}
 
+	constexpr void incrementSate(uchar& srcData, uchar dataToAdd)
+	{
+		if (255 - srcData < dataToAdd)
+			srcData = 255;
+		else
+			srcData += dataToAdd;
+	}
+
+	constexpr void decrementSate(uchar& srcData, uchar dataToMinus)
+	{
+		if (srcData >= dataToMinus)
+			srcData -= dataToMinus;
+		else
+			srcData = 0;
+	}
+
+	inline void addSafe(int x, int y, const Barscalar& val)
+	{
+		//if (diagReverce)
+		//	values[x * _wid + y] += val;
+		//else
+		if (type == BarType::BYTE8_1)
+		{
+			uchar& srcData = data[(y * _wid + x) * TSize];
+			incrementSate(srcData, val.data.b1);
+		}
+		else
+		{
+			assert(type == BarType::BYTE8_3 || type == BarType::BYTE8_4);
+
+			buchar *off = data + (y * _wid + x) * TSize;
+			if (val.type == BarType::BYTE8_3)
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					incrementSate(off[i], val.data.b3[i]);
+				}
+			}
+			else
+			{
+				assert(val.type == BarType::BYTE8_1);
+				for (int i = 0; i < 3; i++)
+				{
+					incrementSate(off[i], val.getAvgUchar());
+				}
+			}
+		}
+
+		cachedMin.isCached = false;
+		cachedMax.isCached = false;
+	}
+
+
 	void setOpp(int x, int y, uchar op)
 	{
 		buchar *off = data + (y * _wid + x) * TSize;
-		if (type == BarType::BYTE8_4)
+		if (type == BarType::BYTE8_4 || TSize == 4)
 		{
 			off[3] = op;
 		}
+	}
+
+	inline void minusSafe(int x, int y, const Barscalar& val)
+	{
+		if (type == BarType::BYTE8_1)
+		{
+			uchar& srcData = data[(y * _wid + x) * TSize];
+			decrementSate(srcData, val.getAvgUchar());
+		}
+		else
+		{
+			buchar *off = data + (y * _wid + x) * TSize;
+			if (val.type == BarType::BYTE8_3)
+			{
+				for (uchar i = 0; i < 3; i++)
+				{
+					decrementSate(off[i], val.data.b3[i]);
+				}
+			}
+			else
+			{
+				for (uchar i = 0; i < 3; i++)
+				{
+					decrementSate(off[i], val.getAvgUchar());
+				}
+			}
+		}
+
+		cachedMin.isCached = false;
+		cachedMax.isCached = false;
 	}
 
 
@@ -556,7 +639,7 @@ public:
 		if (type == BarType::BYTE8_1)
 		{
 			assert(data[(y * _wid + x) * TSize] >= val.data.b1);
-			data[(y * _wid + x) * TSize] -= val.data.b1;
+			data[(y * _wid + x) * TSize] -= val.getAvgUchar();
 		}
 		else
 		{
@@ -569,9 +652,9 @@ public:
 			}
 			else
 			{
-				off[0] -= val.data.b1;
-				off[1] -= val.data.b1;
-				off[2] -= val.data.b1;
+				off[0] -= val.getAvgUchar();
+				off[1] -= val.getAvgUchar();
+				off[2] -= val.getAvgUchar();
 			}
 		}
 
@@ -584,7 +667,7 @@ public:
 	{
 		if (type == BarType::BYTE8_1)
 		{
-			data[pos * TSize] = val.data.b1;
+			data[pos * TSize] = val.getAvgUchar();
 		}
 		else
 		{
@@ -597,9 +680,9 @@ public:
 			}
 			else
 			{
-				off[0] = val.data.b1;
-				off[1] = val.data.b1;
-				off[2] = val.data.b1;
+				off[0] = val.getAvgUchar();
+				off[1] = val.getAvgUchar();
+				off[2] = val.getAvgUchar();
 			}
 		}
 		cachedMin.isCached = false;
