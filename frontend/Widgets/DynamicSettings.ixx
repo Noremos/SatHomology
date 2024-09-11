@@ -31,12 +31,14 @@ bool MyInputText(const char* label, BackString* my_str, const ImVec2& size = ImV
 	return ImGui::InputText(label, (char*)my_str->c_str(), my_str->length(), flags | ImGuiInputTextFlags_CallbackResize, MyResizeCallback, (void*)my_str);
 }
 
-export void drawDynamicSettings(MLSettings& settings)
+export bool drawDynamicSettings(MLSettings& settings)
 {
+	bool hotChange = false;
 	for (size_t i = 0; i < settings.values.size(); i++)
 	{
 		OptionValue& set = settings.values[i];
 
+		bool hasChange = false;
 		const char* label = set.name.c_str();
 		switch (set.type)
 		{
@@ -44,10 +46,20 @@ export void drawDynamicSettings(MLSettings& settings)
 			ImGui::Checkbox(label, &set.data.b);
 			break;
 		case OptionValue::sv_int:
-			ImGui::InputInt(label, &set.data.i);
+			if (set.flags & OptionValue::SLIDER)
+				hasChange = ImGui::SliderInt(label, &set.data.i, 0, 100);
+			else
+				ImGui::InputInt(label, &set.data.i);
 			break;
 		case OptionValue::sv_double:
-			ImGui::InputDouble(label, &set.data.d);
+			if (set.flags & OptionValue::SLIDER)
+			{
+				float temp = set.data.d;
+				hasChange = ImGui::SliderFloat(label, &temp, 0, 30.0);
+				set.data.d = temp;
+			}
+			else
+				ImGui::InputDouble(label, &set.data.d);
 			break;
 		case OptionValue::sv_str:
 			MyInputText(label, set.data.s);
@@ -70,8 +82,13 @@ export void drawDynamicSettings(MLSettings& settings)
 		case OptionValue::sv_path:
 			break;
 		}
+
+		if (hasChange && set.flags & OptionValue::HOT_RELOAR)
+			hotChange = true;
 	}
 	ImGui::Separator();
+
+	return hotChange;
 }
 
 

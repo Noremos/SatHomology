@@ -111,9 +111,10 @@ public:
 		set(factory.get(selectedId));
 
 
+		bool hotChange = false;
 		auto* settings = alg->getSettings();
 		if (settings)
-			drawDynamicSettings(*settings);
+			hotChange = drawDynamicSettings(*settings);
 
 		if (alg->hasFilter())
 		{
@@ -134,7 +135,7 @@ public:
 			}
 		}
 
-		if (ImGui::Button("Run"))
+		if (hotChange || ImGui::Button("Run"))
 		{
 			auto rets = alg->execute(context.iol);
 			context.setLayers(rets, "Разложить");

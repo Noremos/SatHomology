@@ -88,11 +88,20 @@ MEXPORT struct OptionValue
 	} type;
 
 public:
+
+	enum Flags
+	{
+		NONE = 0,
+		SLIDER,
+		HOT_RELOAR
+	} flags = NONE;
+
 	void operator =(OptionValue&& other)
 	{
 		name = std::exchange(other.name, "");
 		type = std::exchange(other.type, sv_bool);
 		data = std::move(other.data);
+		flags = std::exchange(other.flags, NONE);
 		other.data.b = false;
 	}
 
@@ -105,6 +114,7 @@ public:
 	{
 		name = other.name;
 		type = other.type;
+		flags = other.flags;
 		switch (type)
 		{
 		case OptionValue::sv_str:
@@ -133,25 +143,28 @@ public:
 	}
 
 
-	OptionValue(const BackString& name, bool val)
+	OptionValue(const BackString& name, bool val, Flags flags = Flags::NONE)
 	{
 		this->name = name;
 		data.b = val;
 		type = sv_bool;
+		this->flags = flags;
 	}
 
-	OptionValue(const BackString& name, int val)
+	OptionValue(const BackString& name, int val, Flags flags = Flags::NONE)
 	{
 		this->name = name;
 		data.i = val;
 		type = sv_int;
+		this->flags = flags;
 	}
 
-	OptionValue(const BackString& name, double val)
+	OptionValue(const BackString& name, double val, Flags flags = Flags::NONE)
 	{
 		this->name = name;
 		data.d = val;
 		type = sv_double;
+		this->flags = flags;
 	}
 
 	OptionValue(const BackString& name, BackString val)
