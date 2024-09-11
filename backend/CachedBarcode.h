@@ -227,6 +227,12 @@ public:
 		}
 
 	}
+
+	void saveLoadStateSimple(StateBinFile::BinState* state)
+	{
+		state->pShort(startl.getInt());
+		state->pShort(endl.getInt());
+	}
 };
 
 
@@ -263,7 +269,7 @@ public:
 		for (int i = 0; i < size; i++)
 		{
 			bc::barline* line = item->barlines[i];
-			std::cout << line->start.getAvgFloat() << " " << line->m_end.getAvgFloat() << std::endl;
+			// std::cout << line->start.getAvgFloat() << " " << line->m_end.getAvgFloat() << std::endl;
 			assert(line->id == i);
 
 			Base::items.push_back({});
@@ -324,6 +330,17 @@ public:
 		{
 			Base::items[i].saveLoadState(state);
 			Base::items[i].root = this;
+		}
+	}
+
+
+	void saveLoadStateSImple(StateBinFile::BinState* state)
+	{
+		int count = Base::items.size();
+		count = state->pInt(count);
+		for (int i = 0; i < count; ++i)
+		{
+			Base::items[i].saveLoadStateSimple(state);
 		}
 	}
 };
