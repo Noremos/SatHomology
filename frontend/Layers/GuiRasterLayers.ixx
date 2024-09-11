@@ -46,8 +46,8 @@ public:
 
 		if (ImGui::Button("Выгрузить"))
 		{
-			BackPathStr path = getSavePath({ "png", "*.png",
-								"jpg", "*.jpg" });
+
+			BackPathStr path = getSavePath({ "*.png", "*.jpg" });
 			imwrite(path, data->mat);
 		}
 		ImGui::Separator();

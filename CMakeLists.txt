@@ -40,6 +40,7 @@ set(SIDE_SOURCES
     side/barcode/PrjBarlib/modules/tiffreader.cpp
     side/Hungarian.cpp
     side/hclust-cpp/fastcluster.cpp
+    side/tinyfiledialogs.c
 )
 
 

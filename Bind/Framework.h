@@ -23,6 +23,8 @@ import BackBind;
 #endif
 
 
+#include "tinyfiledialogs.h"
+
 //#define GL_RGB                            0x1907
 
 MEXPORT inline std::vector<BackPathStr> openImagesOrProject()
@@ -133,11 +135,22 @@ MEXPORT inline BackPathStr openProject()
 
 MEXPORT inline BackPathStr getSavePath(std::initializer_list<BackString> exts)
 {
-	auto fs = pfd::save_file("Choose file to save", pfd::path::home(), exts, pfd::opt::none);
+	std::vector<const char*> extsSrc;
+	for (auto &i : exts)
+	{
+		extsSrc.push_back(i.data());
+	}
 
-	std::cout << "File path:" << " " + fs.result() << std::endl;
+	auto fs = tinyfd_saveFileDialog(
+		"Choose file to save",
+		pfd::path::home().data(),
+		exts.size(),
+		extsSrc.data(),
+		NULL);
 
-	return fs.result().size() == 0 ? "" : fs.result();
+	// auto fs = pfd::save_file("Choose file to save", pfd::path::home(), exts, pfd::opt::none);
+
+	return fs == nullptr ? "" : fs;
 }
 
 MEXPORT inline BackPathStr getDicumnetPath()
