@@ -16,6 +16,7 @@ module;
 #include <algorithm>
 #include "../side/subprocess.h"
 #include "Usings.h"
+#include <sstream>
 
 #include "../MLSettings.h"
 #ifdef USE_MODULE

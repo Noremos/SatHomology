@@ -84,7 +84,7 @@ BackImage prepareImg(const bool normal, const BackImage& src, int channels = 3)
 	return img;
 }
 
-void testRestore(InOutLayer iol, const MLSettings& setting)
+RetLayers testRestore(InOutLayer iol, const MLSettings& setting)
 {
 	bc::barstruct constr = getConstr(setting);
 	constr.coltype = bc::ColorType::gray;
