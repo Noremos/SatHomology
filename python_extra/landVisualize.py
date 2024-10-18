@@ -269,7 +269,7 @@ linesd= [
 (125, 141),
 ]
 
-def drawSingle(land : Landscape, name = None):
+def drawSingle(land : Landscape, onlyLand : bool = False):
 	# Количество объектов
 	np.random.seed(0)  # Для повторяемости результатов0
 	# Уникальные цвета для каждого объекта
@@ -282,17 +282,25 @@ def drawSingle(land : Landscape, name = None):
 	# y = i + np.random.rand(100)*0.25
 		colors.append([r,g,b])
 
-	separateFig, (ax, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+	separateFig, axs = plt.subplots(1, 1, figsize=(5, 5)) if onlyLand else plt.subplots(1, 2, figsize=(10, 5))
 
+	ax = None
+	ax2 = None
+	if onlyLand:
+		ax2 = axs
+	else:
+		ax = axs[1]
+		ax2 = axs[0]
 
 	plt.axis('equal')
 	# ax.legend()
-	ax.grid(True)
+
+	if not onlyLand:
+		ax.grid(True)
+		ax.set_xlabel('Яркость')
+		ax.set_ylabel('Высота')
+
 	ax2.grid(True)
-
-	ax.set_xlabel('Яркость')
-	ax.set_ylabel('Высота')
-
 	ax2.set_xlabel('Яркость')
 	ax2.set_ylabel('Номер компоненты')
 	# Start y from 0
@@ -312,32 +320,102 @@ def drawSingle(land : Landscape, name = None):
 		ax2.plot(x_coords, heights, linestyle='-', color=colors[k2 % len(colors)], linewidth= 2)
 		k2 += 5
 
-	for line in land.lines:
-		if k == 0:
-			k += 1
-			continue
-		x_coords = [p.x for p in line]
-		heights = [p.y for p in line]
+	if not onlyLand:
+		for line in land.lines:
+			if k == 0:
+				k += 1
+				continue
+			x_coords = [p.x for p in line]
+			heights = [p.y for p in line]
 
-		if k == 7:
-			x_coords[0] -= 1
-			x_coords[1] -= 0.5
-			heights[1] += 0.5
+			if k == 7:
+				x_coords[0] -= 1
+				x_coords[1] -= 0.5
+				heights[1] += 0.5
 
-		wid = 5 - k
-		if wid < 0:
+			wid = 5 - k
+			if wid < 0:
+				wid = 1
 			wid = 1
-		wid = 1
-		ax.plot(x_coords, heights, linestyle='-', color=colors[k % len(colors)], linewidth= wid)
-		k += 1
+			ax.plot(x_coords, heights, linestyle='-', color=colors[k % len(colors)], linewidth= wid)
+			k += 1
 
 	# save figure with 300 dpi
 
 	plt.savefig("out.jpg", dpi=300)
 	plt.show()
 
-landsPerClass, landsAll = loadLandscape("out.bin")
-drawSingle(landsAll[0])
+
+
+def drawExample():
+	# Количество объектов
+	np.random.seed(0)  # Для повторяемости результатов0
+	# Уникальные цвета для каждого объекта
+	colors = []
+	for i in range(30):
+		r = np.round(np.random.rand(),1)
+		g = np.round(np.random.rand(),1)
+		b = np.round(np.random.rand(),1)
+
+	# y = i + np.random.rand(100)*0.25
+		colors.append([r,g,b])
+
+	separateFig, axs = plt.subplots(1, 1, figsize=(5, 5))
+
+	ax = None
+	ax2 = None
+	ax2 = axs
+
+	plt.axis('equal')
+	# ax.legend()
+
+	ax2.grid(True)
+	ax2.set_xlabel('Яркость')
+	ax2.set_ylabel('Высота')
+	# Start y from 0
+	# ax.set_yticks([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
+
+	# ax2.axis(ymin = 0)
+
+	# set x legend
+
+
+	k = 0
+
+	k2 = 1
+
+
+	linesd= [
+		(0, 95),
+		(9, 104),
+		(20, 50),
+		(101, 110),
+		(0, 141),
+		(100, 141),
+		]
+
+
+	for line in linesd:
+		llen = line[1] - line[0]
+		x_coords = [line[0], line[0] + llen / 2, line[1]]
+		heights = [0,llen / 2, 0]
+		ax2.plot(x_coords, heights, linestyle='-', color=colors[k2 % len(colors)], linewidth= 2)
+		k2 += 5
+
+	# save figure with 300 dpi
+
+	ax2.set_ylim(bottom=0.)
+	plt.savefig("out.jpg", dpi=300)
+	plt.show()
+
+
+def main():
+	landsPerClass, landsAll = loadLandscape("out.bin")
+	drawSingle(landsAll[0])
+# drawSingle(landsAll[0], True)
 # drawForOne(landsAll[0], UseHei)
 
 # drawForOne(landsAll[0])
+
+drawExample()
+# main()
