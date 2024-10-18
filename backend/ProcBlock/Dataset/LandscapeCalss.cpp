@@ -10,7 +10,7 @@
 #include "hclust-cpp/fastcluster.h"
 #include "../../Clusterizers/ExteranlReader.h"
 #include "Barcode/PrjBarlib/modules/StateBinFile.h"
-
+#include <numeric>
 
 struct Point {
     double x, y;
@@ -144,6 +144,11 @@ public:
 			}
 		}
 		return minPair;
+	}
+
+	void fill(int value)
+	{
+		std::fill(data.begin(), data.end(), value);
 	}
 };
 
@@ -395,6 +400,8 @@ void LandscapeCluster::predict(std::vector<Landscape>& landscapes)
 
 	FuncPtr& func = *fucns[curFUnc];
 
+	double maxval = 0;
+
 	for (size_t i = 0; i < n; i++)
 	{
 		for (size_t j = i + 1; j < n; j++)
@@ -406,11 +413,147 @@ void LandscapeCluster::predict(std::vector<Landscape>& landscapes)
 			// iterLandDistanceMdpiInf // 5
 			// iterLandDistanceMdpi2 // 18
 			matrix.setBoth(i, j, func(landscapes[i], landscapes[j], iterationStep, -1));
+			if (matrix.get(i, j) > maxval)
+				maxval = matrix.get(i, j);
 			// matrix.setBoth(j, i, lineDistance<Distance::Line::AreaInf>(landscapes[i], landscapes[j]));
 		}
 		matrix(i, i) = 0;
 	}
 
+	// // Label sharing
+	// for (size_t i = 0; i < n; i++)
+	// {
+	// 	for (size_t j = i + 1; j < n; j++)
+	// 	{
+	// 		matrix.setBoth(i, j, matrix.get(i, j) / maxval);
+	// 	}
+	// }
+
+	// std::vector<std::pair<int, int>> edges;
+	// for (size_t i = 0; i < n; i++)
+	// {
+	// 	for (size_t j = i + 1; j < n; j++)
+	// 	{
+	// 		edges.push_back({ i,j });
+	// 	}
+	// }
+
+	// std::sort(edges.begin(), edges.end(), [&matrix](const auto& a, const auto& b)
+	// {
+	// 	return matrix(a.first, a.second) < matrix(b.first, b.second);
+	// });
+
+	// std::set<int> used;
+	// std::vector<int> p(n);
+	// std::fill(p.begin(), p.end(), -1);
+
+	// std::vector<std::pair<int, float>> labels(n, {-1, 0.f});
+
+	// int res = 0;
+	// std::vector<int> startPoints;
+	// for (const auto& edge : edges)
+	// {
+	// 	int& a = p[edge.first];
+	// 	int& b = p[edge.second];
+
+	// 	if (a == -1)
+	// 	{
+	// 		if (b == -1)
+	// 		{
+	// 			if (startPoints.size() < maxAllowed)
+	// 			{
+	// 				labels[edge.first] = {res, 1.f};
+	// 				labels[edge.second] = {res, 1.f};
+	// 				used.insert(a);
+	// 				startPoints.push_back(a);
+	// 			}
+	// 			a = b = res++;
+	// 		}
+	// 		else
+	// 			a = b;
+	// 	}
+	// 	else
+	// 	{
+	// 		if (b == -1)
+	// 			b = a;
+
+	// 		// a = b;
+	// 	}
+	// 	// int aroot = edge.first;
+	// 	// while (p[aroot] != aroot) aroot = p[aroot];
+
+	// 	// int broot = edge.second;
+	// 	// while (p[broot] != broot) broot = p[broot];
+
+	// 	// if (aroot != broot)
+	// 	// {
+	// 	// 	res += matrix(edge.first, edge.second);
+	// 	// 	p[broot] = aroot;
+	// 	// }
+	// }
+
+	// {
+	// 	int u = edges.size() - 1;
+	// 	while (startPoints.size() < maxAllowed)
+	// 	{
+	// 		int d1 = edges[u].first;
+	// 		int d2 = edges[u].second;
+	// 		if (used.find(d1) == used.end())
+	// 			startPoints.push_back(d1);
+	// 		else if (used.find(d2) == used.end())
+	// 		{
+	// 			labels[d1] = {res, 1.f};
+	// 			labels[d2] = {res, 1.f};
+	// 			startPoints.push_back(d2);
+	// 		}
+	// 	}
+	// }
+
+	// for (size_t iter = 0; iter < 5; iter++)
+	// {
+	// 	for (size_t i = 0; i < n; i++)
+	// 	{
+	// 		auto& lhsLabel = labels[i];
+	// 		if (lhsLabel.first != -1)
+	// 		{
+	// 			int maxId = 0;
+	// 			float maxDistance = 0;
+	// 			for (size_t j = 0; j < n; j++)
+	// 			{
+	// 				if (i == j)
+	// 					continue;
+
+	// 				float factor = matrix.get(i, j);
+	// 				auto& rhsLabel = labels[j];
+
+	// 				if (rhsLabel.first != -1)
+	// 					continue;
+
+	// 				if (factor > maxDistance)
+	// 				{
+	// 					maxId = j;
+	// 					maxDistance = factor;
+	// 				}
+	// 			}
+	// 			if (maxDistance > lhsLabel.second)
+	// 			{
+	// 				lhsLabel.first = labels[maxId].first;
+	// 				lhsLabel.second = maxDistance;
+	// 			}
+	// 		}
+	// 	}
+
+	// }
+
+	// for (size_t i = 0; i < n; i++)
+	// {
+	// 	output.push_back(labels[i].first);
+	// }
+	// return;
+
+
+
+	// Cloud
 
 	BackString filePath = get_temp_file_path();
 	StateBinFile::BinStateWriter writer;
