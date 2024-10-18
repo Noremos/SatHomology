@@ -481,7 +481,67 @@ public:
 
 		// **** Collect ****
 		std::vector<TestIterator*> iters {&iterFunc, &iterStep, &iterFuncName, &iterType};
-		int maxAllowed = 1;
+		int maxAllowed = 100;
+
+		// **** Work ****
+		DatasetWork dws;
+		dws.openCraters(maxAllowed, "objects/NWPU-RESISC45", {"desert", "intersection", "railway", "commercial_area"});
+		dws.collect(maxAllowed, landscapes, constr, landPyCluste);
+
+
+		BackFileWriter result("result.txt", std::ios::trunc);
+		while (true)
+		{
+			TestIterator& it = *iters[0];
+
+			// print
+			BackString out;
+			for (auto* t : iters)
+			{
+				t->print(out);
+				out += "| ";
+			}
+			cout << out << endl;
+
+			auto res = dws.predict(landPyCluste);
+			result << out << " => " << res.first << "/" << res.second << ", " << ((100.f * res.first) / res.second) << "%" << endl;
+
+
+			int i = 0;
+			for (;i < iters.size(); i++)
+			{
+				bool allowMoveNext = true;
+				iters[i]->iterate(); // Switch next
+				if (iters[i]->ended())
+				{
+					iters[i]->restart(); // Rstart and go iterate next
+				}
+				else
+				{
+					if (iters[i]->needRebuild())
+					{
+						landPyCluste.clear();
+						dws.collect(maxAllowed, landscapes, constr, landPyCluste);
+					}
+					allowMoveNext = false;
+				}
+
+
+
+
+				if (!allowMoveNext)
+					break;
+			}
+
+			if (i == iters.size())
+				break;
+		}
+
+
+		cout << "DONE" << endl;
+
+		return {};
+
 
 		// **** Work ****
 
@@ -492,7 +552,7 @@ public:
 		// dw.openCraters("objects/eurosat", {"Forest", "Pasture"});
 		// dw.openCraters("objects/256_ObjectCategories", {"009.bear", "007.bat"});
 
-		dw.openCraters(maxAllowed, "objects/NWPU-RESISC45", {"intersection"});
+		dw.openCraters(maxAllowed, "objects/NWPU-RESISC45", {"intersection", "harbor"});
 		// dw.openCraters(maxAllowed, "objects/NWPU-RESISC45");
 		// dw.openCraters("objects/UCMerced_LandUse/Images", {"forest", "parkinglot"});
 		// dw.openCraters("test_dataset");
@@ -502,9 +562,10 @@ public:
 		// **** Cluster ****
 
 		// std::cout << "Start" << std::endl;
-		// dw.collect(maxAllowed, landscapes, constr, landPyCluste);
+		dw.collect(maxAllowed, landscapes, constr, landPyCluste);
 		// landPyCluste.dummy.curFUnc = 0;
-		// dw.predict(landPyCluste);
+		dw.predict(landPyCluste);
+		return {};
 
 		// **** Binary writer ****
 		WriterProcessor writer(resolution);
