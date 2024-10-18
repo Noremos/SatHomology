@@ -84,21 +84,105 @@ BackImage prepareImg(const bool normal, const BackImage& src, int channels = 3)
 	return img;
 }
 
+void testRestore(InOutLayer iol, const MLSettings& setting)
+{
+	bc::barstruct constr = getConstr(setting);
+	constr.coltype = bc::ColorType::gray;
+
+	const bool normal = constr.proctype != bc::ProcType::f255t0;
+
+
+	using namespace std::string_literals;
+	BackString root = "/Users/sam/Edu/papers/2024_split/"s;
+
+	std::vector<BackString> paths = {"1_commercial_area_231.jpg"s, "2_freeway_258.jpg"s, "3_ground_track_field_028.jpg"s, "4_lake_013.jpg"s};
+	int starts[] =
+	{
+		5, 5, 5, 3
+	};
+
+	int middles[] =
+	{
+		75, 50, 35, 20
+	};
+
+	int middleK[] =
+	{
+		5, 5, 5, 5
+	};
+
+	int hightK[] =
+	{
+		50, 15, 15, 15
+	};
+
+
+	for (size_t i = 0; i < paths.size(); i++)
+	{
+		// break;
+		int start = starts[i];
+		int middle = middles[i];
+		BackImage main = imread(root + paths[i]);
+
+		std::unique_ptr<bc::Baritem> citem(bc::BarcodeCreator::create(main, constr));
+		// citem->sortByLen();
+		// restore(citem.get(), normal, main, 0, middle, 1.f);
+		BackImage out = prepareImg(normal, main, 3);
+		// restore(citem.get(), normal, out, middle, 100, 1);
+
+		int k = middleK[i];
+		{
+			BackImage middleHilight = out;
+			restore(citem.get(), normal, middleHilight, 0, start, 1.f);
+			restore(citem.get(), normal, middleHilight, middle, 100, 1.f);
+			restore(citem.get(), !normal, middleHilight, start, middle, k);
+
+
+			imwrite(root + intToStr(i + 1) + "/rest + "s + intToStr(start) + "-"s + intToStr(middle) + "% * " + intToStr(k) + ".png"s, middleHilight);
+		}
+
+		k = hightK[i];
+		{
+			BackImage highHilight = out;
+			restore(citem.get(), normal, highHilight, 0, start, 1.f);
+			restore(citem.get(), normal, highHilight, start, middle, 1.f);
+			restore(citem.get(), !normal, highHilight, middle, 100, k);
+
+			imwrite(root + intToStr(i + 1) + "/rest + "s + intToStr(middle) + "-100% * "+ intToStr(k) +".png"s, highHilight);
+		}
+
+		// StateBinFile::BinStateWriter writer;
+		// writer.open(root + intToStr(i + 1) + "/bar.bin"s);
+		// auto count = writer.pInt(citem->barlines.size());
+		// for (int i = 0; i < count; ++i)
+		// {
+		// 	writer.pShort(citem->barlines[i]->start.getInt());
+		// 	writer.pShort(citem->barlines[i]->end().getInt());
+		// }
+
+	}
+	return {};
+}
+
 RetLayers exeRestore(InOutLayer iol, const MLSettings& setting)
 {
-	RetLayers ret;
+	// testRestore()
+	bc::barstruct constr = getConstr(setting);
+	constr.coltype = bc::ColorType::gray;
+
+	const bool normal = constr.proctype != bc::ProcType::f255t0;
+
+
+
 	BackImage src;
+	RetLayers ret;
 
 	RasterLayer* rasterSpot = genOutputFromInput(iol, src);
 	ret.push_back(rasterSpot);
+	auto auitem = (bc::BarcodeCreator::create(src, constr));
+	bc::Baritem* item = auitem.get();
 
 
-	bc::BarcodeCreator bcc;
-	bc::barstruct constr = getConstr(setting);
-	constr.coltype = bc::ColorType::gray;
-	bc::Baritem* item = (bcc.createBarcode(&src, constr));
-
-	const bool normal = constr.proctype != bc::ProcType::f255t0;
 
 	Barscalar minColor;
 	Barscalar maxColor;
@@ -111,69 +195,8 @@ RetLayers exeRestore(InOutLayer iol, const MLSettings& setting)
 
 	BackImage img = prepareImg(normal, src, rasterSpot->mat.channels());
 	float hilight = *setting.getDouble("K");
-/*
-	using namespace std::string_literals;
-	{
-		StateBinFile::BinStateWriter writer;
-		writer.open("/Users/sam/Edu/papers/2024_split/1/bar.bin");
 
-		CachedBaritemHolder cache;
-		BackImage main = imread("/Users/sam/Edu/papers/2024_split/1_commercial_area_231.jpg"s);
 
-		std::unique_ptr<bc::Baritem> citem(bc::BarcodeCreator::create(main, constr));
-		restore(citem.get(), normal, main, 0, 75, 1.f);
-		restore(citem.get(), normal, main, 75, 100, 1);
-		// cache.create(&main, constr, nullptr);
-		// cache.saveLoadStateSImple(&writer);
-		imwrite("/Users/sam/Edu/papers/2024_split/1/multiply_k15.png"s, main);
-	}
-
-	using namespace std::string_literals;
-	{
-		StateBinFile::BinStateWriter writer;
-		writer.open("/Users/sam/Edu/papers/2024_split/2/bar.bin");
-
-		CachedBaritemHolder cache;
-		BackImage main = imread("/Users/sam/Edu/papers/2024_split/2_freeway_258.jpg"s);
-		std::unique_ptr<bc::Baritem> citem(bc::BarcodeCreator::create(main, constr));
-		restore(citem.get(), normal, main, 0, 50, 1.f);
-		restore(citem.get(), normal, main, 50, 100, 15);
-		// cache.create(&main, constr, nullptr);
-		// cache.saveLoadStateSImple(&writer);
-		imwrite("/Users/sam/Edu/papers/2024_split/2/multiply_k15.png"s, main);
-	}
-
-	using namespace std::string_literals;
-	{
-		StateBinFile::BinStateWriter writer;
-		writer.open("/Users/sam/Edu/papers/2024_split/3/bar.bin");
-
-		CachedBaritemHolder cache;
-		BackImage main = imread("/Users/sam/Edu/papers/2024_split/3_ground_track_field_028.jpg"s);
-		// cache.create(&main, constr, nullptr);
-		// cache.saveLoadStateSImple(&writer);
-		std::unique_ptr<bc::Baritem> citem(bc::BarcodeCreator::create(main, constr));
-		restore(citem.get(), normal, main, 0, 35, 1.f);
-		restore(citem.get(), normal, main, 35, 100, 15);
-		imwrite("/Users/sam/Edu/papers/2024_split/3/multiply_k15.png"s, main);
-	}
-
-	using namespace std::string_literals;
-	{
-		StateBinFile::BinStateWriter writer;
-		writer.open("/Users/sam/Edu/papers/2024_split/4/bar.bin");
-
-		CachedBaritemHolder cache;
-		BackImage main = imread("/Users/sam/Edu/papers/2024_split/4_lake_013.jpg"s);
-		// cache.create(&main, constr, nullptr);
-		// cache.saveLoadStateSImple(&writer);
-		std::unique_ptr<bc::Baritem> citem(bc::BarcodeCreator::create(main, constr));
-		restore(citem.get(), normal, main, 0, 20, 1.f);
-		restore(citem.get(), normal, main, 20, 100, 15);
-		imwrite("/Users/sam/Edu/papers/2024_split/4/multiply_k15.png"s, main);
-	}
-
-	return {};*/
 
 	bool multiplyMode = *setting.getBool("Multiply mode");
 
@@ -218,3 +241,13 @@ MLSettings mkSettingsRestore()
 }
 
 static AlgFuncRegister registerExeRestore("Restore", exeRestore, mkSettingsRestore, "Preview");
+
+// class AutoRun
+// {
+// public:
+// 	AutoRun()
+// 	{
+// 		exeRestore({}, testRestore());
+// 	}
+// };
+// static AutoRun autoee;
