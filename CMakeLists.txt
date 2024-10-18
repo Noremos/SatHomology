@@ -154,10 +154,6 @@ target_sources(${BTARGET}
 find_package(glfw3 CONFIG REQUIRED)
 target_link_libraries(${BTARGET} PRIVATE glfw)
 
-# this is heuristically generated, and may not be correct
-find_package(jsoncpp CONFIG REQUIRED)
-target_link_libraries(${BTARGET} PRIVATE JsonCpp::JsonCpp)
-
 find_package(Lua REQUIRED)
 target_include_directories(${BTARGET} PRIVATE ${LUA_INCLUDE_DIR})
 target_link_libraries(${BTARGET} PRIVATE ${LUA_LIBRARIES})

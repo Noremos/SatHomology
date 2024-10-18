@@ -152,7 +152,7 @@ public:
 		int temp;
 		MetadataProvider d("", temp);
 
-		categ.counter = loadDoc["counter"].asInt();
+		categ.counter = loadDoc["counter"];
 		JsonArray list = loadDoc["categories"];
 		for (auto item : list)
 		{
@@ -170,12 +170,12 @@ public:
 		int temp;
 		MetadataProvider d("", temp);
 
-		JsonArray arr(Json::ValueType::arrayValue);
+		JsonArray arr = JsonArray::array();
 		for (size_t i = 0; i < categs.size(); i++)
 		{
 			JsonObject catId;
 			categs[i].write(catId, d);
-			arr.append(catId);
+			arr.push_back(catId);
 		}
 
 		BackJson loadDoc;
