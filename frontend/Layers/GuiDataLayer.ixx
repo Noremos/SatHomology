@@ -28,7 +28,6 @@ import DrawUtils;
 import IGuiLayer;
 //import FrontendBind;
 
-Project* proj = Project::getProject();
 //GuiBackend backend;
 
 
@@ -43,6 +42,7 @@ public:
 
 	GuiLayerData(T* fromCore = nullptr)
 	{
+		Project* proj = Project::getProject();
 		if (fromCore == nullptr)
 			data = proj->addLayerData<T>();
 		else

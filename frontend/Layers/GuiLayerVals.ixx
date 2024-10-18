@@ -30,7 +30,6 @@ import IGuiLayer;
 
 //import FrontendBind;
 
-Project* proj = Project::getProject();
 //GuiBackend backend;
 
 export class LayersVals : public ILayerWorker
@@ -295,6 +294,7 @@ public:
 				if (ImGui::Button(ICON_FA_TRASH "", ImVec2(selHei, selHei)))
 				{
 					delId = curID;
+					Project* proj = Project::getProject();
 					lay->getCore()->release(proj->getMeta());
 					if (curRadio)
 					{
@@ -346,6 +346,7 @@ public:
 			ImGui::EndListBox();
 		}
 
+		Project* proj = Project::getProject();
 		if (delId != -1)
 		{
 			layers.remove(delId);

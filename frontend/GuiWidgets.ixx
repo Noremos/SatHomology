@@ -15,7 +15,6 @@ export module GuiWidgets;
 import ProjectModule;
 import DrawUtils;
 
-Project* proj = Project::getProject();
 
 // struct CDDisplayPS
 // {
@@ -319,6 +318,7 @@ public:
 		if (hovered)
 		{
 			auto* win = ImGui::GetCurrentWindow();
+			Project* proj = Project::getProject();
 			auto& pds = proj->getDisplay();
 			// auto wpos = pds.csPos;
 
