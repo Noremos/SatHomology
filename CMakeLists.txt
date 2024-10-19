@@ -66,7 +66,7 @@ include_directories(
 
 # Настройка конфигураций
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release")
-set(CXX_SCAN_FOR_MODULES TRUE)
+# set(CXX_SCAN_FOR_MODULES TRUE)
 
 if (BUILD_TEST)
     enable_testing()
@@ -126,11 +126,11 @@ else()
     file(COPY ${RES_FILES} DESTINATION ${CMAKE_BINARY_DIR}/../../${OUT_FOLTE}/)
 endif()
 
-target_sources(${BTARGET}
-    PUBLIC
-    FILE_SET all_my_modules TYPE CXX_MODULES FILES
-    # ${SOURCES_MODULES}
-)
+# target_sources(${BTARGET}
+#     PUBLIC
+#     FILE_SET all_my_modules TYPE CXX_MODULES FILES
+#     ${SOURCES_MODULES}
+# )
 
 # add_library(foo)
 # # Add the module file to the library
