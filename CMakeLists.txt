@@ -44,23 +44,15 @@ set(SIDE_SOURCES
 )
 
 
-file(GLOB_RECURSE SOURCES_MODULES
-    "Bind/*.ixx"
-    "frontend/*.ixx"
-    "backend/*.ixx"
-    # "side/Barcode/PrjBarlib/modules/*.ixx"
-    # "side/Barcode/PrjBarlib/modules/StateBinFile.ixx"
-    # "side/Barcode/PrjBarlib/modules/TiffReader.ixx"
-)
 
-list(FILTER SOURCES_MODULES EXCLUDE REGEX ".*backend/Algs/CachedBarcodeAlg\\.ixx$")
-list(FILTER SOURCES_MODULES EXCLUDE REGEX ".*backend/Interfaces/IAlg\\.ixx$")
-list(FILTER SOURCES_MODULES EXCLUDE REGEX ".*backend/Layers/SimpleLineDisplay\\.ixx$")
-list(FILTER SOURCES_MODULES EXCLUDE REGEX ".*backend/Layers/SimpleLineDisplay\\.ixx$")
-list(FILTER SOURCES_MODULES EXCLUDE REGEX ".*frontend/Viewer3d\\.ixx$")
-list(FILTER SOURCES_MODULES EXCLUDE REGEX ".*frontend/Object3d\\.ixx$")
-list(FILTER SOURCES_MODULES EXCLUDE REGEX ".*side/Barcode/PrjBarlib/modules/BinStateFileWrapper\\.ixx$")
-list(FILTER SOURCES_MODULES EXCLUDE REGEX ".*side/Barcode/PrjBarlib/modules/ImageReader\\.ixx$")
+# list(FILTER SOURCES_MODULES EXCLUDE REGEX ".*backend/Algs/CachedBarcodeAlg\\.ixx$")
+# list(FILTER SOURCES_MODULES EXCLUDE REGEX ".*backend/Interfaces/IAlg\\.ixx$")
+# list(FILTER SOURCES_MODULES EXCLUDE REGEX ".*backend/Layers/SimpleLineDisplay\\.ixx$")
+# list(FILTER SOURCES_MODULES EXCLUDE REGEX ".*backend/Layers/SimpleLineDisplay\\.ixx$")
+# list(FILTER SOURCES_MODULES EXCLUDE REGEX ".*frontend/Viewer3d\\.ixx$")
+# list(FILTER SOURCES_MODULES EXCLUDE REGEX ".*frontend/Object3d\\.ixx$")
+# list(FILTER SOURCES_MODULES EXCLUDE REGEX ".*side/Barcode/PrjBarlib/modules/BinStateFileWrapper\\.ixx$")
+# list(FILTER SOURCES_MODULES EXCLUDE REGEX ".*side/Barcode/PrjBarlib/modules/ImageReader\\.ixx$")
 
 
 # add_definitions(-DIMGUI_DEFINE_MATH_OPERATORS)
@@ -137,7 +129,7 @@ endif()
 target_sources(${BTARGET}
     PUBLIC
     FILE_SET all_my_modules TYPE CXX_MODULES FILES
-    ${SOURCES_MODULES}
+    # ${SOURCES_MODULES}
 )
 
 # add_library(foo)

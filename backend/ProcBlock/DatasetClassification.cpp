@@ -28,8 +28,9 @@ using namespace std::string_literals;
 // import RasterLayers;
 // import IBlock;
 // import LayersCore;
-// import ProjectModule;
-import AlgUtils;
+// //import IAlgorithm
+#include "../backend/project.h"
+//import AlgUtils;
 // import MatrModule;
 // import ConvertItem;
 // import CachedBarcode;

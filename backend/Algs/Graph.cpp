@@ -9,12 +9,14 @@
 #include "../MLSettings.h"
 #include "../Layers/layerInterface.h"
 #include "../Layers/Rasterlayers.h"
+#include "../backend/Interfaces/IAlgorithm.h"
+#include "../backend/Algs/SimpleBar.h"
 
 // import MLSettings;
 // import MatrModule;
-import IAlgorithm;
-import AlgUtils;
-import SimpleBar;
+//import IAlgorithm
+//import AlgUtils;
+//import SimpleBar;
 
 
 RetLayers exeBargraph(InOutLayer iol, const MLSettings& setting)

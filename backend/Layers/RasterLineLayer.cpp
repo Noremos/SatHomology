@@ -1,6 +1,8 @@
 #include "RasterLineLayer.h"
 
-import GeoprocessorModule;
+// //import GeoprocessorModule;
+#include "../backend/GeoProcessor.h"
+#include "../GeoProcessor.h"
 
 std::vector<Barscalar> RasterLineLayer::colors;
 

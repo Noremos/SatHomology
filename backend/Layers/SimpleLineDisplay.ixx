@@ -1,6 +1,8 @@
 //export module SimpleLine;
-//import DrawUtils;
-//import VectorLayers;
+////import DrawUtils;
+#include "../DrawUtils.h"
+////import VectorLayers;
+#include "../backend/Layers/VectorLayers.h"
 //
 //export void MyFunc();
 

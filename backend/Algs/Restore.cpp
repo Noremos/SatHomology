@@ -16,16 +16,20 @@
 #include "../Layers/layerInterface.h"
 #include "../Layers/Rasterlayers.h"
 #include "../CachedBarcode.h"
+#include "../project.h"
 
 // import LayersCore;
 // import RasterLayers;
 //import BackBind;
-import ProjectModule;
+// //import IAlgorithm
+#include "../backend/project.h"
 // import MLSettings;
 // import MatrModule;
-import IAlgorithm;
-import AlgUtils;
-import SimpleBar;
+//import IAlgorithm
+#include "../backend/Interfaces/IAlgorithm.h"
+//import AlgUtils;
+//import SimpleBar;
+#include "../backend/Algs/SimpleBar.h"
 
 // Linear interpolation function
 

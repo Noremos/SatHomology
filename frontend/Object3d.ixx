@@ -1,4 +1,4 @@
-module;
+/*module;
 
 #define LOG
 #include <vector>
@@ -16,7 +16,8 @@ module;
 
 export module Obejct3DModule;
 // import ImgReader;
-import BackTypes;
+//import BackTypes;
+#include "../backend/BackTypes.h"
 //import BackBind;
 
 
@@ -246,7 +247,7 @@ class Obj3d
 	StaticArray<objoff> currNullRow;
 	StaticArray<objoff> prevNullRow;
 	//	objoff* nullRow[2];
-	objoff getIndex(int x, int y, int /*realH*/)
+	objoff getIndex(int x, int y, int) // healH
 	{
 		return y == 0 ? prevNullRow[x / step] : currNullRow[x / step];
 	}
@@ -790,3 +791,4 @@ void Object3d::readFile(const BackPathStr& path)
 
 	return;
 }
+*/

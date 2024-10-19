@@ -10,8 +10,11 @@
 // import RasterLayers;
 // import IBlock;
 // import LayersCore;
-import ProjectModule;
-import AlgUtils;
+//import IAlgorithm
+#include "../project.h"
+#include "../Algs/Common.h"
+
+//import AlgUtils;
 //import BackBind;
 // import MatrModule;
 

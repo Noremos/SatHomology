@@ -23,29 +23,45 @@
 #include "../backend/Layers/Rasterlayers.h"
 #include "../backend/Layers/RasterLineLayer.h"
 
-import FrontendBind;
+#include "frontend.h"
+#include "Layers/GuiLayerVals.h"
+#include "GuiOverlap.h"
+#include "GuiClassifier.h"
+#include "GuiWidgets.h"
+#include "../backend/Layers/VectorLayers.h"
+#include "Layers/GuiVectorLayers.h"
+#include "../backend/project.h"
+#include "Layers/GuiRasterLayers.h"
+#include "Layers/GuiRasterLineLayer.h"
+#include "DrawUtils.h"
+#include "Layers/IGuiLayer.h"
+#include "Layers/GuiLayerVals.h"
+#include "../backend/Interfaces/IAlgorithm.h"
+#include "GuiBlock.h"
+
+//import FrontendBind;
 // import Platform;
-import GuiLayers;
+//import GuiLayers;
 // import BarcodeModule;
-import GuiOverlap;
-import GuiClassifierModule;
-import GuiWidgets;
-import VectorLayers;
-import GuiVectorLayers;
-import ProjectModule;
-import GuiRasterLayers;
-import GuiRasterLineLayer;
+//import GuiOverlap;
+// import GuiClassifierModule;
+//import GuiWidgets;
+//import VectorLayers;
+//import GuiVectorLayers;
+//import IAlgorithm
+// import GuiRasterLayers;
+// import GuiRasterLineLayer;
 // import ProjectSettings;
 //import BackBind;
 // import RasterLineLayerModule;
 
-import DrawUtils;
+//import DrawUtils;
 // import RasterLayers;
 // import LayersCore;
-import IGuiLayer;
-import GuiLayers;
-import IAlgorithm;
-import GuiBlock;
+//import IGuiLayer;
+//import GuiLayers;
+//import IAlgorithm
+//import GuiBlock;
 //import Lua;
 
 

@@ -12,23 +12,34 @@
 #include "../Layers/layerInterface.h"
 #include "../Layers/Rasterlayers.h"
 #include "../Layers/RasterLineLayer.h"
+#include "../project.h"
+#include "../Layers/VectorLayers.h"
+#include "../Classifer/ClassicBarClassifer.h"
+#include "../GeoProcessor.h"
+#include "../Interfaces/IAlgorithm.h"
 
 // import LayersCore;
-import ProjectModule;
+// //import IAlgorithm
+#include "../backend/project.h"
+#include "Common.h"
+
 // import RasterLineLayerModule;
-import VectorLayers;
+// //import VectorLayers;
+#include "../backend/Layers/VectorLayers.h"
 // import BarTypes;
 // import BarcodeModule;
 // import RasterLayers;
-import Classifiers;
-import GeoprocessorModule;
+// //import Classifiers;
+#include "../backend/Classifer/ClassicBarClassifer.h"
+// //import GeoprocessorModule;
+#include "../backend/GeoProcessor.h"
 
 // import IItemModule;
 //import BackBind;
 // import MatrModule;
-import IAlgorithm;
+// import IAlgorithm
 // import MLSettings;
-import AlgUtils;
+// //import AlgUtils;
 
 class TreeWalk
 {
@@ -217,17 +228,6 @@ void ResizeAspect(BackSize& size, const BackSize maxSize)
 }
 
 
-template<class T>
-constexpr T mmmin(T a, T b)
-{
-	return a > b ? b : a;
-}
-
-template<class T>
-constexpr T mmmax(const T a, const T b)
-{
-	return a > b ? a : b;
-}
 
 void getMod(BackPixelPoint& start, BackPixelPoint& end, BackPixelPoint p, BackSize size, float aspectX, float aspectY)
 {

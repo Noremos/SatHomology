@@ -45,7 +45,8 @@ export module RasterLineLayerModule;
 // import RasterLayers;
 // import MetadataCoreIO;
 // import IItemModule;
-// import GeoprocessorModule;
+// //import GeoprocessorModule;
+#include "../backend/GeoProcessor.h"
 // import ProjectSettings;
 // import CachedBarcode;
 // import ClusterInterface;

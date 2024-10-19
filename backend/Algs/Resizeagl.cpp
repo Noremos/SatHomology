@@ -12,16 +12,19 @@
 #include "../MLSettings.h"
 #include "../Layers/layerInterface.h"
 #include "../Layers/Rasterlayers.h"
+#include "../backend/project.h"
+#include "../backend/Interfaces/IAlgorithm.h"
+#include "../backend/Algs/SimpleBar.h"
 
 // import LayersCore;
 // import RasterLayers;
 //import BackBind;
-import ProjectModule;
+//import IAlgorithm
 // import MLSettings;
 // import MatrModule;
-import IAlgorithm;
-import AlgUtils;
-import SimpleBar;
+//import IAlgorithm
+//import AlgUtils;
+//import SimpleBar;
 
 // Linear interpolation function
 
