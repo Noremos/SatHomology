@@ -225,9 +225,9 @@ public:
 		return ptr ? ptr->textureId: 0;
 	}
 
-	void* getTexturePtr()
+	ImTextureID getTexturePtr()
 	{
-		return (void*)(intptr_t)getTextureId();
+		return (ImTextureID)(intptr_t)getTextureId();
 	}
 
 private:
