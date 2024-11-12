@@ -74,7 +74,7 @@ protected:
 			}
 			else if (chnls == 4)
 			{
-				type = BarType::BYTE8_3;
+				type = BarType::BYTE8_4;
 				TSize = 4;
 			}
 			else
@@ -94,7 +94,7 @@ protected:
 				assert(_channels == 1);
 				break;
 			case BarType::BYTE8_4:
-				type = BarType::BYTE8_3;
+				type = BarType::BYTE8_4;
 				TSize = 4;
 				assert(_channels == 4);
 				break;
@@ -378,22 +378,7 @@ public:
 
 	inline Barscalar get(int x, int y) const override
 	{
-		buchar* off = data + (y * _wid + x) * TSize;
-		switch (type)
-		{
-		case BarType::INT32_1:
-			return Barscalar(*reinterpret_cast<int*>(off), type);
-		case BarType::FLOAT32_1:
-			return Barscalar(*reinterpret_cast<float*>(off), type);
-		case BarType::BYTE8_1:
-			return Barscalar(off[0]);
-		case BarType::BYTE8_3:
-			return Barscalar(off[0], off[1], off[2]);
-		case BarType::BYTE8_4:
-			return Barscalar(off[0], off[1], off[2], off[3]);
-		default:
-			throw;
-		}
+		return getLiner(y * _wid + x);
 	}
 
 	inline buchar* lineOffet(int y, int x = 0) const
@@ -408,51 +393,7 @@ public:
 
 	inline void set(int x, int y, const Barscalar& val)
 	{
-		buchar* off = data + (y * _wid + x) * TSize;
-		if (type == BarType::BYTE8_1)
-		{
-			*off = val.getAvgUchar();
-		}
-		else
-		{
-			if (TSize == 4)
-				off[3] = 255;
-
-			switch (val.type)
-			{
-			case BarType::BYTE8_1:
-				off[0] = val.data.b1;
-				off[1] = val.data.b1;
-				off[2] = val.data.b1;
-				break;
-			case BarType::BYTE8_4:
-				if (TSize == 4)
-					off[3] = val.data.b3[3];
-
-			case BarType::BYTE8_3:
-				off[0] = val.data.b3[0];
-				off[1] = val.data.b3[1];
-				off[2] = val.data.b3[2];
-				break;
-			case BarType::FLOAT32_1:
-				off[0] = val.data.f;
-				off[1] = val.data.f;
-				off[2] = val.data.f;
-				break;
-			case BarType::INT32_1:
-				off[0] = val.data.i;
-				off[1] = val.data.i;
-				off[2] = val.data.i;
-				break;
-				//			assert(false);
-			default:
-				assert(false);
-				break;
-			}
-
-		}
-		cachedMin.isCached = false;
-		cachedMax.isCached = false;
+		setLiner(y * _wid + x, val);
 	}
 
 	struct m_rgbfill
@@ -480,13 +421,14 @@ public:
 		case BarType::BYTE8_1:
 			memset(off, val.data.b1, xwid * TSize);
 			break;
-		case BarType::BYTE8_3:
+		case BarType::BYTE8_4:
 			if (TSize == 4)
 			{
 				m_rgbafill valtof{ val.data.b3[0],  val.data.b3[1],  val.data.b3[2], 255 };
 				std::fill_n((m_rgbafill*)off, xwid, valtof);
 			}
-			else
+			break;
+		case BarType::BYTE8_3:
 			{
 				m_rgbfill valtof{ val.data.b3[0],  val.data.b3[1],  val.data.b3[2] };
 				std::fill_n((m_rgbfill*)off, xwid, valtof);
@@ -509,28 +451,35 @@ public:
 		//if (diagReverce)
 		//	values[x * _wid + y] += val;
 		//else
-		if (type == BarType::BYTE8_1)
+		switch (type)
 		{
+		case BarType::BYTE8_1:
 			data[(y * _wid + x) * TSize] += val.getAvgUchar();
-		}
-		else
-		{
-			assert(type == BarType::BYTE8_3 || type == BarType::BYTE8_4);
+			break;
+			/* code */
+		case BarType::BYTE8_3:
+		case BarType::BYTE8_4:
+			{
+				buchar *off = data + (y * _wid + x) * TSize;
+				if (val.type == BarType::BYTE8_1 || val.type == BarType::FLOAT32_1)
+				{
+					for (size_t i = 0; i < _channels; i++)
+					{
+						off[i] += val.getAvgUchar();
+					}
+				}
+				else
+				{
+					for (size_t i = 0; i < _channels; i++)
+					{
+						off[i] += val.data.b3[i];
+					}
+				}
+			}
+			break;
 
-			buchar *off = data + (y * _wid + x) * TSize;
-			if (val.type == BarType::BYTE8_3)
-			{
-				off[0] += val.data.b3[0];
-				off[1] += val.data.b3[1];
-				off[2] += val.data.b3[2];
-			}
-			else
-			{
-				assert(val.type == BarType::BYTE8_1);
-				off[0] += val.getAvgUchar();
-				off[1] += val.getAvgUchar();
-				off[2] += val.getAvgUchar();
-			}
+		default:
+			break;
 		}
 
 		cachedMin.isCached = false;
@@ -593,6 +542,15 @@ public:
 	void setOpp(int x, int y, uchar op)
 	{
 		buchar *off = data + (y * _wid + x) * TSize;
+		if (type == BarType::BYTE8_4 || TSize == 4)
+		{
+			off[3] = op;
+		}
+	}
+
+	void setOpp(int i, uchar op)
+	{
+		buchar *off = data + i * TSize;
 		if (type == BarType::BYTE8_4 || TSize == 4)
 		{
 			off[3] = op;
@@ -665,25 +623,43 @@ public:
 
 	inline void setLiner(size_t pos, const Barscalar& val)
 	{
-		if (type == BarType::BYTE8_1)
+		buchar *off = data + pos * TSize;
+
+		switch (type)
 		{
-			data[pos * TSize] = val.getAvgUchar();
-		}
-		else
+		case BarType::BYTE8_1:
+			*off = val.getAvgUchar();
+			break;
+		case BarType::BYTE8_4:
+			off[3] = val.type == BarType::BYTE8_4 ? val.data.b3[3] : 255;
+		case BarType::BYTE8_3:
 		{
-			buchar *off = data + pos * TSize;
-			if (val.type == BarType::BYTE8_3)
+			switch (val.type)
 			{
-				off[0] = val.data.b3[0];
-				off[1] = val.data.b3[1];
-				off[2] = val.data.b3[2];
-			}
-			else
-			{
+			case BarType::BYTE8_1:
+			case BarType::FLOAT32_1:
 				off[0] = val.getAvgUchar();
 				off[1] = val.getAvgUchar();
 				off[2] = val.getAvgUchar();
+				break;
+			case BarType::BYTE8_3:
+			case BarType::BYTE8_4:
+				off[0] = val.data.b3[0];
+				off[1] = val.data.b3[1];
+				off[2] = val.data.b3[2];
+				break;
+			default:
+				assert(false);
+				break;
 			}
+
+			break;
+		}
+		case BarType::FLOAT32_1:
+			reinterpret_cast<float*>(off)[0] = val.getAvgFloat();
+			break;
+		default:
+			assert(false);
 		}
 		cachedMin.isCached = false;
 		cachedMax.isCached = false;
@@ -691,14 +667,21 @@ public:
 
 	virtual Barscalar getLiner(size_t pos) const override
 	{
-		if (type == BarType::BYTE8_1)
+		buchar* off = data + pos * TSize;
+		switch (type)
 		{
-			return Barscalar(data[pos * TSize]);
-		}
-		else
-		{
-			buchar *off = data + pos * TSize;
+		default:
+			assert(false);
+		case BarType::INT32_1:
+			return Barscalar(*reinterpret_cast<int*>(off), type);
+		case BarType::FLOAT32_1:
+			return Barscalar(*reinterpret_cast<float*>(off), type);
+		case BarType::BYTE8_1:
+			return Barscalar(off[0]);
+		case BarType::BYTE8_3:
 			return Barscalar(off[0], off[1], off[2]);
+		case BarType::BYTE8_4:
+			return Barscalar(off[0], off[1], off[2], off[3]);
 		}
 	}
 
@@ -713,7 +696,7 @@ public:
 
 	void assignInstanceOf(const BackImage& inst)
 	{
-		setMetadata(inst._wid, inst._hei, inst._channels);
+		setMetadata(inst._wid, inst._hei, inst._channels, inst.type);
 		valAssignInstanceOf(inst.data);
 
 		this->type = inst.type;
@@ -722,6 +705,9 @@ public:
 
 	void resize(int new_width, int new_height)
 	{
+		if (new_width == width() && new_height == height())
+			return;
+
 		const float x_ratio = (float)width() / new_width;
 		const float y_ratio = (float)height() / new_height;
 
@@ -775,14 +761,30 @@ public:
 
 		return r;
 	}
+
+	BackImage mirror() const
+	{
+		BackImage copyImg(*this);
+		for (int y = 0; y < height(); y++)
+		{
+			for (int x = 0; x < width() / 2; x++)
+			{
+				int lastX = width() - 1 - x;
+				copyImg.set(x, y, get(lastX, y));
+				copyImg.set(lastX, y, get(x, y));
+			}
+		}
+
+		return copyImg;
+	}
 };
 
 
 MEXPORT void FrameworkInit();
 
-MEXPORT BackImage imread(const BackString& path);
+MEXPORT BackImage imread(const BackString& path, bool dropAlpha = false);
 
-MEXPORT BackImage imread(const BackPathStr& path);
+MEXPORT BackImage imread(const BackPathStr& path, bool dropAlpha = false);
 MEXPORT void imwrite(const BackString& path, const BackImage& mat);
 
 MEXPORT void imwrite(const BackPathStr& path, const BackImage& mat);
