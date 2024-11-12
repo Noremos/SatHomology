@@ -1106,7 +1106,7 @@ namespace MyApp
 
 
 		drawLayout();
-		//ImGui::ShowDemoWindow();
+		// ImGui::ShowDemoWindow();
 	}
 
 	void Close()
