@@ -51,8 +51,6 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            // "args": ["/tmp/input_array.txt", "SpectralCoclustering", "{\"n_clusters\":2}"],
-            "args": ["/tmp/input_array.bin", "hierarchical", "2"],
             "justMyCode": true
         },
     ]
