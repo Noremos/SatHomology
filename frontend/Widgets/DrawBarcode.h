@@ -197,6 +197,7 @@ public:
 		if (!ImGui::Begin("BarcodeChart"))
 		{
 			ImGui::End();
+			return;
 		}
 
 		if (ImGui::Button("Save"))
