@@ -106,6 +106,7 @@ public:
 		if (ImGui::Button("Выполнить"))
 		{
 			auto ret = block->execute(context.iol);
+			context.iol.out = -1;
 			context.setLayers(ret, names[selectedId].data());
 		}
 
