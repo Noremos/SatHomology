@@ -207,4 +207,4 @@ public:
 		exeAugment({}, mkSettingsType());
 	}
 };
-static AutoRun autoee;
+// static AutoRun autoee;
