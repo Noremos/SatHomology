@@ -68,6 +68,24 @@ public:
 		main.opacity = tempVal;
 	}
 
+	void saveRecursive(StateBinFile::BinStateWriter& writer, SimpleLine* line)
+	{
+		writer.pBool(true);
+		writer.pInt(line->start.getAvgUchar());
+		writer.pInt(line->end.getAvgUchar());
+		writer.pInt(line->matr.size());
+		for (auto& a : line->matr)
+		{
+			writer.pShort(a.getX());
+			writer.pShort(a.getY());
+		}
+
+		for (size_t i = 0; i < line->children.size(); i++)
+		{
+			saveRecursive(writer, line->getChild(i));
+		}
+	}
+
 	virtual void toGuiData()
 	{
 		selectedLine = nullptr;
@@ -124,6 +142,15 @@ public:
 		if (ImGui::Button("Показать баркод"))
 		{
 			chart.show = true;
+		}
+
+		if (ImGui::Button("Save"))
+		{
+			StateBinFile::BinStateWriter writer;
+			writer.open("out.bin");
+			saveRecursive(writer, selectedLine);
+			writer.pBool(false);
+			writer.close();
 		}
 	}
 
@@ -186,6 +213,7 @@ public:
 		SimpleLine* line = data->clickResponser[index];
 		if (line)
 		{
+			printf(", %d\n", line->barlineIndex);
 			if (selectedLine == line && line->getParent())
 				line = line->getParent();
 

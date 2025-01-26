@@ -80,123 +80,131 @@ void describe(bc::Baritem* itm)
 		// }
 	}
 }
+
+void save(BackStringView fileName, bool normilize)
+{
+	bc::barstruct constr;
+	constr.coltype = bc::ColorType::gray;
+	constr.proctype = bc::ProcType::Radius;
+
+	BackPathStr srcleanb("/Users/sam/Edu/datasets/objects/eurosat_augment");
+	string fullname(fileName.data(), fileName.length());
+	fullname += ".png"sv;
+
+	string outName(fileName.data(), fileName.length());
+	outName += "gray.png";
+	imwrite(srcleanb / outName, imread(srcleanb / fullname));
+	exit(0);
+
+
+	BackImage img = imread(srcleanb / fullname);
+	auto baseImg = bc::BarcodeCreator::create(img, constr);
+	// baseImg->sortByLen();
+	if (normilize)
+	{
+		outName += "-norm.bin";
+		baseImg->normalize();
+		StateBinFile::BinStateWriter writer;
+		writer.open(outName);
+		auto count = writer.pInt(baseImg->barlines.size());
+		for (int i = 0; i < count; ++i)
+		{
+			auto line = baseImg->barlines[i];
+			writer.pFloat(line->start.getAvgFloat());
+			writer.pFloat(line->end().getAvgFloat());
+		}
+		writer.close();
+	}
+	else
+	{
+		outName += ".bin";
+
+		StateBinFile::BinStateWriter writer;
+		writer.open(outName);
+		auto count = writer.pInt(baseImg->barlines.size());
+		for (int i = 0; i < count; ++i)
+		{
+			auto line = baseImg->barlines[i];
+			writer.pShort(line->start.getAvgUchar());
+			writer.pShort(line->end().getAvgUchar());
+		}
+		writer.close();
+	}
+}
+
+void buildSave(BackString path, BackString outName, bc::ProcType type = bc::ProcType::Radius)
+{
+	bc::barstruct constr;
+	constr.coltype = bc::ColorType::gray;
+	constr.proctype = type;
+
+	BackPathStr srcleanb(path);
+	BackImage img = imread(srcleanb);
+	auto baseImg = bc::BarcodeCreator::create(img, constr);
+
+	StateBinFile::BinStateWriter writer;
+	writer.open(outName);
+
+	writer.pInt(baseImg->barlines.size());
+	for (auto* line : baseImg->barlines)
+	{
+		writer.pInt(line->start.getAvgUchar());
+		writer.pInt(line->m_end.getAvgUchar());
+		writer.pInt(line->matr.size());
+		for (auto& a : line->matr)
+		{
+			writer.pShort(a.getX());
+			writer.pShort(a.getY());
+		}
+	}
+}
+
 RetLayers exeAugment(InOutLayer iol, const MLSettings& setting)
 {
-	bc::barstruct constr = getConstr(setting);
-		constr.coltype = bc::ColorType::gray;
-		constr.proctype = bc::ProcType::Radius;
-	// {
-	// 	BackImage a = imread("/Users/sam/Edu/datasets/objects/eurosat_augment/Highway_1185.png"s);
-	// 	// a = a.getRect(0, 11, 16, 12);
-	// 	// BackImage a = imread("/Users/sam/Edu/bar/base/ident-ss1.png"s, true);
+	bc::barstruct constr;
+	constr.coltype = bc::ColorType::gray;
+	constr.proctype = bc::ProcType::f0t255;
+
+	BackImage img = imread(BackPathStr("input1.jpg"));
+	auto baseImg = bc::BarcodeCreator::create(img, constr);
+	std::cout << baseImg->barlines.size() << endl;
+
+	// buildSave("python_extra/inputs/input2-smlf.png", "input2-sml-radius.bin");
+	// buildSave("input2-sml.jpg", "input2-sml-f255jpg.bin", bc::ProcType::f255t0);
+	// buildSave("input2-smlf.png", "input2-sml-f255.bin", bc::ProcType::f255t0);
+	// buildSave("input1-smlf.png", "input1-sml-f0.bin", bc::ProcType::f0t255);
+	buildSave("input1-sml.jpg", "input1-sml-f0jpg.bin", bc::ProcType::f0t255);
+
+	// buildSave("python_extra/inputs/input2.jpg", "input2-radius.bin");
+	// buildSave("python_extra/inputs/input2.jpg", "input2-f255.bin", bc::ProcType::f255t0);
+
+	// buildSave("python_extra/inputs/input1.jpg", "input1-radius.bin");
+	// buildSave("python_extra/inputs/input1.jpg", "input1-f255.bin", bc::ProcType::f255t0);
+	// save("HerbaceousVegetation_170", true);
+
+	// save("HerbaceousVegetation_170", false);
+	// save("HerbaceousVegetation_170-blur", false);
+	// save("HerbaceousVegetation_170-bright", false);
+	// save("HerbaceousVegetation_170-distort-rt", false);
+	// save("HerbaceousVegetation_170-distort", false);
+	// save("HerbaceousVegetation_170-gauss-rot", false);
+	// save("HerbaceousVegetation_170-gauss", false);
+	// save("HerbaceousVegetation_170-hsv", false);
+	// save("HerbaceousVegetation_170-med-blur", false);
+	// save("HerbaceousVegetation_170-mirror", false);
 
 
-
-	// 	auto baseImg = bc::BarcodeCreator::create(a, constr);
-	// 	describe(baseImg.get());
-
-	// 	BackImage b = a.mirror();
-	// 	auto augImg = bc::BarcodeCreator::create(b, constr);
-	// 	describe(augImg.get());
-
-	// 	float res = baseImg->compireBestRes(augImg.get(), bc::CompireStrategy::CommonToLen);
-	// 	cout << res << endl;
-	// }
-	// return {};
-
-	RetLayers ret;
-	BackImage src;
-
-	// std::unique_ptr<bc::Baritem> containner(bcc.run(&src, constr, dummy));
-	// bc::Baritem* item = containner.get();
-
-	std::unordered_map<BackString, std::unique_ptr<ImageC>> sourceFiles;
-	int maxAllowed = 10;
-	BackPathStr srcleanb("/Users/sam/Edu/datasets/objects/eurosat_augment");
-	for (const auto& entry : std::filesystem::directory_iterator(srcleanb))
-	{
-		auto path = entry.path();
-		auto fileName = path.filename().string();
-
-		// int number_.pos = fileName.find_first_of('_');
-		int subtype_pos = fileName.find_first_of('-');
-		int ext_type = fileName.find_last_of('.');
-
-		string ext = fileName.substr(ext_type + 1);
-		if (ext != "png" && ext != "jpg")
-		{
-			continue;
-		}
-
-		int lastPos = subtype_pos == std::string::npos ? ext_type : subtype_pos;
-		BackString onlyName = fileName.substr(0, lastPos);
-		auto& img = sourceFiles[onlyName];
-		// std::cout << onlyName << endl;
-		if (img == nullptr)
-		{
-			img.reset(new ImageC);
-		}
-
-		if (subtype_pos == std::string::npos)
-		{
-			img->name = fileName;
-		}
-		else
-		{
-			BackString sub_type = fileName.substr(subtype_pos + 1, ext_type - subtype_pos - 1);
-			if (augmentNumber.count(sub_type) == 0)
-			{
-				augmentNumber.insert(std::pair(sub_type, augmentNumber.size()));
-			}
-
-			int sub_type_pos = augmentNumber[sub_type];
-			img->augments[sub_type_pos] = fileName;
-		}
-	}
-
-	std::vector<Results> numToNameMap(augmentNumber.size());
-	for (auto augName : augmentNumber)
-	{
-		numToNameMap[augName.second] = augName.first;
-	}
-
-	int augSize = numToNameMap.size();
-
-	for (auto& filePair : sourceFiles)
-	{
-		ImageC& img = *(filePair.second.get());
-		BackImage src = imread(srcleanb / img.name);
-		auto baseImg = bc::BarcodeCreator::create(src, constr);
-		// baseImg->normalize();
-
-		for (int i = 0; i < augSize; i++)
-		{
-			assert(!img.augments[i].empty());
-
-			BackImage aug = imread(srcleanb / img.augments[i]);
-			auto augImg = bc::BarcodeCreator::create(aug, constr);
-			// augImg->normalize();
-
-			float res = baseImg->compireFull(augImg.get(), bc::CompireStrategy::CommonToLen);
-			numToNameMap[i].add(res);
-		}
-	}
-
-	for (auto& res : numToNameMap)
-	{
-		res.printResult();
-	}
 
 	return {};
 }
 
 static AlgFuncRegister registerAugment("AugmentText", exeAugment, mkSettingsType);
-// class AutoRun
-// {
-// public:
-// 	AutoRun()
-// 	{
-// 		exeAugment({}, mkSettingsType());
-// 	}
-// };
-// static AutoRun autoee;
+class AutoRun
+{
+public:
+	AutoRun()
+	{
+		exeAugment({}, mkSettingsType());
+	}
+};
+static AutoRun autoee;
