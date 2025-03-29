@@ -144,7 +144,7 @@ public:
 			chart.show = true;
 		}
 
-		if (ImGui::Button("Save"))
+		if (ImGui::Button("Save") && selectedLine)
 		{
 			StateBinFile::BinStateWriter writer;
 			writer.open("out.bin");
