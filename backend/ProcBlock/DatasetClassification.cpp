@@ -445,7 +445,7 @@ public:
 
 	const BackString name() const override
 	{
-		return "Dataset Classification";
+		return "Landscape Clusterization";
 	}
 
 	RetLayers execute(InOutLayer) override
