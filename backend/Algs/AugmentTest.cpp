@@ -199,12 +199,12 @@ RetLayers exeAugment(InOutLayer iol, const MLSettings& setting)
 }
 
 static AlgFuncRegister registerAugment("AugmentText", exeAugment, mkSettingsType);
-class AutoRun
-{
-public:
-	AutoRun()
-	{
-		exeAugment({}, mkSettingsType());
-	}
-};
+// class AutoRun
+// {
+// public:
+// 	AutoRun()
+// 	{
+// 		exeAugment({}, mkSettingsType());
+// 	}
+// };
 // static AutoRun autoee;
