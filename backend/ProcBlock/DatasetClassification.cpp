@@ -448,27 +448,62 @@ public:
 		return "Landscape Clusterization";
 	}
 
-	RetLayers execute(InOutLayer) override
+
+
+	void saveDebug(const bc::barstruct& constr, LandscapeCollection& landscapes)
 	{
-		// Enumerate each file in filesRoot
+		// **** Binary writer ****
+		WriterProcessor writer(resolution);
+		// dw.collect(maxAllowed, landscapes, constr, writer);
+		CachedBaritemHolder cache;
 
-		LandscapeCollection landscapes;
-		*landscapes.settings.getInt("Resolution") = resolution;
-		bc::BarcodeCreator bcc;
-		if (limit <= 0)
-			limit = INT_MAX;
+		BackImage main = imread("/Users/sam/Edu/bar/test2/s4.png"s, true);
+		cache.create(&main, constr, nullptr);
+		// cache.saveLoadState(&writer);
+
+		landscapes.addAllLines(cache);
+		LandscapeClass* item = landscapes.back();
+
+		// Fitting --------------- ---------------
+
+		writer.setClasses(1);
+		writer.addToSet(item, 0);
+		writer.predict();
+	}
+
+	void expereemnt2calsses(LandscapeCollection& landscapes, bc::barstruct& constr, PointProcessor<LandscapeCluster>& landPyCluste)
+	{
+		int maxAllowed = 100;
+
+		DatasetWork dw;
+		// dw.open(maxAllowed);
+		// dw.openCraters("craters/ctx_samv2/train");
+		// dw.openCraters("objects/eurosat", {"Forest", "Pasture"});
+		// dw.openCraters("objects/256_ObjectCategories", {"009.bear", "007.bat"});
+
+		dw.openCraters(maxAllowed, "objects/NWPU-RESISC45", {"intersection", "harbor"});
+		// dw.openCraters(maxAllowed, "objects/NWPU-RESISC45");
+		// dw.openCraters("objects/UCMerced_LandUse/Images", {"forest", "parkinglot"});
+		// dw.openCraters("test_dataset");
 
 
-		landscapes.performOnPerform();
-		landscapes.round = false;
+		// **** Cluster ****
 
-		PointProcessor<LandscapeCluster> landPyCluste;
-		ClassProcessor classer;
+		// std::cout << "Start" << std::endl;
+		dw.collect(maxAllowed, landscapes, constr, landPyCluste);
+		// landPyCluste.dummy.curFUnc = 0;
+		dw.predict(landPyCluste);
+	}
 
+	void experement4classes(LandscapeCollection& landscapes, bc::barstruct& constr, PointProcessor<LandscapeCluster>& landPyCluste)
+	{
+		int maxAllowed = 100;
 
-		bc::barstruct constr = bar.getConstr();
-		constr.createGraph = false; // Do not create empty nodes
+		// **** Work ****
 
+		DatasetWork dws;
+		dws.openCraters(maxAllowed, "objects/NWPU-RESISC45", {"desert", "intersection", "railway", "commercial_area"});
+		dws.collect(maxAllowed, landscapes, constr, landPyCluste);
 
 		// **** Iterators ****
 		FuncIterator iterFunc(landPyCluste.dummy.curFUnc);
@@ -482,13 +517,6 @@ public:
 
 		// **** Collect ****
 		std::vector<TestIterator*> iters {&iterFunc, &iterStep, &iterFuncName, &iterType};
-		int maxAllowed = 100;
-
-		// **** Work ****
-		DatasetWork dws;
-		dws.openCraters(maxAllowed, "objects/NWPU-RESISC45", {"desert", "intersection", "railway", "commercial_area"});
-		dws.collect(maxAllowed, landscapes, constr, landPyCluste);
-
 
 		BackFileWriter result("result.txt", std::ios::trunc);
 		while (true)
@@ -527,9 +555,6 @@ public:
 					allowMoveNext = false;
 				}
 
-
-
-
 				if (!allowMoveNext)
 					break;
 			}
@@ -540,52 +565,35 @@ public:
 
 
 		cout << "DONE" << endl;
+	}
 
-		return {};
+	RetLayers execute(InOutLayer) override
+	{
+		// Enumerate each file in filesRoot
 
+		LandscapeCollection landscapes;
+		*landscapes.settings.getInt("Resolution") = resolution;
+		bc::BarcodeCreator bcc;
+		if (limit <= 0)
+			limit = INT_MAX;
+
+
+		landscapes.performOnPerform();
+		landscapes.round = false;
+
+		// ClassProcessor classer;
+
+		bc::barstruct constr = bar.getConstr();
+		constr.createGraph = false; // Do not create empty nodes
+		constr.proctype = bc::ProcType::Radius;
+
+		// saveDebug(constr, landscapes);
+		// return {};
+
+		PointProcessor<LandscapeCluster> landPyCluste;
 
 		// **** Work ****
-
-
-		DatasetWork dw;
-		// dw.open(maxAllowed);
-		// dw.openCraters("craters/ctx_samv2/train");
-		// dw.openCraters("objects/eurosat", {"Forest", "Pasture"});
-		// dw.openCraters("objects/256_ObjectCategories", {"009.bear", "007.bat"});
-
-		dw.openCraters(maxAllowed, "objects/NWPU-RESISC45", {"intersection", "harbor"});
-		// dw.openCraters(maxAllowed, "objects/NWPU-RESISC45");
-		// dw.openCraters("objects/UCMerced_LandUse/Images", {"forest", "parkinglot"});
-		// dw.openCraters("test_dataset");
-
-
-
-		// **** Cluster ****
-
-		// std::cout << "Start" << std::endl;
-		dw.collect(maxAllowed, landscapes, constr, landPyCluste);
-		// landPyCluste.dummy.curFUnc = 0;
-		dw.predict(landPyCluste);
-		return {};
-
-		// **** Binary writer ****
-		WriterProcessor writer(resolution);
-		// dw.collect(maxAllowed, landscapes, constr, writer);
-		CachedBaritemHolder cache;
-
-		BackImage main = imread("/Users/sam/Edu/bar/test2/s4.png"s);
-		cache.create(&main, constr, nullptr);
-		// cache.saveLoadState(&writer);
-
-		landscapes.addAllLines(cache);
-		LandscapeClass* item = landscapes.back();
-
-		// Fitting --------------- ---------------
-
-		writer.setClasses(1);
-		writer.addToSet(item, 0);
-		writer.predict();
-		std::cout << "Done" << std::endl;
+		experement4classes(landscapes, constr, landPyCluste);
 		return {};
 	}
 
