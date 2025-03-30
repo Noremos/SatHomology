@@ -285,7 +285,7 @@ public:
 	{
 		bc::Baritem item;
 		item.barlines = std::move(raw->childer);
-		item.relen();
+		item.relength();
 		item.setType();
 		raw->childer = std::move(item.barlines);
 	}
@@ -302,9 +302,9 @@ public:
 	{
 		bc::Baritem newOne;
 		raw->line->getChilredAsList(newOne.barlines, true, true, false);
-		newOne.relen();
+		newOne.relength();
 
-		auto cp = bc::CompireStrategy::CommonToLen;
+		auto cp = bc::CompareStrategy::CommonToLen;
 		float res = 0;
 
 		int maxInd = -1;
@@ -335,7 +335,7 @@ public:
 	bc::barline* line = nullptr;
 	int depth = 0;
 	int matrSize = 0;
-	int betty[256];
+	std::array<int, 256> betty;
 
 	BettylineClass(bc::barline* iline = nullptr) : line(iline)
 	{
@@ -385,7 +385,7 @@ public:
 
 	void update()
 	{
-		line->getBettyNumbers(betty);
+		betty = line->getBettyNumbers();
 	}
 
 	virtual void saveLoadState(StateBinFile::BinState* state) override
@@ -552,7 +552,7 @@ public:
 		if (st > ed)
 			st = ed;
 
-		container.add(raw->betty, st);
+		container.add(raw->betty.data(), st);
 	}
 
 	int predictInner(const BettylineClass* newOne)
@@ -568,7 +568,7 @@ public:
 		float maxP = res;
 		for (size_t i = 0; i < classes.size(); i++)
 		{
-			float ps = classes[i]->container.compire(newOne->betty, st);
+			float ps = classes[i]->container.compire(newOne->betty.data(), st);
 			if (ps > maxP)
 			{
 				maxP = ps;
