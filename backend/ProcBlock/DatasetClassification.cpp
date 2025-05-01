@@ -312,7 +312,7 @@ public:
 
 	void restart() override
 	{
-		type = bc::ProcType::f0t255;
+		type = bc::ProcType::Radius;
 	}
 
 	void iterate() override
@@ -585,7 +585,7 @@ public:
 
 		bc::barstruct constr = bar.getConstr();
 		constr.createGraph = false; // Do not create empty nodes
-		constr.proctype = bc::ProcType::Radius;
+		// constr.proctype = bc::ProcType::Radius;
 
 		// saveDebug(constr, landscapes);
 		// return {};

@@ -41,6 +41,7 @@ set(SIDE_SOURCES
     side/Hungarian.cpp
     side/hclust-cpp/fastcluster.cpp
     side/tinyfiledialogs.c
+    side/Barcode/PrjBarlib/extra/BarcodeCreatorCloud.cpp
 )
 
 

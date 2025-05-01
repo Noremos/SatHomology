@@ -83,6 +83,65 @@ class BinStateReader:
 
 
 
+class BinStateWriter:
+	def __init__(self, stream: Optional[BinaryIO] = None):
+		self.stream = open(stream, 'wb') if isinstance(stream, str) else stream
+		self.inside = stream is None
+
+	def write_raw(self, fmt: str, value):
+		data = struct.pack(fmt, value)
+		self.stream.write(data)
+
+	def open(self, path: str) -> bool:
+		if not self.inside:
+			raise Exception("Stream already initialized externally")
+
+		self.stream = open(path, 'wb')
+		return True
+
+	def p_bool(self, value: bool) -> bool:
+		self.write_raw('B', 1 if value else 0)
+		return value
+
+	def p_short(self, value: int) -> int:
+		self.write_raw('h', value)
+		return value
+
+	def p_int(self, value: int) -> int:
+		self.write_raw('i', value)
+		return value
+
+	def p_float(self, value: float) -> float:
+		self.write_raw('f', value)
+		return value
+
+	def p_int64(self, value: int) -> int:
+		self.write_raw('Q', value)
+		return value
+
+	def p_string(self, value: str) -> str:
+		assert len(value) < 65536  # ushort max value
+		self.p_short(len(value))
+		self.stream.write(value.encode('utf-8'))
+		return value
+
+	def p_array(self, size: int) -> int:
+		return self.p_int(size)
+
+	def end_item(self):
+		pass
+
+	def close(self):
+		if self.stream:
+			cur_pos = self.stream.tell()
+			self.write_raw('I', len(self.memoffs))  # Write the size of memoffs
+			for offset in self.memoffs:
+				self.write_raw('Q', offset)
+
+			self.stream.seek(0)
+			self.write_raw('Q', cur_pos)  # Update items_end_pos
+			self.stream.close()
+
 class Point:
 	def __init__(self):
 		self.x = 0

@@ -245,8 +245,14 @@ public:
 	{
 		bc::BarcodeCreator creator;
 		std::unique_ptr<bc::Baritem> citem(creator.createBarcode(img, constr));
+		init(citem.get(), callback);
+	}
 
-		auto* item = citem.get();
+	void init(bc::Baritem* item, const Base::ItemCallback& callback)
+	{
+		if (!item)
+			return;
+
 		int size = (int)item->barlines.size();
 
 		if (item->getRootNode())
