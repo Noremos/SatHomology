@@ -323,6 +323,18 @@ public:
 		mkDirIfNotExists(metadata.getSubFolder(getMetaLayerName()));
 	}
 
+	void init(LayerProvider inProv, const MetadataProvider& metadata)
+	{
+		subToRealFactor = inProv.displayFactor;
+
+		resetResponser(inProv.getDisplayWidth(), inProv.getDisplayHeight());
+		parentlayerId = -1;
+		prov = inProv;
+
+		mkDirIfNotExists(metadata.getSubFolder(getMetaLayerName()));
+	}
+
+
 	void clearResponser()
 	{
 		int wid = mat.width();

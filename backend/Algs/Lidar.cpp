@@ -144,10 +144,8 @@ public:
 
 			if (first)
 			{
-				startX = point.x;
-				startY = point.y;
-				endX = point.x;
-				endY = point.y;
+				endX = startX = point.x;
+				endY = startY = point.y;
 				first = false;
 			}
 
@@ -181,28 +179,40 @@ RetLayers exeLidar(InOutLayer iol, const MLSettings& setting)
 	std::string_view lasFilePath = "/Users/sam/H/Programs/imgui/SatHomology/lidara.raw";
 	LasOut outlas = LasParser::parseLasFile(lasFilePath);
 
+	const int chunkSize = 500;
+
+
 	// for (const auto& point : outlas.points)
 	// {
 	// 	cloudPoints.emplace_back(point.x - outlas.x, point.y - outlas.y, point.z);
 	// }
 	Project* proj = Project::getProject();
+
+	IRasterLayer* input = proj->getInRaster(iol);
+	LayerProvider prov;
+	prov.init(outlas.width, outlas.height, input->displayWidth(), chunkSize);
+
 	RasterLineLayer* layer = proj->addLayerData<RasterLineLayer>();
+	layer->init(input, proj->getMeta());
 
+	const int chunkWid = outlas.width / chunkSize;
+	const int chunkHei = outlas.height / chunkSize;
 
+	BackImage mask(chunkSize, chunkSize, BarType::BYTE8_1);
+	mask.fill((uchar)1);
 
-	int chunkSize = 1000;
-	int chunkWid = outlas.width / chunkSize;
-	int chunkHei = outlas.height / chunkSize;
 	for (int cw = 0; cw < chunkWid; cw++)
 	{
 		for (int ch = 0; ch < chunkHei; ch++)
 		{
+			BackImage chunk(chunkSize, chunkSize, BarType::FLOAT32_1);
+
 			int startX = outlas.x + cw * chunkSize;
 			int startY = outlas.y + ch * chunkSize;
 			int endX = std::min(startX + chunkSize, outlas.x + outlas.width);
 			int endY = std::min(startY + chunkSize, outlas.y + outlas.height);
 
-			bc::CloudPointsBarcode::CloudPoints chunk;
+			int found = 0;
 			for (int x = startX; x < endX; x++)
 			{
 				for (int y = startY; y < endY; y++)
@@ -211,23 +221,33 @@ RetLayers exeLidar(InOutLayer iol, const MLSettings& setting)
 					auto it = outlas.allPoints.find(static_cast<unsigned long long>(point.x) << 32 | static_cast<unsigned long long>(point.y));
 					if (it != outlas.allPoints.end())
 					{
-						point.z = it->second;
-						chunk.emplace_back(point);
+						std::cout << "Found [" << x - startX << "," << y - startY << "] = " << it->second << std::endl;
+						chunk.set(x - startX, y - startY, (float)it->second);
+						++found;
 					}
+					else
+						mask.set(x - startX, y - startY, (uchar)0);
 				}
 			}
 
-			bc::CloudPointsBarcode bcc;
-			std::unique_ptr<bc::Baritem> item = bcc.createBarcode(&chunk);
+			std::cout << "Found " << found << " pixels";
 
+			bc::barstruct bc;
+			bc.proctype = bc::ProcType::Radius;
+			bc.coltype = bc::ColorType::native;
+			bc.mask = &mask;
+			bc.maskId = 1;
+
+			bc::BarcodeCreator bcc;
+			std::unique_ptr<bc::Baritem> item = bc::BarcodeCreator::create(chunk, bc);
 
 			CachedBaritemHolder holder;
 			holder.init(item.get(), nullptr);
 
-			TileProvider iolProv(1.0, cw,ch);
+			TileProvider iolProv(1.0, startX - outlas.x, startY - outlas.y);
 			layer->addHolder(holder, iolProv, nullptr);
 
-			break;
+			return {layer};
 		}
 	}
 	return {layer};
