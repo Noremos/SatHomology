@@ -4,25 +4,24 @@ from BinState import BinStateWriter
 import numpy as np
 
 # Specify the path to your .las file
-las_file_path = "/Users/sam/Edu/Аспирантура/Arch/LiDAR_BIGDATA_GN/Ground_2020_Участок 1.las"
 
-def save_las_to_bin(las_file_path):
-	lasdata = BinStateWriter("lidara2.raw")
+def save_las_to_bin(las_file_path, output):
+	lasdata = BinStateWriter(output)
 	# Open the .las file
 	with laspy.open(las_file_path) as las:
 		print(f"File contains {las.header.point_count} points.")
 		# Access points if needed
 		points = las.read().points
 		# print(points)
-		if str(points.array.dtype.fields.get('X')[0]) == 'int32':
-			print("X is int32")
+		if str(points.array.dtype.fields.get('Z')[0]) == 'int32':
+			print("Z is int32")
 			for p in points.array:
 				lasdata.p_bool(True)
 				lasdata.p_int(p[0]) #X
 				lasdata.p_int(p[1]) #Y
 				lasdata.p_int(p[2]) #Z
 		else:
-			print("X is not int32")
+			print("Z is not int32")
 			for p in points.array:
 				lasdata.p_bool(True)
 				lasdata.p_float(p[0])
@@ -75,3 +74,6 @@ def create_geotiff_from_las(las_file_path, output_tif_path):
 		dataset.GetRasterBand(1).WriteArray(raster)
 		dataset.FlushCache()
 		dataset = None
+
+save_las_to_bin('/Users/sam/Edu/Аспирантура/Arch/LiDAR_BIGDATA_GN/Безклассификации/2020_1 без классификации_ч1.las', "las1.raw")
+save_las_to_bin('/Users/sam/Edu/Аспирантура/Arch/LiDAR_BIGDATA_GN/Безклассификации/2020_1 без классификации_ч2.las', "las2.raw")

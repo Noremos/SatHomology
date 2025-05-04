@@ -393,6 +393,8 @@ public:
 
 	inline void set(int x, int y, const Barscalar& val)
 	{
+		assert(x < _wid);
+		assert(y < _hei);
 		setLiner(y * _wid + x, val);
 	}
 

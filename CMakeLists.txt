@@ -141,7 +141,9 @@ endif()
 #       foo.cxx
 # )
 
-
+# this is heuristically generated, and may not be correct
+find_package(shapelib CONFIG REQUIRED)
+target_link_libraries(${BTARGET} PRIVATE shapelib::shp)
 
 # this is heuristically generated, and may not be correct
 find_package(glfw3 CONFIG REQUIRED)

@@ -24,6 +24,7 @@
 #include <iostream>
 #include <string>
 #include "../Layers/RasterLineLayer.h"
+#include "../GeoProcessor.h"
 
 struct LasPoint {
 	float x, y, z;
@@ -34,10 +35,10 @@ struct LasOut
 {
 	// bc::CloudPointsBarcode::CloudPoints cloudPoints;
 	std::unordered_map<unsigned long long, int> allPoints;
-	int x = 0;
-	int y = 0;
-	int width = 0;
-	int height = 0;
+	unsigned long long x = 0;
+	unsigned long long y = 0;
+	unsigned long long width = 0;
+	unsigned long long height = 0;
 };
 
 struct Header
@@ -173,13 +174,39 @@ public:
 		return out;
 	}
 };
+using ull = unsigned long long;
+class PixelIterator
+{
+public:
+	PixelIterator(unsigned long long start, unsigned long long end, ull iterator = 1)
+		: start(start), end(end), iterator(iterator)
+	{ }
+
+	bool notEnded() const
+	{
+		return start < end;
+	}
+
+	void iterate()
+	{
+		start += iterator;
+	}
+
+	ull value() const { return start; }
+private:
+	ull start;
+	ull end;
+	ull iterator = 10;
+};
 
 RetLayers exeLidar(InOutLayer iol, const MLSettings& setting)
 {
-	std::string_view lasFilePath = "/Users/sam/H/Programs/imgui/SatHomology/lidara.raw";
+	std::string_view lasFilePath = "/Users/sam/H/Programs/imgui/SatHomology/las1.raw";
 	LasOut outlas = LasParser::parseLasFile(lasFilePath);
 
-	const int chunkSize = 500;
+	const unsigned long long chunkSize = 100;
+	const unsigned long long chunkOversize = 0;
+	const unsigned long long step = 10;
 
 
 	// for (const auto& point : outlas.points)
@@ -189,45 +216,62 @@ RetLayers exeLidar(InOutLayer iol, const MLSettings& setting)
 	Project* proj = Project::getProject();
 
 	IRasterLayer* input = proj->getInRaster(iol);
-	LayerProvider prov;
-	prov.init(outlas.width, outlas.height, input->displayWidth(), chunkSize);
+
+	const float factor = (outlas.height / step) / input->displayHeight();
 
 	RasterLineLayer* layer = proj->addLayerData<RasterLineLayer>();
 	layer->init(input, proj->getMeta());
+	layer->prov.displayFactor = factor;
 
-	const int chunkWid = outlas.width / chunkSize;
-	const int chunkHei = outlas.height / chunkSize;
+	const unsigned long long fullChunkSize = chunkSize + chunkOversize;
 
-	BackImage mask(chunkSize, chunkSize, BarType::BYTE8_1);
-	mask.fill((uchar)1);
+	const unsigned long long chunkWidthToRead = fullChunkSize * step;
+	const unsigned long long chunkRealToRead = chunkSize * step;
 
-	for (int cw = 0; cw < chunkWid; cw++)
+	const unsigned long long lasEndY = outlas.y + outlas.height;
+
+	// Read the real size
+	for (unsigned long long chunkStartX = outlas.x; chunkStartX < outlas.x + outlas.width; chunkStartX += chunkRealToRead)
 	{
-		for (int ch = 0; ch < chunkHei; ch++)
+		for (unsigned long long chunkStartY = outlas.y; chunkStartY < lasEndY; chunkStartY += chunkRealToRead)
 		{
-			BackImage chunk(chunkSize, chunkSize, BarType::FLOAT32_1);
+			// Chunk read pos
+			const unsigned long long chunkEndX = std::min(chunkStartX + chunkWidthToRead, outlas.x + outlas.width);
+			const unsigned long long chunkEndY = std::min(chunkStartY + chunkWidthToRead, lasEndY);
 
-			int startX = outlas.x + cw * chunkSize;
-			int startY = outlas.y + ch * chunkSize;
-			int endX = std::min(startX + chunkSize, outlas.x + outlas.width);
-			int endY = std::min(startY + chunkSize, outlas.y + outlas.height);
+			// Chunk in output size
+			BackImage chunk((chunkEndX - chunkStartX) / step, (chunkEndY - chunkStartY) / step, BarType::FLOAT32_1);
 
-			int found = 0;
-			for (int x = startX; x < endX; x++)
+
+			// read the chunk in real size
+			int outX = 0;
+			for (PixelIterator iterX(chunkStartX, chunkEndX, step); iterX.notEnded();iterX.iterate())
 			{
-				for (int y = startY; y < endY; y++)
+				int outY = chunk.height();
+				for (PixelIterator iterY(chunkStartY, chunkEndY, step); iterY.notEnded(); iterY.iterate())
 				{
-					bc::CloudPointsBarcode::CloudPoint point(x, y, 0);
-					auto it = outlas.allPoints.find(static_cast<unsigned long long>(point.x) << 32 | static_cast<unsigned long long>(point.y));
-					if (it != outlas.allPoints.end())
+					// Read the rect and Aproximate by step
+					float sum = 0;
+					float count = 0;
+					for (PixelIterator aproximateX(iterX.value(), iterX.value() + step); aproximateX.notEnded(); aproximateX.iterate())
 					{
-						std::cout << "Found [" << x - startX << "," << y - startY << "] = " << it->second << std::endl;
-						chunk.set(x - startX, y - startY, (float)it->second);
-						++found;
+						for (PixelIterator aproximateY(iterY.value(), iterY.value() + step); aproximateY.notEnded(); aproximateY.iterate())
+						{
+							bc::CloudPointsBarcode::CloudPoint point(aproximateX.value(), aproximateY.value(), 0);
+							auto it = outlas.allPoints.find(static_cast<unsigned long long>(point.x) << 32 | static_cast<unsigned long long>(point.y));
+							if (it != outlas.allPoints.end())
+							{
+								// std::cout << "Found [" << aproximateX.value() << "," <<aproximateY.value() << "] = " << it->second << std::endl;
+								sum += it->second;
+								++count;
+							}
+						}
 					}
-					else
-						mask.set(x - startX, y - startY, (uchar)0);
+					// Invert the Y
+					chunk.set(outX, --outY, count == 0 ? -9999 : (sum / count));
 				}
+
+				++outX;
 			}
 
 			std::cout << "Found " << found << " pixels";
@@ -235,23 +279,41 @@ RetLayers exeLidar(InOutLayer iol, const MLSettings& setting)
 			bc::barstruct bc;
 			bc.proctype = bc::ProcType::Radius;
 			bc.coltype = bc::ColorType::native;
-			bc.mask = &mask;
-			bc.maskId = 1;
 
 			bc::BarcodeCreator bcc;
 			std::unique_ptr<bc::Baritem> item = bc::BarcodeCreator::create(chunk, bc);
 
+			{
+				ShapeFile shp("test");
+				for (size_t i = 0; i < item->barlines.size(); ++i)
+				{
+					const bc::barline& curLine = *item->barlines[i];
+					shp.writePolygonRecord(curLine);
+				}
+
+				shp.close();
+			}
+
 			CachedBaritemHolder holder;
 			holder.init(item.get(), nullptr);
 
-			TileProvider iolProv(1.0, startX - outlas.x, startY - outlas.y);
+			// Invert the Y
+			const ull yCurStart = lasEndY - chunkEndY;
+
+			const TileProvider iolProv(factor, (chunkStartX - outlas.x) / step, yCurStart / step);
 			layer->addHolder(holder, iolProv, nullptr);
+
+			std::cout << "------Added-----\n";
+			std::cout << "X: " << iolProv.offset.x << " Y:" << iolProv.offset.y << std::endl;
+
+
 
 			return {layer};
 		}
 	}
 	return {layer};
 }
+
 
 static AlgFuncRegister registerLidar("Lidar", exeLidar, mkSettingsType);
 class AutoRun
