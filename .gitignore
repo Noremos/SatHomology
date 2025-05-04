@@ -42,3 +42,7 @@ imgui.ini
 m
 *.bin
 */__pycache__/*
+*.raw
+*.shp
+*.dbf
+*.shx
