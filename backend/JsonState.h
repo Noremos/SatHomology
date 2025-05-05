@@ -38,6 +38,7 @@ public:
 	virtual JsonObjectIOState* objectBegin(const BackString& name) = 0;
 	virtual void arrayEnd() = 0;
 	virtual void objectEnd() = 0;
+	virtual ~JsonObjectIOState() = default;
 };
 
 class JsonArrayIOState
@@ -53,6 +54,7 @@ public:
 	virtual JsonObjectIOState* objectBegin(int ind) = 0;
 	virtual void arrayEnd() = 0;
 	virtual void objectEnd() = 0;
+	virtual ~JsonArrayIOState() = default;
 };
 
 template<class TAR>
@@ -64,6 +66,7 @@ class TJsonObjectIOStateReader : public JsonObjectIOState
 public:
 	TJsonObjectIOStateReader(const BackJson& json) : json(json)
 	{}
+	~TJsonObjectIOStateReader() = default;
 
 	bool isReading() const
 	{
@@ -134,6 +137,7 @@ class TJsonObjectIOStateWriter : public JsonObjectIOState
 public:
 	TJsonObjectIOStateWriter(BackJson& json) : json(json)
 	{}
+	~TJsonObjectIOStateWriter() = default;
 
 	bool isReading() const
 	{
@@ -206,6 +210,7 @@ class JsonArrayIOStateReader : public JsonArrayIOState
 public:
 	JsonArrayIOStateReader(const BackJson& json) : json(json)
 	{}
+	~JsonArrayIOStateReader() = default;
 
 	void scUchar(int ind, buchar& val)
 	{
@@ -272,6 +277,7 @@ class JsonArrayIOStateWriter : public JsonArrayIOState
 public:
 	JsonArrayIOStateWriter(BackJson& json) : json(json)
 	{}
+	~JsonArrayIOStateWriter() = default;
 
 	void scUchar(int ind, buchar& val)
 	{

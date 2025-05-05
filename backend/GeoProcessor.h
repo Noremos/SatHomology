@@ -20,6 +20,7 @@
 #include "MatrImg.h"
 #include "../Bind/MHashMap.h"
 #include "../Bind/Framework.h"
+#include "Layers/layerInterface.h"
 // export module GeoprocessorModule;
 
 //import BackBind;
@@ -98,10 +99,14 @@ class ShapeFile
 	SHPHandle shpHandle;
 	DBFHandle dbfHandle;
 
+	int numFieldIndex;
+	int startFieldIndex;
+	int endFieldIndex;
+	int depthFieldIndex;
 public:
 	ShapeFile(std::string_view path);
 
-	void writePolygonRecord(const bc::barline& polygon);
+	void writePolygonRecord(const bc::barline& polygon,const TileProvider& provider);
 
 	void close();
 

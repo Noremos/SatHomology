@@ -9,7 +9,10 @@ def save_las_to_bin(las_file_path, output):
 	lasdata = BinStateWriter(output)
 	# Open the .las file
 	with laspy.open(las_file_path) as las:
+		print(f"Coordinate System: {las.header.system_identifier}")
+		print(f"Bounds: {las.header.mins} to {las.header.maxs}")
 		print(f"File contains {las.header.point_count} points.")
+		return
 		# Access points if needed
 		points = las.read().points
 		# print(points)

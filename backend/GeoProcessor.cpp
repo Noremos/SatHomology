@@ -205,7 +205,6 @@ public:
 		accum = 1;
 	}
 
-	// There is a bug somewhere that lead to infinite loop. Try to find and fix it
 
 	void run(const bool aproxim = false)
 	{
@@ -217,7 +216,7 @@ public:
 			contur.push_back(stIndex);
 		}
 
-		while (!pointsStack.empty() || getIndex() != stIndex)
+		while (true)
 		{
 			char start = (dirct + 6) % 8; // Safe minus 2
 			char end = start + 5;
@@ -226,25 +225,23 @@ public:
 			// 0 X 4
 			prevS = getIndex();
 
-			bool foundMove = false;
 			for (; start < end; start += accum)
 			{
 				int* off = poss[(int)start];
 				if (tryVal(off[0], off[1]))
 				{
-					foundMove = true;
 					break;
 				}
 			}
 
-			if (foundMove)
+			if (start != end)
 			{
 				int s = getIndex();
 				StartPos old = dirct;
 				dirs.push(dirct);
 				dirct = (StartPos)(start % 8);
 
-				// Check new disk with the old one
+				// Check new dir with the old one
 				if (dirct != old || !aproxim)
 				{
 					contur.push_back(prevS);
@@ -259,7 +256,7 @@ public:
 			{
 				unset();
 
-				if (pointsStack.empty())
+				if (pointsStack.size() < 1)
 					break;
 
 				StartPos old = dirct;
@@ -275,13 +272,6 @@ public:
 				y = p.y;
 			}
 		}
-
-		//if (aproxim)
-		//{
-		//	contur.push_back(prevS);
-		//	//contur.push_back(getIndex());
-		//	//					contur.push_back(s);
-		//}
 	}
 
 	void set(const bc::barvalue& p) { points[p.getIndex()] = true; }
@@ -326,14 +316,105 @@ private:
 };
 
 
+class Beete
+{
+	MMMAP<buint, bool> points;
+
+	int startX, startY;
+public:
+	void set(const bc::barvalue& p) { points[p.getIndex()] = true; }
+	void set(int x, int y) { points[bc::barvalue::getStatInd(x, y)] = true; }
+
+
+	bool exists(int xl, int yl) const
+	{
+		auto ds = points.find(bc::barvalue::getStatInd(xl, yl));
+		if (ds == points.end())
+			return false;
+
+		return ds->second;
+	}
+
+	enum Direction : char { LeftMid = 0, LeftTop = 1, TopMid = 2, RigthTop = 3, RigthMid = 4, RigthBottom = 5, BottomMid = 6, LeftBottom = 7 };
+
+	static constexpr int dx[8] = {-1, -1,  0, 1, 1,  1,  0, -1};
+	static constexpr int dy[8] = { 0,  1,  1, 1, 0, -1, -1, -1};
+
+	static constexpr Direction moveDirection(Direction x, int add)
+	{
+		return static_cast<Direction>((static_cast<int>(x) + add) % 8);
+	}
+
+	static constexpr Direction move(Direction x, int add)
+	{
+		return moveDirection(x, add + 6);
+	}
+
+	static constexpr Direction turnLeft(Direction x)
+	{
+		return moveDirection(x, 6);
+	}
+
+	void setStart(int x, int y)
+	{
+		this->startX = x;
+		this->startY = y;
+	}
+
+	mcountor beetleContour() const
+	{
+		mcountor contour;
+
+		int cx = startX;
+		int cy = startY;
+		Direction dir = RigthMid; // initial direction to the left of starting direction
+
+		do
+		{
+			bool found = false;
+			for (int i = 0; i < 8; ++i)
+			{
+				const Direction ndir = move(dir, i);
+				const int nx = cx + dx[ndir];
+				const int ny = cy + dy[ndir];
+
+				if (exists(nx, ny))
+				{
+					if (ndir != dir)
+						contour.push_back(bc::barvalue::getStatInd(cx, cy));
+
+					if (nx == startX && ny == startY)
+					{
+						return contour;
+					}
+
+					cx = nx;
+					cy = ny;
+					// dir = turnLeft(ndir); // turn left relative to move direction
+					dir = ndir;
+					found = true;
+					break;
+				}
+			}
+
+			if (!found)
+				break; // disconnected? probably an error
+
+		} while (true);
+
+
+		return contour;
+	}
+};
+
+
 CounturRect getCountour(const bc::barvector& points, mcountor& contur, bool aproximate)
 {
 	contur.clear();
 
 	int rect[4]{ 99999999, 99999999, 0, 0 };
 	int stY = 99999;
-	MapCountur dictPoints(contur);
-	dictPoints.setFull();
+	Beete dictPoints;
 	for (auto& p : points)
 	{
 		dictPoints.set(p);
@@ -368,7 +449,7 @@ CounturRect getCountour(const bc::barvector& points, mcountor& contur, bool apro
 		return {BackPoint(rect[0], rect[1]), BackPoint(rect[2], rect[3])};
 
 	dictPoints.setStart(rect[0], stY);
-	dictPoints.run(aproximate);
+	contur = dictPoints.beetleContour();
 
 	return {BackPoint(rect[0], rect[1]), BackPoint(rect[2], rect[3])};
 }
@@ -663,22 +744,53 @@ ShapeFile::ShapeFile(std::string_view path)
 	shpHandle = SHPCreate(shpPath.c_str(), SHPT_POLYGON);
 	dbfHandle = DBFCreate(dbfPath.c_str());
 
-	if (!shpHandle || !dbfHandle) {
+	if (!shpHandle || !dbfHandle)
+	{
 		throw std::runtime_error("Error creating shapefile: " + std::string(path));
+	}
+
+	DBFAddField(dbfHandle, "NumPoints", FTInteger, 10, 0);
+	numFieldIndex = DBFGetFieldIndex(dbfHandle, "NumPoints");
+	if (numFieldIndex == -1)
+	{
+		throw std::runtime_error("Error adding NumPoints field to DBF");
+	}
+
+	DBFAddField(dbfHandle, "Start", FTDouble, 10, 5);
+	startFieldIndex = DBFGetFieldIndex(dbfHandle, "Start");
+	if (startFieldIndex == -1)
+	{
+		throw std::runtime_error("Error adding NumPoints field to DBF");
+	}
+
+	DBFAddField(dbfHandle, "End", FTDouble, 10, 5);
+	endFieldIndex = DBFGetFieldIndex(dbfHandle, "End");
+	if (endFieldIndex == -1)
+	{
+		throw std::runtime_error("Error adding NumPoints field to DBF");
+	}
+
+	DBFAddField(dbfHandle, "Depth", FTInteger, 10, 0);
+	depthFieldIndex = DBFGetFieldIndex(dbfHandle, "Depth");
+	if (depthFieldIndex == -1)
+	{
+		throw std::runtime_error("Error adding NumPoints field to DBF");
 	}
 }
 
-void ShapeFile::writePolygonRecord(const bc::barline& polygon)
+void ShapeFile::writePolygonRecord(const bc::barline& polygon, const TileProvider& provider)
 {
 	mcountor count;
-	CounturRect rect = getCountour(polygon.matr, count, true);
+	// CounturRect rect =
+	getCountourOder(polygon.matr, count, true);
 
 	std::vector<double> xCoords, yCoords;
 	for (const auto& vertex : count)
 	{
 		auto p = bc::barvalue::getStatPoint(vertex);
-		xCoords.push_back(p.x);
-		yCoords.push_back(p.y);
+		BackPixelPoint pix = provider.tileToFull(p.x, p.y);
+		xCoords.push_back(pix.x);
+		yCoords.push_back(pix.y);
 	}
 
 	SHPObject* shpObject = SHPCreateSimpleObject(SHPT_POLYGON, xCoords.size(), xCoords.data(), yCoords.data(), nullptr);
@@ -686,7 +798,13 @@ void ShapeFile::writePolygonRecord(const bc::barline& polygon)
 		throw std::runtime_error("Error creating SHPObject for polygon");
 	}
 
-	SHPWriteObject(shpHandle, -1, shpObject);
+	int id = SHPWriteObject(shpHandle, -1, shpObject);;
+
+	DBFWriteIntegerAttribute(dbfHandle, id, numFieldIndex, polygon.matr.size());
+	DBFWriteDoubleAttribute(dbfHandle, id, startFieldIndex, polygon.getStart().getAvgFloat());
+	DBFWriteDoubleAttribute(dbfHandle, id, endFieldIndex, polygon.getEnd().getAvgFloat());
+	DBFWriteIntegerAttribute(dbfHandle, id, depthFieldIndex, polygon.getDeath());
+
 	SHPDestroyObject(shpObject);
 }
 
