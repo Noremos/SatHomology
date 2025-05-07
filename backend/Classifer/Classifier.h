@@ -112,10 +112,8 @@ public:
 
 			mcountor temp;
 			getCountour(item->getMatrix(), temp, true);
-			for (const auto& pm : temp)
+			for (const auto& point : temp)
 			{
-				auto point = bc::barvalue::getStatPoint(pm);
-
 				BackPixelPoint op = tileProv.tileToPreview(point.x, point.y); // To display
 				BackPoint iglob((static_cast<float>(op.x) + 0.5f), static_cast<float>(op.y) + 0.5f);
 

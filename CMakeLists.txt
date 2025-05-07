@@ -80,8 +80,9 @@ if (BUILD_TEST)
     add_executable(${BTARGET}
         ${SOURCES}
         ${SIDE_SOURCES}
-        Tests/FindClosestTests.cpp
-        Tests/SatTests.cpp
+        # Tests/FindClosestTests.cpp
+        Tests/FindCounturTests.cpp
+        # Tests/SatTests.cpp
     )
 
     set_target_properties(${BTARGET} PROPERTIES

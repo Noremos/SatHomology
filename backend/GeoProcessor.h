@@ -82,9 +82,10 @@ MEXPORT struct DictWrap
 	}
 };
 
-MEXPORT using mcountor = std::vector<buint>;
+using Countur = std::vector<BackPixelPoint>;
+using mcountor = Countur;
 
-MEXPORT inline CounturRect getCountour(const bc::barvector& points, mcountor& contur, bool aproximate = false);
+CounturRect getCountour(const bc::barvector& points, mcountor& contur, bool aproximate = false);
 CounturRect getCountour(const bc::barvector& points, mcountor& contur, bool aproximate);
 CounturRect getCountourOder(const bc::barvector& points, mcountor& contur, bool aproximate);
 
@@ -106,7 +107,7 @@ class ShapeFile
 public:
 	ShapeFile(std::string_view path);
 
-	void writePolygonRecord(const bc::barline& polygon,const TileProvider& provider);
+	void writePolygonRecord(const bc::barline& polygon,const TileProvider& provider, float xyMutator = 1.f);
 
 	void close();
 

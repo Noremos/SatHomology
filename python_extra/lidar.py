@@ -9,10 +9,9 @@ def save_las_to_bin(las_file_path, output):
 	lasdata = BinStateWriter(output)
 	# Open the .las file
 	with laspy.open(las_file_path) as las:
-		print(f"Coordinate System: {las.header.system_identifier}")
-		print(f"Bounds: {las.header.mins} to {las.header.maxs}")
 		print(f"File contains {las.header.point_count} points.")
-		return
+		print(f"Bounds: {las.header.mins} to {las.header.maxs}")
+
 		# Access points if needed
 		points = las.read().points
 		# print(points)
@@ -78,5 +77,85 @@ def create_geotiff_from_las(las_file_path, output_tif_path):
 		dataset.FlushCache()
 		dataset = None
 
-save_las_to_bin('/Users/sam/Edu/Аспирантура/Arch/LiDAR_BIGDATA_GN/Безклассификации/2020_1 без классификации_ч1.las', "las1.raw")
-save_las_to_bin('/Users/sam/Edu/Аспирантура/Arch/LiDAR_BIGDATA_GN/Безклассификации/2020_1 без классификации_ч2.las', "las2.raw")
+
+
+# save_las_to_bin('/Users/sam/Edu/Аспирантура/Arch/LiDAR_BIGDATA_GN/Безклассификации/2020_1 без классификации_ч1.las', "las1.raw")
+# save_las_to_bin('/Users/sam/Edu/Аспирантура/Arch/LiDAR_BIGDATA_GN/Безклассификации/2020_1 без классификации_ч2.las', "las2.raw")
+
+
+
+
+lasFiles = [
+	'/Users/sam/Edu/Аспирантура/Arch/LiDAR_BIGDATA_GN/Безклассификации/2020_1 без классификации_ч1.las',
+	'/Users/sam/Edu/Аспирантура/Arch/LiDAR_BIGDATA_GN/Безклассификации/2020_1 без классификации_ч2.las',
+	'/Users/sam/Edu/Аспирантура/Arch/LiDAR_BIGDATA_GN/Ground_2020_Участок 1.las'
+]
+
+
+void processAll()
+{
+	std::array<std::string_view, 3> files = {
+		"/Users/sam/H/Programs/imgui/SatHomology/lidara.raw",
+		"/Users/sam/H/Programs/imgui/SatHomology/las1.raw",
+		"/Users/sam/H/Programs/imgui/SatHomology/las2.raw"
+	};
+
+	std::array<bc::ProcType, 3> procs = {
+		bc::ProcType::f0t255,
+		bc::ProcType::f255t0,
+		bc::ProcType::Radius
+	};
+
+	std::array<std::string_view, 9> labels = {
+		"Ground_2020 f0t255",
+		"Ground_2020 f255t0",
+		"Ground_2020 Radius",
+		"2020_1 ch1 f0t255",
+		"2020_1 ch1 f255t0",
+		"2020_1 ch1 Radius",
+		"2020_1 ch2 f0t255",
+		"2020_1 ch2 f255t0",
+		"2020_1 ch2 Radius"
+	};
+
+	static_assert(files.size() == procs.size());
+	static_assert(files.size() * procs.size() == labels.size());
+
+	int labelCounter = 0;
+	for (size_t i = 0; i < files.size(); ++i)
+	{
+		std::cout << "Processing file: " << files[i] << std::endl;
+
+		std::string_view lasFilePath = files[i];
+		LasOut outlas = LasParser::parseLasFile(lasFilePath);
+
+		bc::barstruct bcs;
+		bcs.coltype = bc::ColorType::native;
+		bcs.createBinaryMasks = true;
+		bcs.createGraph = true;
+
+		for (size_t j = 0; j < procs.size(); ++j)
+		{
+			std::cout << "Step: " << j << std::endl;
+			bcs.proctype = procs[j];
+
+			const std::string_view label = labels[labelCounter++];
+			ShapeFile shp(label);
+
+			int a = 0;
+
+			processLas(outlas, bcs, 1, false, [&](bc::Baritem& item, const TileProvider iolProv)
+			{
+				for (size_t i = 0; i < item.barlines.size(); ++i)
+				{
+					const bc::barline& curLine = *item.barlines[i];
+					shp.writePolygonRecord(curLine, iolProv);
+				}
+				return false;
+			});
+			shp.close();
+			std::cout << "Write to " << label << std::endl;
+			return;
+		}
+	}
+}

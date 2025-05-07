@@ -373,12 +373,11 @@ public:
 						auto* classLayer = layers[classTypeOfItem];
 						DrawPrimitive* prim = classLayer->addPrimitive(classLayer->color);
 
-						std::vector<buint> out;
+						Countur out;
 						auto* item = collectionToPredict->getCItem(i);
 						auto rect = getCountourOder(item->getMatrix(), out, true);
-						for (const auto& pm : out)
+						for (const auto& op : out)
 						{
-							auto op = bc::barvalue::getStatPoint(pm);
 							//BackPoint iglob(static_cast<float>(op.x) + 0.5f, static_cast<float>(op.y) + 0.5f);
 							BackPoint iglob(static_cast<float>(op.x), static_cast<float>(op.y));
 

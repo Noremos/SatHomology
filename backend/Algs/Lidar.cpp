@@ -28,11 +28,6 @@
 
 using ull = unsigned long long;
 
-struct LasPoint {
-	float x, y, z;
-	unsigned short intensity;
-};
-
 struct LasOut
 {
 	// bc::CloudPointsBarcode::CloudPoints cloudPoints;
@@ -42,87 +37,6 @@ struct LasOut
 	ull width = 0;
 	ull height = 0;
 };
-
-struct Header
-{
-	char fileSignature[4]; // "LASF"
-	unsigned short fileSourceId;
-	unsigned short globalEncoding;
-	unsigned int projectId1;
-	unsigned short projectId2;
-	unsigned short projectId3;
-	char versionMajor;
-	char versionMinor;
-	char systemIdentifier[32];
-	char generatingSoftware[32];
-	unsigned int fileCreationDayOfYear;
-	unsigned int fileCreationYear;
-	unsigned int headerSize; // 227 bytes
-	unsigned int offsetToPointData;
-};
-struct PointDataRecordFormat
-{
-	unsigned char dataRecordFormat;
-	unsigned short pointDataRecordLength;
-	unsigned int numberOfPointRecords;
-	unsigned int numberOfPointsByReturn[5];
-	unsigned int xScaleFactor;
-	unsigned int yScaleFactor;
-	unsigned int zScaleFactor;
-	int xOffset;
-	int yOffset;
-	int zOffset;
-};
-struct PointDataRecord
-{
-	unsigned int x;
-	unsigned int y;
-	unsigned int z;
-	unsigned short intensity;
-	unsigned char returnNumber;
-	unsigned char numberOfReturns;
-	unsigned char classification;
-	unsigned char scanDirectionFlag;
-	unsigned char edgeOfFlightLine;
-	unsigned char classificationFlags;
-	unsigned char userData;
-	unsigned short pointSourceId;
-};
-struct PointData
-{
-	PointDataRecordFormat format;
-	std::vector<PointDataRecord> points;
-};
-struct PointDataRecordVLR
-{
-	unsigned short recordId;
-	unsigned short recordLengthAfterHeader;
-	unsigned short description;
-	unsigned int userId;
-	unsigned int recordNumber;
-	unsigned int recordOffset;
-};
-struct PointDataRecordVLRs
-{
-	unsigned short recordCount;
-	std::vector<PointDataRecordVLR> records;
-};
-struct PointDataRecordVLRHeader
-{
-	unsigned short recordId;
-	unsigned short recordLengthAfterHeader;
-	unsigned short description;
-	unsigned int userId;
-	unsigned int recordNumber;
-	unsigned int recordOffset;
-};
-struct PointDataRecordVLRsHeader
-{
-	unsigned short recordCount;
-	std::vector<PointDataRecordVLRHeader> records;
-};
-
-
 class LasParser
 {
 public:
@@ -214,7 +128,7 @@ int getTileSize(int x, int step)
 }
 
 using CallbackFunc = std::function<bool(bc::Baritem&, const TileProvider iolProv)>;
-void processLas(const LasOut& outlas, bc::barstruct bc, float factor, CallbackFunc callback)
+void processLas(const LasOut& outlas, bc::barstruct bc, float factor, bool fromZero, CallbackFunc callback)
 {
 	const ull fullChunkSize = chunkSize + chunkOversize;
 
@@ -240,7 +154,7 @@ void processLas(const LasOut& outlas, bc::barstruct bc, float factor, CallbackFu
 			int outX = 0;
 			for (PixelIterator iterX(chunkStartX, chunkEndX, step); iterX.notEnded();iterX.iterate())
 			{
-				int outY = chunk.height();
+				int outY = fromZero ? chunk.height() : 0;
 				for (PixelIterator iterY(chunkStartY, chunkEndY, step); iterY.notEnded(); iterY.iterate())
 				{
 					// Read the rect and Aproximate by step
@@ -261,7 +175,7 @@ void processLas(const LasOut& outlas, bc::barstruct bc, float factor, CallbackFu
 						}
 					}
 					// Invert the Y
-					chunk.set(outX, --outY, count == 0 ? -9999 : (sum / count));
+					chunk.set(outX, fromZero ? --outY : outY++, count == 0 ? -9999 : (sum / count));
 				}
 
 				++outX;
@@ -269,16 +183,18 @@ void processLas(const LasOut& outlas, bc::barstruct bc, float factor, CallbackFu
 
 
 			// Invert the Y
-			const ull yCurStart = lasEndY - chunkEndY;
-			const TileProvider iolProv(factor, (chunkStartX - outlas.x) / step, yCurStart / step);
+			const ull yCurStart = fromZero ? (lasEndY - chunkEndY) : (chunkStartY - outlas.y);
+			const TileProvider localProjection(factor, (chunkStartX - outlas.x) / step, yCurStart / step);
+
+			const TileProvider globalProjection(factor, chunkStartX, chunkStartY);
 
 			std::cout << "------Added chunk-----\n";
-			std::cout << "X: " << iolProv.offset.x << " Y:" << iolProv.offset.y << std::endl;
+			std::cout << "X: " << localProjection.offset.x << " Y:" << localProjection.offset.y << std::endl;
 
 			bc::BarcodeCreator bcc;
 			std::unique_ptr<bc::Baritem> item = bc::BarcodeCreator::create(chunk, bc);
 
-			bool ret = callback(*item.get(), iolProv);
+			bool ret = callback(*item.get(), fromZero ? localProjection : globalProjection);
 			if (!ret)
 			{
 				return;
@@ -315,7 +231,7 @@ RetLayers exeLidar(InOutLayer iol, const MLSettings& setting)
 	layer->init(input, proj->getMeta());
 	layer->prov.displayFactor = factor;
 
-	processLas(outlas, bc, factor, [&](bc::Baritem& item, const TileProvider iolProv) {
+	processLas(outlas, bc, factor, true, [&](bc::Baritem& item, const TileProvider iolProv) {
 
 		CachedBaritemHolder holder;
 		holder.init(&item, nullptr);
@@ -377,7 +293,8 @@ void processAll()
 			const std::string_view label = labels[labelCounter++];
 			ShapeFile shp(label);
 
-			processLas(outlas, bcs, 1.f, [&](bc::Baritem& item, const TileProvider iolProv)
+
+			processLas(outlas, bcs, 100, false, [&](bc::Baritem& item, const TileProvider iolProv)
 			{
 				for (size_t i = 0; i < item.barlines.size(); ++i)
 				{
@@ -388,11 +305,119 @@ void processAll()
 			});
 			shp.close();
 			std::cout << "Write to " << label << std::endl;
+			return;
 		}
 	}
 }
 
 
+
+void test()
+{
+	std::string_view lasFilePath = "/Users/sam/H/Programs/imgui/SatHomology/lidara.raw";
+	LasOut outlas = LasParser::parseLasFile(lasFilePath);
+
+	bc::barstruct bc;
+	bc.coltype = bc::ColorType::native;
+	bc.createBinaryMasks = true;
+	bc.createGraph = true;
+
+
+	int a = 1;
+	ShapeFile shp("test");
+	processLas(outlas, bc, 100, false, [&](bc::Baritem& item, const TileProvider iolProv)
+	{
+		for (size_t i = 0; i < item.barlines.size(); ++i)
+		{
+			const bc::barline& curLine = *item.barlines[i];
+			shp.writePolygonRecord(curLine, iolProv, step);
+		}
+		return ++a < 1;
+	});
+
+	shp.close();
+	exit(0);
+}
+
+
+void rtest1()
+{
+	bc::barvector inPoints;
+
+	inPoints.push_back({0,0, 0.f});
+	inPoints.push_back({0,1, 0.f});
+	inPoints.push_back({0,2, 0.f});
+	mcountor out;
+	getCountourOder(inPoints, out, true);
+
+	assert(out.size() == 4);
+
+	assert(out[0].x == 1);
+	assert(out[0].y == 0);
+
+	assert(out[1].x == 1);
+	assert(out[1].y == 3);
+
+	assert(out[2].x == 0);
+	assert(out[2].y == 3);
+
+	assert(out[3].x == 0);
+	assert(out[3].y == 0);
+}
+
+
+void rtest2()
+{
+	bc::barvector inPoints;
+
+	inPoints.push_back({2,1, 0.f});
+	inPoints.push_back({1,2, 0.f});
+	mcountor out;
+	getCountourOder(inPoints, out, true);
+
+	assert(out.size() == 4);
+
+	assert(out[0] == BackPixelPoint(1,2));
+
+	assert(out[1].x == 1);
+	assert(out[1].y == 0);
+
+	assert(out[2].x == 1);
+	assert(out[2].y == 3);
+
+	assert(out[3].x == 0);
+	assert(out[3].y == 3);
+}
+
+void rtest3()
+{
+	bc::barvector inPoints;
+	inPoints.push_back({1,1,  0.f});
+	// inPoints.push_back({2,1,  0.f});
+
+	mcountor out;
+	getCountourOder(inPoints, out, true);
+
+	assert(out.size() == 4);
+
+	assert(out[0] == BackPixelPoint(1,2));
+
+	assert(out[1].x == 1);
+	assert(out[1].y == 0);
+
+	assert(out[2].x == 1);
+	assert(out[2].y == 3);
+
+	assert(out[3].x == 0);
+	assert(out[3].y == 3);
+}
+
+void tests()
+{
+	// rtest1();
+	// rtest2();
+	rtest3();
+}
 static AlgFuncRegister registerLidar("Lidar", exeLidar, mkSettingsType);
 class AutoRun
 {
@@ -400,7 +425,9 @@ public:
 	AutoRun()
 	{
 		// exeLidar({}, mkSettingsType());
-		processAll();
+		// processAll();
+		test();
+		// tests();
 	}
 };
 static AutoRun autoee;

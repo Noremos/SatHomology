@@ -177,141 +177,110 @@ void getMaskRes(const BackImage& mat, BackImage& maskMat)
 
 class MapCountur
 {
-	int x = 0, y = 0;
-	int stIndex = 0;
-	mcountor& contur;
-	MMMAP<buint, bool> points;
+	Countur& contur;
+	BackPixelPoint startPoint;
+	ushort accum = 1;
 
+	// Map
+	std::set<buint> points;
+
+	// Runtime
+	BackPixelPoint cur;
 	enum StartPos : char { LeftMid = 0, LeftTop = 1, TopMid = 2, RigthTop = 3, RigthMid = 4, RigthBottom = 5, BottomMid = 6, LeftBottom = 7 };
-
 	StartPos dirct = RigthMid;
-	std::stack<StartPos> dirs;
-	std::stack<buint> pointsStack;
 
-	int accum = 2;
-	int poss[16][2] = { {-1, 0}, {-1, -1}, {0, -1}, {1, -1}, {1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}, {0, -1}, {1, -1}, {1, 0}, {1, 1}, {0, 1}, {-1, 1} };
+
+
+	int poss[16][2] = { {-1, 0}, {-1, -1}, {0, -1}, {1, -1}, {1, 0}, {1, 1}, {0, 1}, {-1, 1},
+						{-1, 0}, {-1, -1}, {0, -1}, {1, -1}, {1, 0}, {1, 1}, {0, 1}, {-1, 1} };
 
 public:
-	MapCountur(mcountor& contur) : contur(contur)
+	MapCountur(Countur& contur) : contur(contur)
 	{ }
 
-	void setFull()
+	void set4Directions()
 	{
 		accum = 2;
 	}
 
-	void setShort()
+	void set8Directions()
 	{
 		accum = 1;
 	}
 
-
 	void run(const bool aproxim = false)
 	{
-		int prevS;
-		dirct = RigthMid;
+		if (points.empty())
+			return;
 
-		if (aproxim)
-		{
-			contur.push_back(stIndex);
-		}
+		dirct = RigthMid;
+		cur = startPoint;
 
 		while (true)
 		{
-			char start = (dirct + 6) % 8; // Safe minus 2
-			char end = start + 5;
+			ushort start = (dirct + 6) % 8; // Safe minus 2
+			const ushort end = start + 7;
 			// Check
 			// 1 2 3
 			// 0 X 4
-			prevS = getIndex();
+			//   6 5
+
+			const BackPixelPoint prevS = cur;
+			const StartPos oldDirection = dirct;
 
 			for (; start < end; start += accum)
 			{
-				int* off = poss[(int)start];
-				if (tryVal(off[0], off[1]))
+				const int* off = poss[start];
+				const BackPixelPoint newPoint(cur.x + off[0], cur.y + off[1]);
+
+				if (this->exists(newPoint))
 				{
+					// Update dir
+					dirct = (StartPos)(start % 8);
+					cur = newPoint;
+
+					// In case of approximation
+					// put only if direction has changed
+					if (!aproxim || dirct != oldDirection)
+					{
+						contur.push_back(prevS);
+					}
+
+					if (cur == startPoint)
+					{
+						if (contur.front() != startPoint)
+						{
+							contur.push_back(startPoint);
+						}
+						return;
+					}
+
 					break;
 				}
 			}
 
-			if (start != end)
-			{
-				int s = getIndex();
-				StartPos old = dirct;
-				dirs.push(dirct);
-				dirct = (StartPos)(start % 8);
-
-				// Check new dir with the old one
-				if (dirct != old || !aproxim)
-				{
-					contur.push_back(prevS);
-				}
-
-				if (s == stIndex)
-				{
-					break;
-				}
-			}
-			else
-			{
-				unset();
-
-				if (pointsStack.size() < 1)
-					break;
-
-				StartPos old = dirct;
-				dirct = dirs.top();
-				dirs.pop();
-
-				if (dirct != old || !aproxim)
-					contur.pop_back();
-
-				auto p = bc::barvalue::getStatPoint(pointsStack.top());
-				pointsStack.pop();
-				x = p.x;
-				y = p.y;
-			}
+			// --------
+			// not found assert
+			assert(start < end);
 		}
+
+
 	}
 
-	void set(const bc::barvalue& p) { points[p.getIndex()] = true; }
-	void set(int x, int y) { points[bc::barvalue::getStatInd(x, y)] = true; }
+	void set(const bc::barvalue& p) { points.insert(p.getIndex()); }
+	void set(int x, int y) { points.insert(bc::barvalue::getStatInd(x, y)); }
 
 	void setStart(int x, int y)
 	{
-		this->x = x;
-		this->y = y;
-		stIndex = bc::barvalue::getStatInd(x, y);
+		startPoint.x = x;
+		startPoint.y = y;
 	}
 
 private:
 
-	void unset() { points[bc::barvalue::getStatInd(x, y)] = false; }
-
-	bool exists(int xl, int yl)
+	bool exists(BackPixelPoint p)
 	{
-		auto ds = points.find(bc::barvalue::getStatInd(xl, yl));
-		if (ds == points.end())
-			return false;
-
-		return ds->second;
-	}
-
-	bool tryVal(int oX, int oY)
-	{
-		if (exists(x + oX, y + oY))
-		{
-			pointsStack.push(getIndex());
-			x += oX;
-			y += oY;
-			return true;
-		}
-		return false;
-	}
-
-	buint getIndex()
-	{
-		return bc::barvalue::getStatInd(x, y);
+		return points.contains(bc::barvalue::getStatInd(p.x, p.y));
 	}
 };
 
@@ -324,7 +293,6 @@ class Beete
 public:
 	void set(const bc::barvalue& p) { points[p.getIndex()] = true; }
 	void set(int x, int y) { points[bc::barvalue::getStatInd(x, y)] = true; }
-
 
 	bool exists(int xl, int yl) const
 	{
@@ -361,9 +329,9 @@ public:
 		this->startY = y;
 	}
 
-	mcountor beetleContour() const
+	Countur beetleContour() const
 	{
-		mcountor contour;
+		Countur contour;
 
 		int cx = startX;
 		int cy = startY;
@@ -408,7 +376,7 @@ public:
 };
 
 
-CounturRect getCountour(const bc::barvector& points, mcountor& contur, bool aproximate)
+CounturRect getCountour(const bc::barvector& points, Countur& contur, bool aproximate)
 {
 	contur.clear();
 
@@ -455,16 +423,14 @@ CounturRect getCountour(const bc::barvector& points, mcountor& contur, bool apro
 }
 
 
-
-
-CounturRect getCountourOder(const bc::barvector& points, mcountor& contur, bool aproximate)
+CounturRect getCountourOder(const bc::barvector& points, Countur& contur, bool aproximate)
 {
 	contur.clear();
 
 	int rect[4]{ 99999999, 99999999, 0, 0 };
-	int stY;
+	int stY = 0;
 	MapCountur dictPoints(contur);
-	dictPoints.setShort();
+	dictPoints.set8Directions();
 	for (auto& p : points)
 	{
 		dictPoints.set(p);
@@ -491,9 +457,6 @@ CounturRect getCountourOder(const bc::barvector& points, mcountor& contur, bool 
 			rect[3] = y;
 		}
 	}
-
-	int wid = rect[2] - rect[0];
-	int hei = rect[3] - rect[1];
 
 	dictPoints.setStart(rect[0], stY);
 	dictPoints.run(aproximate);
@@ -673,7 +636,7 @@ void getRect(const bc::barvector& points, BackPoint& topLeft, BackPoint& bottomR
 // {
 // 	int recordNumber = ++recordCounter;
 
-// 	mcountor count;
+// 	Countur count;
 // 	CounturRect rect = getCountour(polygon.matr, count, true);
 
 // 	// Calculate content length: 44 bytes for polygon header + 16 bytes per vertex
@@ -714,7 +677,7 @@ void getRect(const bc::barvector& points, BackPoint& topLeft, BackPoint& bottomR
 // 	// Write vertices
 // 	for (const auto& vertex : count)
 // 	{
-// 		auto p = bc::barvalue::getStatPoint(vertex);
+// 		auto p = (vertex);
 // 		double x = p.x;
 // 		double y = p.y;
 // 		shp.write(reinterpret_cast<const char*>(&x), sizeof(x));
@@ -778,17 +741,21 @@ ShapeFile::ShapeFile(std::string_view path)
 	}
 }
 
-void ShapeFile::writePolygonRecord(const bc::barline& polygon, const TileProvider& provider)
+void ShapeFile::writePolygonRecord(const bc::barline& polygon, const TileProvider& provider, float xyMutator)
 {
-	mcountor count;
+	if (polygon.matr.size() < 3)
+	{
+		return;
+	}
+
+	Countur count;
 	// CounturRect rect =
 	getCountourOder(polygon.matr, count, true);
 
 	std::vector<double> xCoords, yCoords;
-	for (const auto& vertex : count)
+	for (const auto& p : count)
 	{
-		auto p = bc::barvalue::getStatPoint(vertex);
-		BackPixelPoint pix = provider.tileToFull(p.x, p.y);
+		const BackPoint pix = provider.tileToReal(p.x, p.y, xyMutator);
 		xCoords.push_back(pix.x);
 		yCoords.push_back(pix.y);
 	}

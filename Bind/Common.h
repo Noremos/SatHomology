@@ -99,6 +99,7 @@ struct TPoint
 	T x, y;
 
 	TPoint(T _x = 0, T _y = 0) : x(_x), y(_y) {}
+	// TPoint(std::initializer_list<T> t) : x(t.begin()[0]), y(t.begin()[1]) {}
 
 	bool operator==(const TPoint& other) const
 	{

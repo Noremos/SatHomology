@@ -90,7 +90,7 @@ public:
 		if (line->matr.size() == 0)
 			return guiTree;
 
-		std::vector<buint> out;
+		Countur out;
 		auto rect = getCountourOder(line->matr, out, true);
 		if (out.size() == 0)
 		{
@@ -105,9 +105,8 @@ public:
 		DrawPrimitive* p = layer->addPrimitive(pointCol);
 		guiTree.primId = p->id;
 		guiTree.size = line->matr.size();
-		for (const auto& pm : out)
+		for (const auto& op : out)
 		{
-			auto op = bc::barvalue::getStatPoint(pm);
 			//BackPoint iglob(static_cast<float>(op.x) + 0.5f, static_cast<float>(op.y) + 0.5f);
 			BackPoint iglob(static_cast<float>(op.x), static_cast<float>(op.y));
 

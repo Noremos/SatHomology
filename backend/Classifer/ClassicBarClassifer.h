@@ -194,7 +194,7 @@ public:
 				// Write
 				line = vec[i];
 
-				buint couId = line->id;
+				// buint couId = line->id;
 				state->pInt(line->id);
 				state->pInt(line->parentId);
 			}

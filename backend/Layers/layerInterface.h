@@ -61,6 +61,18 @@ public:
 		return BackPixelPoint(locX + offset.x, locY + offset.y);
 	}
 
+	constexpr double asd(int offset, uint v, double locMutator) const
+	{
+		return (static_cast<double>(offset) + static_cast<double>(v) * locMutator) / static_cast<double>(factor);
+	}
+
+	BackPoint tileToReal(uint locX, uint locY, float locMutator) const
+	{
+		return BackPoint(
+			asd(offset.x, locX, locMutator),
+			asd(offset.y, locY, locMutator));
+	}
+
 	TileProvider& operator=(const TileProvider& other)
 	{
 		factor = other.factor;
