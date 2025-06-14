@@ -361,3 +361,16 @@ MEXPORT inline bool endsWith(const BackString& string, const BackString endl)
 
 	return true;
 }
+
+
+using AutoRunFunction = std::function<void()>;
+class AutoRunRegister
+{
+public:
+	static AutoRunFunction runner;
+
+	AutoRunRegister(AutoRunFunction function)
+	{
+		runner = function;
+	}
+};

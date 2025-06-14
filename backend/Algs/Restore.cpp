@@ -245,13 +245,3 @@ MLSettings mkSettingsRestore()
 }
 
 static AlgFuncRegister registerExeRestore("Restore", exeRestore, mkSettingsRestore, "Preview");
-
-// class AutoRun
-// {
-// public:
-// 	AutoRun()
-// 	{
-// 		exeRestore({}, testRestore());
-// 	}
-// };
-// static AutoRun autoee;

@@ -432,15 +432,3 @@ void tests()
 	rtest3();
 }
 static AlgFuncRegister registerLidar("Lidar", exeLidar, mkSettingsType);
-class AutoRun
-{
-public:
-	AutoRun()
-	{
-		// exeLidar({}, mkSettingsType());
-		// processAll();
-		test();
-		// tests();
-	}
-};
-// static AutoRun autoee;
