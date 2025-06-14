@@ -46,10 +46,10 @@ public:
 			for (auto& c : comps)
 			{
 				// comm
-				double avg = c->getAvg();
+				const double avg = c->getAvg();
 				for (auto& p : c->pixels)
 				{
-					neck[p.y * iwid + p.x] += (1.0 / c->getAvg());
+					neck[p.y * iwid + p.x] += (1.0 / avg);
 				}
 			}
 
@@ -86,6 +86,11 @@ public:
 				continue;
 
 			auto* line = new bc::barline(workingImg->get(c->pixels[0]), workingImg->get(c->pixels.back()));
+			if (line->lenFloat() == 0)
+			{
+				delete line;
+				continue;
+			}
 			line->initRoot(itm);
 			for (auto& p : c->pixels)
 			{

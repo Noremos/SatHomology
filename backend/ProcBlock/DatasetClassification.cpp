@@ -377,7 +377,7 @@ using namespace std::literals::string_view_literals;
 
 class FuncNameIterator : public TestIterator
 {
-	int stepId;
+	int stepId = 0;
 	const char*& methodName;
 	std::vector<BackStringView> funcName =
 	{
@@ -393,7 +393,9 @@ class FuncNameIterator : public TestIterator
 public:
 
 	FuncNameIterator(const char*& ref) : methodName(ref)
-	{ }
+	{
+		restart();
+	}
 
 	void restart() override
 	{

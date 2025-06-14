@@ -232,6 +232,12 @@ public:
 				continue;
 
 			auto* line = new bc::barline(workingImg->get(c->pixels[0]), workingImg->get(c->pixels.back()));
+			if (line->lenFloat() == 0)
+			{
+				delete line;
+				continue;
+			}
+
 			line->initRoot(itm);
 			for (auto& p : c->pixels)
 			{
