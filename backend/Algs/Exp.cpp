@@ -272,7 +272,7 @@ RetLayers exeQuadro(InOutLayer iol, const MLSettings& settings)
 
 
 	constr.addStructure(type, bc::ColorType::native, bc::ComponentType::Component);
-	constr.maskId = 0;
+	constr.maskValueId = 0;
 	constr.mask = &mask;
 
 	bc::BarConstructor constHolder;
@@ -334,7 +334,7 @@ RetLayers exeQuadro(InOutLayer iol, const MLSettings& settings)
 				//	continue;
 
 				bc::barstruct bst = constr;
-				bst.maskId = i;
+				bst.maskValueId = i;
 				constHolder.structs.push_back(bst);
 
 				// if (item->barlines[i]->len() < 10)

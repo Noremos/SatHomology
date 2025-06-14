@@ -148,6 +148,7 @@ void processLas(const LasOut& outlas, bc::barstruct bc, float factor, bool fromZ
 
 			// Chunk in output size
 			BackImage chunk(getTileSize((chunkEndX - chunkStartX), step), getTileSize((chunkEndY - chunkStartY), step), BarType::FLOAT32_1);
+			BackImage mask(chunk.wid(), chunk.hei(), BarType::INT32_1);
 
 
 			// read the chunk in real size
@@ -174,8 +175,18 @@ void processLas(const LasOut& outlas, bc::barstruct bc, float factor, bool fromZ
 							}
 						}
 					}
+
+					const int y = fromZero ? --outY : outY++;
 					// Invert the Y
-					chunk.set(outX, fromZero ? --outY : outY++, count == 0 ? -9999 : (sum / count));
+					if (count > 0)
+					{
+						chunk.set(outX, y, count == 0 ? -9999 : (sum / count));
+						mask.set(outX, y, Barscalar(1, BarType::INT32_1));
+					}
+					else
+					{
+						mask.set(outX, y, Barscalar(0, BarType::INT32_1));
+					}
 				}
 
 				++outX;
@@ -191,6 +202,8 @@ void processLas(const LasOut& outlas, bc::barstruct bc, float factor, bool fromZ
 			std::cout << "------Added chunk-----\n";
 			std::cout << "X: " << localProjection.offset.x << " Y:" << localProjection.offset.y << std::endl;
 
+			bc.mask = &mask;
+			bc.maskValueId = 1;
 			bc::BarcodeCreator bcc;
 			std::unique_ptr<bc::Baritem> item = bc::BarcodeCreator::create(chunk, bc);
 
@@ -430,4 +443,4 @@ public:
 		// tests();
 	}
 };
-static AutoRun autoee;
+// static AutoRun autoee;
