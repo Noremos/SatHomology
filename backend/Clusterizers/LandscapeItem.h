@@ -60,7 +60,7 @@ public:
 			auto& curVec = landscape.back();
 			auto& b = curVec.points.back();
 			assert(b.x <= x);
-			assert(b.x != x || b.y != y); //TODO: FIXME
+			// assert(b.x != x || b.y != y); //TODO: FIXME
 			if (b.x == x && b.y == y)
 				return;
 		}
