@@ -15,6 +15,7 @@ rowptr SimpleImgReader::getRowData(int ri)
 bool SimpleImgReader::open(const BackString& path)
 {
 	main = imread(path);
+	// main.resize(256, 256);
 	samples = main.channels();
 	type = ImageType::int8;
 

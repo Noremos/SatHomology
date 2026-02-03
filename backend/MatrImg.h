@@ -400,6 +400,14 @@ public:
 		setLiner(y * _wid + x, val);
 	}
 
+	inline void setIfExists(int x, int y, const Barscalar& val)
+	{
+		if (x < 0 || y < 0 || x >= _wid || y >= _hei)
+			return;
+
+		setLiner(y * _wid + x, val);
+	}
+
 	struct m_rgbfill
 	{
 		buchar rgb[3];
@@ -789,9 +797,19 @@ MEXPORT void FrameworkInit();
 MEXPORT BackImage imread(const BackString& path, bool dropAlpha = false);
 
 MEXPORT BackImage imread(const BackPathStr& path, bool dropAlpha = false);
+
+inline BackImage imread(const char* path, bool dropAlpha = false)
+{
+	return imread(BackString(path), dropAlpha);
+}
+
 MEXPORT void imwrite(const BackString& path, const BackImage& mat);
 
 MEXPORT void imwrite(const BackPathStr& path, const BackImage& mat);
+inline void imwrite(const char* path, const BackImage& mat)
+{
+	imwrite(BackString(path), mat);
+}
 
 
 MEXPORT BackImage imreadFromMemory(const buchar* data, size_t size);

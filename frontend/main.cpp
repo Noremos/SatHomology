@@ -127,8 +127,8 @@ int main(int, char** argv)
 	//ImGui::PushFont(font);
 	MyApp::Init(argv[0]);
 
-	// if (AutoRunRegister::runner)
-	// 	AutoRunRegister::runner();
+	if (AutoRunRegister::runner)
+		AutoRunRegister::runner();
 
 	// Main loop
 	while (!glfwWindowShouldClose(window))
