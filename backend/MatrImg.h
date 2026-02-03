@@ -758,7 +758,7 @@ public:
 	}
 
 
-	BackImage getRect(int stX, int stRow, int wid, int hei)
+	BackImage getRect(int stX, int stRow, int wid, int hei) const
 	{
 		const int typeSize = TSize; // channels * scalar size
 		const int destBytesSize = wid * typeSize;

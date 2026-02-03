@@ -83,7 +83,7 @@ void drawCountur(BackImage& out, const Rect rect, const Barscalar& color, int16_
 // Draw a small percentage text like "<N>%" directly onto BackImage without
 // using any external text libraries. Uses a simple 3x5 pixel font scaled by
 // 'scale'.
-void drawPercentText(BackImage& out, int percent, const Barscalar& color, int x = 0, int y = 0, int scale = 1)
+void drawPercentText(BackImage& out, int percent, Barscalar color, int x = 0, int y = 0, int scale = 1)
 {
 	if (scale <= 0) scale = 1;
 	// Clamp percent to 0..999 for display
@@ -143,6 +143,9 @@ void drawPercentText(BackImage& out, int percent, const Barscalar& color, int x 
 
 	for (int ci = 0; ci < totalChars; ++ci)
 	{
+		if (ci + 1 == totalChars)
+			color = Barscalar(0, 0, 0); // percent sign in black
+
 		const uint8_t* glyph = nullptr;
 		uint8_t localGlyph[5];
 		if (ci < len)
@@ -189,9 +192,9 @@ const std::vector<std::string> TRAIN
 {
 	"0c70835db_png_jpg.rf.b33d308d41070899738a2cbc81696811.jpg",
 	"0e79e9286_png_jpg.rf.b68f40355db238f87f9bc7950ef650a2.jpg",
-	"4f833867-273e-4d73-8bc3-cb2d9ceb54ef_1060_1060_jpg.rf.8e289124678d6ae3dee96979050174c0.jpg",
-	"4fdabd34-a2fd-4f0a-bb48-01fe043f1499_0_1060_jpg.rf.067f2467b08ae9a2706e6df2c234e295.jpg",
-	"38ff8d64-3460-4f83-bf9c-383832aeba0d_0_1060_jpg.rf.cc6f9fbb05f103d7ce0ebfecae8776a8.jpg",
+	"140d04fd-dea7-4d46-bce2-e20f73e155da_0_0_jpg.rf.43231b4a5386e2b324cac997563f6229.jpg",
+	"980b5831-43b7-4adb-9e4b-67d6cff3ef68_0_1060_jpg.rf.3963875ade6f27e756c222ba5d9facaa.jpg",
+	"135fdc4c-6656-4176-9873-9f00c6918293_1060_1060_jpg.rf.7ab251bd04a18367fea7549d75fd3a93.jpg",
 	"P2672__1-0__3000___600_png_jpg.rf.596ca436c207483c9e8afa3e2710fb94.jpg",
 	"P2753__1-0__0___1200_png_jpg.rf.a7109280c463052b2e9672296282f090.jpg",
 	"P2754__1-0__1800___1200_png_jpg.rf.b7a1685eeacf8bac3949219f434f836d.jpg"
@@ -199,12 +202,11 @@ const std::vector<std::string> TRAIN
 
 const std::vector<std::string> TEST
 {
-	"0fec7f7ff_png_jpg.rf.c7512d2139a78b930e5adc81a1b1f250.jpg",
-	"2cdbcdd8e_png_jpg.rf.b542fbf7049fbb307b7f78a8e29aad6a.jpg",
-	"3e321b8a-9504-45aa-82b4-16158e28e290_1060_1060_jpg.rf.362d727519b454eeac2b42fb35142d3e.jpg",
-	"03f84930-e2be-4c19-9afc-0dc26d02538e_1060_0_jpg.rf.c8ac4f9068dde47da4ac0211f59e751b.jpg",
-	"15691_png_jpg.rf.fa449ee7d1d79b9307e7c7effb376344.jpg",
-	"P1412__1-0__3000___0_png_jpg.rf.50630bd0bc29553f3c61b2b6a9c5ab48.jpg"
+	"4d53fbdae_png_jpg.rf.8bf1ac78a6bc54af93e853cc33067dde.jpg", // boat
+	"3e321b8a-9504-45aa-82b4-16158e28e290_1060_1060_jpg.rf.362d727519b454eeac2b42fb35142d3e.jpg", // air
+	"03f84930-e2be-4c19-9afc-0dc26d02538e_1060_0_jpg.rf.c8ac4f9068dde47da4ac0211f59e751b.jpg", // air
+	"15691_png_jpg.rf.fa449ee7d1d79b9307e7c7effb376344.jpg", // veh
+	"P1412__1-0__3000___0_png_jpg.rf.50630bd0bc29553f3c61b2b6a9c5ab48.jpg" // air
 };
 
 // struct Search
@@ -275,7 +277,7 @@ struct Node
 		// Penalize by distance to encourage exact matches
 		for (size_t i = 0; i < 3; i++)
 		{
-			result.hits[i] -= distance;
+			result.hits[i] = std::max<int32_t>(result.hits[i] - distance, 0);
 		}
 
 		// Accumulate counts from all children (visiting as many branches as possible)
@@ -363,96 +365,274 @@ struct Node
 	}
 };
 
-struct DatasetEntry
+
+struct ClassicTrainer
 {
-	// uint16_t typeId;
-	Node root;
-	PlusValues counters{};
+	std::array<std::vector<std::unique_ptr<bc::Baritem>>, 3> constrs;
 
-	// std::vector<int> itemIds;
 
-	// void buildDecisionTree()
-	// {
-	// 	itemIds.clear();
-	// 	for (size_t i = 0; i < items.size(); ++i)
-	// 	{
-	// 		auto& item = items[i];
-	// 		int minX = std::numeric_limits<int>::max();
-	// 		int minY = std::numeric_limits<int>::max();
-	// 		int maxX = std::numeric_limits<int>::min();
-	// 		int maxY = std::numeric_limits<int>::min();
-	// 		for (const auto& barline : item->barlines)
-	// 		{
-	// 			for (const auto& pm : barline->matr)
-	// 			{
-	// 				minX = std::min(minX, pm.getX());
-	// 				minY = std::min(minY, pm.getY());
-	// 				maxX = std::max(maxX, pm.getX());
-	// 				maxY = std::max(maxY, pm.getY());
-	// 			}
-	// 		}
-	// 		float centroidX = (minX + maxX) / 2.0f;
-	// 		float centroidY = (minY + maxY) / 2.0f;
-	// 		float width = maxX - minX;
-	// 		float height = maxY - minY;
-	// 		Trainer<4>::Hash h;
-	// 		h.key[0] = centroidX;
-	// 		h.key[1] = centroidY;
-	// 		h.key[2] = width;
-	// 		h.key[3] = height;
-	// 		h.value = 0.0f; // not used
-	// 		index.add(h);
-	// 		itemIds.push_back(i);
-	// 	}
-	// 	index.train();
-	// }
+	void add(bc::Baritem* item, const uint16_t typeId)
+	{
+		constrs[typeId].emplace_back(item->clone());
+	}
 
-	// int findClosest(const bc::Baritem& query)
-	// {
-	// 	int minX = std::numeric_limits<int>::max();
-	// 	int minY = std::numeric_limits<int>::max();
-	// 	int maxX = std::numeric_limits<int>::min();
-	// 	int maxY = std::numeric_limits<int>::min();
-	// 	for (const auto& barline : query.barlines)
-	// 	{
-	// 		for (const auto& pm : barline->matr)
-	// 		{
-	// 			minX = std::min(minX, pm.getX());
-	// 			minY = std::min(minY, pm.getY());
-	// 			maxX = std::max(maxX, pm.getX());
-	// 			maxY = std::max(maxY, pm.getY());
-	// 		}
-	// 	}
-	// 	float centroidX = (minX + maxX) / 2.0f;
-	// 	float centroidY = (minY + maxY) / 2.0f;
-	// 	float width = maxX - minX;
-	// 	float height = maxY - minY;
-	// 	Trainer<4>::Hash h;
-	// 	h.key[0] = centroidX;
-	// 	h.key[1] = centroidY;
-	// 	h.key[2] = width;
-	// 	h.key[3] = height;
-	// 	int lineId = index.getCloser(h);
-	// 	return itemIds[lineId];
-	// }
+	std::pair<uint16_t, float> findType(const bc::Baritem* in) const
+	{
+		float maxRes = 0.0f;
+		uint16_t maxTypeId = 0;
+		for (size_t i = 0; i < 3; i++)
+		{
+			for (const auto& item : constrs[i])
+			{
+				float res = item->compareFull(in, bc::CompareStrategy::CommonToLen);
+				if (res > maxRes)
+				{
+					maxRes = res;
+					maxTypeId = static_cast<uint16_t>(i);
+				}
+			}
+		}
+		return {maxTypeId, maxRes};
+	}
 };
-
-using Dataset = std::array<DatasetEntry, 3>;
-
 struct DatasetData
 {
+	int addItem(bc::Baritem* item, const uint16_t categoryId)
+	{
+		classic.add(item, categoryId);
+		return root.add(item->getRootNode(), categoryId);
+	}
+
+	std::pair<uint16_t, float> predict(bc::Baritem* item)
+	{
+		return classic.findType(item);
+		// return root.findType(item->getRootNode()->getChild(0));
+	}
+
+
 	Node root;
+
+	ClassicTrainer classic;
 	// Dataset dataset;
 	Range width;
 	Range height;
 	PlusValues counters{};
 	std::array<uint32_t, 3> truePositive{};
-	std::array<uint32_t, 3> falsePositive{};
 	std::array<uint32_t, 3> size{};
+
+	std::array<uint32_t, 3> falsePositive{};
+	std::array<uint32_t, 3> falseNegative{};
 };
 
+struct CocoImage
+{
+	BackImage img;
+	int id;
+};
 
-void parseCocoAnnotations(DatasetData& outData, const bc::barstruct& constr, std::string prefix = "test", bool trainDataset = false)
+std::vector<CocoImage> parseCocoImages(const BackJson& json, std::string prefixPath, const std::vector<std::string>& whitelist)
+{
+	std::vector<CocoImage> images;
+	for (const auto& image : json["images"])
+	{
+		CocoImage img;
+		auto fileName = image["file_name"].get<std::string>();
+		img.id = image["id"].get<int>();
+
+		bool good = false;
+		for (const auto& search : whitelist)
+		{
+			if (fileName == search)
+			{
+				good = true;
+				break;
+			}
+		}
+		if (good)
+		{
+			img.img = imread(prefixPath + fileName);
+			images.push_back(std::move(img));
+		}
+	}
+	return images;
+}
+
+std::optional<uint32_t> checkAnnotationImage(const BackJson& annotate, const std::vector<CocoImage>& images)
+{
+	uint32_t cocoImageId = 0;
+	auto imageId = annotate["image_id"].get<int>();
+
+	for (const auto& image : images)
+	{
+		if (imageId == image.id)
+		{
+			return cocoImageId;
+		}
+
+		++cocoImageId;
+	}
+
+	return std::nullopt;
+}
+
+
+std::optional<Rect> parseBox(const BackJson& annotate)
+{
+	auto bbox = annotate["bbox"];
+	if (bbox.size() != 4)
+		return std::nullopt;
+
+	int x = static_cast<int>(bbox[0]);
+	int y = static_cast<int>(bbox[1]);
+	int w = static_cast<int>(bbox[2]);
+	int h = static_cast<int>(bbox[3]);
+
+	Rect rect;
+	rect.x.min = x;
+	rect.x.max = x + w;
+	rect.y.min = y;
+	rect.y.max = y + h;
+
+	return rect;
+}
+
+std::unique_ptr<bc::Baritem> parseCocoAnnotationItem(const BackJson& ann, std::vector<CocoImage> images, const bc::barstruct& constr, Rect& outRect)
+{
+	auto imageId = checkAnnotationImage(ann, images);
+	if (imageId == std::nullopt)
+		return nullptr;
+
+	auto box = parseBox(ann);
+	if (box == std::nullopt)
+		return nullptr;
+
+	const BackImage& src = images[imageId.value()].img;
+	outRect = box.value();
+	auto rectImg = src.getRect(outRect.x.min, outRect.y.min, outRect.x.max - outRect.x.min, outRect.y.max - outRect.y.min);
+
+	auto item = bc::BarcodeCreator::create(rectImg, constr);
+	// outData.dataset[ann["category_id"].get<int>()].root->add(item->getRootNode(), ann["category_id"].get<int>());
+	assert(item->getRootNode()->getChildrenCount() == 1);
+
+	return item;
+}
+
+void parseCocoAnnotationsTrain(DatasetData& outData, const bc::barstruct& constr, const std::string prefix = "train")
+{
+	std::string prefixPath(PATH.data(), PATH.size());
+	prefixPath += prefix;
+	prefixPath += "/";
+
+	std::string jsonPath = prefixPath;
+	jsonPath += "_annotations.coco.json";
+
+	auto json = jsonFromFile(jsonPath);
+	auto images = parseCocoImages(json, prefixPath, TRAIN);
+
+	// Use nlohmann to parse JSON
+	for (const auto& ann : json["annotations"])
+	{
+		Rect rect;
+		auto item = parseCocoAnnotationItem(ann, images, constr, rect);
+		if (!item)
+			continue;
+
+		auto categoryId = ann["category_id"].get<int>() - 1;
+
+		int rscore = outData.addItem(item.get(), categoryId);
+		++outData.counters[categoryId];
+
+		[[maybe_unused]]
+		auto [rtype, score] = outData.predict(item.get());
+		assert(rtype == categoryId || score == 1);
+
+		outData.width.min = std::min(outData.width.min, rect.x.min);
+		outData.height.min = std::min(outData.height.min, rect.y.min);
+		outData.width.max = std::max(outData.width.max, rect.x.max);
+		outData.height.max = std::max(outData.height.max, rect.y.max);
+	}
+}
+
+constexpr uint16_t NUM_CLASSES = 3;
+
+double computeAccuracy(const std::array<std::array<int, 3>, 3>& cm)
+{
+    int correct = 0;
+    int total = 0;
+
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+        {
+            total += cm[i][j];
+            if (i == j)
+                correct += cm[i][j];
+        }
+
+    return total > 0 ? static_cast<double>(correct) / total : 0.0;
+}
+
+double computeBalancedAccuracy(const std::array<std::array<int, 3>, 3>& cm)
+{
+    double sumRecall = 0.0;
+
+    for (int k = 0; k < 3; ++k)
+    {
+        int TP = cm[k][k];
+        int FN = 0;
+
+        for (int j = 0; j < 3; ++j)
+            if (j != k)
+                FN += cm[k][j];
+
+        double recall = (TP + FN) > 0
+            ? static_cast<double>(TP) / (TP + FN)
+            : 0.0;
+
+        sumRecall += recall;
+    }
+
+    return sumRecall / 3;
+}
+
+double computeMacroF1(
+    const std::array<std::array<int, NUM_CLASSES>, NUM_CLASSES>& cm)
+{
+    double sumF1 = 0.0;
+
+    for (int k = 0; k < NUM_CLASSES; ++k)
+    {
+        int TP = cm[k][k];
+        int FP = 0;
+        int FN = 0;
+
+        for (int i = 0; i < NUM_CLASSES; ++i)
+        {
+            if (i != k)
+            {
+                FP += cm[i][k];
+                FN += cm[k][i];
+            }
+        }
+
+        double precision = (TP + FP) > 0
+            ? static_cast<double>(TP) / (TP + FP)
+            : 0.0;
+
+        double recall = (TP + FN) > 0
+            ? static_cast<double>(TP) / (TP + FN)
+            : 0.0;
+
+        double f1 = (precision + recall) > 0
+            ? 2.0 * precision * recall / (precision + recall)
+            : 0.0;
+
+        sumF1 += f1;
+    }
+
+    return sumF1 / NUM_CLASSES;
+}
+
+void parseCocoAnnotationsTest(DatasetData& ds, const bc::barstruct& constr, const std::string prefix = "test")
 {
 	std::string prefixPath(PATH.data(), PATH.size());
 	prefixPath += prefix;
@@ -463,110 +643,77 @@ void parseCocoAnnotations(DatasetData& outData, const bc::barstruct& constr, std
 
 	auto json = jsonFromFile(jsonPath);
 
-	std::vector<int> goodImageIds;
-	std::vector<BackImage> goodImages;
-	for (const auto& image : json["images"])
-	{
-		auto name = image["file_name"];
-		auto id = image["id"];
+	auto images = parseCocoImages(json, prefixPath, TEST);
 
-		bool good = false;
-		for (const auto& search : TRAIN)
-		{
-			if (name.get<std::string>() == search)
-			{
-				goodImageIds.push_back(id.get<int>());
+	auto outImages = images;
 
-				goodImages.push_back(imread(prefixPath + search));
-				break;
-			}
-		}
-	}
-
+	std::array<std::array<int, 3>, 3> confusion = {};
 	// Use nlohmann to parse JSON
 	for (const auto& ann : json["annotations"])
 	{
-		bool skip = true;
-		int id = 0;
-		for (const auto& gid : goodImageIds)
-		{
-			if (ann["image_id"].get<int>() == gid)
-			{
-				skip = false;
-				break;
-			}
-
-			++id;
-		}
-
-		if (skip)
+		Rect rect;
+		auto item = parseCocoAnnotationItem(ann, images, constr, rect);
+		if (!item)
 			continue;
 
-		auto bbox = ann["bbox"];
-		if (bbox.size() != 4) continue;
-		int x = static_cast<int>(bbox[0]);
-		int y = static_cast<int>(bbox[1]);
-		int w = static_cast<int>(bbox[2]);
-		int h = static_cast<int>(bbox[3]);
-		Rect rect;
-		rect.x.min = x;
-		rect.x.max = x + w;
-		rect.y.min = y;
-		rect.y.max = y + h;
+		const auto categoryId = ann["category_id"].get<int>() - 1;
 
-		BackImage& src = goodImages[id];
+		auto [rtype, score] = ds.predict(item.get());
+		ds.size[categoryId]++;
 
-		auto rectImg = src.getRect(rect.x.min, rect.y.min, rect.x.max - rect.x.min, rect.y.max - rect.y.min);
+		confusion[categoryId][rtype]++;
 
-		auto item = bc::BarcodeCreator::create(rectImg, constr);
-		// outData.dataset[ann["category_id"].get<int>()].root->add(item->getRootNode(), ann["category_id"].get<int>());
-		assert(item->getRootNode()->getChildrenCount() == 1);
-		auto categoryId = ann["category_id"].get<int>() - 1;
-
-		if (id == 2)
-			id = 2;
-
-		if (trainDataset)
+		Barscalar color;
+		if (rtype == categoryId)
 		{
-			int rscore = outData.root.add(item->getRootNode(), categoryId);
-			outData.counters[categoryId] += rscore;
-
-			auto [rtype, score] = outData.root.findType(item->getRootNode()->getChild(0));
-			assert(rtype == categoryId || score == 1);
-
-			outData.width.min = std::min(outData.width.min, rect.x.min);
-			outData.height.min = std::min(outData.height.min, rect.y.min);
-			outData.width.max = std::max(outData.width.max, rect.x.max);
-			outData.height.max = std::max(outData.height.max, rect.y.max);
-			outData.size[categoryId]++;
+			color = Barscalar(0, 255, 0);
+			ds.truePositive[categoryId]++;
 		}
 		else
 		{
-			auto [rtype, score] = outData.root.findType(item->getRootNode()->getChild(0));
-			if (rtype == categoryId)
-			{
-				outData.truePositive[categoryId]++;
-			}
-			else
-			{
-				outData.falsePositive[rtype]++;
-			}
-			// Process test data if needed
+			color = Barscalar(255, 0, 0);
+			ds.falsePositive[rtype]++;
+			ds.falseNegative[categoryId]++;
 		}
+
+		auto imageId = checkAnnotationImage(ann, images);
+		auto& out = outImages[imageId.value()].img;
+
+		drawCountur(out, rect, color, 2);
+		drawPercentText(out, (score * 100), color, rect.x.min, rect.y.min - 10, 2);
+	}
+
+	std::cout << "Dataset evaluation:\n";
+	for (size_t i = 0; i < 3; ++i)
+	{
+		uint32_t tp = ds.truePositive[i];
+		float precision = (tp == 0) ? 0.0f : (float(tp) / float(ds.size[i]));
+		std::cout << " Type " << i + 1 << ": Precision=" << precision << std::endl;
+	}
+
+	double acc = computeAccuracy(confusion);
+	double balAcc = computeBalancedAccuracy(confusion);
+	double macroF1 = computeMacroF1(confusion);
+
+	std::cout << "Accuracy: " << acc << "\n";
+	std::cout << "Balanced accuracy: " << balAcc << "\n";
+	std::cout << "Macro-F1: " << macroF1 << "\n";
+
+	for (const auto& outImg : outImages)
+	{
+		std::string outPath = "";
+		// outPath += "/output/";
+		// outPath += prefix;
+		// outPath += "/";
+		outPath += std::to_string(outImg.id);
+		outPath += ".png";
+		imwrite(outPath, outImg.img);
 	}
 }
 
-
-BackImage findObjects(const BackImage& src, const bc::barstruct& constr)
+BackImage findObjectsOnImage(const BackImage& src, const bc::barstruct& constr, const DatasetData& ds)
 {
 	BackImage out = src;
-
-	DatasetData ds;
-	parseCocoAnnotations(ds, constr, "train");
-
-	// std::unique_ptr<bc::Baritem> containner(bcc.run(&src, constr, dummy));
-	// bc::Baritem* item = containner.get();
-
 	std::unique_ptr<bc::Baritem> item = bc::BarcodeCreator::create(src, constr);
 
 	std::array<Barscalar, 3> colors;
@@ -611,11 +758,19 @@ BackImage findObjects(const BackImage& src, const bc::barstruct& constr)
 	return out;
 }
 
+void objectClassification(const bc::barstruct& constr)
+{
+	DatasetData ds;
+	parseCocoAnnotationsTrain(ds, constr, "train");
+	parseCocoAnnotationsTest(ds, constr, "test");
+}
+
 
 RetLayers findObjects(InOutLayer iol, const MLSettings& setting)
 {
 	RetLayers ret;
-	bc::barstruct constr = getConstr(setting);
+	// bc::barstruct constr = getConstr(setting);
+	// findObjectsOnImage
 
 	return ret;
 }
@@ -631,10 +786,10 @@ AutoRunRegister registerParseCocoAnnotations([]()
 	// BackImage testImg = imread("/Users/sam/Edu/bar/12/10.png", true);
 
 	bc::barstruct constr;
-	constr.proctype = bc::ProcType::f255t0;
+	constr.proctype = bc::ProcType::Radius;
 	constr.createGraph = true;
 	constr.createBinaryMasks = false;
-	constr.attachMode = bc::AttachMode::firstEatSecond;
-	BackImage out = findObjects(testImg, constr);
-	imwrite("/Users/sam/H/Programs/imgui/SatHomology/out.png", out);
+	constr.attachMode = bc::AttachMode::morePointsEatLow;
+	objectClassification(constr);
+	exit(0);
 });
