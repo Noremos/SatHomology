@@ -493,7 +493,24 @@ std::optional<Rect> parseBox(const BackJson& annotate)
 	rect.y.min = y;
 	rect.y.max = y + h;
 
+	// rect.x.min = x - 15;
+	// rect.x.max = x + w + 15;
+	// rect.y.min = y - 15;
+	// rect.y.max = y + h + 15;
 	return rect;
+}
+
+std::unique_ptr<bc::Baritem> makeBarcode(const BackImage& src, const bc::barstruct& constr, Rect rect)
+{
+	auto rectImg = src.getRectSafe(rect.x.min, rect.y.min, rect.x.max - rect.x.min, rect.y.max - rect.y.min);
+	if (rectImg.width() == 0 || rectImg.height() == 0)
+		return nullptr;
+
+	auto item = bc::BarcodeCreator::create(rectImg, constr);
+	// outData.dataset[ann["category_id"].get<int>()].root->add(item->getRootNode(), ann["category_id"].get<int>());
+	assert(item->getRootNode()->getChildrenCount() == 1);
+
+	return item;
 }
 
 std::unique_ptr<bc::Baritem> parseCocoAnnotationItem(const BackJson& ann, std::vector<CocoImage> images, const bc::barstruct& constr, Rect& outRect)
@@ -508,13 +525,8 @@ std::unique_ptr<bc::Baritem> parseCocoAnnotationItem(const BackJson& ann, std::v
 
 	const BackImage& src = images[imageId.value()].img;
 	outRect = box.value();
-	auto rectImg = src.getRect(outRect.x.min, outRect.y.min, outRect.x.max - outRect.x.min, outRect.y.max - outRect.y.min);
 
-	auto item = bc::BarcodeCreator::create(rectImg, constr);
-	// outData.dataset[ann["category_id"].get<int>()].root->add(item->getRootNode(), ann["category_id"].get<int>());
-	assert(item->getRootNode()->getChildrenCount() == 1);
-
-	return item;
+	return makeBarcode(src, constr, outRect);
 }
 
 void parseCocoAnnotationsTrain(DatasetData& outData, const bc::barstruct& constr, const std::string prefix = "train")
@@ -550,6 +562,12 @@ void parseCocoAnnotationsTrain(DatasetData& outData, const bc::barstruct& constr
 		outData.height.min = std::min(outData.height.min, rect.y.min);
 		outData.width.max = std::max(outData.width.max, rect.x.max);
 		outData.height.max = std::max(outData.height.max, rect.y.max);
+	}
+
+	std::cout << "Dataset trained:\n";
+	for (size_t i = 0; i < 3; ++i)
+	{
+		std::cout << " Type " << i + 1 << ": Count=" << outData.counters[i] << std::endl;
 	}
 }
 
@@ -711,6 +729,96 @@ void parseCocoAnnotationsTest(DatasetData& ds, const bc::barstruct& constr, cons
 	}
 }
 
+
+void parseCocoAnnotationsTestAll(DatasetData& ds, const bc::barstruct& constr, const std::string prefix = "test")
+{
+	std::string prefixPath(PATH.data(), PATH.size());
+	prefixPath += prefix;
+	prefixPath += "/";
+
+	std::string jsonPath = prefixPath;
+	jsonPath += "_annotations.coco.json";
+
+	auto json = jsonFromFile(jsonPath);
+
+
+	std::unordered_map<int, BackImage> imagesCache;
+
+	uint32_t count = 0;
+	std::array<std::array<int, 3>, 3> confusion = {};
+	auto start = std::chrono::high_resolution_clock::now();
+	// Use nlohmann to parse JSON
+
+
+	for (const auto& ann : json["annotations"])
+	{
+		auto imageId = ann["image_id"].get<int>();
+
+		if (imagesCache.find(imageId) == imagesCache.end())
+		{
+			// Load image
+			auto it = std::find_if(json["images"].begin(), json["images"].end(),
+				[imageId](const BackJson& img) { return img["id"].get<int>() == imageId; });
+
+			if (it == json["images"].end())
+				continue;
+
+			auto fileName = (*it)["file_name"].get<std::string>();
+			BackImage img = imread(prefixPath + fileName, true);
+
+			if (imagesCache.size() > 100)
+			{
+				imagesCache.clear();
+			}
+
+			std::cout << "Processing annotation for image ID " << imageId << "\n";
+			imagesCache[imageId] = img;
+		}
+
+
+		auto rect = parseBox(ann);
+		if (rect == std::nullopt)
+			continue;
+
+		auto item = makeBarcode(imagesCache[imageId], constr, rect.value());
+		if (!item)
+			continue;
+
+		const auto categoryId = ann["category_id"].get<int>() - 1;
+
+		auto [rtype, score] = ds.predict(item.get());
+		ds.size[categoryId]++;
+
+		confusion[categoryId][rtype]++;
+
+		if (rtype == categoryId)
+		{
+			ds.truePositive[categoryId]++;
+		}
+	}
+	auto end = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> duration = end - start;
+	std::cout << "Function duration: " << duration.count() << " seconds" << std::endl;
+
+	std::cout << "Dataset evaluation:\n";
+	for (size_t i = 0; i < 3; ++i)
+	{
+		uint32_t tp = ds.truePositive[i];
+		float precision = (tp == 0) ? 0.0f : (float(tp) / float(ds.size[i]));
+		std::cout << " Type " << i + 1 << ": Precision=" << precision << std::endl;
+	}
+
+	double acc = computeAccuracy(confusion);
+	double balAcc = computeBalancedAccuracy(confusion);
+	double macroF1 = computeMacroF1(confusion);
+
+	std::cout << "Accuracy: " << acc << "\n";
+	std::cout << "Balanced accuracy: " << balAcc << "\n";
+	std::cout << "Macro-F1: " << macroF1 << "\n";
+
+
+}
+
 BackImage findObjectsOnImage(const BackImage& src, const bc::barstruct& constr, const DatasetData& ds)
 {
 	BackImage out = src;
@@ -762,7 +870,7 @@ void objectClassification(const bc::barstruct& constr)
 {
 	DatasetData ds;
 	parseCocoAnnotationsTrain(ds, constr, "train");
-	parseCocoAnnotationsTest(ds, constr, "test");
+	parseCocoAnnotationsTestAll(ds, constr, "test");
 }
 
 
@@ -790,6 +898,12 @@ AutoRunRegister registerParseCocoAnnotations([]()
 	constr.createGraph = true;
 	constr.createBinaryMasks = false;
 	constr.attachMode = bc::AttachMode::morePointsEatLow;
-	objectClassification(constr);
+	// objectClassification(constr);
+
+	{
+		DatasetData ds;
+		parseCocoAnnotationsTrain(ds, constr, "train");
+		parseCocoAnnotationsTest(ds, constr, "test");
+	}
 	exit(0);
 });
