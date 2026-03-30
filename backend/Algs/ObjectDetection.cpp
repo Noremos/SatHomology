@@ -218,83 +218,194 @@ const std::vector<std::string> TEST
 
 using DistanceValue = uint32_t;
 using PlusValue = int32_t;
+using PlusValues = std::array<PlusValue, 3>;
 
 struct Score
 {
-	std::array<int32_t, 3> hits;
+	PlusValues hits;
 	uint32_t count{};
 };
 
-using PlusValues = std::array<PlusValue, 3>;
+int findMaxId(const PlusValues& values)
+{
+	int maxId = 0;
+	for (size_t i = 1; i < values.size(); ++i)
+	{
+		if (values[i] > values[maxId])
+			maxId = i;
+	}
+	return maxId;
+}
+
+
+// Пример: feature extraction + nanoflann KD-tree search
+#include <vector>
+#include <cmath>
+#include <algorithm>
+#include "nanoflann.hpp"
+
+// --- Типы ---
+using Vec = std::vector<double>;
+using Dataset = std::vector<Vec>;
+
+// --- Пример функции извлечения признаков ---
+Vec extract_features_from_baritem(const bc::Baritem& item, size_t L = 32, size_t B = 8) {
+    Vec feat;
+    // 1) получить длины, отсортировать по убыванию
+    std::vector<double> lens;
+    lens.reserve(item.barlines.size());
+    for (auto b : item.barlines) lens.push_back(static_cast<double>(b->lenFloat()));
+    std::sort(lens.begin(), lens.end(), std::greater<double>());
+
+    // top L lengths
+    for (size_t i = 0; i < L; ++i)
+        feat.push_back(i < lens.size() ? lens[i] : 0.0);
+
+    // sum, max, mean, std, count
+    double sum = 0;
+    double maxv = 0;
+    for (double v : lens) { sum += v; if (v > maxv) maxv = v; }
+    double mean = lens.empty() ? 0.0 : sum / lens.size();
+    double var = 0;
+    for (double v : lens) var += (v - mean)*(v - mean);
+    double std = lens.size() > 1 ? sqrt(var / lens.size()) : 0.0;
+    feat.push_back(sum);
+    feat.push_back(maxv);
+    feat.push_back(mean);
+    feat.push_back(std);
+    feat.push_back(static_cast<double>(lens.size()));
+
+    // simple histogram with B bins (linear bins 0..maxv)
+    Vec hist(B, 0.0);
+    if (!lens.empty() && maxv > 0) {
+        for (double v : lens) {
+            size_t bin = std::min(B - 1, static_cast<size_t>( (v / maxv) * B ));
+            hist[bin] += 1.0;
+        }
+        for (double &h : hist) h /= lens.size(); // normalize by count
+    }
+    feat.insert(feat.end(), hist.begin(), hist.end());
+
+    // Optionally: normalize vector here (L2)
+    double norm = 0;
+    for (double x : feat) norm += x*x;
+    norm = sqrt(norm);
+    if (norm > 0) for (double &x : feat) x /= norm;
+
+    return feat;
+}
+
+// --- nanoflann adapter ---
+struct PointCloud {
+    Dataset pts;
+    inline size_t kdtree_get_point_count() const { return pts.size(); }
+    inline double kdtree_get_pt(const size_t idx, const size_t dim) const { return pts[idx][dim]; }
+    template <class BBOX> bool kdtree_get_bbox(BBOX&) const { return false; }
+};
+
+
+using namespace nanoflann;
+struct GNode
+{
+	// using nanoflann: kd-tree for L2
+	using KDTree = KDTreeSingleIndexAdaptor<
+		L2_Simple_Adaptor<double, PointCloud>,
+		PointCloud,
+		-1 /* the dimensionality is dynamic */
+	>;
+
+	static constexpr int K = 10;
+
+		// --- Building index ---
+	struct Classf
+	{
+		PointCloud cloud;
+		mutable std::unique_ptr<KDTree> index;
+	};
+	std::array<Classf, 3> classes{};
+
+	mutable bool notBuild = true;
+
+	std::pair<uint16_t, float> findType(const bc::barline* line) const
+	{
+		assert(false);
+		return { 0, 0.0f }; // stub for now
+	}
+
+	std::pair<uint16_t, float> findType(const bc::Baritem& queryItem) const
+	{
+		if (notBuild)
+		{
+			for (size_t i = 0; i < 3; ++i)
+			{
+				auto& c = classes[i];
+				size_t dim = c.cloud.pts.empty() ? 0 : c.cloud.pts[0].size();
+				c.index = std::make_unique<KDTree>(dim, c.cloud, KDTreeSingleIndexAdaptorParams(10 /* leaf */));
+				c.index->buildIndex();
+			}
+			notBuild = false;
+		}
+
+		// --- Query: get top-K indices ---
+		std::vector<size_t> ret_indexes(K);
+		std::vector<double> out_dists_sqr(K);
+		std::vector<double> query = extract_features_from_baritem(queryItem);
+		KNNResultSet<double> resultSet(K);
+		resultSet.init(&ret_indexes[0], &out_dists_sqr[0]);
+		for (size_t i = 0; i < 3; i++)
+		{
+			bool ret = classes[i].index->findNeighbors(resultSet, query.data(), SearchParameters(10));
+			if (ret)
+			{
+				// Found neighbors for class i
+				return {static_cast<uint16_t>(i), static_cast<float>(out_dists_sqr[0])};
+			}
+		}
+
+		return {0, 1.0f}; // default fallback
+	}
+
+	int add(const bc::Baritem& line, const uint16_t typeId)
+	{
+		classes[typeId].cloud.pts.push_back(extract_features_from_baritem(line));
+
+		return 0;
+	}
+};
 
 struct Node
 {
-	std::array<std::unique_ptr<Node>, 256> children;
+	std::array<std::unique_ptr<Node>, 256> children{};
 	PlusValues types{};
 	uint16_t length{};
 
-	std::pair<Node*, DistanceValue> findChild(const uint16_t key) const
-	{
-		if (children[key])
-		{
-			return {children[key].get(), 0};
-		}
-
-		for (uint16_t i = 1; i < std::min<uint16_t>(256 - key, key); ++i)
-		{
-			if (children[key + i])
-			{
-				return {children[key + i].get(), i};
-			}
-
-			if (children[key - i])
-			{
-				return {children[key - i].get(), i};
-			}
-		}
-
-		return {nullptr, 0};
-	}
-
 	Score findInChild(const bc::barline* line) const
 	{
-		auto [node, distance] = findChild(line->len().getAvgUchar());
-		if (!node)
-		{
-			return Score{{}, 1}; // Return zeros if node not found
-		}
+		Score score{types, 1};
 
-		// Start with current node's type counts
-		Score result{node->getPlusValue(), 1};
-		for (size_t i = 0; i < 3; i++)
-		{
-			if (result.hits[i] > 0)
-			{
-				result.hits[i] = 1;
-			}
-		}
-
-		// Penalize by distance to encourage exact matches
-		for (size_t i = 0; i < 3; i++)
-		{
-			result.hits[i] = std::max<int32_t>(result.hits[i] - distance, 0);
-		}
-
-		// Accumulate counts from all children (visiting as many branches as possible)
 		for (uint16_t i = 0; i < line->getChildrenCount(); ++i)
 		{
 			auto child = line->getChild(i);
-			auto childCounts = node->findInChild(child);
 
-			// Accumulate: add child counts to result
-			for (uint16_t t = 0; t < 3; ++t)
+			for (size_t key = child->start.getAvgUchar(); key < child->m_end.getAvgUchar(); key++)
 			{
-				result.hits[t] += childCounts.hits[t];
+				Node* node = children[key].get();
+				if (node == nullptr)
+				{
+					score.count += 1;
+					continue;
+				}
+
+				auto childCounts = node->findInChild(child);
+				for (uint16_t t = 0; t < 3; ++t)
+				{
+					score.hits[t] += childCounts.hits[t];
+				}
+				score.count += childCounts.count;
 			}
-			result.count += childCounts.count;
 		}
 
-		return result;
+		return score;
 	}
 
 	std::pair<uint16_t, float> findType(const bc::barline* line) const
@@ -321,26 +432,6 @@ struct Node
 		return {maxTypeId, float(plus.hits[maxTypeId]) / float(plus.count)};
 	}
 
-	PlusValues getPlusValue() const
-	{
-		// uint16_t maxTypeId = 0;
-		// for (size_t i = 0; i < 3; i++)
-		// {
-		// 	if (types[i] > types[maxTypeId])
-		// 	{
-		// 		maxTypeId = i;
-		// 	}
-		// }
-
-		// Distance output;
-		// for (size_t i = 0; i < 3; i++)
-		// {
-		// 	output[i] = types[i] - types[maxTypeId];
-		// }
-
-		return types;
-	}
-
 	int add(const bc::barline* line, const uint16_t typeId)
 	{
 		this->length = line->len().getAvgUchar();
@@ -350,10 +441,10 @@ struct Node
 		for (uint16_t i = 0; i < line->getChildrenCount(); ++i)
 		{
 			auto child = line->getChild(i);
-			if (child)
+
+			for (size_t key = child->start.getAvgUchar(); i < child->m_end.getAvgUchar(); i++)
 			{
-				const uint16_t key = child->len().getAvgUchar();
-				if (!children[key])
+				if (children[key] == nullptr)
 				{
 					children[key] = std::make_unique<Node>();
 				}
@@ -365,6 +456,118 @@ struct Node
 	}
 };
 
+
+struct GENode
+{
+	struct Node
+	{
+		// using nanoflann: kd-tree for L2
+		std::array<int,256> children{};
+
+		void add(const bc::barline* child, const uint16_t typeId)
+		{
+			for (size_t key = child->start.getAvgUchar(); key < child->m_end.getAvgUchar(); key++)
+			{
+				children[key] |= 1 << typeId;
+			}
+		}
+
+		std::array<int, 3> check(const bc::barline* child) const
+		{
+			std::array<int, 3> score{};
+			for (size_t key = child->start.getAvgUchar(); key < child->m_end.getAvgUchar(); key++)
+			{
+				for (size_t i = 0; i < 3; i++)
+				{
+					if (children[key] & (1 << i))
+					{
+						score[i]++;
+					}
+				}
+			}
+
+			// int type = 0;
+			// for (size_t i = 1; i < 3; i++)
+			// {
+			// 	if (score[i] > score[0])
+			// 	{
+			// 		score[0] = score[i];
+			// 		type = i;
+			// 	}
+			// }
+			return score;
+		}
+	};
+
+	std::pair<uint16_t, float> findType(const bc::barline* line) const
+	{
+		assert(false);
+		return { 0, 0.0f }; // stub for now
+	}
+
+	std::pair<uint16_t, float> findType(const bc::Baritem& queryItem) const
+	{
+		float score[3]{};
+		uint32_t size = std::min(static_cast<uint32_t>(queryItem.barlines.size()), static_cast<uint32_t>(children.size()));
+
+		float length = 0;
+		for (size_t i = 0; i < queryItem.barlines.size(); i++)
+		{
+			length += queryItem.barlines[i]->len().getAvgUchar();
+		}
+
+		for (size_t i = 0; i < size; i++)
+		{
+			float linelen = queryItem.barlines[i]->len().getAvgFloat();
+			float coof = linelen / length;
+
+			auto type = children[i]->check(queryItem.barlines[i]);
+			int total = 0;
+			for (size_t t = 0; t < 3; t++)
+			{
+				total += type[t];
+			}
+
+			if (total == 0)
+				continue;
+
+			for (size_t j = 0; j < 3; j++)
+			{
+				score[j] += (float(type[j]) / linelen);// * (coof);
+			}
+		}
+
+		int type = 0;
+		for (size_t i = 1; i < 3; i++)
+		{
+			if (score[i] > score[type])
+			{
+				type = i;
+			}
+		}
+		return {type, score[type]}; // default fallback
+	}
+
+	std::vector<std::unique_ptr<Node>> children{};
+	int add(const bc::Baritem& item, const uint16_t typeId)
+	{
+		if (children.size() <= item.barlines.size())
+		{
+			children.resize(item.barlines.size());
+		}
+
+		for (size_t i = 0; i < item.barlines.size(); i++)
+		{
+			if (children[i] == nullptr)
+			{
+				children[i] = std::make_unique<Node>();
+			}
+			children[i]->add(item.barlines[i], typeId);
+		}
+
+		return 0;
+	}
+};
 
 struct ClassicTrainer
 {
@@ -399,18 +602,20 @@ struct DatasetData
 {
 	int addItem(bc::Baritem* item, const uint16_t categoryId)
 	{
-		classic.add(item, categoryId);
-		return root.add(item->getRootNode(), categoryId);
+		// classic.add(item, categoryId);
+		item->sortByLen();
+		return root.add(*item, categoryId);
 	}
 
 	std::pair<uint16_t, float> predict(bc::Baritem* item)
 	{
-		return classic.findType(item);
-		// return root.findType(item->getRootNode()->getChild(0));
+		// return classic.findType(item);
+		item->sortByLen();
+		return root.findType(*item);
 	}
 
 
-	Node root;
+	GENode root;
 
 	ClassicTrainer classic;
 	// Dataset dataset;
@@ -554,9 +759,9 @@ void parseCocoAnnotationsTrain(DatasetData& outData, const bc::barstruct& constr
 		int rscore = outData.addItem(item.get(), categoryId);
 		++outData.counters[categoryId];
 
-		[[maybe_unused]]
-		auto [rtype, score] = outData.predict(item.get());
-		assert(rtype == categoryId || score == 1);
+		// [[maybe_unused]]
+		// auto [rtype, score] = outData.predict(item.get());
+		// assert(rtype == categoryId || score == 1);
 
 		outData.width.min = std::min(outData.width.min, rect.x.min);
 		outData.height.min = std::min(outData.height.min, rect.y.min);
