@@ -756,6 +756,33 @@ public:
 		_wid = new_width;
 		_hei = new_height;
 	}
+	BackImage getRectSafe(int stX, int stRow, int wid, int hei) const
+	{
+		if (stX < 0)
+		{
+			wid += stX;
+			stX = 0;
+		}
+		if (stRow < 0)
+		{
+			hei += stRow;
+			stRow = 0;
+		}
+		if (stX + wid > _wid)
+		{
+			wid = _wid - stX;
+		}
+		if (stRow + hei > _hei)
+		{
+			hei = _hei - stRow;
+		}
+		if (wid <= 0 || hei <= 0)
+		{
+			return BackImage(0, 0, _channels, type);
+		}
+
+		return getRect(stX,  stRow, wid, hei);
+	}
 
 
 	BackImage getRect(int stX, int stRow, int wid, int hei) const
